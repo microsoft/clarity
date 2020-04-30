@@ -19,7 +19,7 @@ export default [
   },
   {
     input: "src/global.ts",
-    output: [ { file: pkg.browser, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.unpkg, format: "iife", exports: "named" } ],
     plugins: [
       resolve(),
       typescript({ rollupCommonJSResolveHack: true, clean: true }),

@@ -29,12 +29,9 @@ export function decode(input: string): DecodedPayload {
     let jsonVersion = parseVersion(payload.envelope.version);
     let codeVersion = parseVersion(version);
 
-    /* Temporarily disable version check as we transition out of beta version */
-    if (false &&
-        jsonVersion.major !== codeVersion.major ||
+    if (jsonVersion.major !== codeVersion.major ||
         jsonVersion.minor !== codeVersion.minor ||
-        jsonVersion.patch !== codeVersion.patch ||
-        Math.abs(jsonVersion.beta - codeVersion.beta) > 1) {
+        Math.abs(jsonVersion.patch - codeVersion.patch) > 1) {
         throw new Error(`Invalid version. Actual: ${payload.envelope.version} | Expected: ${version} (+/- 1) | ${input.substr(0, 250)}`);
     }
 

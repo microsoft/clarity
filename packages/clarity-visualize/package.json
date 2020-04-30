@@ -6,7 +6,7 @@
   "license": "MIT",
   "main": "build/clarity.visualize.js",
   "module": "build/clarity.visualize.module.js",
-  "browser": "build/clarity.visualize.min.js",
+  "unpkg": "build/clarity.visualize.min.js",
   "types": "types/index.d.ts",
   "keywords": [
     "clarity",

@@ -6,7 +6,7 @@
   "license": "MIT",
   "main": "build/clarity.decode.js",
   "module": "build/clarity.decode.module.js",
-  "browser": "build/clarity.decode.min.js",
+  "unpkg": "build/clarity.decode.min.js",
   "types": "types/index.d.ts",
   "keywords": [
     "clarity",
