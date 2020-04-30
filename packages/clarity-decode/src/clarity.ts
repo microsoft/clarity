@@ -29,7 +29,9 @@ export function decode(input: string): DecodedPayload {
     let jsonVersion = parseVersion(payload.envelope.version);
     let codeVersion = parseVersion(version);
 
-    if (jsonVersion.major !== codeVersion.major ||
+    /* Temporarily disable version check as we transition out of beta version */
+    if (false &&
+        jsonVersion.major !== codeVersion.major ||
         jsonVersion.minor !== codeVersion.minor ||
         jsonVersion.patch !== codeVersion.patch ||
         Math.abs(jsonVersion.beta - codeVersion.beta) > 1) {
@@ -198,17 +200,16 @@ export function decode(input: string): DecodedPayload {
 
 
 function parseVersion(ver: string): DecodedVersion {
+    let output: DecodedVersion = { major: 0, minor: 0, patch: 0, beta: 0 };
     let parts = ver.split(".");
     if (parts.length === 3) {
         let subparts = parts[2].split("-b");
+        output.major = parseInt(parts[0], 10);
+        output.minor = parseInt(parts[1], 10);
         if (subparts.length === 2) {
-            return {
-                major: parseInt(parts[0], 10),
-                minor: parseInt(parts[1], 10),
-                patch: parseInt(subparts[0], 10),
-                beta: parseInt(subparts[1], 10)
-            };
-        }
+            output.patch = parseInt(subparts[0], 10);
+            output.beta = parseInt(subparts[1], 10);
+        } else { output.patch = parseInt(parts[2], 10); }
     }
-    return { major: 0, minor: 0, patch: 0, beta: 0 };
+    return output;
 }
