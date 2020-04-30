@@ -25,7 +25,6 @@
   "bugs": {
     "url": "https://github.com/microsoft/clarity/issues"
   },
-  "dependencies": {},
   "devDependencies": {
     "del-cli": "3.0.0",
     "husky": "4.2.3",
