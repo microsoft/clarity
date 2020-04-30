@@ -1,0 +1,63 @@
+{
+  "name": "clarity-devtools",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Adds Clarity debugging support to browser devtools",
+  "author": "Microsoft Corp.",
+  "license": "MIT",
+  "keywords": [
+    "clarity",
+    "Microsoft",
+    "interactions",
+    "cursor",
+    "pointer",
+    "instrumentation",
+    "analytics",
+    "decode"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/clarity.git",
+    "directory": "packages/clarity-devtools"
+  },
+  "bugs": {
+    "url": "https://github.com/Microsoft/clarity/issues"
+  },
+  "dependencies": {
+    "clarity-decode": "^0.4.0",
+    "clarity-js": "^0.4.0",
+    "clarity-visualize": "^0.4.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^7.1.3",
+    "@types/chrome": "0.0.35",
+    "del-cli": "^1.1.0",
+    "lint-staged": "^7.3.0",
+    "pubsub-js": "^1.7.0",
+    "rollup": "^2.7.3",
+    "rollup-plugin-copy": "^3.3.0",
+    "rollup-plugin-terser": "^5.3.0",
+    "rollup-plugin-typescript2": "^0.27.0",
+    "source-map-loader": "^0.2.4",
+    "ts-node": "^8.0.1",
+    "tslint": "^5.11.0",
+    "typescript": "^3.2.4"
+  },
+  "scripts": {
+    "build": "yarn build:clean && yarn build:main",
+    "build:main": "rollup -c rollup.config.ts",
+    "build:clean": "del-cli extension/*",
+    "tslint": "tslint --project ./",
+    "tslint:fix": "tslint --fix --project ./ --force"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.ts": [
+      "tslint --format codeFrame"
+    ]
+  }
+}

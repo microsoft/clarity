@@ -1,12 +1,8 @@
-# Build
-build/
-extension/
-
-# Dependency directories
-node_modules/
-
-# Visual Studio Code
+# Visual Studio Code temporary files
 .vscode/
+
+# npm packages
+node_modules
 
 # npm logs
 npm-debug.log*

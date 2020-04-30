@@ -1,0 +1,1 @@
+export { decode } from "./clarity";

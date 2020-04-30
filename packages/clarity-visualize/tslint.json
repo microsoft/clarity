@@ -1,0 +1,35 @@
+{
+  "extends": "tslint:recommended",
+  "rules": {
+    "max-line-length": [
+      true,
+      140
+    ],
+    "no-console": [
+      false
+    ],
+    "no-string-literal": false,
+    "prefer-const": false,
+    "prefer-for-of": false,
+    "object-literal-sort-keys": false,
+    "one-variable-per-declaration": false,
+    "trailing-comma": [
+      false
+    ],
+    "variable-name": false,
+    "interface-name": false,
+    "interface-over-type-literal": false,
+    "only-arrow-functions": false,
+    "typedef": [
+      true,
+      "call-signature",
+      "arrow-call-signature",
+      "parameter",
+      "arrow-parameter",
+      "property-declaration",
+      "member-variable-declaration",
+      "object-destructuring",
+      "array-destructuring"
+    ]
+  }
+}
