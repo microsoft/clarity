@@ -1,12 +1,12 @@
 {
   "name": "clarity-decode",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
   "author": "Microsoft Corp.",
   "license": "MIT",
   "main": "build/clarity.decode.js",
   "module": "build/clarity.decode.module.js",
-  "browser": "build/clarity.decode.min.js",
+  "unpkg": "build/clarity.decode.min.js",
   "types": "types/index.d.ts",
   "keywords": [
     "clarity",
@@ -26,7 +26,7 @@
     "url": "https://github.com/Microsoft/clarity/issues"
   },
   "dependencies": {
-    "clarity-js": "^0.4.2"
+    "clarity-js": "^0.4.3"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.1.0",
