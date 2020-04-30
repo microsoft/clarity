@@ -1,6 +1,6 @@
 {
   "name": "Clarity Devtools",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "version_name": "0.4.0",
   "manifest_version": 2,
   "minimum_chrome_version": "10.0",
