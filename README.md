@@ -9,13 +9,13 @@ Clarity provides you all these insights by:
 Clarity is a project in active development. While it's not yet ready for production use, we continue making improvements and encourage the community to join us in the process.
 
 ## Project Structure
-1. **[clarity-js](https://github.com/microsoft/clarity/packages/clarity-js/)**: Instrumentation code that goes on the website and tracks user interactions as well as layout changes. It is responsible for batching all captured events, computing metrics and encoding data to minimize bytes sent over the wire.
+1. **[clarity-js](https://github.com/microsoft/clarity/tree/master/packages/clarity-js)**: Instrumentation code that goes on the website and tracks user interactions as well as layout changes. It is responsible for batching all captured events, computing metrics and encoding data to minimize bytes sent over the wire.
 
-2. **[clarity-decode](https://github.com/microsoft/clarity/packages/clarity-decode/)**: Code, which usually runs on the server, decodes incoming data back into its original format. From analytics perspective, all analysis should happen on data coming out of decode module and should never run on encoded data from clarity-js directly.
+2. **[clarity-decode](https://github.com/microsoft/clarity/tree/master/packages/clarity-decode)**: Code, which usually runs on the server, decodes incoming data back into its original format. From analytics perspective, all analysis should happen on data coming out of decode module and should never run on encoded data from clarity-js directly.
 
-3. **[clarity-visualize](https://github.com/microsoft/clarity/packages/clarity-visualize/)**: This is what makes Clarity visual and intuitive. It takes the decoded data from clarity-decode and turns it back into pixel-perfect session replay, exactly how the user saw it.
+3. **[clarity-visualize](https://github.com/microsoft/clarity/tree/master/packages/clarity-visualize)**: This is what makes Clarity visual and intuitive. It takes the decoded data from clarity-decode and turns it back into pixel-perfect session replay, exactly how the user saw it.
 
-4. **[clarity-devtools](https://github.com/microsoft/clarity/packages/clarity-devtools/)**: This is a devtools extension for chromium based browsers. It demonstrates how various components of Clarity come together and enables live session captures against any website, including downloading event data.
+4. **[clarity-devtools](https://github.com/microsoft/clarity/tree/master/packages/clarity-devtools)**: This is a devtools extension for chromium based browsers. It demonstrates how various components of Clarity come together and enables live session captures against any website, including downloading event data.
 
 ## Examples
 Here are some example sessions on popular websites visualized to demonstrate the telemetry captured:

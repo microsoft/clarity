@@ -3,7 +3,7 @@
 
 ## About the Project
 The goal of this project is to demonstrate how various components of Clarity come together. It enables:
-1. Debugging support for [clarity-js](https://github.com/microsoft/clarity/packages/clarity-js) to browser devtools. 
+1. Debugging support for [clarity-js](https://github.com/microsoft/clarity/tree/master/packages/clarity-js) to browser devtools. 
 2. Exporting data captured by Clarity - both in encoded and decoded format.
 3. Live session replays against any website
 
