@@ -1,7 +1,7 @@
 # Clarity
 Clarity is a behavioral analytics library written in javascript. It helps you understand how users view and use your website across all modern devices and browsers. Understanding how users navigate, interact and browse your website can provide new insights about your users. Empathizing with your users and seeing where features fail or succeed can help improve your product, grow revenue and improve user retention.
 
-This package takes the decoded data from [clarity-decode](https://github.com/microsoft/clarity/packages/clarity-decode/) and turns it into pixel-perfect session replay, exactly how the user saw it.
+This package takes the decoded data from [clarity-decode](https://github.com/microsoft/clarity/tree/master/packages/clarity-decode) and turns it into pixel-perfect session replay, exactly how the user saw it.
 
 Clarity is a project in active development. While it's not yet ready for production use, we continue making improvements and encourage the community to join us in the process.
 
