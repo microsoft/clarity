@@ -137,8 +137,8 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
             value.parent = parentId;
             // Move this node to the right location under new parent
             if (parentId !== null && parentId >= 0) {
-                let childIndex = previousId !== null ? values[parentId].children.indexOf(previousId) + 1 : values[parentId].children.length;
-                values[parentId].children.splice(childIndex, 0 , id);
+                let childIndex = previousId === null ? values[parentId].children.length : values[parentId].children.indexOf(previousId) + 1;
+                values[parentId].children.splice(childIndex, 0, id);
                 // Update region after the move
                 value.region = regionMap.has(node) ? regionMap.get(node) : values[parentId].region;
             } else {
@@ -366,6 +366,9 @@ function getFullUrl(relative: string): string {
 
 function getPreviousId(node: Node): number {
     let id = null;
+
+    // Some nodes may not have an ID by design since Clarity skips over tags like SCRIPT, NOSCRIPT, META, COMMENTS, etc..
+    // In that case, we keep going back and check for their sibling until we find a sibling with ID or no more sibling nodes are left.
     while (id === null && node.previousSibling) {
         id = getId(node.previousSibling);
         node = node.previousSibling;

@@ -22,24 +22,22 @@ export function resize(
     let width = data.width;
     let height = data.height;
     if (onresize) { onresize(width, height); } else {
-        try {
-            let margin = 10;
-            let px = "px";
-            let container = iframe.ownerDocument.body;
-            let offsetTop = iframe.offsetTop;
-            let availableWidth = container.clientWidth - (2 * margin);
-            let availableHeight = container.clientHeight - offsetTop - (2 * margin);
-            let scale = Math.min(Math.min(availableWidth / width, 1), Math.min(availableHeight / height, 1));
-            iframe.removeAttribute("style");
-            iframe.style.position = "relative";
-            iframe.style.width = width + px;
-            iframe.style.height = height + px;
-            iframe.style.transformOrigin = "0 0 0";
-            iframe.style.transform = "scale(" + scale + ")";
-            iframe.style.border = "1px solid #cccccc";
-            iframe.style.overflow = "hidden";
-            iframe.style.left = ((container.clientWidth - (width * scale)) / 2) + px;
-        }  catch { /* do nothing */ }
+        let margin = 10;
+        let px = "px";
+        let container = iframe.ownerDocument.body;
+        let offsetTop = iframe.offsetTop;
+        let availableWidth = container.clientWidth - (2 * margin);
+        let availableHeight = container.clientHeight - offsetTop - (2 * margin);
+        let scale = Math.min(Math.min(availableWidth / width, 1), Math.min(availableHeight / height, 1));
+        iframe.removeAttribute("style");
+        iframe.style.position = "relative";
+        iframe.style.width = width + px;
+        iframe.style.height = height + px;
+        iframe.style.transformOrigin = "0 0 0";
+        iframe.style.transform = "scale(" + scale + ")";
+        iframe.style.border = "1px solid #cccccc";
+        iframe.style.overflow = "hidden";
+        iframe.style.left = ((container.clientWidth - (width * scale)) / 2) + px;
     }
 }
 
