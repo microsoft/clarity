@@ -41,7 +41,18 @@ export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void 
     let doc = iframe.contentDocument;
     for (let node of data) {
         let parent = element(node.parent);
-        let next = element(node.next);
+        let pivot = element(node.previous);
+        let insert = insertAfter;
+
+        // For backward compatibility. Until v0.4.4 we used the next element to determine right ordering within DOM
+        // Starting with v0.4.5, we moved away from the next element and instead starting sending previous element
+        // This change fixes several edge cases where positioning of DOM could get inconsistent.
+        // In future, we can get rid of following code, but keeping it for now to ensure backward compatibility.
+        if ("next" in node) {
+            pivot = element(node.next);
+            insert = insertBefore;
+        }
+
         let tag = node.tag;
         if (tag && tag.indexOf(Layout.Constant.IFRAME_PREFIX) === 0) { tag = node.tag.substr(Layout.Constant.IFRAME_PREFIX.length); }
         switch (tag) {
@@ -88,7 +99,7 @@ export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void 
                 let textElement = element(node.id);
                 textElement = textElement ? textElement : doc.createTextNode(null);
                 textElement.nodeValue = node.value;
-                insert(node, parent, textElement, next);
+                insert(node, parent, textElement, pivot);
                 break;
             case "HTML":
                 let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
@@ -117,14 +128,14 @@ export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void 
                     }
                 }
                 setAttributes(headElement as HTMLElement, node.attributes);
-                insert(node, parent, headElement, next);
+                insert(node, parent, headElement, pivot);
                 break;
             case "STYLE":
                 let styleElement = element(node.id);
                 styleElement = styleElement ? styleElement : doc.createElement(node.tag);
                 setAttributes(styleElement as HTMLElement, node.attributes);
                 styleElement.textContent = node.value;
-                insert(node, parent, styleElement, next);
+                insert(node, parent, styleElement, pivot);
                 break;
             case "IFRAME":
                 let iframeElement = element(node.id) as HTMLElement;
@@ -133,7 +144,7 @@ export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void 
                 node.attributes["data-id"] = `${node.id}`;
                 setAttributes(iframeElement as HTMLElement, node.attributes);
                 if (!(Layout.Constant.SAME_ORIGIN_ATTRIBUTE in node.attributes)) { iframeElement.style.backgroundColor = "maroon"; }
-                insert(node, parent, iframeElement, next);
+                insert(node, parent, iframeElement, pivot);
                 break;
             default:
                 let domElement = element(node.id);
@@ -141,7 +152,7 @@ export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void 
                 if (!node.attributes) { node.attributes = {}; }
                 node.attributes["data-id"] = `${node.id}`;
                 setAttributes(domElement as HTMLElement, node.attributes);
-                insert(node, parent, domElement, next);
+                insert(node, parent, domElement, pivot);
                 break;
         }
     }
@@ -154,7 +165,13 @@ function createElement(doc: Document, tag: string): HTMLElement {
     return doc.createElement(tag);
 }
 
-function insert(data: Layout.DomData, parent: Node, node: Node, next: Node): void {
+function insertAfter(data: Layout.DomData, parent: Node, node: Node, previous: Node): void {
+    let next = previous && previous.parentElement === parent ? previous.nextSibling : null;
+    next = previous === null && parent ? parent.firstChild : next;
+    insertBefore(data, parent, node, next);
+}
+
+function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node): void {
     if (parent !== null) {
         next = next && next.parentElement !== parent ? null : next;
         try {

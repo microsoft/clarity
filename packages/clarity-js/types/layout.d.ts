@@ -58,7 +58,7 @@ export interface NodeInfo {
 export interface NodeValue {
     id: number;
     parent: number;
-    next: number;
+    previous: number;
     position: number;
     children: number[];
     data: NodeInfo;

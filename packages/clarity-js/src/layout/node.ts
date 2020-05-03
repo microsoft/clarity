@@ -92,9 +92,7 @@ export default function(node: Node, source: Source): Node {
                     break;
                 case "HEAD":
                     let head = { tag, attributes: getAttributes(element.attributes) };
-                    // Capture base href as part of discovering DOM unless it's inside iframe.
-                    // iframe already accquires base value from the parent, so we don't have to proactively generate it.
-                    if (insideFrame === false) { head.attributes[Constant.BASE_ATTRIBUTE] = location.protocol + "//" + location.hostname; }
+                    if (location) { head.attributes[Constant.BASE_ATTRIBUTE] = location.protocol + "//" + location.hostname; }
                     dom[call](node, parent, head, source);
                     break;
                 case "STYLE":

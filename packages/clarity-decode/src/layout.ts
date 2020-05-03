@@ -89,7 +89,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
     let output: DomData = {
         id: node[0],
         parent: tagIndex > 1 ? node[1] : null,
-        next: tagIndex > 2 ? node[2] : null,
+        previous: tagIndex > 2 ? node[2] : null,
         tag,
         position: position ? parseInt(position, 10) : null
     };
