@@ -1,13 +1,13 @@
 {
   "name": "Clarity Devtools",
-  "version": "0.4.4",
-  "version_name": "0.4.4",
+  "version": "0.4.5",
+  "version_name": "0.4.5",
   "manifest_version": 2,
   "minimum_chrome_version": "10.0",
   "devtools_page": "devtools.html",
   "browser_action": {
     "default_icon": "icon.png",
-    "default_title": "Clarity Inspector: Open developer tools to activate",
+    "default_title": "Clarity Devtools: Open developer tools to activate",
     "default_popup": "popup.html"
   },
   "icons": {"64": "icon.png"},
