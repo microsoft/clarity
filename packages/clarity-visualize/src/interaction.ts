@@ -24,7 +24,7 @@ export function resize(
     if (onresize) { onresize(width, height); } else {
         let margin = 10;
         let px = "px";
-        let container = iframe.ownerDocument.body;
+        let container = iframe.ownerDocument.documentElement;
         let offsetTop = iframe.offsetTop;
         let availableWidth = container.clientWidth - (2 * margin);
         let availableHeight = container.clientHeight - offsetTop - (2 * margin);

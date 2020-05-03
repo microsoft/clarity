@@ -34,11 +34,11 @@ background.onMessage.addListener(function(message: any): void {
         let header = document.getElementById("header") as HTMLElement;
         let download = document.getElementById("download") as HTMLElement;
         let iframe = document.getElementById("clarity") as HTMLIFrameElement;
-        visualize.render(decoded, iframe, header);
         info.style.display = "none";
         header.style.display = "block";
-        iframe.style.display = "block";
         download.style.display = "block";
+        iframe.style.display = "block";
+        visualize.render(decoded, iframe, header);
     }
 });
 
