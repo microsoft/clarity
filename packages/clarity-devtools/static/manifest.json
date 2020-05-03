@@ -1,16 +1,23 @@
 {
-  "name": "Clarity Devtools",
-  "version": "0.4.5",
-  "version_name": "0.4.5",
   "manifest_version": 2,
-  "minimum_chrome_version": "10.0",
+  "name": "Clarity Developer Tools",
+  "description": "Get insights about how customers use your website.",
+  "version": "0.4.5",
+  "version_name": "0.4.5",  
+  "minimum_chrome_version": "50",
   "devtools_page": "devtools.html",
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "64": "icon-64.png",
+    "128": "icon-128.png"
+  },
   "browser_action": {
     "default_icon": "icon.png",
-    "default_title": "Clarity Devtools: Open developer tools to activate",
+    "default_title": "Clarity Developer Tools",
     "default_popup": "popup.html"
   },
-  "icons": {"64": "icon.png"},
   "content_scripts": [{
     "matches": ["http://*/*", "https://*/*"],
     "js": ["content.js"]
