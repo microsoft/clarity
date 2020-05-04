@@ -15,7 +15,7 @@ Clarity is a project in active development. While it's not yet ready for product
 
 3. **[clarity-visualize](https://github.com/microsoft/clarity/tree/master/packages/clarity-visualize)**: This is what makes Clarity visual and intuitive. It takes the decoded data from clarity-decode and turns it back into pixel-perfect session replay, exactly how the user saw it.
 
-4. **[clarity-devtools](https://github.com/microsoft/clarity/tree/master/packages/clarity-devtools)**: This is a devtools extension for chromium based browsers. It demonstrates how various components of Clarity come together and enables live session captures against any website, including downloading event data.
+4. **[clarity-devtools](https://github.com/microsoft/clarity/tree/master/packages/clarity-devtools)**: This is a developer tools extension for chromium based browsers. It demonstrates how various components of Clarity come together and enables live session captures against any website, including downloading event data.
 
 ## Examples
 Here are some example sessions on popular websites visualized to demonstrate the telemetry captured:

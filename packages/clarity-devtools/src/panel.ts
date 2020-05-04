@@ -34,11 +34,11 @@ background.onMessage.addListener(function(message: any): void {
         let header = document.getElementById("header") as HTMLElement;
         let download = document.getElementById("download") as HTMLElement;
         let iframe = document.getElementById("clarity") as HTMLIFrameElement;
-        visualize.render(decoded, iframe, header);
         info.style.display = "none";
         header.style.display = "block";
-        iframe.style.display = "block";
         download.style.display = "block";
+        iframe.style.display = "block";
+        visualize.render(decoded, iframe, header);
     }
 });
 
@@ -49,7 +49,8 @@ function reset(): void {
     if (iframe) { iframe.parentElement.removeChild(iframe); }
     iframe = document.createElement("iframe");
     iframe.id = "clarity";
-    iframe.title = "Clarity Inspector";
+    iframe.title = "Clarity Developer Tools";
+    iframe.setAttribute("scrolling", "no");
     document.body.appendChild(iframe);
     console.log("Clearing out previous session... moving on to next one.");
     eJson = [];

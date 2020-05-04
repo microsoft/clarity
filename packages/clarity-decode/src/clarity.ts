@@ -23,9 +23,8 @@ export function decode(input: string): DecodedPayload {
     let encoded: Data.Token[][] = json.d.sort((a: Data.Token[], b: Data.Token[]): number => (a[0] as number) - (b[0] as number));
 
     // Check if the incoming version is compatible with the current running code
-    // We do an exact match for major, minor and path components of the version.
-    // However, the beta portion of the version can be either same, one less or one more.
-    // This ensures we are backward and forward compatible with upto one version change.
+    // We do an exact match for the major version and minor version.
+    // For patch, we are backward and forward compatible with up to version change.
     let jsonVersion = parseVersion(payload.envelope.version);
     let codeVersion = parseVersion(version);
 

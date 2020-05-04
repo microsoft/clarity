@@ -17,22 +17,18 @@ export function scroll(event: Interaction.ScrollEvent, iframe: HTMLIFrameElement
 export function resize(
     event: Interaction.ResizeEvent,
     iframe: HTMLIFrameElement,
-    resizeCallback?: (width: number, height: number) => void): void {
+    onresize?: (width: number, height: number) => void): void {
     let data = event.data;
-    let margin = 10;
-    let px = "px";
     let width = data.width;
     let height = data.height;
-    let availableWidth = (iframe.contentWindow.innerWidth - (2 * margin));
-    let scaleWidth = Math.min(availableWidth / width, 1);
-    let scaleHeight = Math.min((iframe.contentWindow.innerHeight - (16 * margin)) / height, 1);
-    let scale = Math.min(scaleWidth, scaleHeight);
-    // if resizeCallback is provided, don't scale the iframe ourselves. In cases where a parent component
-    // is utilizing a video player with the decode rendering here, the parent needs to be able to decide
-    // the size of the iframe
-    if (resizeCallback) {
-        resizeCallback(width, height);
-    } else {
+    if (onresize) { onresize(width, height); } else {
+        let margin = 10;
+        let px = "px";
+        let container = iframe.ownerDocument.documentElement;
+        let offsetTop = iframe.offsetTop;
+        let availableWidth = container.clientWidth - (2 * margin);
+        let availableHeight = container.clientHeight - offsetTop - (2 * margin);
+        let scale = Math.min(Math.min(availableWidth / width, 1), Math.min(availableHeight / height, 1));
         iframe.removeAttribute("style");
         iframe.style.position = "relative";
         iframe.style.width = width + px;
@@ -40,9 +36,8 @@ export function resize(
         iframe.style.transformOrigin = "0 0 0";
         iframe.style.transform = "scale(" + scale + ")";
         iframe.style.border = "1px solid #cccccc";
-        iframe.style.margin = margin + px;
         iframe.style.overflow = "hidden";
-        iframe.style.left = ((availableWidth - (width * scale)) / 2) + px;
+        iframe.style.left = ((container.clientWidth - (width * scale)) / 2) + px;
     }
 }
 

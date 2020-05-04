@@ -77,7 +77,7 @@ export function getId(node: Node, autogen: boolean = false): number {
 export function add(node: Node, parent: Node, data: NodeInfo, source: Source): void {
     let id = getId(node, true);
     let parentId = parent ? getId(parent) : null;
-    let nextId = getNextId(node);
+    let previousId = getPreviousId(node);
     let masked = true;
     let parentValue = null;
     let region = regionMap.has(node) ? regionMap.get(node) : null;
@@ -101,7 +101,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     values[id] = {
         id,
         parent: parentId,
-        next: nextId,
+        previous: previousId,
         children: [],
         position: null,
         data,
@@ -117,7 +117,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
 export function update(node: Node, parent: Node, data: NodeInfo, source: Source): void {
     let id = getId(node);
     let parentId = parent ? getId(parent) : null;
-    let nextId = getNextId(node);
+    let previousId = getPreviousId(node);
     let changed = false;
 
     if (id in values) {
@@ -125,23 +125,20 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
         value.metadata.active = true;
 
         // Handle case where internal ordering may have changed
-        if (value["next"] !== nextId) {
+        if (value.previous !== previousId) {
             changed = true;
-            value["next"] = nextId;
+            value.previous = previousId;
         }
 
         // Handle case where parent might have been updated
-        if (value["parent"] !== parentId) {
+        if (value.parent !== parentId) {
             changed = true;
-            let oldParentId = value["parent"];
-            value["parent"] = parentId;
+            let oldParentId = value.parent;
+            value.parent = parentId;
             // Move this node to the right location under new parent
             if (parentId !== null && parentId >= 0) {
-                if (nextId !== null && nextId >= 0) {
-                    values[parentId].children.splice(nextId + 1, 0 , id);
-                } else {
-                    values[parentId].children.push(id);
-                }
+                let childIndex = previousId === null ? values[parentId].children.length : values[parentId].children.indexOf(previousId) + 1;
+                values[parentId].children.splice(childIndex, 0, id);
                 // Update region after the move
                 value.region = regionMap.has(node) ? regionMap.get(node) : values[parentId].region;
             } else {
@@ -354,7 +351,7 @@ function metadata(tag: string, id: number, parentId: number): void {
         }
 
         // Enable boxmodel if this node defines a new region
-        // This setting is not recurrsive and does not apply to any of the children.
+        // This setting is not recursive and does not apply to any of the children.
         // It tells Clarity to monitor bounding rectangle (x,y,width,height) for this region.
         // E.g. region would be "SearchBox" and what's inside that region (input field, submit button, label, etc.) do not matter.
         if (regionMap.has(nodes[id])) { value.metadata.boxmodel = true; }
@@ -367,11 +364,14 @@ function getFullUrl(relative: string): string {
     return a.href;
 }
 
-function getNextId(node: Node): number {
+function getPreviousId(node: Node): number {
     let id = null;
-    while (id === null && node.nextSibling) {
-        id = getId(node.nextSibling);
-        node = node.nextSibling;
+
+    // Some nodes may not have an ID by design since Clarity skips over tags like SCRIPT, NOSCRIPT, META, COMMENTS, etc..
+    // In that case, we keep going back and check for their sibling until we find a sibling with ID or no more sibling nodes are left.
+    while (id === null && node.previousSibling) {
+        id = getId(node.previousSibling);
+        node = node.previousSibling;
     }
     return id;
 }

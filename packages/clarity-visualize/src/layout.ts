@@ -41,7 +41,26 @@ export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void 
     let doc = iframe.contentDocument;
     for (let node of data) {
         let parent = element(node.parent);
-        let next = element(node.next);
+        let pivot = element(node.previous);
+        let insert = insertAfter;
+
+        // For backward compatibility. Until v0.4.4 we used the next element to determine right ordering within DOM
+        // Starting with v0.4.5, we moved away from the next element and instead starting sending previous element
+        // This change fixes several edge cases where positioning of DOM could get inconsistent.
+        // Example:
+        // -- Let's say there's a parent X with two children: A, C. Then, A is mutated and a child B is inserted before C: X -> (A, B, C)
+        // -- However, if we rely on pivot "next", then DOM will instead look incorrect like: X -> B, C, A. Because, payload will be:
+        // ---- A: (Parent: X, Next: null // because B is yet undiscovered) | B: (Parent: X, Next: C // because C is already discovered)
+        // ---- When we process A, since next is null, we will end up moving A as the last child (X -> C, A)
+        // ---- Then we get to B, since next is a valid node C, we will place it before C, making DOM look like: (X -> B, C, A)
+        // -- To avoid the above issue we rely on pivot "previous" node and that turns mutations from above example into:
+        // ---- A: (Parent X, Prev: null // it's the first child) | B: (Parent: X, Prev: A // because A is already known)
+        // ---- This leads us to desired DOM structure: X -> (A, B, C).
+        if ("next" in node) {
+            pivot = element(node.next);
+            insert = insertBefore;
+        }
+
         let tag = node.tag;
         if (tag && tag.indexOf(Layout.Constant.IFRAME_PREFIX) === 0) { tag = node.tag.substr(Layout.Constant.IFRAME_PREFIX.length); }
         switch (tag) {
@@ -88,7 +107,7 @@ export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void 
                 let textElement = element(node.id);
                 textElement = textElement ? textElement : doc.createTextNode(null);
                 textElement.nodeValue = node.value;
-                insert(node, parent, textElement, next);
+                insert(node, parent, textElement, pivot);
                 break;
             case "HTML":
                 let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
@@ -117,14 +136,14 @@ export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void 
                     }
                 }
                 setAttributes(headElement as HTMLElement, node.attributes);
-                insert(node, parent, headElement, next);
+                insert(node, parent, headElement, pivot);
                 break;
             case "STYLE":
                 let styleElement = element(node.id);
                 styleElement = styleElement ? styleElement : doc.createElement(node.tag);
                 setAttributes(styleElement as HTMLElement, node.attributes);
                 styleElement.textContent = node.value;
-                insert(node, parent, styleElement, next);
+                insert(node, parent, styleElement, pivot);
                 break;
             case "IFRAME":
                 let iframeElement = element(node.id) as HTMLElement;
@@ -133,7 +152,7 @@ export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void 
                 node.attributes["data-id"] = `${node.id}`;
                 setAttributes(iframeElement as HTMLElement, node.attributes);
                 if (!(Layout.Constant.SAME_ORIGIN_ATTRIBUTE in node.attributes)) { iframeElement.style.backgroundColor = "maroon"; }
-                insert(node, parent, iframeElement, next);
+                insert(node, parent, iframeElement, pivot);
                 break;
             default:
                 let domElement = element(node.id);
@@ -141,7 +160,7 @@ export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void 
                 if (!node.attributes) { node.attributes = {}; }
                 node.attributes["data-id"] = `${node.id}`;
                 setAttributes(domElement as HTMLElement, node.attributes);
-                insert(node, parent, domElement, next);
+                insert(node, parent, domElement, pivot);
                 break;
         }
     }
@@ -154,7 +173,13 @@ function createElement(doc: Document, tag: string): HTMLElement {
     return doc.createElement(tag);
 }
 
-function insert(data: Layout.DomData, parent: Node, node: Node, next: Node): void {
+function insertAfter(data: Layout.DomData, parent: Node, node: Node, previous: Node): void {
+    let next = previous && previous.parentElement === parent ? previous.nextSibling : null;
+    next = previous === null && parent ? parent.firstChild : next;
+    insertBefore(data, parent, node, next);
+}
+
+function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node): void {
     if (parent !== null) {
         next = next && next.parentElement !== parent ? null : next;
         try {

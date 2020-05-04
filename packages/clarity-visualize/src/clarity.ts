@@ -49,11 +49,10 @@ export function reset(): void {
     layout.reset();
 }
 
-export async function replay(
-    events: Data.DecodedEvent[],
+export async function replay(events: Data.DecodedEvent[],
     iframe: HTMLIFrameElement,
     header?: HTMLElement,
-    resizeCallback?: (width: number, height: number) => void
+    onresize?: (width: number, height: number) => void
 ): Promise<void> {
     let start = events[0].time;
     for (let entry of events) {
@@ -93,7 +92,7 @@ export async function replay(
                 interaction.selection(entry as Interaction.SelectionEvent, iframe);
                 break;
             case Data.Event.Resize:
-                interaction.resize(entry as Interaction.ResizeEvent, iframe, resizeCallback);
+                interaction.resize(entry as Interaction.ResizeEvent, iframe, onresize);
                 break;
             case Data.Event.Scroll:
                 interaction.scroll(entry as Interaction.ScrollEvent, iframe);
