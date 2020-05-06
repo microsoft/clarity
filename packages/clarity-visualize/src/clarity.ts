@@ -46,6 +46,7 @@ export function render(decoded: Data.DecodedPayload, iframe: HTMLIFrameElement, 
 
 export function reset(): void {
     data.reset();
+    interaction.reset();
     layout.reset();
 }
 
