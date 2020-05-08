@@ -17,7 +17,7 @@ const CLARITY_CLICK = "clarity-click";
 const CLARITY_POINTER = "clarity-pointer";
 const CLARITY_TOUCH = "clarity-touch";
 const CLARITY_POINTER_CLICK = "clarity-pointer-click";
-const CLARITY_POINTER_TOUCH = "clarity-pointer-touch";
+const CLARITY_POINTER_NONE = "clarity-pointer-none";
 const CLARITY_POINTER_MOVE = "clarity-pointer-move";
 const CLARITY_CLICK_RING = "clarity-click-ring";
 const CLARITY_TOUCH_RING = "clarity-touch-ring";
@@ -143,7 +143,7 @@ export function pointer(event: Interaction.PointerEvent, iframe: HTMLIFrameEleme
             `.${CLARITY_TOUCH} { background: radial-gradient(rgba(255,255,0,1), transparent); }` +
             `.${CLARITY_TOUCH_RING} { background: transparent; border: 1px solid rgba(255,0,0,0.8); }` +
             `.${CLARITY_POINTER_CLICK} { background-image: url(${CLICK_ICON}); }` +
-            `.${CLARITY_POINTER_TOUCH} { background: none; }` +
+            `.${CLARITY_POINTER_NONE} { background: none; }` +
             `.${CLARITY_POINTER_MOVE} { background-image: url(${POINTER_ICON}); }`;
 
         p.appendChild(style);
@@ -156,16 +156,16 @@ export function pointer(event: Interaction.PointerEvent, iframe: HTMLIFrameEleme
         case Data.Event.RightClick:
         case Data.Event.DoubleClick:
             drawClick(doc, data.x, data.y);
-            p.className = CLARITY_POINTER_CLICK;
+            p.className = CLARITY_POINTER_NONE;
             break;
         case Data.Event.TouchStart:
         case Data.Event.TouchEnd:
         case Data.Event.TouchCancel:
             drawTouch(doc, data.x, data.y);
-            p.className = CLARITY_POINTER_TOUCH;
+            p.className = CLARITY_POINTER_NONE;
             break;
         case Data.Event.TouchMove:
-            p.className = CLARITY_POINTER_TOUCH;
+            p.className = CLARITY_POINTER_NONE;
             break;
         case Data.Event.MouseMove:
             p.className = CLARITY_POINTER_MOVE;
