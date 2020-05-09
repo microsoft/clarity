@@ -51,16 +51,17 @@ export function scroll(event: Interaction.ScrollEvent, iframe: HTMLIFrameElement
     let scrollTarget = element(data.target as number) as HTMLElement || iframe.contentDocument.body;
     if (scrollTarget) { scrollTarget.scrollTo(data.x, data.y); }
 
-    // Position canvas relative to scroll events
-    let canvas = overlay(iframe);
-    if (canvas) {
-        canvas.style.left = data.x + PIXEL;
-        canvas.style.top = data.y + PIXEL;
-        canvas.width = de.clientWidth;
-        canvas.height = de.clientHeight;
+    // Position canvas relative to scroll events on the parent page
+    if (scrollTarget === de || scrollTarget === iframe.contentDocument.body) {
+        let canvas = overlay(iframe);
+        if (canvas) {
+            canvas.style.left = data.x + PIXEL;
+            canvas.style.top = data.y + PIXEL;
+            canvas.width = de.clientWidth;
+            canvas.height = de.clientHeight;
+        }
+        scrollPointIndex = points.length;
     }
-
-    scrollPointIndex = points.length;
 }
 
 export function resize(
@@ -278,7 +279,7 @@ function drawTrail(now: number, canvas: HTMLCanvasElement): void {
                 gradient.addColorStop(0, color(lastFactor))
 
                 // Line width of the trail shrinks as the position of the point goes farther away.
-                ctx.lineWidth = config.trailWidth * currentFactor;
+                ctx.lineWidth = config.trailWidth * currentFactor * currentFactor;
                 ctx.lineCap = ROUND;
                 ctx.lineJoin = ROUND;
                 ctx.strokeStyle = gradient;
