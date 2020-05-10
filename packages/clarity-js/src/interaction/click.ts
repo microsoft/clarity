@@ -1,6 +1,7 @@
 import { Event } from "@clarity-types/data";
 import { ClickData } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
+import offset from "@src/core/offset";
 import { schedule } from "@src/core/task";
 import { link, target, track } from "@src/data/target";
 import { iframe } from "@src/layout/dom";
@@ -22,8 +23,11 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
     let y = "pageY" in evt ? Math.round(evt.pageY) : ("clientY" in evt ? Math.round(evt["clientY"] + d.scrollTop) : null);
     // In case of iframe, we adjust (x,y) to be relative to top parent's origin
-    x = x && frame ? x + frame.offsetLeft : x;
-    y = y && frame ? y + frame.offsetTop : y;
+    if (frame) {
+        let distance = offset(frame);
+        x = x ? x + distance.x : x;
+        y = y ? y + distance.y : y;
+    }
 
     let t = target(evt);
     // Find nearest anchor tag (<a/>) parent if current target node is part of one
