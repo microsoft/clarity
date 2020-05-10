@@ -1,11 +1,7 @@
+import { Point } from "@clarity-types/visualize";
 import { Data, Interaction  } from "clarity-decode";
+import { state } from "./clarity";
 import { element } from "./layout";
-
-interface Point {
-    time: number;
-    x: number;
-    y: number;
-}
 
 // tslint:disable-next-line: max-line-length
 const POINTER_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAoCAYAAACfKfiZAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAUoSURBVHgB7VddTBxVFD6zs2X5W3YXZ1uo/CyRQiVthKIpDzwAMSZqg4TIs9jW+lCSUtInrMBiH0gMohF50bAJvJCQtg8+iJC6Fow/EVYTIhBxQYWwoFLkR1jYn+s5d2eWmV2wVVliTE9ycu/cuXPOd8/57rlzAf5jIsAhiw60znU+n6+1pqZGjHgXc+HOc3NzDQwlGAzeXVpaegy7AhxGVGRH+vT09EQC0NzcTCB+nJyczMO+LuYgZCdHrFZrMgEgTPX19SwQCPw0PT1dgs+iPCdmwgGkpqamKABICwsL2ezsLPN6vddkXgih17EBEGexWEwKgFOnEpkgCCwnJ4eD2N7efoPmUCTklB08AFSzAuDVS0fZD98XMlu2gYNwOp0Md8iHw8PD1ljwIioCF85LbNaNKXAXcRAUDYWcc3NzJw4ahKgGQM4uXpDYZyOPM9/2Wbay/CS7euU4B6aAwLScVXgBByC0GgOoUkARuOvMxzQ8wVighKu9OYODq6qqYisrK2xzc/NaWVmZ/iA4oSsuLj6CrSYFw5/mM+ed/DAA0tu38pjFomc2m42Tc2tr68a/ARHe22NjY1EGBIEXKZif94bHql5IBdfoaex5oKKiAqampl4bGhq6PTIyIv2TyqkA4JvbbDYLauc6nQCiqIOZGa/mI5vNAM47BWA2/QJFRUXQ2dl5rrS09OuZmZlc5MjfAsEBIJl0IaeCpsoQCBry+xncu+ePAuEaOw31V9KgoaEB7HZ7Nm7Xodra2qdkew9UOTWTkFh7REDAFsDt3tzTQMdbNmhpehRaW1uhuro6OyUl5ePe3t6rCOKBIsEB9Pf3s8jJoYrLOBC9HmB1NQDLy/49jTQ1ZcCtmyfg228+AiSzyePxvNnT02NHct53m3IAmLeQtwhRoiCgEojp6T/2NUTkdH5SgL1FKC8v5+QcHBzscLlcEvxFOvTqByxEe5w0DNA/iDhzYyMIPb2/QjAIu3AF0ECvfUmCt9+Z5+Ts6Oiow1P1HFbOZzIzM91KkYN9IkFnQbgOUCX86ouTXL/8/CRWxXxWd9mqGOCtWtVjMiRN5cSI5MuVUyOCCgC9TEL/K2gEEAC8clEKxQBNLSz4oPpFN1RWVkJbWxtGIbhrBOeTiqLIVYesVcZoPbi9SX9fXV29hO1N/CS4VwoigrkrHo8PLtf9jFvPBu3t7TA6Ovry+Pj4HDpiOzs7gl4fMoOgGO6CALX0mJCQEKQ5SUlJfoPB4M/Ly/MS33DLan3JJ5vmNFSn4MyZRIbIeemdmJi4ge/TUY8ZjUYpLS3Nin3So8nJydRKCCIV20dQqTWjGlETUI/IkRY0EUCj+26V9z/4DVyuTXA43oP4+HgHFpt3cXgbNbC+vk7KMjIysFzPC7hSYWNjg62tralN8GgoLf3zRhFRJkecmZapisDr19N5v6Wlhf6IvkMHafhsQocJdHjRISQvQlT6kWOksn1x338IJQWg2gXPP2diRqOOH72Y57murq4SAkihlJ1wY6oDKKqvVriPRHGAVDly+/r6njWZTBYcS4RQHmPzT6gGoJDO7XbbiWyy8ziI0Y0pCoDD4WCLi4vdmPdjdF+A0B/Tgf2CaUThgHIvINLhXWACx46jpqDGx8p5OJwFBQXhwcbGxvnu7u7zGBE6fXZQ6RhUuBET4TcjSZKMFIGBgYGns7KywqSL9bVMAUBbK2lhYeE6tiYIVa64w3BOIlCxwDQQy2nVlHOlbB6OKFd02bH+sFYeKZEV7aH8/+VPXTO9DRqcKEgAAAAASUVORK5CYII=";
@@ -34,6 +30,7 @@ const config = {
     clickHeight: 22,
     pixelLife: 3000,
     trailWidth: 6,
+    maxTrailPoints: 50,
     zIndex: 10000000
 }
 
@@ -45,15 +42,16 @@ export function reset(): void {
     scrollPointIndex = 0;
 }
 
-export function scroll(event: Interaction.ScrollEvent, iframe: HTMLIFrameElement): void {
+export function scroll(event: Interaction.ScrollEvent): void {
     let data = event.data;
-    let de = iframe.contentDocument.documentElement;
-    let scrollTarget = element(data.target as number) as HTMLElement || iframe.contentDocument.body;
+    let doc = state.player.contentDocument;
+    let de = doc.documentElement;
+    let scrollTarget = element(data.target as number) as HTMLElement || doc.body;
     if (scrollTarget) { scrollTarget.scrollTo(data.x, data.y); }
 
     // Position canvas relative to scroll events on the parent page
-    if (scrollTarget === de || scrollTarget === iframe.contentDocument.body) {
-        let canvas = overlay(iframe);
+    if (scrollTarget === de || scrollTarget === doc.body) {
+        let canvas = overlay();
         if (canvas) {
             canvas.style.left = data.x + PIXEL;
             canvas.style.top = data.y + PIXEL;
@@ -64,30 +62,28 @@ export function scroll(event: Interaction.ScrollEvent, iframe: HTMLIFrameElement
     }
 }
 
-export function resize(
-    event: Interaction.ResizeEvent,
-    iframe: HTMLIFrameElement,
-    onresize?: (width: number, height: number) => void): void {
+export function resize(event: Interaction.ResizeEvent): void {
     let data = event.data;
     let width = data.width;
     let height = data.height;
-    if (onresize) { onresize(width, height); } else {
+    if (state.onresize) { state.onresize(width, height); } else {
         let margin = config.margin;
         let px = PIXEL;
-        let container = iframe.ownerDocument.documentElement;
-        let offsetTop = iframe.offsetTop;
+        let player = state.player;
+        let container = player.ownerDocument.documentElement;
+        let offsetTop = player.offsetTop;
         let availableWidth = container.clientWidth - (2 * margin);
         let availableHeight = container.clientHeight - offsetTop - (2 * margin);
         let scale = Math.min(Math.min(availableWidth / width, 1), Math.min(availableHeight / height, 1));
-        iframe.removeAttribute("style");
-        iframe.style.position = "relative";
-        iframe.style.width = width + px;
-        iframe.style.height = height + px;
-        iframe.style.transformOrigin = "0 0 0";
-        iframe.style.transform = "scale(" + scale + ")";
-        iframe.style.border = "1px solid #cccccc";
-        iframe.style.overflow = "hidden";
-        iframe.style.left = ((container.clientWidth - (width * scale)) / 2) + px;
+        player.removeAttribute("style");
+        player.style.position = "relative";
+        player.style.width = width + px;
+        player.style.height = height + px;
+        player.style.transformOrigin = "0 0 0";
+        player.style.transform = "scale(" + scale + ")";
+        player.style.border = "1px solid #cccccc";
+        player.style.overflow = "hidden";
+        player.style.left = ((container.clientWidth - (width * scale)) / 2) + px;
     }
 }
 
@@ -107,9 +103,9 @@ export function input(event: Interaction.InputEvent): void {
     }
 }
 
-export function selection(event: Interaction.SelectionEvent, iframe: HTMLIFrameElement): void {
+export function selection(event: Interaction.SelectionEvent): void {
     let data = event.data;
-    let doc = iframe.contentDocument;
+    let doc = state.player.contentDocument;
     let s = doc.getSelection();
     // Wrapping selection code inside a try / catch to avoid throwing errors when dealing with elements inside the shadow DOM.
     try { s.setBaseAndExtent(element(data.start as number), data.startOffset, element(data.end as number), data.endOffset); } catch (ex) {
@@ -117,10 +113,10 @@ export function selection(event: Interaction.SelectionEvent, iframe: HTMLIFrameE
     }
 }
 
-export function pointer(event: Interaction.PointerEvent, iframe: HTMLIFrameElement): void {
+export function pointer(event: Interaction.PointerEvent): void {
     let data = event.data;
     let type = event.event;
-    let doc = iframe.contentDocument;
+    let doc = state.player.contentDocument;
     let p = doc.getElementById(CLARITY_POINTER);
     let pointerWidth = config.pointerWidth;
     let pointerHeight = config.pointerHeight;
@@ -170,13 +166,19 @@ export function pointer(event: Interaction.PointerEvent, iframe: HTMLIFrameEleme
             break;
         case Data.Event.MouseMove:
             p.className = CLARITY_POINTER_MOVE;
-            points.push({time: event.time, x: data.x, y: data.y});
-            drawTrail(points[points.length-1].time, overlay(iframe));
+            addPoint({time: event.time, x: data.x, y: data.y});
             break;
         default:
             p.className = CLARITY_POINTER_MOVE;
             break;
     }
+}
+
+function addPoint(point: Point): void {
+    let last = points.length > 0 ? points[points.length-1] : null;
+    if (last && point.x === last.x && point.y === last.y) {
+        last.time = point.time;
+    } else { points.push(point); }
 }
 
 function drawTouch(doc: Document, x: number, y: number): void {
@@ -219,9 +221,9 @@ function drawClick(doc: Document, x: number, y: number): void {
     click.appendChild(ringTwo);
 }
 
-function overlay(iframe: HTMLIFrameElement): HTMLCanvasElement {
+function overlay(): HTMLCanvasElement {
     // Create canvas for visualizing interactions
-    let doc = iframe.contentDocument;
+    let doc = state.player.contentDocument;
     let de = doc.documentElement;
     let canvas = doc.getElementById(CLARITY_CANVAS) as HTMLCanvasElement;
     if (canvas === null) {
@@ -249,13 +251,14 @@ function match(time: number): Point[] {
             p.push(points[i]);
         } else { break; }
     }
-    return p;
+    return p.slice(0, config.maxTrailPoints);
 }
 
-function drawTrail(now: number, canvas: HTMLCanvasElement): void {
+export function trail(now: number): void {
+    const canvas = overlay();
     if (canvas) {
         const ctx = canvas.getContext('2d');
-        const path = match(now);
+        const path = curve(match(now));
         // We need at least two points to create a line
         if (path.length > 1) {
             let last = path[0];
@@ -279,7 +282,7 @@ function drawTrail(now: number, canvas: HTMLCanvasElement): void {
                 gradient.addColorStop(0, color(lastFactor))
 
                 // Line width of the trail shrinks as the position of the point goes farther away.
-                ctx.lineWidth = config.trailWidth * currentFactor * currentFactor;
+                ctx.lineWidth = config.trailWidth * currentFactor;
                 ctx.lineCap = ROUND;
                 ctx.lineJoin = ROUND;
                 ctx.strokeStyle = gradient;
@@ -299,26 +302,70 @@ function drawTrail(now: number, canvas: HTMLCanvasElement): void {
 }
 
 function color(factor: number): string {
-    let subfactor: number = (Math.round(factor * 100) % 25) / 25.0;
+    let range: number = ((factor * 100) % 25) / 25.0;
     let r: number = 0;
     let g: number = 0;
     let b: number = 0;
-    if(factor > 0.75) {
+    if (factor === 1) {
         r = 255;
-        g = Math.round(255 - 255 * subfactor);
-        b = 0;
-    } else if (factor > 0.5) {
-        r = Math.round(255 - 255 * subfactor);
+    } else if (factor >= 0.75) {
+        r = 255;
+        g = Math.round(255 - 255 * range);
+    } else if (factor >= 0.5) {
+        r = Math.round(255 * range);
         g = 255;
-        b = 0;
-    } else if (factor > 0.25) {
-        r = 0;
+    } else if (factor >= 0.25) {
         g = 255;
-        b = Math.round(255 - 255 * subfactor);
+        b = Math.round(255 - 255 * range);
     } else {
-        r = 0;
-        g = Math.round(255 - 255 * subfactor);
+        g = Math.round(255 * range);
         b = 255;
     }
     return `rgba(${r}, ${g}, ${b}, ${factor})`;
+}
+
+// Reference: https://en.wikipedia.org/wiki/Cubic_Hermite_spline#Cardinal_spline
+function curve(path: Point[]): Point[] {
+    const tension = 0.5;
+    let p = [];
+    let output = [];
+
+    // Make a copy of the input points so we don't make any side effects
+    p = path.slice(0);
+    // The algorithm require a valid previous and next point for each point in the original input
+    // Duplicate first and last point in the path to the beginning and the end of the array respectively
+    // E.g. [{x:37,y:45}, {x:54,y:34}] => [{x:37,y:45}, {x:37,y:45}, {x:54,y:34}, {x:54,y:34}]
+    p.unshift(path[0]);
+    p.push(path[path.length - 1]);
+    // Loop through the points, and generate intermediate points to make a smooth trail
+      for (let i = 1; i < p.length-2; i++) {
+        const time = p[i].time;
+        const segments = Math.max(Math.min(Math.round(distance(p[i], p[i-1])), 10), 1);
+        for (let t = 0; t <= segments; t++) {
+
+            // Compute tension vectors
+            let t1: Point = {time, x: (p[i+1].x - p[i-1].x) * tension, y: (p[i+1].y - p[i-1].y) * tension};
+            let t2: Point = {time, x: (p[i+2].x - p[i].x) * tension, y: (p[i+2].y - p[i].y) * tension};
+            let step = t / segments;
+
+            // Compute cardinals
+            let c1 = 2 * Math.pow(step, 3) - 3 * Math.pow(step, 2) + 1;
+            let c2 = -(2 * Math.pow(step, 3)) + 3 * Math.pow(step, 2);
+            let c3 = Math.pow(step, 3) - 2 * Math.pow(step, 2) + step;
+            let c4 = Math.pow(step, 3) - Math.pow(step, 2);
+
+            // Compute new point with common control vectors
+            let x = c1 * p[i].x + c2 * p[i+1].x + c3 * t1.x + c4 * t2.x;
+            let y = c1 * p[i].y + c2 * p[i+1].y + c3 * t1.y + c4 * t2.y;
+
+            output.push({time,x,y});
+        }
+    }
+    return output;
+}
+
+function distance(a: Point, b: Point): number {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.sqrt(dx*dx + dy*dy);
 }

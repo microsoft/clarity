@@ -1,77 +1,68 @@
+import { Container, PlaybackState, ResizeHandler } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import * as data from "./data";
 import * as interaction from "./interaction";
 import * as layout from "./layout";
 
-let pageId: string = null;
+export let state: PlaybackState = null;
 
-export function html(decoded: Data.DecodedPayload[], iframe: HTMLIFrameElement): void {
-    reset();
-    let events: Data.DecodedEvent[] = [];
-    for (let payload of decoded) {
-        for (let key in payload) {
-            if (Array.isArray(payload[key])) {
-                events = events.concat(payload[key]);
-            }
-        }
-    }
+export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement): void {
+    if (decoded.length === 0) { return; }
+    state = { version: decoded[0].envelope.version, player, metrics: null, onresize: null };
 
-    let sortedevents = events.sort(sort)
-    for (let entry of sortedevents) {
+    // Flatten the payload and parse all events out of them, sorted by time
+    let events = process(decoded);
+
+    // Walk through all events
+    while (events.length > 0) {
+        let entry = events.shift();
         switch (entry.event) {
             case Data.Event.Discover:
             case Data.Event.Mutation:
-                layout.markup(entry as Layout.DomEvent, iframe);
+                layout.markup(entry as Layout.DomEvent);
                 break;
         }
     }
 }
 
-export function render(decoded: Data.DecodedPayload, iframe: HTMLIFrameElement, header?: HTMLElement): void {
-    // Reset rendering if we receive a new pageId or we receive the first sequence
-    if (pageId !== decoded.envelope.pageId || decoded.envelope.sequence === 1) {
-        pageId = decoded.envelope.pageId;
-        reset();
-    }
+export async function replay(decoded: Data.DecodedPayload): Promise<void> {
+    if (state === null) { throw new Error(`Initialize visualization by calling "setup" prior to making this call.`); }
 
-    // Replay events
-    let events: Data.DecodedEvent[] = [];
-    for (let key in decoded) {
-        if (Array.isArray(decoded[key])) {
-            events = events.concat(decoded[key]);
-        }
-    }
-    replay(events.sort(sort), iframe, header);
+    // Flatten the payload and parse all events out of them, sorted by time
+    // Call render method on these events
+    render(process([decoded]));
 }
 
-export function reset(): void {
+export function setup(envelope: Data.Envelope, container: Container, onresize: ResizeHandler = null): void {
+    state = {
+        version: envelope.version,
+        player: container.player,
+        metrics: container.metrics ? container.metrics : null,
+        onresize
+    }
     data.reset();
     interaction.reset();
     layout.reset();
 }
 
-export async function replay(events: Data.DecodedEvent[],
-    iframe: HTMLIFrameElement,
-    header?: HTMLElement,
-    onresize?: (width: number, height: number) => void
-): Promise<void> {
-    let start = events[0].time;
+export function render(events: Data.DecodedEvent[]): void {
+    if (state === null) { throw new Error(`Initialize visualization by calling "setup" prior to making this call.`); }
+    let time = 0;
     for (let entry of events) {
-        if (entry.time - start > 16) { start = await wait(entry.time); }
-
+        time = entry.time;
         switch (entry.event) {
             case Data.Event.Page:
                 data.page(entry as Data.PageEvent);
                 break;
             case Data.Event.Metric:
-                if (header) { data.metric(entry as Data.MetricEvent, header); }
+                data.metric(entry as Data.MetricEvent);
                 break;
             case Data.Event.Discover:
             case Data.Event.Mutation:
-                layout.markup(entry as Layout.DomEvent, iframe);
+                layout.markup(entry as Layout.DomEvent);
                 break;
             case Data.Event.BoxModel:
-                if (data.lean) { layout.boxmodel(entry as Layout.BoxModelEvent, iframe); }
+                if (data.lean) { layout.boxmodel(entry as Layout.BoxModelEvent); }
                 break;
             case Data.Event.MouseDown:
             case Data.Event.MouseUp:
@@ -84,28 +75,37 @@ export async function replay(events: Data.DecodedEvent[],
             case Data.Event.TouchCancel:
             case Data.Event.TouchEnd:
             case Data.Event.TouchMove:
-                interaction.pointer(entry as Interaction.PointerEvent, iframe);
+                interaction.pointer(entry as Interaction.PointerEvent);
                 break;
             case Data.Event.Input:
                 interaction.input(entry as Interaction.InputEvent);
                 break;
             case Data.Event.Selection:
-                interaction.selection(entry as Interaction.SelectionEvent, iframe);
+                interaction.selection(entry as Interaction.SelectionEvent);
                 break;
             case Data.Event.Resize:
-                interaction.resize(entry as Interaction.ResizeEvent, iframe, onresize);
+                interaction.resize(entry as Interaction.ResizeEvent);
                 break;
             case Data.Event.Scroll:
-                interaction.scroll(entry as Interaction.ScrollEvent, iframe);
+                interaction.scroll(entry as Interaction.ScrollEvent);
                 break;
         }
     }
+
+    // Update pointer trail at the end of every frame
+    if (events.length > 0) { interaction.trail(time); }
 }
 
-async function wait(timestamp: number): Promise<number> {
-    return new Promise<number>((resolve: FrameRequestCallback): void => {
-        setTimeout(resolve, 10, timestamp);
-    });
+function process(decoded: Data.DecodedPayload[]): Data.DecodedEvent[] {
+    let events: Data.DecodedEvent[] = [];
+    for (let payload of decoded) {
+        for (let key in payload) {
+            if (Array.isArray(payload[key])) {
+                events = events.concat(payload[key]);
+            }
+        }
+    }
+    return events.sort(sort);
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {

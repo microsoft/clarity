@@ -8,6 +8,7 @@ import { NavigationEvent, NetworkEvent, PaintEvent } from "./performance";
 import { PartialEvent } from "./core";
 
 /* Redeclare enums */
+export import Envelope = Data.Envelope;
 export import Code = Data.Code;
 export import Event = Data.Event;
 export import Metric = Data.Metric;

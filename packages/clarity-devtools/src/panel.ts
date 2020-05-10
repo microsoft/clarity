@@ -25,26 +25,27 @@ background.onMessage.addListener(function(message: any): void {
     // Handle responses from the background page, if any
     if (message && message.payload) {
         let decoded = decode(message.payload);
-        if (decoded.envelope.sequence === 1) { reset(); }
         eJson.push(JSON.parse(message.payload));
         dJson.push(decoded);
         data.process(decoded);
         id = decoded.envelope.pageId;
         let info = document.getElementById("info");
-        let header = document.getElementById("header") as HTMLElement;
+        let header = document.getElementById("header") as HTMLDivElement;
         let download = document.getElementById("download") as HTMLElement;
         let iframe = document.getElementById("clarity") as HTMLIFrameElement;
         info.style.display = "none";
         header.style.display = "block";
         download.style.display = "block";
         iframe.style.display = "block";
-        visualize.render(decoded, iframe, header);
+        if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
+        visualize.replay(decoded);
     }
 });
 
-function reset(): void {
+function reset(envelope: Data.Envelope): void {
     if (console) { console.clear(); }
-    let iframe = document.getElementById("clarity");
+    let header = document.getElementById("header") as HTMLDivElement;
+    let iframe = document.getElementById("clarity") as HTMLIFrameElement;
     let download = document.getElementById("download") as HTMLElement;
     if (iframe) { iframe.parentElement.removeChild(iframe); }
     iframe = document.createElement("iframe");
@@ -58,4 +59,5 @@ function reset(): void {
     id = "";
     (download.firstChild as HTMLElement).onclick = function(): void { save(true); };
     (download.lastChild as HTMLElement).onclick = function(): void { save(false); };
+    visualize.setup(envelope, { player: iframe, metrics: header });
 }

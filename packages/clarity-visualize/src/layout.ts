@@ -1,4 +1,5 @@
 import { Data, Layout } from "clarity-decode";
+import { state } from "./clarity";
 
 const ADOPTED_STYLE_SHEET = "clarity-adopted-style";
 let nodes = {};
@@ -9,9 +10,9 @@ export function reset(): void {
     boxmodels = {};
 }
 
-export function boxmodel(event: Layout.BoxModelEvent, iframe: HTMLIFrameElement): void {
+export function boxmodel(event: Layout.BoxModelEvent): void {
     let data = event.data;
-    let doc = iframe.contentDocument;
+    let doc = state.player.contentDocument;
     for (let bm of data) {
         let rectangle = bm.box;
         let el = element(bm.id) as HTMLElement;
@@ -35,10 +36,10 @@ export function element(nodeId: number): Node {
     return nodeId !== null && nodeId > 0 && nodeId in nodes ? nodes[nodeId] : null;
 }
 
-export function markup(event: Layout.DomEvent, iframe: HTMLIFrameElement): void {
+export function markup(event: Layout.DomEvent): void {
     let data = event.data;
     let type = event.event;
-    let doc = iframe.contentDocument;
+    let doc = state.player.contentDocument;
     for (let node of data) {
         let parent = element(node.parent);
         let pivot = element(node.previous);
@@ -190,7 +191,6 @@ function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node
         }
     } else if (parent === null && node.parentElement !== null) {
         node.parentElement.removeChild(node);
-        node = null;
     }
     nodes[data.id] = node;
 }
