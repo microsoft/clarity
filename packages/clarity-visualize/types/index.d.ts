@@ -1,13 +1,14 @@
-import { Container, ResizeHandler } from "./visualize";
+import { ResizeHandler } from "./visualize";
 import { Data, Diagnostic, Interaction, Layout } from "clarity-decode"
 
 interface Visualize {
-    html: (decoded: Data.DecodedPayload[]) => void;
+    html: (decoded: Data.DecodedPayload[], player: HTMLIFrameElement) => void;
     render: (events: Data.DecodedEvent[]) =>  void;
     replay: (decoded: Data.DecodedPayload) => void;
-    setup: (envelope: Data.Envelope, container: Container, onresize?: ResizeHandler) => void;
+    reset: () => void;
+    setup: (version: string, player: HTMLIFrameElement, onresize?: ResizeHandler, metadata?: HTMLElement) => void;
 }
 
 declare const visualize: Visualize;
 
-export { visualize, Data, Diagnostic, Interaction, Layout, Container, ResizeHandler };
+export { visualize, Data, Diagnostic, Interaction, Layout, ResizeHandler };

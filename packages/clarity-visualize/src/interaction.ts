@@ -21,7 +21,6 @@ const ROUND = "round";
 const PIXEL = "px";
 
 const config = {
-    margin: 10,
     pointerWidth: 32,
     pointerHeight: 32,
     pointerOffsetX: 3,
@@ -30,7 +29,7 @@ const config = {
     clickHeight: 22,
     pixelLife: 3000,
     trailWidth: 6,
-    maxTrailPoints: 50,
+    maxTrailPoints: 75,
     zIndex: 10000000
 }
 
@@ -66,24 +65,8 @@ export function resize(event: Interaction.ResizeEvent): void {
     let data = event.data;
     let width = data.width;
     let height = data.height;
-    if (state.onresize) { state.onresize(width, height); } else {
-        let margin = config.margin;
-        let px = PIXEL;
-        let player = state.player;
-        let container = player.ownerDocument.documentElement;
-        let offsetTop = player.offsetTop;
-        let availableWidth = container.clientWidth - (2 * margin);
-        let availableHeight = container.clientHeight - offsetTop - (2 * margin);
-        let scale = Math.min(Math.min(availableWidth / width, 1), Math.min(availableHeight / height, 1));
-        player.removeAttribute("style");
-        player.style.position = "relative";
-        player.style.width = width + px;
-        player.style.height = height + px;
-        player.style.transformOrigin = "0 0 0";
-        player.style.transform = "scale(" + scale + ")";
-        player.style.border = "1px solid #cccccc";
-        player.style.overflow = "hidden";
-        player.style.left = ((container.clientWidth - (width * scale)) / 2) + px;
+    if (state.onresize) {
+        state.onresize(width, height);
     }
 }
 

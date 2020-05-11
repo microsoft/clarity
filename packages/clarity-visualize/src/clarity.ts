@@ -1,4 +1,4 @@
-import { Container, PlaybackState, ResizeHandler } from "@clarity-types/visualize";
+import { PlaybackState, ResizeHandler } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import * as data from "./data";
 import * as interaction from "./interaction";
@@ -8,7 +8,7 @@ export let state: PlaybackState = null;
 
 export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement): void {
     if (decoded.length === 0) { return; }
-    state = { version: decoded[0].envelope.version, player, metrics: null, onresize: null };
+    state = { version: decoded[0].envelope.version, player, onresize: null, metadata: null };
 
     // Flatten the payload and parse all events out of them, sorted by time
     let events = process(decoded);
@@ -25,7 +25,7 @@ export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement):
     }
 }
 
-export async function replay(decoded: Data.DecodedPayload): Promise<void> {
+export function replay(decoded: Data.DecodedPayload): void {
     if (state === null) { throw new Error(`Initialize visualization by calling "setup" prior to making this call.`); }
 
     // Flatten the payload and parse all events out of them, sorted by time
@@ -33,16 +33,16 @@ export async function replay(decoded: Data.DecodedPayload): Promise<void> {
     render(process([decoded]));
 }
 
-export function setup(envelope: Data.Envelope, container: Container, onresize: ResizeHandler = null): void {
-    state = {
-        version: envelope.version,
-        player: container.player,
-        metrics: container.metrics ? container.metrics : null,
-        onresize
-    }
+export function reset(): void {
+    state = null
     data.reset();
     interaction.reset();
     layout.reset();
+}
+
+export function setup(version: string, player: HTMLIFrameElement, onresize: ResizeHandler = null, metadata: HTMLElement = null): void {
+    reset();
+    state = { version, player, onresize, metadata };
 }
 
 export function render(events: Data.DecodedEvent[]): void {

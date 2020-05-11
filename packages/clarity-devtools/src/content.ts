@@ -28,7 +28,7 @@ function activate(): void {
         lean: items.clarity.leanMode,
         regions,
         upload,
-        projectId: "clarity-inspector"
+        projectId: "clarity-devtools"
       });
     });
     window["clarity"] = clarity;
