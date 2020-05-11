@@ -2,6 +2,7 @@ import { Event } from "@clarity-types/data";
 import { NetworkState } from "@clarity-types/performance";
 import config from "@src/core/config";
 import { schedule } from "@src/core/task";
+import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "./encode";
 
@@ -18,7 +19,7 @@ export function compute(entry: PerformanceResourceTiming): void {
     state.push({
         url: entry.name,
         data: {
-            start: Math.round(entry.startTime),
+            start: time(entry.startTime),
             duration: Math.round(entry.duration),
             size: "transferSize" in entry ? Math.round(entry.transferSize) : null,
             target: null,

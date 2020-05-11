@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { PaintState } from "@clarity-types/performance";
+import { time } from "@src/core/time";
 import encode from "./encode";
 
 // Reference: https://www.w3.org/TR/paint-timing/
@@ -10,6 +11,6 @@ export function reset(): void {
 }
 
 export function compute(entry: PerformanceEntry): void {
-    state = { time: Math.round(entry.startTime), data: { name: entry.name } };
+    state = { time: time(entry.startTime), data: { name: entry.name } };
     encode(Event.Paint);
 }

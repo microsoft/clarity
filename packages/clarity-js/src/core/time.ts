@@ -4,8 +4,9 @@ export function start(): void {
     startTime = performance.now();
 }
 
-export function time(): number {
-    return Math.round(performance.now() - startTime);
+export function time(ts: number = null): number {
+    ts = ts ? ts : performance.now();
+    return Math.max(Math.round(ts - startTime), 0);
 }
 
 export function end(): void {
