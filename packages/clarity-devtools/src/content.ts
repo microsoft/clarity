@@ -23,12 +23,12 @@ function activate(): void {
     }, (items: any) => {
       if (items.clarity.showText) { document.body.setAttribute(Layout.Constant.UNMASK_ATTRIBUTE, "true"); }
       clarity.start({
-        lookahead: 250,
-        delay: 250,
+        lookahead: 0,
+        delay: 50,
         lean: items.clarity.leanMode,
         regions,
         upload,
-        projectId: "clarity-inspector"
+        projectId: "clarity-devtools"
       });
     });
     window["clarity"] = clarity;

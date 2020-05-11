@@ -16,7 +16,7 @@ function save(encoded: boolean = true): void {
 
     let a = document.createElement("a");
     let suffix = encoded ? "encoded" : "decoded";
-    a.setAttribute("download", `clarity-vnext-${id.toUpperCase()}-${suffix}.json`);
+    a.setAttribute("download", `clarity-${id.toUpperCase()}-${suffix}.json`);
     a.href = url;
     a.click();
 }
@@ -25,26 +25,47 @@ background.onMessage.addListener(function(message: any): void {
     // Handle responses from the background page, if any
     if (message && message.payload) {
         let decoded = decode(message.payload);
-        if (decoded.envelope.sequence === 1) { reset(); }
         eJson.push(JSON.parse(message.payload));
         dJson.push(decoded);
         data.process(decoded);
         id = decoded.envelope.pageId;
         let info = document.getElementById("info");
-        let header = document.getElementById("header") as HTMLElement;
+        let metadata = document.getElementById("header") as HTMLDivElement;
         let download = document.getElementById("download") as HTMLElement;
         let iframe = document.getElementById("clarity") as HTMLIFrameElement;
         info.style.display = "none";
-        header.style.display = "block";
+        metadata.style.display = "block";
         download.style.display = "block";
         iframe.style.display = "block";
-        visualize.render(decoded, iframe, header);
+        if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
+        visualize.replay(decoded);
     }
 });
 
-function reset(): void {
+function resize(width: number, height: number): void {
+    let margin = 10;
+    let px = "px";
+    let iframe = document.getElementById("clarity") as HTMLIFrameElement;
+    let container = iframe.ownerDocument.documentElement;
+    let offsetTop = iframe.offsetTop;
+    let availableWidth = container.clientWidth - (2 * margin);
+    let availableHeight = container.clientHeight - offsetTop - (2 * margin);
+    let scale = Math.min(Math.min(availableWidth / width, 1), Math.min(availableHeight / height, 1));
+    iframe.removeAttribute("style");
+    iframe.style.position = "relative";
+    iframe.style.width = width + px;
+    iframe.style.height = height + px;
+    iframe.style.transformOrigin = "0 0 0";
+    iframe.style.transform = "scale(" + scale + ")";
+    iframe.style.border = "1px solid #cccccc";
+    iframe.style.overflow = "hidden";
+    iframe.style.left = ((container.clientWidth - (width * scale)) / 2) + px;
+}
+
+function reset(envelope: Data.Envelope): void {
     if (console) { console.clear(); }
-    let iframe = document.getElementById("clarity");
+    let metadata = document.getElementById("header") as HTMLDivElement;
+    let iframe = document.getElementById("clarity") as HTMLIFrameElement;
     let download = document.getElementById("download") as HTMLElement;
     if (iframe) { iframe.parentElement.removeChild(iframe); }
     iframe = document.createElement("iframe");
@@ -58,4 +79,5 @@ function reset(): void {
     id = "";
     (download.firstChild as HTMLElement).onclick = function(): void { save(true); };
     (download.lastChild as HTMLElement).onclick = function(): void { save(false); };
+    visualize.setup(envelope.version, iframe, resize, metadata);
 }

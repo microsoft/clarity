@@ -1,4 +1,5 @@
 import { Data, Layout } from "clarity-decode";
+import { state } from "./clarity";
 
 export let lean = false;
 
@@ -22,7 +23,9 @@ export function page(event: Data.PageEvent): void {
     lean = !!event.data.lean;
 }
 
-export function metric(event: Data.MetricEvent, header: HTMLElement): void {
+export function metric(event: Data.MetricEvent): void {
+    if (state.metadata === null) { return; }
+
     let html = [];
     // Copy over metrics for future reference
     for (let m in event.data) {
@@ -38,7 +41,7 @@ export function metric(event: Data.MetricEvent, header: HTMLElement): void {
         }
     }
 
-    header.innerHTML = `<ul>${html.join(Layout.Constant.EMPTY_STRING)}</ul>`;
+    state.metadata.innerHTML = `<ul>${html.join(Layout.Constant.EMPTY_STRING)}</ul>`;
 }
 
 function value(num: number, unit: string): number {

@@ -2,6 +2,7 @@ import { Event } from "@clarity-types/data";
 import { PointerState } from "@clarity-types/interaction";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
+import offset from "@src/core/offset";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
@@ -34,8 +35,11 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
     let y = "pageY" in evt ? Math.round(evt.pageY) : ("clientY" in evt ? Math.round(evt["clientY"] + d.scrollTop) : null);
     // In case of iframe, we adjust (x,y) to be relative to top parent's origin
-    x = x && frame ? x + frame.offsetLeft : x;
-    y = y && frame ? y + frame.offsetTop : y;
+    if (frame) {
+        let distance = offset(frame);
+        x = x ? x + distance.x : x;
+        y = y ? y + distance.y : y;
+    }
 
     // Check for null values before processing this event
     if (x !== null && y !== null) { handler({ time: time(), event, data: { target: track(target(evt)), x, y } }); }

@@ -47,6 +47,11 @@ export interface AsyncTask {
     resolve: TaskResolve;
 }
 
+export interface OffsetDistance {
+    x: number;
+    y: number;
+}
+
 export interface BrowserEvent {
     event: string;
     target: EventTarget;
