@@ -108,14 +108,14 @@ async function process(): Promise<void> {
             break;
         case Constant.CHILD_LIST:
           // Process additions
-          let addedLength = mutation.addedNodes.length;
+          let addedLength = mutation.addedNodes ? mutation.addedNodes.length : 0;
           for (let j = 0; j < addedLength; j++) {
             let addedNode = mutation.addedNodes[j];
             dom.extractRegions(addedNode as HTMLElement);
             traverse(addedNode, timer, Source.ChildListAdd);
           }
           // Process removes
-          let removedLength = mutation.removedNodes.length;
+          let removedLength = mutation.removedNodes ? mutation.removedNodes.length : 0;
           for (let j = 0; j < removedLength; j++) {
             if (task.shouldYield(timer)) { await task.suspend(timer); }
             processNode(mutation.removedNodes[j], Source.ChildListRemove);
@@ -137,7 +137,7 @@ function generate(target: Node, type: MutationRecordType): void {
     nextSibling: null,
     oldValue: null,
     previousSibling: null,
-    removedNodes: null,
+    removedNodes: [],
     target,
     type
   }]);
