@@ -1,5 +1,5 @@
 import { Priority } from "@clarity-types/core";
-import { Code, Event, Metric } from "@clarity-types/data";
+import { Code, Event, Metric, Severity } from "@clarity-types/data";
 import { Constant, Source } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -42,13 +42,13 @@ export function start(): void {
 export function observe(node: Node): void {
   // Create a new observer for every time a new DOM tree (e.g. root document or shadowdom root) is discovered on the page
   // In the case of shadow dom, any mutations that happen within the shadow dom are not bubbled up to the host document
-  // For this reason, we need to wire up mutations everytime we see a new shadow dom.
+  // For this reason, we need to wire up mutations every time we see a new shadow dom.
   // Also, wrap it inside a try / catch. In certain browsers (e.g. legacy Edge), observer on shadow dom can throw errors
   try {
     let observer = window["MutationObserver"] ? new MutationObserver(measure(handle) as MutationCallback) : null;
     observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
     observers.push(observer);
-  } catch (error) { internal.error(Code.MutationObserver, error); }
+  } catch (error) { internal.error(Code.MutationObserver, error, Severity.Info); }
 }
 
 export function monitor(frame: HTMLIFrameElement): void {

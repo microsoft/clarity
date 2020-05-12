@@ -1,5 +1,5 @@
 import { Constant, Source } from "@clarity-types/layout";
-import { Code } from "@clarity-types/data";
+import { Code, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
 import * as dom from "./dom";
 import * as internal from "@src/diagnostic/internal";
@@ -144,7 +144,7 @@ function getCssRules(sheet: CSSStyleSheet): string {
     let cssRules = null;
     // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain
     try { cssRules = sheet ? sheet.cssRules : []; } catch (e) {
-        internal.error(Code.CssRules, e);
+        internal.error(Code.CssRules, e, Severity.Warning);
         if (e.name !== "SecurityError") { throw e; }
     }
 

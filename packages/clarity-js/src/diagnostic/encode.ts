@@ -30,6 +30,8 @@ export default async function(type: Event): Promise<void> {
                 tokens.push(internal.data.code);
                 tokens.push(internal.data.name);
                 tokens.push(internal.data.message);
+                tokens.push(internal.data.stack);
+                tokens.push(internal.data.severity);
                 queue(tokens);
             }
             break;

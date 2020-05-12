@@ -74,6 +74,13 @@ export const enum Code {
     PerformanceObserver = 3
 }
 
+export const enum Severity {
+    Info = 0,
+    Warning = 1,
+    Error = 2,
+    Fatal = 3
+}
+
 export const enum Upload {
     Async = 0,
     Beacon = 1

@@ -24,7 +24,9 @@ export function decode(tokens: Data.Token[]): DiagnosticEvent {
             let internalError: Diagnostic.InternalErrorData = {
                 code: tokens[2] as number,
                 name: tokens[3] as string,
-                message: tokens[4] as string
+                message: tokens[4] as string,
+                stack: tokens[5] as string,
+                severity: tokens[6] as number
             };
             return { time, event, data: internalError };
     }

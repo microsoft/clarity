@@ -1,4 +1,4 @@
-import { Code } from "@clarity-types/data";
+import { Code, Severity } from "@clarity-types/data";
 import { LargestContentfulPaintEntry, LongTaskEntry } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -69,7 +69,9 @@ function process(entries: PerformanceEntryList, offset: number): void {
             }
             lastEntryIndex++;
         }
-    } else { internal.error(Code.PerformanceObserver, null); }
+    } else {
+        internal.error(Code.PerformanceObserver, null, Severity.Info);
+    }
 }
 
 export function end(): void {
