@@ -27,11 +27,14 @@ function recompute(root: Node): void {
     // Bail out if we don't have a valid selection
     if (current === null) { return; }
 
-    // Bail out if we got valid selection but not valid nodes
+    // Bail out if we got a valid selection but not valid nodes
     // In Edge, selectionchange gets fired even on interactions like right clicks and
     // can result in null anchorNode and focusNode if there was no previous selection on page
-    if (current.anchorNode === null && current.focusNode === null) { return; }
-
+    // Also, ignore any selections that start and end at the exact same point
+    if ((current.anchorNode === null && current.focusNode === null) ||
+        (current.anchorNode === current.focusNode && current.anchorOffset === current.focusOffset)) {
+        return;
+    }
     let startNode = data.start ? (data.start as TargetInfo).node : null;
     if (previous !== null && data.start !== null && startNode !== current.anchorNode) {
         clearTimeout(timeout);
