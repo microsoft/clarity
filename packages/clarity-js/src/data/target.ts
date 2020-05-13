@@ -12,7 +12,8 @@ export function reset(): void {
 
 export function target(evt: UIEvent): Node {
     let path = evt.composed && evt.composedPath ? evt.composedPath() : null;
-    return (path && path.length > 0 ? path[0] : evt.target) as Node;
+    let node = (path && path.length > 0 ? path[0] : evt.target) as Node;
+    return node.nodeType === Node.DOCUMENT_NODE ? (node as Document).documentElement : node;
 }
 
 export function link(node: Node): HTMLAnchorElement {
