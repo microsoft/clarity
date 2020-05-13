@@ -1,10 +1,10 @@
 import { Event } from "@clarity-types/data";
 import { ClickData } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
-import offset from "@src/core/offset";
 import { schedule } from "@src/core/task";
 import { link, target, track } from "@src/data/target";
 import { iframe } from "@src/layout/dom";
+import offset from "@src/layout/offset";
 import encode from "./encode";
 
 export let data: ClickData;
