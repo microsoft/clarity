@@ -69,9 +69,7 @@ function process(entries: PerformanceEntryList, offset: number): void {
             }
             lastEntryIndex++;
         }
-    } else {
-        internal.error(Code.PerformanceObserver, null, Severity.Info);
-    }
+    } else { internal.error(Code.PerformanceObserver, null, Severity.Info); }
 }
 
 export function end(): void {
