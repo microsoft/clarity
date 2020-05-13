@@ -8,6 +8,7 @@ The goal of this project is to demonstrate how various components of Clarity com
 3. Live session replays against any website
 
 ## Building Extension
+ - Setup your development environment by following instructions **[here](https://github.com/microsoft/clarity/blob/master/CONTRIBUTING.md)**
  - Build everything: `yarn build`
  - Extension will be built under: `extension` folder
 

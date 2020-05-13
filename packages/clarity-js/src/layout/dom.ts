@@ -314,10 +314,12 @@ export function updates(): NodeValue[] {
 }
 
 function remove(id: number, source: Source): void {
-    let value = values[id];
-    value.metadata.active = false;
-    value.parent = null;
-    track(id, source);
+    if (id in values) {
+        let value = values[id];
+        value.metadata.active = false;
+        value.parent = null;
+        track(id, source);
+    }
 }
 
 function metadata(tag: string, id: number, parentId: number): void {

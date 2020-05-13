@@ -77,31 +77,33 @@ export default async function(type: Event): Promise<void> {
             queue(tokens);
             break;
         case Event.Network:
-            for (let state of network.state) {
-                if (task.shouldYield(timer)) { await task.suspend(timer); }
-                let data = state.data;
-                data.target = observe(track(getMatch(state.url)));
-                let metadata = [];
-                let keys = ["start", "duration", "size", "target", "initiator", "protocol", "host"];
-                for (let key of keys) {
-                    switch (key) {
-                        case "target":
-                            if (data[key]) { tokens.push(data[key] as number); }
-                            break;
-                        case "initiator":
-                        case "protocol":
-                        case "host":
-                            metadata.push(data[key]);
-                            break;
-                        default:
-                            tokens.push(data[key]);
-                            break;
+            if (network.state.length > 0) {
+                for (let state of network.state) {
+                    if (task.shouldYield(timer)) { await task.suspend(timer); }
+                    let data = state.data;
+                    data.target = observe(track(getMatch(state.url)));
+                    let metadata = [];
+                    let keys = ["start", "duration", "size", "target", "initiator", "protocol", "host"];
+                    for (let key of keys) {
+                        switch (key) {
+                            case "target":
+                                if (data[key]) { tokens.push(data[key] as number); }
+                                break;
+                            case "initiator":
+                            case "protocol":
+                            case "host":
+                                metadata.push(data[key]);
+                                break;
+                            default:
+                                tokens.push(data[key]);
+                                break;
+                        }
                     }
+                    tokens = tokenize(tokens, metadata);
                 }
-                tokens = tokenize(tokens, metadata);
+                queue(tokens);
+                network.reset();
             }
-            queue(tokens);
-            network.reset();
             break;
         case Event.Paint:
             tokens = [paint.state.time, type];

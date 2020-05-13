@@ -38,7 +38,9 @@ export const enum Constant {
     CHILD_LIST = "childList",
     ATTRIBUTES = "attributes",
     CHARACTER_DATA = "characterData",
-    LOAD_EVENT = "load"
+    LOAD_EVENT = "load",
+    PLACEHOLDER_SELECTOR = "*?",
+    DISCONNECTED_SELECTOR = "*!"
 }
 
 

@@ -1,5 +1,5 @@
 import { Priority } from "@clarity-types/core";
-import { Code, Event, Metric } from "@clarity-types/data";
+import { Code, Event, Metric, Severity } from "@clarity-types/data";
 import { Constant, Source } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -42,13 +42,13 @@ export function start(): void {
 export function observe(node: Node): void {
   // Create a new observer for every time a new DOM tree (e.g. root document or shadowdom root) is discovered on the page
   // In the case of shadow dom, any mutations that happen within the shadow dom are not bubbled up to the host document
-  // For this reason, we need to wire up mutations everytime we see a new shadow dom.
+  // For this reason, we need to wire up mutations every time we see a new shadow dom.
   // Also, wrap it inside a try / catch. In certain browsers (e.g. legacy Edge), observer on shadow dom can throw errors
   try {
     let observer = window["MutationObserver"] ? new MutationObserver(measure(handle) as MutationCallback) : null;
     observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
     observers.push(observer);
-  } catch (error) { internal.error(Code.MutationObserver, error); }
+  } catch (error) { internal.error(Code.MutationObserver, error, Severity.Info); }
 }
 
 export function monitor(frame: HTMLIFrameElement): void {
@@ -108,14 +108,14 @@ async function process(): Promise<void> {
             break;
         case Constant.CHILD_LIST:
           // Process additions
-          let addedLength = mutation.addedNodes.length;
+          let addedLength = mutation.addedNodes ? mutation.addedNodes.length : 0;
           for (let j = 0; j < addedLength; j++) {
             let addedNode = mutation.addedNodes[j];
             dom.extractRegions(addedNode as HTMLElement);
             traverse(addedNode, timer, Source.ChildListAdd);
           }
           // Process removes
-          let removedLength = mutation.removedNodes.length;
+          let removedLength = mutation.removedNodes ? mutation.removedNodes.length : 0;
           for (let j = 0; j < removedLength; j++) {
             if (task.shouldYield(timer)) { await task.suspend(timer); }
             processNode(mutation.removedNodes[j], Source.ChildListRemove);
@@ -137,7 +137,7 @@ function generate(target: Node, type: MutationRecordType): void {
     nextSibling: null,
     oldValue: null,
     previousSibling: null,
-    removedNodes: null,
+    removedNodes: [],
     target,
     type
   }]);

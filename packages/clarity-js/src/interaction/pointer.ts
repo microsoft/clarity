@@ -2,11 +2,11 @@ import { Event } from "@clarity-types/data";
 import { PointerState } from "@clarity-types/interaction";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
-import offset from "@src/core/offset";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { iframe } from "@src/layout/dom";
+import offset from "@src/layout/offset";
 import { target, track } from "@src/data/target";
 import encode from "./encode";
 

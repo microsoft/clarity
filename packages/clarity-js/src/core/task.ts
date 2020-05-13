@@ -1,6 +1,6 @@
 import { AsyncTask, Priority, RequestIdleCallbackDeadline, RequestIdleCallbackOptions } from "@clarity-types/core";
 import { TaskFunction, TaskResolve, TaskTracker } from "@clarity-types/core";
-import { Code, Metric } from "@clarity-types/data";
+import { Code, Metric, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
 import * as metric from "@src/data/metric";
 import * as internal from "@src/diagnostic/internal";
@@ -66,7 +66,7 @@ function run(): void {
             run();
         }).catch((error: Error): void => {
             // If one of the scheduled tasks failed, log, recover and continue processing rest of the tasks
-            internal.error(Code.RunTask, error);
+            internal.error(Code.RunTask, error, Severity.Warning);
             activeTask = null;
             run();
         });

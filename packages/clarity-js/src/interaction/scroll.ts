@@ -26,15 +26,22 @@ export function observe(root: Node): void {
 }
 
 function recompute(event: UIEvent = null): void {
+    let w = window as Window;
     let de = document.documentElement;
-    let t = event ? target(event) : de;
-    let element = t && t === document ? de : t;
+    let element = event ? target(event) : de;
+
+    // If the target is a Document node, then identify corresponding documentElement and window for this document
+    if (element && element.nodeType === Node.DOCUMENT_NODE) {
+        let frame = iframe(element);
+        w = frame ? frame.contentWindow : w;
+        element = de = (element as Document).documentElement;
+    }
 
     // Edge doesn't support scrollTop position on document.documentElement.
     // For cross browser compatibility, looking up pageYOffset on window if the scroll is on document.
     // And, if for some reason that is not available, fall back to looking up scrollTop on document.documentElement.
-    let x = element === de && "pageXOffset" in window ? Math.round(window.pageXOffset) : Math.round((element as HTMLElement).scrollLeft);
-    let y = element === de && "pageYOffset" in window ? Math.round(window.pageYOffset) : Math.round((element as HTMLElement).scrollTop);
+    let x = element === de && "pageXOffset" in w ? Math.round(w.pageXOffset) : Math.round((element as HTMLElement).scrollLeft);
+    let y = element === de && "pageYOffset" in w ? Math.round(w.pageYOffset) : Math.round((element as HTMLElement).scrollTop);
     let current: ScrollState = { time: time(), event: Event.Scroll, data: {target: track(element), x, y} };
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
