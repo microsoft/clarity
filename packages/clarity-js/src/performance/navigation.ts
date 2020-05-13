@@ -21,11 +21,11 @@ export function compute(entry: PerformanceNavigationTiming): void {
         loadEventStart: Math.round(entry.loadEventStart),
         loadEventEnd: Math.round(entry.loadEventEnd),
         redirectCount: Math.round(entry.redirectCount),
-        size: entry.transferSize,
+        size: entry.transferSize ? entry.transferSize : 0,
         type: entry.type,
         protocol: entry.nextHopProtocol,
-        encodedSize: entry.encodedBodySize,
-        decodedSize: entry.decodedBodySize
+        encodedSize: entry.encodedBodySize ? entry.encodedBodySize : 0,
+        decodedSize: entry.decodedBodySize ? entry.decodedBodySize : 0
     };
     encode(Event.Navigation);
 }
