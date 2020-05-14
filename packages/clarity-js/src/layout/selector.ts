@@ -9,11 +9,11 @@ export default function(tag: string, prefix: string, attributes: Attributes, pos
         case "META":
         case Constant.TEXT_TAG:
         case Constant.DOCUMENT_TAG:
-            return Constant.PLACEHOLDER_SELECTOR;
+            return Constant.EMPTY_STRING;
         case "HTML":
             return "HTML";
         default:
-            if (prefix === null) { return Constant.DISCONNECTED_SELECTOR; }
+            if (prefix === null) { return Constant.EMPTY_STRING; }
             tag = tag.indexOf(Constant.SVG_PREFIX) === 0 ? tag.substr(Constant.SVG_PREFIX.length) : tag;
             let selector = `${prefix}${tag}${suffix}`;
             if (Constant.ID_ATTRIBUTE in attributes && attributes[Constant.ID_ATTRIBUTE].length > 0) {
