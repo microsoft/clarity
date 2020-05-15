@@ -78,7 +78,6 @@ export function queue(data: Token[]): void {
                 break;
             case Event.BoxModel:
             case Event.Document:
-                metric.count(Metric.LayoutBytes, event.length);
                 break;
             case Event.ScriptError:
             case Event.ImageError:
