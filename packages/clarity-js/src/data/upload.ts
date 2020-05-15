@@ -77,6 +77,8 @@ export function queue(data: Token[]): void {
                 } else { metric.count(Metric.LayoutBytes, event.length); }
                 break;
             case Event.BoxModel:
+                metric.count(Metric.RegionBytes, event.length);
+                break;
             case Event.Document:
                 break;
             case Event.ScriptError:

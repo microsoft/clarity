@@ -64,7 +64,8 @@ export const enum Metric {
     DataDuration = 12,
     DiagnosticDuration = 13,
     InteractionDuration = 14,
-    PerformanceDuration = 15
+    PerformanceDuration = 15,
+    RegionBytes = 16
 }
 
 export const enum Code {
