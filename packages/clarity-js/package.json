@@ -1,6 +1,6 @@
 {
   "name": "clarity-js",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
   "author": "Microsoft Corp.",
   "license": "MIT",
