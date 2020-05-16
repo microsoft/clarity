@@ -23,7 +23,7 @@ export default [
     plugins: [
       resolve(),
       typescript({ rollupCommonJSResolveHack: true, clean: true }),
-      terser(),
+      terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
   }
