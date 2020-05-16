@@ -17,8 +17,9 @@ export function start(): void {
     let ua = navigator && "userAgent" in navigator ? navigator.userAgent : "";
     let upload = Upload.Async;
     let lean = config.lean ? BooleanFlag.True : BooleanFlag.False;
+    let title = document && document.title ? document.title : null;
     let e: Envelope = { sequence: 0, version, pageId, userId, sessionId, projectId, upload, end: BooleanFlag.False };
-    let p: PageData = { timestamp: ts, ua, url: location.href, referrer: document.referrer, lean };
+    let p: PageData = { timestamp: ts, ua, url: location.href, referrer: document.referrer, lean, title };
 
     metadata = { page: p, envelope: e };
     track();

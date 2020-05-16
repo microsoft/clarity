@@ -152,6 +152,7 @@ export interface PageData {
     url: string;
     referrer: string;
     lean: BooleanFlag;
+    title: string;
 }
 
 export interface PingData {

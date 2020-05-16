@@ -25,19 +25,11 @@ background.onMessage.addListener(function(message: any): void {
     // Handle responses from the background page, if any
     if (message && message.payload) {
         let decoded = decode(message.payload);
+        if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
         eJson.push(JSON.parse(message.payload));
         dJson.push(decoded);
         data.process(decoded);
         id = decoded.envelope.pageId;
-        let info = document.getElementById("info");
-        let metadata = document.getElementById("header") as HTMLDivElement;
-        let download = document.getElementById("download") as HTMLElement;
-        let iframe = document.getElementById("clarity") as HTMLIFrameElement;
-        info.style.display = "none";
-        metadata.style.display = "block";
-        download.style.display = "block";
-        iframe.style.display = "block";
-        if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
         visualize.replay(decoded);
     }
 });
@@ -64,6 +56,7 @@ function resize(width: number, height: number): void {
 
 function reset(envelope: Data.Envelope): void {
     if (console) { console.clear(); }
+    let info = document.getElementById("info");
     let metadata = document.getElementById("header") as HTMLDivElement;
     let iframe = document.getElementById("clarity") as HTMLIFrameElement;
     let download = document.getElementById("download") as HTMLElement;
@@ -77,6 +70,10 @@ function reset(envelope: Data.Envelope): void {
     eJson = [];
     dJson = [];
     id = "";
+    info.style.display = "none";
+    metadata.style.display = "block";
+    download.style.display = "block";
+    iframe.style.display = "block";
     (download.firstChild as HTMLElement).onclick = function(): void { save(true); };
     (download.lastChild as HTMLElement).onclick = function(): void { save(false); };
     visualize.setup(envelope.version, iframe, resize, metadata);

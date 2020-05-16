@@ -39,7 +39,6 @@ export type DecodedEvent = DataEvent | DiagnosticEvent | InteractionEvent | Layo
 export interface DecodedPayload {
     timestamp: number;
     envelope: Data.Envelope;
-    ua?: string;
     metric?: MetricEvent[];
     page?: PageEvent[];
     ping?: PingEvent[];

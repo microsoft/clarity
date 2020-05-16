@@ -19,6 +19,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 url: tokens[4] as string,
                 referrer: tokens[5] as string,
                 lean: tokens[6] as Data.BooleanFlag,
+                title: tokens[7] as string
             };
             return { time, event, data: page };
         case Data.Event.Ping:
