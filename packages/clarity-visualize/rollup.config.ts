@@ -27,7 +27,7 @@ export default [
     plugins: [
       resolve(),
       typescript(),
-      terser(),
+      terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ],
     onwarn(message, warn) {

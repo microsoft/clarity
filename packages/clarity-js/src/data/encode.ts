@@ -22,6 +22,7 @@ export default function(event: Event): void {
             tokens.push(metadata.page.url);
             tokens.push(metadata.page.referrer);
             tokens.push(metadata.page.lean);
+            tokens.push(metadata.page.title);
             queue(tokens);
             break;
         case Event.Tag:

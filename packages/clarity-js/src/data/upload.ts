@@ -77,11 +77,12 @@ export function queue(data: Token[]): void {
                 } else { metric.count(Metric.LayoutBytes, event.length); }
                 break;
             case Event.BoxModel:
-            case Event.Document:
-                metric.count(Metric.LayoutBytes, event.length);
+                metric.count(Metric.RegionBytes, event.length);
                 break;
+            case Event.Document:
             case Event.ScriptError:
             case Event.ImageError:
+                // By default, all events are automatically rolled up under Metric.TotalBytes
                 break;
             case Event.Upgrade:
                 // As part of upgrading experience from lean mode into full mode, we lookup anything that is backed up in memory
@@ -138,7 +139,7 @@ function upload(final: boolean = false): void {
     target.compute();
     metric.compute();
 
-    // Treat this as the last payload only if final boolean was explictly set to true.
+    // Treat this as the last payload only if final boolean was explicitly set to true.
     // In real world tests, we noticed that certain third party scripts (e.g. https://www.npmjs.com/package/raven-js)
     // could inject function arguments for internal tracking (likely stack traces for script errors).
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.

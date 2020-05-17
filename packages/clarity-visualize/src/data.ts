@@ -7,6 +7,7 @@ let metrics: {[key: number]: number} = null;
 const METRIC_MAP = {};
 METRIC_MAP[Data.Metric.TotalBytes] = { name: "Total Bytes", unit: "KB" };
 METRIC_MAP[Data.Metric.LayoutBytes] = { name: "Layout Bytes", unit: "KB" };
+METRIC_MAP[Data.Metric.RegionBytes] = { name: "Region Bytes", unit: "KB" };
 METRIC_MAP[Data.Metric.InteractionBytes] = { name: "Interaction Bytes", unit: "KB" };
 METRIC_MAP[Data.Metric.LongTaskCount] = { name: "Long Tasks" };
 METRIC_MAP[Data.Metric.TotalDuration] = { name: "Total Duration", unit: "ms" };
