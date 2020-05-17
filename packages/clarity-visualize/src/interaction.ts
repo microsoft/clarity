@@ -19,6 +19,7 @@ const CLARITY_POINTER_NONE = "clarity-pointer-none";
 const CLARITY_POINTER_MOVE = "clarity-pointer-move";
 const CLARITY_CLICK_RING = "clarity-click-ring";
 const CLARITY_TOUCH_RING = "clarity-touch-ring";
+const TITLE = "title";
 const ROUND = "round";
 const PIXEL = "px";
 
@@ -135,23 +136,28 @@ export function pointer(event: Interaction.PointerEvent): void {
 
     p.style.left = (data.x - config.pointerOffsetX) + PIXEL;
     p.style.top = (data.y - config.pointerOffsetY) + PIXEL;
+    let title = "Pointer"
     switch (type) {
         case Data.Event.Click:
         case Data.Event.RightClick:
         case Data.Event.DoubleClick:
-            drawClick(doc, data.x, data.y);
+            title = "Click";
+            drawClick(doc, data.x, data.y, title);
             p.className = CLARITY_POINTER_NONE;
             break;
         case Data.Event.TouchStart:
         case Data.Event.TouchEnd:
         case Data.Event.TouchCancel:
-            drawTouch(doc, data.x, data.y);
+            title = "Touch";
+            drawTouch(doc, data.x, data.y, title);
             p.className = CLARITY_POINTER_NONE;
             break;
         case Data.Event.TouchMove:
+            title = "Touch Move";
             p.className = CLARITY_POINTER_NONE;
             break;
         case Data.Event.MouseMove:
+            title = "Mouse Move";
             p.className = CLARITY_POINTER_MOVE;
             addPoint({time: event.time, x: data.x, y: data.y});
             break;
@@ -159,6 +165,7 @@ export function pointer(event: Interaction.PointerEvent): void {
             p.className = CLARITY_POINTER_MOVE;
             break;
     }
+    p.setAttribute(TITLE, `${title} (${data.x}${PIXEL}, ${data.y}${PIXEL})`);
 }
 
 function addPoint(point: Point): void {
@@ -168,9 +175,10 @@ function addPoint(point: Point): void {
     } else { points.push(point); }
 }
 
-function drawTouch(doc: Document, x: number, y: number): void {
+function drawTouch(doc: Document, x: number, y: number, title: string): void {
     let touch = doc.createElement("DIV");
     touch.className = CLARITY_TOUCH;
+    touch.setAttribute(TITLE, `${title} (${x}${PIXEL}, ${y}${PIXEL})`);
     touch.style.left = (x - config.clickWidth / 2) + PIXEL;
     touch.style.top = (y - config.clickWidth / 2) + PIXEL
     touch.style.animation = "disappear 1 1s";
@@ -187,9 +195,10 @@ function drawTouch(doc: Document, x: number, y: number): void {
     touch.appendChild(ringOne);
 }
 
-function drawClick(doc: Document, x: number, y: number): void {
+function drawClick(doc: Document, x: number, y: number, title: string): void {
     let click = doc.createElement("DIV");
     click.className = CLARITY_CLICK;
+    click.setAttribute(TITLE, `${title} (${x}${PIXEL}, ${y}${PIXEL})`);
     click.style.left = (x - config.clickWidth / 2) + PIXEL;
     click.style.top = (y - config.clickHeight / 2) + PIXEL
     doc.body.appendChild(click);
