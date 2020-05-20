@@ -216,7 +216,7 @@ function mask(data: NodeInfo, masked: boolean): boolean {
     // Check for blacklist types (e.g. password, email, etc.) and set the masked property appropriately
     if (Constant.TYPE_ATTRIBUTE in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.TYPE_ATTRIBUTE]) >= 0) { masked = true; }
 
-    // Following two conditions superseed any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
+    // Following two conditions supersede any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
     if (Constant.MASK_ATTRIBUTE in attributes) { masked = true; }
     if (Constant.UNMASK_ATTRIBUTE in attributes) { masked = false; }
 
