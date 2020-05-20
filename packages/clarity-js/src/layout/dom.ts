@@ -201,10 +201,12 @@ function mask(data: NodeInfo, masked: boolean): boolean {
     if (attributes === null || attributes === undefined) { return masked; }
 
     // Check for blacklist fields (e.g. address, phone, etc.) only if the input node is not already masked
-    if (masked === false && tag === Constant.INPUT_TAG && Constant.NAME_ATTRIBUTE in attributes) {
-        let value = attributes[Constant.NAME_ATTRIBUTE].toLowerCase();
+    if (masked === false && tag === Constant.INPUT_TAG) {
+        let field: string = Constant.EMPTY_STRING;
+        // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
+        for (const attribute of Object.keys(attributes)) { field += attribute.toLowerCase(); }
         for (let name of DISALLOWED_NAMES) {
-            if (value.indexOf(name) >= 0) {
+            if (field.indexOf(name) >= 0) {
                 masked = true;
                 continue;
             }
@@ -214,7 +216,7 @@ function mask(data: NodeInfo, masked: boolean): boolean {
     // Check for blacklist types (e.g. password, email, etc.) and set the masked property appropriately
     if (Constant.TYPE_ATTRIBUTE in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.TYPE_ATTRIBUTE]) >= 0) { masked = true; }
 
-    // Following two conditions superseede any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
+    // Following two conditions superseed any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
     if (Constant.MASK_ATTRIBUTE in attributes) { masked = true; }
     if (Constant.UNMASK_ATTRIBUTE in attributes) { masked = false; }
 
