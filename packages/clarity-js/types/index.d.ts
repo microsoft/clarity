@@ -16,6 +16,7 @@ interface Clarity {
   upgrade: (key: string) => void;
   consent: () => void;
   tag: (key: string, value: string) => void;
+  metadata: () => Data.Metadata;
 }
 
 interface Helper {

@@ -1,4 +1,5 @@
 import { Config } from "@clarity-types/core";
+import { Metadata } from "@clarity-types/data";
 import * as core from "@src/core";
 import configuration from "@src/core/config";
 import version from "@src/core/version";
@@ -114,4 +115,8 @@ export function consent(): void {
   if (active && !configuration.track) {
     measure(data.consent)();
   }
+}
+
+export function metadata(): Metadata {
+  return active ? data.metadata() : null;
 }

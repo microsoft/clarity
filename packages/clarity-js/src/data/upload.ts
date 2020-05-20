@@ -4,7 +4,7 @@ import measure from "@src/core/measure";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "@src/data/encode";
-import { envelope, metadata } from "@src/data/metadata";
+import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as target from "@src/data/target";
@@ -144,9 +144,9 @@ function upload(final: boolean = false): void {
     // could inject function arguments for internal tracking (likely stack traces for script errors).
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
     let last = final === true;
-    let payload: EncodedPayload = {e: JSON.stringify(envelope(last)), d: `[${events.join()}]`};
+    let payload: EncodedPayload = {e: JSON.stringify(metadata.envelope(last)), d: `[${events.join()}]`};
     let data = stringify(payload);
-    let sequence = metadata.envelope.sequence;
+    let sequence = metadata.state.envelope.sequence;
     metric.count(Metric.TotalBytes, data.length);
     send(data, sequence, last);
 

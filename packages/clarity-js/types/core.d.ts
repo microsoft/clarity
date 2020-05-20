@@ -1,4 +1,4 @@
-import { ClarityInfo, Payload, Token } from "./data";
+import { Metadata, Payload, Token } from "./data";
 
 type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
@@ -76,6 +76,6 @@ export interface Config {
     track?: boolean;
     regions?: RegionTracker;
     url?: string;
-    onstart?: (data: ClarityInfo) => void;
+    onstart?: (data: Metadata) => void;
     upload?: (data: string, sequence?: number, last?: boolean) => void;
 }

@@ -104,7 +104,8 @@ export interface EncodedPayload {
     d: string;
 }
 
-export interface ClarityInfo {
+export interface Metadata {
+    projectId: string;
     userId: string;
     sessionId: string;
     pageId: string;
@@ -117,7 +118,7 @@ export interface TargetInfo {
     node: Node;
 }
 
-export interface Metadata {
+export interface PageState {
     page: PageData;
     envelope: Envelope;
 }
