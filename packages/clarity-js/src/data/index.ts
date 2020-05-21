@@ -6,7 +6,7 @@ import * as tag from "@src/data/tag";
 import * as target from "@src/data/target";
 import * as upgrade from "@src/data/upgrade";
 import * as upload from "@src/data/upload";
-export { consent } from "@src/data/metadata";
+export { consent, metadata } from "@src/data/metadata";
 export { tag } from "@src/data/tag";
 export { upgrade } from "@src/data/upgrade";
 

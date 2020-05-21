@@ -30,6 +30,7 @@ export const enum Constant {
     FUNCTION = "function",
     INPUT_TAG = "INPUT",
     IFRAME_TAG = "IFRAME",
+    BASE_TAG = "BASE",
     NATIVE_CODE = "[native code]",
     DOCUMENT_TAG = "*D",
     SHADOW_DOM_TAG = "*S",

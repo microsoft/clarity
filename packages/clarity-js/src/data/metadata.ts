@@ -1,4 +1,4 @@
-import { BooleanFlag, Envelope, Event, Metadata, PageData, Token, Upload } from "@clarity-types/data";
+import { BooleanFlag, Envelope, Event, Metadata, PageState, PageData, Token, Upload } from "@clarity-types/data";
 import config from "@src/core/config";
 import version from "@src/core/version";
 import encode from "@src/data/encode";
@@ -6,7 +6,7 @@ import hash from "@src/data/hash";
 
 const CLARITY_STORAGE_KEY: string = "_clarity";
 const CLARITY_STORAGE_SEPARATOR: string = "|";
-export let metadata: Metadata = null;
+export let state: PageState = null;
 
 export function start(): void {
     let ts = Math.round(Date.now()); // ensuring that the output of Date.now() is an integer
@@ -21,18 +21,32 @@ export function start(): void {
     let e: Envelope = { sequence: 0, version, pageId, userId, sessionId, projectId, upload, end: BooleanFlag.False };
     let p: PageData = { timestamp: ts, ua, url: location.href, referrer: document.referrer, lean, title };
 
-    metadata = { page: p, envelope: e };
+    state = { page: p, envelope: e };
     track();
     encode(Event.Page);
-    if (config.onstart) { config.onstart({ userId: e.userId, sessionId: e.sessionId, pageId: e.pageId}); }
+
+    // For backward compatibility (starting 0.5.7)
+    // This configuration option "onstart" will be removed in subsequent versions
+    // And, is replaced by clarity.metadata() call.
+    if (config.onstart) { config.onstart({ projectId, userId, sessionId, pageId}); }
 }
 
 export function end(): void {
-    metadata = null;
+    state = null;
+}
+
+export function metadata(): Metadata {
+  let e = state ? state.envelope : null;
+  return e ? {
+    projectId: e.projectId,
+    userId: e.userId,
+    sessionId: e.sessionId,
+    pageId: e.pageId
+  } : null;
 }
 
 export function envelope(last: boolean): Token[] {
-    let e = metadata.envelope;
+    let e = state.envelope;
     e.upload = last && "sendBeacon" in navigator ? Upload.Beacon : Upload.Async;
     e.end = last ? BooleanFlag.True : BooleanFlag.False;
     e.sequence++;
@@ -50,7 +64,7 @@ function track(): void {
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + config.expire);
     let expires = expiry ? "expires=" + expiry.toUTCString() : "";
-    let value = metadata.envelope.userId + ";" + expires + ";path=/";
+    let value = state.envelope.userId + ";" + expires + ";path=/";
     document.cookie = CLARITY_STORAGE_KEY + "=" + value;
   }
 }

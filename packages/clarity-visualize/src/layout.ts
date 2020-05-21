@@ -176,8 +176,17 @@ function createElement(doc: Document, tag: string): HTMLElement {
 
 function insertAfter(data: Layout.DomData, parent: Node, node: Node, previous: Node): void {
     let next = previous && previous.parentElement === parent ? previous.nextSibling : null;
-    next = previous === null && parent ? parent.firstChild : next;
+    next = previous === null && parent ? firstChild(parent) : next;
     insertBefore(data, parent, node, next);
+}
+
+function firstChild(node: Node): ChildNode {
+    let child = node.firstChild;
+    // BASE tag should always be the first child to ensure resources with relative URLs are loaded correctly
+    if (child && child.nodeType === Node.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BASE_TAG) {
+        return child.nextSibling;
+    }
+    return child;
 }
 
 function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node): void {

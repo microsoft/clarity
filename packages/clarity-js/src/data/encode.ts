@@ -1,6 +1,6 @@
 import { Event, Token } from "@clarity-types/data";
 import { time } from "@src/core/time";
-import { metadata } from "@src/data/metadata";
+import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as tag from "@src/data/tag";
@@ -17,12 +17,12 @@ export default function(event: Event): void {
             queue(tokens);
             break;
         case Event.Page:
-            tokens.push(metadata.page.timestamp);
-            tokens.push(metadata.page.ua);
-            tokens.push(metadata.page.url);
-            tokens.push(metadata.page.referrer);
-            tokens.push(metadata.page.lean);
-            tokens.push(metadata.page.title);
+            tokens.push(metadata.state.page.timestamp);
+            tokens.push(metadata.state.page.ua);
+            tokens.push(metadata.state.page.url);
+            tokens.push(metadata.state.page.referrer);
+            tokens.push(metadata.state.page.lean);
+            tokens.push(metadata.state.page.title);
             queue(tokens);
             break;
         case Event.Tag:

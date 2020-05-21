@@ -18,6 +18,7 @@ export default [
     ],
     onwarn(message, warn) {
       if (message.code === 'NON_EXISTENT_EXPORT') { return; }
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
     }
   },
@@ -32,6 +33,7 @@ export default [
     ],
     onwarn(message, warn) {
       if (message.code === 'NON_EXISTENT_EXPORT') { return; }
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
     }
   }
