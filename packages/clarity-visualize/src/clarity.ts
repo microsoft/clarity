@@ -1,8 +1,11 @@
-import { PlaybackState, ResizeHandler } from "@clarity-types/visualize";
+import { MergedPayload, PlaybackState, ResizeHandler } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import * as data from "./data";
 import * as interaction from "./interaction";
 import * as layout from "./layout";
+export { dom } from "./layout";
+
+const DOM = "dom";
 
 export let state: PlaybackState = null;
 
@@ -11,13 +14,15 @@ export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement):
     state = { version: decoded[0].envelope.version, player, onresize: null, metadata: null };
 
     // Flatten the payload and parse all events out of them, sorted by time
-    let events = process(decoded);
+    let merged = merge(decoded);
 
-    // Walk through all events
-    while (events.length > 0) {
-        let entry = events.shift();
+    // Render initial markup before rendering rest of the events
+    layout.dom(merged.dom);
+
+    // Render all mutations on top of the initial markup
+    while (merged.events.length > 0) {
+        let entry = merged.events.shift();
         switch (entry.event) {
-            case Data.Event.Discover:
             case Data.Event.Mutation:
                 layout.markup(entry as Layout.DomEvent);
                 break;
@@ -25,12 +30,37 @@ export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement):
     }
 }
 
+export function merge(decoded: Data.DecodedPayload[]): MergedPayload {
+    let merged: MergedPayload = { timestamp: null, envelope: null, dom: null, events: [] };
+    for (let payload of decoded) {
+        merged.timestamp = merged.timestamp ? merged.timestamp : payload.timestamp;
+        merged.envelope = payload.envelope;
+        for (let key of Object.keys(payload)) {
+            let p = payload[key];
+            if (Array.isArray(p)) {
+                for (let entry of p) {
+                    if (key === DOM && entry.event === Data.Event.Discover) {
+                        merged.dom = entry;
+                    } else { merged.events.push(entry); }
+                }
+            }
+        }
+    }
+    merged.events = merged.events.sort(sort);
+    return merged;
+}
+
 export function replay(decoded: Data.DecodedPayload): void {
     if (state === null) { throw new Error(`Initialize visualization by calling "setup" prior to making this call.`); }
 
-    // Flatten the payload and parse all events out of them, sorted by time
-    // Call render method on these events
-    render(process([decoded]));
+    // Merge payloads and parse all events out of them, sorted by time
+    let merged = merge([decoded]);
+
+    // Render initial markup before rendering rest of the events
+    layout.dom(merged.dom);
+
+    // Render all events
+    render(merged.events);
 }
 
 export function reset(): void {
@@ -57,7 +87,6 @@ export function render(events: Data.DecodedEvent[]): void {
             case Data.Event.Metric:
                 data.metric(entry as Data.MetricEvent);
                 break;
-            case Data.Event.Discover:
             case Data.Event.Mutation:
                 layout.markup(entry as Layout.DomEvent);
                 break;
@@ -94,18 +123,6 @@ export function render(events: Data.DecodedEvent[]): void {
 
     // Update pointer trail at the end of every frame
     if (events.length > 0) { interaction.trail(time); }
-}
-
-function process(decoded: Data.DecodedPayload[]): Data.DecodedEvent[] {
-    let events: Data.DecodedEvent[] = [];
-    for (let payload of decoded) {
-        for (let key in payload) {
-            if (Array.isArray(payload[key])) {
-                events = events.concat(payload[key]);
-            }
-        }
-    }
-    return events.sort(sort);
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {

@@ -1,9 +1,10 @@
 import { Priority } from "@clarity-types/core";
 import { Code, Event, Metric, Severity } from "@clarity-types/data";
-import { Constant, Source } from "@clarity-types/layout";
+import { Constant, MutationQueue, Source } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
+import { time } from "@src/core/time";
 import * as internal from "@src/diagnostic/internal";
 import * as boxmodel from "@src/layout/boxmodel";
 import * as doc from "@src/layout/document";
@@ -13,7 +14,7 @@ import traverse from "@src/layout/traverse";
 import processNode from "./node";
 
 let observers: MutationObserver[] = [];
-let mutations: MutationRecord[] = [];
+let mutations: MutationQueue[] = [];
 let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
 
@@ -81,7 +82,7 @@ export function end(): void {
 
 function handle(m: MutationRecord[]): void {
   // Queue up mutation records for asynchronous processing
-  for (let i = 0; i < m.length; i++) { mutations.push(m[i]); }
+  mutations.push({ time: time(), mutations: m});
   task.schedule(process, Priority.High).then((): void => {
       measure(doc.compute)();
       measure(boxmodel.compute)();
@@ -92,40 +93,41 @@ async function process(): Promise<void> {
     let timer = Metric.MutationDuration;
     task.start(timer);
     while (mutations.length > 0) {
-      let mutation = mutations.shift();
-      let target = mutation.target;
-
-      switch (mutation.type) {
-        case Constant.ATTRIBUTES:
-            if (task.shouldYield(timer)) { await task.suspend(timer); }
-            dom.extractRegions(target as HTMLElement);
-            processNode(target, Source.Attributes);
+      let record = mutations.shift();
+      for (let mutation of record.mutations) {
+        let target = mutation.target;
+        switch (mutation.type) {
+          case Constant.ATTRIBUTES:
+              if (task.shouldYield(timer)) { await task.suspend(timer); }
+              dom.extractRegions(target as HTMLElement);
+              processNode(target, Source.Attributes);
+              break;
+          case Constant.CHARACTER_DATA:
+              if (task.shouldYield(timer)) { await task.suspend(timer); }
+              dom.extractRegions(target as HTMLElement);
+              processNode(target, Source.CharacterData);
+              break;
+          case Constant.CHILD_LIST:
+            // Process additions
+            let addedLength = mutation.addedNodes ? mutation.addedNodes.length : 0;
+            for (let j = 0; j < addedLength; j++) {
+              let addedNode = mutation.addedNodes[j];
+              dom.extractRegions(addedNode as HTMLElement);
+              traverse(addedNode, timer, Source.ChildListAdd);
+            }
+            // Process removes
+            let removedLength = mutation.removedNodes ? mutation.removedNodes.length : 0;
+            for (let j = 0; j < removedLength; j++) {
+              if (task.shouldYield(timer)) { await task.suspend(timer); }
+              processNode(mutation.removedNodes[j], Source.ChildListRemove);
+            }
             break;
-        case Constant.CHARACTER_DATA:
-            if (task.shouldYield(timer)) { await task.suspend(timer); }
-            dom.extractRegions(target as HTMLElement);
-            processNode(target, Source.CharacterData);
+          default:
             break;
-        case Constant.CHILD_LIST:
-          // Process additions
-          let addedLength = mutation.addedNodes ? mutation.addedNodes.length : 0;
-          for (let j = 0; j < addedLength; j++) {
-            let addedNode = mutation.addedNodes[j];
-            dom.extractRegions(addedNode as HTMLElement);
-            traverse(addedNode, timer, Source.ChildListAdd);
-          }
-          // Process removes
-          let removedLength = mutation.removedNodes ? mutation.removedNodes.length : 0;
-          for (let j = 0; j < removedLength; j++) {
-            if (task.shouldYield(timer)) { await task.suspend(timer); }
-            processNode(mutation.removedNodes[j], Source.ChildListRemove);
-          }
-          break;
-        default:
-          break;
+        }
       }
+      await encode(Event.Mutation, record.time);
     }
-    await encode(Event.Mutation);
     task.stop(timer);
 }
 

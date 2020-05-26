@@ -1,5 +1,5 @@
 import { Point } from "@clarity-types/visualize";
-import { Data, Interaction  } from "clarity-decode";
+import { Data, Interaction, Layout  } from "clarity-decode";
 import { state } from "./clarity";
 import { element } from "./layout";
 
@@ -14,6 +14,7 @@ const CLARITY_CANVAS = "clarity-canvas";
 const CLARITY_CLICK = "clarity-click";
 const CLARITY_POINTER = "clarity-pointer";
 const CLARITY_TOUCH = "clarity-touch";
+const CLARITY_HOVER = "clarity-hover";
 const CLARITY_POINTER_CLICK = "clarity-pointer-click";
 const CLARITY_POINTER_NONE = "clarity-pointer-none";
 const CLARITY_POINTER_MOVE = "clarity-pointer-move";
@@ -36,6 +37,8 @@ const config = {
     zIndex: 10000000
 }
 
+let hoverId: number = null;
+let targetId: number = null;
 let points: Point[] = [];
 let scrollPointIndex = 0;
 let clickAudio = null;
@@ -44,6 +47,8 @@ export function reset(): void {
     points = [];
     scrollPointIndex = 0;
     clickAudio = null;
+    hoverId = null;
+    targetId = null;
 }
 
 export function scroll(event: Interaction.ScrollEvent): void {
@@ -160,12 +165,32 @@ export function pointer(event: Interaction.PointerEvent): void {
             title = "Mouse Move";
             p.className = CLARITY_POINTER_MOVE;
             addPoint({time: event.time, x: data.x, y: data.y});
+            targetId = data.target as number;
             break;
         default:
             p.className = CLARITY_POINTER_MOVE;
             break;
     }
     p.setAttribute(TITLE, `${title} (${data.x}${PIXEL}, ${data.y}${PIXEL})`);
+}
+
+function hover(): void {
+    if (targetId && targetId !== hoverId) {
+        // First, remove any previous hover class assignments
+        let hoverNode = hoverId ? element(hoverId) as HTMLElement : null;
+        while (hoverNode) {
+            if ("removeAttribute" in hoverNode) { hoverNode.removeAttribute(CLARITY_HOVER); }
+            hoverNode = hoverNode.parentElement;
+        }
+        // Then, add hover class on elements that are below the pointer
+        let targetNode = targetId ? element(targetId) as HTMLElement : null;
+        while (targetNode) {
+            if ("setAttribute" in targetNode) { targetNode.setAttribute(CLARITY_HOVER, Layout.Constant.EMPTY_STRING); }
+            targetNode = targetNode.parentElement;
+        }
+        // Finally, update hoverId to reflect the new node
+        hoverId = targetId;
+    }
 }
 
 function addPoint(point: Point): void {
@@ -209,6 +234,7 @@ function drawClick(doc: Document, x: number, y: number, title: string): void {
     ringOne.style.left = "-0.5" + PIXEL;
     ringOne.style.top = "-0.5" + PIXEL;
     ringOne.style.animation = "pulsate-one 1 1s";
+    ringOne.style.animationFillMode = "forwards";
     click.appendChild(ringOne);
 
     // Second pulsating ring
@@ -259,6 +285,8 @@ export function trail(now: number): void {
     if (canvas) {
         const ctx = canvas.getContext('2d');
         const path = curve(match(now));
+        // Update hovered elements
+        hover();
         // We need at least two points to create a line
         if (path.length > 1) {
             let last = path[0];

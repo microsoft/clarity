@@ -1,6 +1,14 @@
-import { Data } from "clarity-decode";
+import { Data, Layout } from "clarity-decode";
 
-type ResizeHandler  = (width: number, height: number) => void;
+
+export type ResizeHandler  = (width: number, height: number) => void;
+
+export interface MergedPayload {
+    timestamp: number;
+    envelope: Data.Envelope;
+    dom: Layout.DomEvent;
+    events: Data.DecodedEvent[];
+}
 
 export interface Point {
     time: number;

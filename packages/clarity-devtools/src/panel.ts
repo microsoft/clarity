@@ -43,7 +43,6 @@ function resize(width: number, height: number): void {
     let availableWidth = container.clientWidth - (2 * margin);
     let availableHeight = container.clientHeight - offsetTop - (2 * margin);
     let scale = Math.min(Math.min(availableWidth / width, 1), Math.min(availableHeight / height, 1));
-    iframe.removeAttribute("style");
     iframe.style.position = "absolute";
     iframe.style.width = width + px;
     iframe.style.height = height + px;

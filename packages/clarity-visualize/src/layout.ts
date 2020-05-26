@@ -1,13 +1,20 @@
 import { Data, Layout } from "clarity-decode";
 import { state } from "./clarity";
 
+const TIMEOUT = 3000;
+const HOVER = ":hover";
+const CLARITY_HOVER = "clarity-hover";
 const ADOPTED_STYLE_SHEET = "clarity-adopted-style";
+let stylesheets: Promise<void>[] = [];
 let nodes = {};
 let boxmodels = {};
+let events = {};
 
 export function reset(): void {
     nodes = {};
     boxmodels = {};
+    stylesheets = [];
+    events = {};
 }
 
 export function boxmodel(event: Layout.BoxModelEvent): void {
@@ -34,6 +41,19 @@ export function boxmodel(event: Layout.BoxModelEvent): void {
 
 export function element(nodeId: number): Node {
     return nodeId !== null && nodeId > 0 && nodeId in nodes ? nodes[nodeId] : null;
+}
+
+export async function dom(event: Layout.DomEvent): Promise<void> {
+    if (event) {
+        // When setting up player for the first time, start off with hidden IFRAME
+        state.player.style.visibility = "hidden";
+        // Render all DOM events to reconstruct the page
+        markup(event);
+        // Wait on all stylesheets to finish loading
+        await Promise.all(stylesheets);
+        // Toggle back the visibility of IFRAME
+        state.player.style.visibility = "visible";
+    }
 }
 
 export function markup(event: Layout.DomEvent): void {
@@ -139,12 +159,26 @@ export function markup(event: Layout.DomEvent): void {
                 setAttributes(headElement as HTMLElement, node.attributes);
                 insert(node, parent, headElement, pivot);
                 break;
+            case "LINK":
+                let linkElement = element(node.id) as HTMLLinkElement;
+                linkElement = linkElement ? linkElement : createElement(doc, node.tag) as HTMLLinkElement;
+                if (!node.attributes) { node.attributes = {}; }
+                setAttributes(linkElement as HTMLElement, node.attributes);
+                if ("rel" in node.attributes && node.attributes["rel"] === "stylesheet") {
+                    stylesheets.push(new Promise((resolve: () => void): void => {
+                        linkElement.onload = linkElement.onerror = style.bind(this, linkElement, resolve);
+                        setTimeout(resolve, TIMEOUT);
+                    }));
+                }
+                insert(node, parent, linkElement, pivot);
+                break;
             case "STYLE":
-                let styleElement = element(node.id);
-                styleElement = styleElement ? styleElement : doc.createElement(node.tag);
+                let styleElement = element(node.id) as HTMLStyleElement;
+                styleElement = styleElement ? styleElement : doc.createElement(node.tag) as HTMLStyleElement;
                 setAttributes(styleElement as HTMLElement, node.attributes);
                 styleElement.textContent = node.value;
                 insert(node, parent, styleElement, pivot);
+                style(styleElement);
                 break;
             case "IFRAME":
                 let iframeElement = element(node.id) as HTMLElement;
@@ -164,7 +198,26 @@ export function markup(event: Layout.DomEvent): void {
                 insert(node, parent, domElement, pivot);
                 break;
         }
+        // Track state for this node
+        if (node.id) { events[node.id] = node; }
     }
+}
+
+function style(node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void {
+    // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain
+    try {
+        const sheet = node.sheet as CSSStyleSheet;
+        let cssRules = sheet ? sheet.cssRules : [];
+        for (let i = 0; i < cssRules.length; i++) {
+            if (cssRules[i].cssText.indexOf(HOVER) >= 0) {
+                let css = cssRules[i].cssText.replace(/:hover/g, `[${CLARITY_HOVER}]`);
+                sheet.removeRule(i);
+                sheet.insertRule(css, i);
+            }
+        }
+    } catch { /* do nothing */ }
+
+    if (resolve) { resolve(); }
 }
 
 function createElement(doc: Document, tag: string): HTMLElement {
@@ -175,6 +228,9 @@ function createElement(doc: Document, tag: string): HTMLElement {
 }
 
 function insertAfter(data: Layout.DomData, parent: Node, node: Node, previous: Node): void {
+    // Skip over no-op changes where parent and previous element is still the same
+    // In case of IFRAME, re-adding DOM at the exact same place will lead to loss of state and the markup inside will be destroyed
+    if (events[data.id] && events[data.id].parent === data.parent && events[data.id].previous === data.previous) { return; }
     let next = previous && previous.parentElement === parent ? previous.nextSibling : null;
     next = previous === null && parent ? firstChild(parent) : next;
     insertBefore(data, parent, node, next);
