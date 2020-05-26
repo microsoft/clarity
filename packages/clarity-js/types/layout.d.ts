@@ -82,6 +82,11 @@ export interface NodeChange {
     value: NodeValue;
 }
 
+export interface MutationQueue {
+    time: number;
+    mutations: MutationRecord[];
+}
+
 /* Event Data */
 
 export interface DocumentData {

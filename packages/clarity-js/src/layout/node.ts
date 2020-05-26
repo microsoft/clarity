@@ -6,7 +6,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 
-const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus"];
+const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror"];
 
 export default function(node: Node, source: Source): Node {
     let child: Node = null;

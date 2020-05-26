@@ -204,7 +204,7 @@ function mask(data: NodeInfo, masked: boolean): boolean {
     if (masked === false && tag === Constant.INPUT_TAG) {
         let field: string = Constant.EMPTY_STRING;
         // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
-        for (const attribute of Object.keys(attributes)) { field += attribute.toLowerCase(); }
+        for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
         for (let name of DISALLOWED_NAMES) {
             if (field.indexOf(name) >= 0) {
                 masked = true;

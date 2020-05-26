@@ -9,8 +9,8 @@ import * as boxmodel from "./boxmodel";
 import * as doc from "./document";
 import * as dom from "./dom";
 
-export default async function(type: Event): Promise<void> {
-    let tokens: Token[] = [time(), type];
+export default async function(type: Event, ts: number = null): Promise<void> {
+    let tokens: Token[] = [ts || time(), type];
     let timer = type === Event.Discover ? Metric.DiscoverDuration : Metric.MutationDuration;
     switch (type) {
         case Event.Document:

@@ -1,8 +1,10 @@
-import { ResizeHandler } from "./visualize";
+import { MergedPayload, ResizeHandler } from "./visualize";
 import { Data, Diagnostic, Interaction, Layout } from "clarity-decode"
 
 interface Visualize {
+    dom: (event: Layout.DomEvent) => Promise<void>;
     html: (decoded: Data.DecodedPayload[], player: HTMLIFrameElement) => void;
+    merge: (decoded: Data.DecodedPayload[]) => MergedPayload;
     render: (events: Data.DecodedEvent[]) =>  void;
     replay: (decoded: Data.DecodedPayload) => void;
     reset: () => void;
@@ -11,4 +13,4 @@ interface Visualize {
 
 declare const visualize: Visualize;
 
-export { visualize, Data, Diagnostic, Interaction, Layout, ResizeHandler };
+export { visualize, Data, Diagnostic, Interaction, Layout, MergedPayload, ResizeHandler };
