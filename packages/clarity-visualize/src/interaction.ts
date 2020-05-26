@@ -34,7 +34,8 @@ const config = {
     pixelLife: 3000,
     trailWidth: 6,
     maxTrailPoints: 75,
-    zIndex: 10000000
+    zIndex: 10000000,
+    hoverDepth: 3
 }
 
 let hoverId: number = null;
@@ -176,17 +177,21 @@ export function pointer(event: Interaction.PointerEvent): void {
 
 function hover(): void {
     if (targetId && targetId !== hoverId) {
+        let depth = 0;
         // First, remove any previous hover class assignments
         let hoverNode = hoverId ? element(hoverId) as HTMLElement : null;
-        while (hoverNode) {
+        while (hoverNode && depth < config.hoverDepth) {
             if ("removeAttribute" in hoverNode) { hoverNode.removeAttribute(CLARITY_HOVER); }
             hoverNode = hoverNode.parentElement;
+            depth++;
         }
         // Then, add hover class on elements that are below the pointer
+        depth = 0;
         let targetNode = targetId ? element(targetId) as HTMLElement : null;
-        while (targetNode) {
+        while (targetNode && depth < config.hoverDepth) {
             if ("setAttribute" in targetNode) { targetNode.setAttribute(CLARITY_HOVER, Layout.Constant.EMPTY_STRING); }
             targetNode = targetNode.parentElement;
+            depth++;
         }
         // Finally, update hoverId to reflect the new node
         hoverId = targetId;

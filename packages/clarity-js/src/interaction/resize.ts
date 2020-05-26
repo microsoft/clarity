@@ -12,6 +12,8 @@ export function start(): void {
 
 function recompute(): void {
     let de = document.documentElement;
+    // window.innerWidth includes width of the scrollbar and is not a true representation of the viewport width.
+    // Therefore, when possible, use documentElement's clientWidth property.
     data = {
         width: de && "clientWidth" in de ? de.clientWidth : window.innerWidth,
         height: de && "clientHeight" in de ? de.clientHeight : window.innerHeight,
