@@ -62,6 +62,8 @@ export default function(node: Node, source: Source): Node {
             }
             break;
         case Node.TEXT_NODE:
+            // In IE11 TEXT_NODE doesn't expose a valid parentElement property. Instead we need to lookup parentNode property.
+            parent = parent ? parent : node.parentNode as HTMLElement;
             // Account for this text node only if we are tracking the parent node
             // We do not wish to track text nodes for ignored parent nodes, like script tags
             // Also, we do not track text nodes for STYLE tags
