@@ -1,14 +1,14 @@
-import { Event, TargetInfo } from "@clarity-types/data";
+import { Event } from "@clarity-types/data";
 import { InputData, InputState } from "@clarity-types/interaction";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import mask from "@src/core/mask";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
-import { target, track } from "@src/data/target";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { get } from "@src/layout/dom";
 import encode from "./encode";
+import { target } from "@src/layout/target";
 
 let timeout: number = null;
 export let state: InputState[] = [];
@@ -39,10 +39,10 @@ function recompute(evt: UIEvent): void {
                 break;
         }
 
-        let data: InputData = { target: track(input as Node), value: v };
+        let data: InputData = { target: input, value: v };
 
         // If last entry in the queue is for the same target node as the current one, remove it so we can later swap it with current data.
-        if (state.length > 0 && (state[state.length - 1].data.target as TargetInfo).id === (data.target as TargetInfo).id) { state.pop(); }
+        if (state.length > 0 && (state[state.length - 1].data.target === data.target)) { state.pop(); }
 
         state.push({ time: time(), event: Event.Input, data });
 

@@ -1,23 +1,16 @@
-import {Event, Metric, TargetInfo, Token} from "@clarity-types/data";
-import * as task from "@src/core/task";
+import {Event, Token} from "@clarity-types/data";
 import { time } from "@src/core/time";
-import { observe, track } from "@src/data/target";
 import tokenize from "@src/data/token";
 import { queue } from "@src/data/upload";
 import { getMatch } from "@src/layout/dom";
 import * as connection from "@src/performance/connection";
-import * as contentfulPaint from "@src/performance/contentfulPaint";
-import * as longtask from "@src/performance/longtask";
-import * as memory from "@src/performance/memory";
 import * as navigation from "@src/performance/navigation";
 import * as network from "@src/performance/network";
-import * as paint from "@src/performance/paint";
+import * as target from "@src/layout/target";
 
 export default async function(type: Event): Promise<void> {
     let t = time();
     let tokens: Token[] = [t, type];
-    let timer = Metric.PerformanceDuration;
-    task.start(timer);
     switch (type) {
         case Event.Connection:
             tokens.push(connection.data.downlink);
@@ -25,35 +18,6 @@ export default async function(type: Event): Promise<void> {
             tokens.push(connection.data.saveData);
             tokens.push(connection.data.type);
             connection.reset();
-            queue(tokens);
-            break;
-        case Event.ContentfulPaint:
-            // Ensure that there's valid data before processing this event
-            // This is different from others because we use the schedule call to queue up encoding
-            // In an edge case, where clarity may tear down before this gets a chance to run, data will be null.
-            if (contentfulPaint.data) {
-                tokens.push(contentfulPaint.data.load);
-                tokens.push(contentfulPaint.data.render);
-                tokens.push(contentfulPaint.data.size);
-                tokens.push(observe(contentfulPaint.data.target as TargetInfo));
-                contentfulPaint.reset();
-                queue(tokens);
-            }
-            break;
-        case Event.LongTask:
-            tokens = [longtask.state.time, type];
-            tokens.push(longtask.state.data.duration);
-            tokens.push(longtask.state.data.attributionName);
-            tokens.push(longtask.state.data.attributionContainer);
-            tokens.push(longtask.state.data.attributionType);
-            tokens.push(longtask.state.data.name);
-            longtask.reset();
-            queue(tokens);
-            break;
-        case Event.Memory:
-            tokens.push(memory.data.limit);
-            tokens.push(memory.data.available);
-            tokens.push(memory.data.consumed);
             queue(tokens);
             break;
         case Event.Navigation:
@@ -79,15 +43,19 @@ export default async function(type: Event): Promise<void> {
         case Event.Network:
             if (network.state.length > 0) {
                 for (let state of network.state) {
-                    if (task.shouldYield(timer)) { await task.suspend(timer); }
                     let data = state.data;
-                    data.target = observe(track(getMatch(state.url)));
+                    let networkTarget = target.metadata(getMatch(state.url));
+                    data.target = networkTarget.id;
+                    data.region = networkTarget.region;
                     let metadata = [];
                     let keys = ["start", "duration", "size", "target", "initiator", "protocol", "host"];
                     for (let key of keys) {
                         switch (key) {
                             case "target":
-                                if (data[key]) { tokens.push(data[key] as number); }
+                                if (data[key]) {
+                                    tokens.push(data["target"] as number);
+                                    tokens.push(data["region"]);
+                                }
                                 break;
                             case "initiator":
                             case "protocol":
@@ -105,12 +73,5 @@ export default async function(type: Event): Promise<void> {
                 network.reset();
             }
             break;
-        case Event.Paint:
-            tokens = [paint.state.time, type];
-            tokens.push(paint.state.data.name);
-            paint.reset();
-            queue(tokens);
-            break;
     }
-    task.stop(timer);
 }

@@ -1,12 +1,11 @@
 import { Data, version } from "clarity-js";
 import { DecodedPayload, DecodedVersion } from "../types/data";
-import { MetricEvent, PageEvent, PingEvent, SummaryEvent, TagEvent, TargetEvent, UpgradeEvent, UploadEvent } from "../types/data";
-import { ImageErrorEvent, InternalErrorEvent, ScriptErrorEvent } from "../types/diagnostic";
-import { ClickEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
+import { MetricEvent, PingEvent, TagEvent, UpgradeEvent, UploadEvent } from "../types/data";
+import { ImageErrorEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
+import { BaselineEvent, ClickEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
 import { SelectionEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
-import { BoxModelEvent, DocumentEvent, DomEvent, HashEvent, ResourceEvent } from "../types/layout";
-import { ConnectionEvent, LargestContentfulPaintEvent, LongTaskEvent, MemoryEvent } from "../types/performance";
-import { NavigationEvent, NetworkEvent, PaintEvent } from "../types/performance";
+import { DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
+import { ConnectionEvent, NavigationEvent, NetworkEvent } from "../types/performance";
 
 import * as data from "./data";
 import * as diagnostic from "./diagnostic";
@@ -35,16 +34,10 @@ export function decode(input: string): DecodedPayload {
     }
 
     /* Reset components before decoding to keep them stateless */
-    data.reset();
     layout.reset();
 
     for (let entry of encoded) {
-        data.summarize(entry);
         switch (entry[1]) {
-            case Data.Event.Page:
-                if (payload.page === undefined) { payload.page = []; }
-                payload.page.push(data.decode(entry) as PageEvent);
-                break;
             case Data.Event.Ping:
                 if (payload.ping === undefined) { payload.ping = []; }
                 payload.ping.push(data.decode(entry) as PingEvent);
@@ -52,10 +45,6 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Tag:
                 if (payload.tag === undefined) { payload.tag = []; }
                 payload.tag.push(data.decode(entry) as TagEvent);
-                break;
-            case Data.Event.Target:
-                if (payload.target === undefined) { payload.target = []; }
-                payload.target.push(data.decode(entry) as TargetEvent);
                 break;
             case Data.Event.Upgrade:
                 if (payload.upgrade === undefined) { payload.upgrade = []; }
@@ -104,6 +93,10 @@ export function decode(input: string): DecodedPayload {
                 if (payload.selection === undefined) { payload.selection = []; }
                 payload.selection.push(interaction.decode(entry) as SelectionEvent);
                 break;
+            case Data.Event.Baseline:
+                if (payload.baseline === undefined) { payload.baseline = []; }
+                payload.baseline.push(interaction.decode(entry) as BaselineEvent);
+                break;
             case Data.Event.Input:
                 if (payload.input === undefined) { payload.input = []; }
                 payload.input.push(interaction.decode(entry) as InputEvent);
@@ -116,9 +109,9 @@ export function decode(input: string): DecodedPayload {
                 if (payload.visibility === undefined) { payload.visibility = []; }
                 payload.visibility.push(interaction.decode(entry) as VisibilityEvent);
                 break;
-            case Data.Event.BoxModel:
-                if (payload.boxmodel === undefined) { payload.boxmodel = []; }
-                payload.boxmodel.push(layout.decode(entry) as BoxModelEvent);
+            case Data.Event.Region:
+                if (payload.region === undefined) { payload.region = []; }
+                payload.region.push(layout.decode(entry) as RegionEvent);
                 break;
             case Data.Event.Discover:
             case Data.Event.Mutation:
@@ -137,25 +130,13 @@ export function decode(input: string): DecodedPayload {
                 if (payload.image === undefined) { payload.image = []; }
                 payload.image.push(diagnostic.decode(entry) as ImageErrorEvent);
                 break;
-            case Data.Event.InternalError:
-                if (payload.internal === undefined) { payload.internal = []; }
-                payload.internal.push(diagnostic.decode(entry) as InternalErrorEvent);
+            case Data.Event.Log:
+                if (payload.log === undefined) { payload.log = []; }
+                payload.log.push(diagnostic.decode(entry) as LogEvent);
                 break;
             case Data.Event.Connection:
                 if (payload.connection === undefined) { payload.connection = []; }
                 payload.connection.push(performance.decode(entry) as ConnectionEvent);
-                break;
-            case Data.Event.ContentfulPaint:
-                if (payload.contentfulPaint === undefined) { payload.contentfulPaint = []; }
-                payload.contentfulPaint.push(performance.decode(entry) as LargestContentfulPaintEvent);
-                break;
-            case Data.Event.LongTask:
-                if (payload.longtask === undefined) { payload.longtask = []; }
-                payload.longtask.push(performance.decode(entry) as LongTaskEvent);
-                break;
-            case Data.Event.Memory:
-                if (payload.memory === undefined) { payload.memory = []; }
-                payload.memory.push(performance.decode(entry) as MemoryEvent);
                 break;
             case Data.Event.Navigation:
                 if (payload.navigation === undefined) { payload.navigation = []; }
@@ -165,20 +146,11 @@ export function decode(input: string): DecodedPayload {
                 if (payload.network === undefined) { payload.network = []; }
                 payload.network.push(performance.decode(entry) as NetworkEvent);
                 break;
-            case Data.Event.Paint:
-                if (payload.paint === undefined) { payload.paint = []; }
-                payload.paint.push(performance.decode(entry) as PaintEvent);
-                break;
             default:
                 console.error(`No handler for Event: ${JSON.stringify(entry)}`);
                 break;
         }
     }
-
-    /* Enrich decoded payload with derived events */
-    payload.summary = data.summary() as SummaryEvent[];
-    if (payload.dom && payload.dom.length > 0) { payload.hash = layout.hash() as HashEvent[]; }
-    if (layout.resources.length > 0) { payload.resource = layout.resource() as ResourceEvent[]; }
 
     return payload;
 }

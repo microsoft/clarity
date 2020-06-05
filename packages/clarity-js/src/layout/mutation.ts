@@ -5,11 +5,11 @@ import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
-import * as internal from "@src/diagnostic/internal";
-import * as boxmodel from "@src/layout/boxmodel";
+import * as log from "@src/diagnostic/log";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
+import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
 import processNode from "./node";
 
@@ -49,7 +49,7 @@ export function observe(node: Node): void {
     let observer = window["MutationObserver"] ? new MutationObserver(measure(handle) as MutationCallback) : null;
     observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
     observers.push(observer);
-  } catch (error) { internal.error(Code.MutationObserver, error, Severity.Info); }
+  } catch (error) { log.log(Code.MutationObserver, error, Severity.Info); }
 }
 
 export function monitor(frame: HTMLIFrameElement): void {
@@ -85,12 +85,12 @@ function handle(m: MutationRecord[]): void {
   mutations.push({ time: time(), mutations: m});
   task.schedule(process, Priority.High).then((): void => {
       measure(doc.compute)();
-      measure(boxmodel.compute)();
+      measure(region.compute)();
   });
 }
 
 async function process(): Promise<void> {
-    let timer = Metric.MutationDuration;
+    let timer = Metric.LayoutCost;
     task.start(timer);
     while (mutations.length > 0) {
       let record = mutations.shift();

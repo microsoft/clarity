@@ -7,6 +7,12 @@ export interface PointerState {
     data: PointerData;
 }
 
+export interface ClickState {
+    time: number;
+    event: number;
+    data: ClickData;
+}
+
 export interface ScrollState {
     time: number;
     event: number;
@@ -19,25 +25,37 @@ export interface InputState {
     data: InputData;
 }
 
+export interface BaselineState {
+    time: number;
+    event: number;
+    data: BaselineData;
+}
+
 /* Event Data */
 export interface InputData {
     target: Target;
     value: string;
+    region?: number;
 }
 
 export interface PointerData {
     target: Target;
     x: number;
     y: number;
+    region?: number;    
 }
 
 export interface ClickData {
     target: Target;
     x: number;
     y: number;
+    eX: number;
+    eY: number;
     button: number;
     text: string;
     link: string;
+    hash: string;
+    region?: number;
 }
 
 export interface ResizeData {
@@ -49,6 +67,7 @@ export interface ScrollData {
     target: Target;
     x: number;
     y: number;
+    region?: number;
 }
 
 export interface SelectionData {
@@ -56,6 +75,7 @@ export interface SelectionData {
     startOffset: number;
     end: Target;
     endOffset: number;
+    region?: number;
 }
 
 export interface UnloadData {
@@ -64,4 +84,11 @@ export interface UnloadData {
 
 export interface VisibilityData {
     visible: string;
+}
+
+export interface BaselineData {
+    scrollX: number;
+    scrollY: number;
+    pointerX: number;
+    pointerY: number;
 }

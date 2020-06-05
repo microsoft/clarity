@@ -1,6 +1,7 @@
 import { Interaction } from "clarity-js";
 import { PartialEvent } from "./core";
 
+export interface BaselineEvent extends PartialEvent { data: Interaction.BaselineData; }
 export interface InputEvent extends PartialEvent { data: Interaction.InputData; }
 export interface ClickEvent extends PartialEvent { data: Interaction.ClickData; }
 export interface PointerEvent extends PartialEvent { data: Interaction.PointerData; }
@@ -10,7 +11,8 @@ export interface SelectionEvent extends PartialEvent { data: Interaction.Selecti
 export interface UnloadEvent extends PartialEvent { data: Interaction.UnloadData; }
 export interface VisibilityEvent extends PartialEvent { data: Interaction.VisibilityData; }
 export interface InteractionEvent extends PartialEvent {
-    data: Interaction.ClickData |
+    data: Interaction.BaselineData |
+    Interaction.ClickData |
     Interaction.InputData |
     Interaction.PointerData |
     Interaction.ResizeData |

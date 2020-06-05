@@ -81,17 +81,14 @@ export function render(events: Data.DecodedEvent[]): void {
     for (let entry of events) {
         time = entry.time;
         switch (entry.event) {
-            case Data.Event.Page:
-                data.page(entry as Data.PageEvent);
-                break;
             case Data.Event.Metric:
                 data.metric(entry as Data.MetricEvent);
                 break;
             case Data.Event.Mutation:
                 layout.markup(entry as Layout.DomEvent);
                 break;
-            case Data.Event.BoxModel:
-                if (data.lean) { layout.boxmodel(entry as Layout.BoxModelEvent); }
+            case Data.Event.Region:
+                if (data.lean) { layout.region(entry as Layout.RegionEvent); }
                 break;
             case Data.Event.MouseDown:
             case Data.Event.MouseUp:
@@ -99,7 +96,6 @@ export function render(events: Data.DecodedEvent[]): void {
             case Data.Event.MouseWheel:
             case Data.Event.Click:
             case Data.Event.DoubleClick:
-            case Data.Event.RightClick:
             case Data.Event.TouchStart:
             case Data.Event.TouchCancel:
             case Data.Event.TouchEnd:

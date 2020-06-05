@@ -60,7 +60,7 @@ export interface BrowserEvent {
 }
 
 export interface Config {
-    projectId?: string;
+    projectId?: number;
     longtask?: number;
     lookahead?: number;
     distance?: number;

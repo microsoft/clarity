@@ -2,35 +2,31 @@ import { helper, Data, Layout } from "clarity-js";
 import { DomData, LayoutEvent } from "../types/layout";
 
 let placeholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNiOAMAANUAz5n+TlUAAAAASUVORK5CYII=";
-export let hashes: { [key: number]: Layout.HashData } = {};
-export let resources: Layout.ResourceData[];
-let lastTime: number;
+let hashes: { [key: number]: string } = {};
 
 export function reset(): void {
     hashes = {};
-    resources = [];
-    lastTime = null;
 }
 
 export function decode(tokens: Data.Token[]): LayoutEvent {
-    let time = lastTime = tokens[0] as number;
+    let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
 
     switch (event) {
         case Data.Event.Document:
             let documentData: Layout.DocumentData = { width: tokens[2] as number, height: tokens[3] as number };
             return { time, event, data: documentData };
-        case Data.Event.BoxModel:
-            let boxmodelData: Layout.BoxModelData[] = [];
+        case Data.Event.Region:
+            let regionData: Layout.RegionData[] = [];
             for (let i = 2; i < tokens.length; i += 3) {
-                let boxmodel: Layout.BoxModelData = {
+                let region: Layout.RegionData = {
                     id: tokens[i] as number,
                     box: tokens[i + 1] as number[],
                     region: tokens[i + 2] as string
                 };
-                boxmodelData.push(boxmodel);
+                regionData.push(region);
             }
-            return { time, event, data: boxmodelData };
+            return { time, event, data: regionData };
         case Data.Event.Discover:
         case Data.Event.Mutation:
             let lastType = null;
@@ -74,16 +70,6 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
     return null;
 }
 
-export function hash(): LayoutEvent[] {
-    let data = [];
-    for (let id in hashes) { if (hashes[id]) { data.push(hashes[id]); } }
-    return data.length > 0 ? [{ time: lastTime, event: Data.Event.Hash, data }] : null;
-}
-
-export function resource(): LayoutEvent[] {
-    return resources.length > 0 ? [{ time: lastTime, event: Data.Event.Resource, data: resources }] : null;
-}
-
 function process(node: any[] | number[], tagIndex: number): DomData {
     let [tag, position]: string[]  = node[tagIndex] ? node[tagIndex].split("~") : [node[tagIndex]];
     let output: DomData = {
@@ -91,12 +77,14 @@ function process(node: any[] | number[], tagIndex: number): DomData {
         parent: tagIndex > 1 ? node[1] : null,
         previous: tagIndex > 2 ? node[2] : null,
         tag,
-        position: position ? parseInt(position, 10) : null
+        position: position ? parseInt(position, 10) : null,
+        selector: null,
+        hash: null
     };
     let hasAttribute = false;
     let attributes: Layout.Attributes = {};
     let value = null;
-    let prefix = output.parent in hashes ? `${hashes[output.parent].selector}>` : (output.parent ? Layout.Constant.EMPTY_STRING : null);
+    let prefix = output.parent in hashes ? `${hashes[output.parent]}>` : (output.parent ? Layout.Constant.EMPTY_STRING : null);
 
     for (let i = tagIndex + 1; i < node.length; i++) {
         let token = node[i] as string;
@@ -123,22 +111,14 @@ function process(node: any[] | number[], tagIndex: number): DomData {
         }
     }
 
-    let s = helper.selector(output.tag, prefix, attributes, output.position);
-    if (s.length > 0) { hashes[output.id] = { id: output.id, hash: helper.hash(s), selector: s }; }
+    let selector = helper.selector(output.tag, prefix, attributes, output.position);
+    if (selector.length > 0) {
+        output.selector = selector;
+        output.hash = helper.hash(selector);
+    }
 
-    getResource(output.tag, attributes);
     if (hasAttribute) { output.attributes = attributes; }
     if (value) { output.value = value; }
 
     return output;
-}
-
-function getResource(tag: string, attributes: Layout.Attributes): void {
-    switch (tag) {
-        case "LINK":
-            if ("href" in attributes && "rel" in attributes && attributes["rel"] === "stylesheet") {
-                resources.push({ tag, url: attributes["href"]});
-            }
-            break;
-    }
 }

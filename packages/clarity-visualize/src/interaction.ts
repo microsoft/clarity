@@ -145,7 +145,6 @@ export function pointer(event: Interaction.PointerEvent): void {
     let title = "Pointer"
     switch (type) {
         case Data.Event.Click:
-        case Data.Event.RightClick:
         case Data.Event.DoubleClick:
             title = "Click";
             drawClick(doc, data.x, data.y, title);

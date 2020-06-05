@@ -1,3 +1,4 @@
+import * as baseline from "@src/interaction/baseline";
 import * as click from "@src/interaction/click";
 import * as input from "@src/interaction/input";
 import * as pointer from "@src/interaction/pointer";
@@ -8,6 +9,7 @@ import * as unload from "@src/interaction/unload";
 import * as visibility from "@src/interaction/visibility";
 
 export function start(): void {
+    baseline.start();
     click.start();
     pointer.start();
     input.start();
@@ -19,6 +21,7 @@ export function start(): void {
 }
 
 export function end(): void {
+    baseline.end();
     click.end();
     pointer.end();
     input.end();

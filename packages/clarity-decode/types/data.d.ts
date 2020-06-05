@@ -1,10 +1,9 @@
 import { Data } from "clarity-js";
-import { DiagnosticEvent, ImageErrorEvent, InternalErrorEvent, ScriptErrorEvent } from "./diagnostic";
-import { ClickEvent, InputEvent, InteractionEvent, PointerEvent, ResizeEvent } from "./interaction";
+import { DiagnosticEvent, ImageErrorEvent, LogEvent, ScriptErrorEvent } from "./diagnostic";
+import { BaselineEvent, ClickEvent, InputEvent, InteractionEvent, PointerEvent, ResizeEvent } from "./interaction";
 import { ScrollEvent, SelectionEvent, UnloadEvent, VisibilityEvent } from "./interaction";
-import { BoxModelEvent, DocumentEvent, DomEvent, HashEvent, LayoutEvent, ResourceEvent } from "./layout";
-import { ConnectionEvent, LargestContentfulPaintEvent, LongTaskEvent, MemoryEvent } from "./performance";
-import { NavigationEvent, NetworkEvent, PaintEvent } from "./performance";
+import { DocumentEvent, DomEvent, LayoutEvent, RegionEvent } from "./layout";
+import { ConnectionEvent, NavigationEvent, NetworkEvent } from "./performance";
 import { PartialEvent } from "./core";
 
 /* Redeclare enums */
@@ -16,20 +15,14 @@ export import Payload = Data.Payload;
 
 /* Data Events */
 export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
-export interface PageEvent extends PartialEvent { data: Data.PageData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
-export interface SummaryEvent extends PartialEvent { data: Data.SummaryData[]; }
 export interface TagEvent extends PartialEvent { data: Data.TagData; }
-export interface TargetEvent extends PartialEvent { data: Data.TargetData[]; }
 export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
 export interface DataEvent extends PartialEvent {
     data: Data.MetricData |
-    Data.PageData |
     Data.PingData |
-    Data.SummaryData[] |
     Data.TagData |
-    Data.TargetData[] |
     Data.UpgradeData |
     Data.UploadData;
 }
@@ -40,7 +33,6 @@ export interface DecodedPayload {
     timestamp: number;
     envelope: Data.Envelope;
     metric?: MetricEvent[];
-    page?: PageEvent[];
     ping?: PingEvent[];
     tag?: TagEvent[];
     image?: ImageErrorEvent[];
@@ -51,25 +43,18 @@ export interface DecodedPayload {
     resize?: ResizeEvent[];
     scroll?: ScrollEvent[];
     selection?: SelectionEvent[];
-    summary?: SummaryEvent[];
     unload?: UnloadEvent[];
     upgrade?: UpgradeEvent[];
     upload?: UploadEvent[];
     visibility?: VisibilityEvent[];
-    boxmodel?: BoxModelEvent[];
-    hash?: HashEvent[];
-    resource?: ResourceEvent[];
+    region?: RegionEvent[];
     dom?: DomEvent[];
     doc?: DocumentEvent[];
-    target?: TargetEvent[];
     connection?: ConnectionEvent[];
-    contentfulPaint?: LargestContentfulPaintEvent[];
-    longtask?: LongTaskEvent[];
-    memory?: MemoryEvent[];
     navigation?: NavigationEvent[];
     network?: NetworkEvent[];
-    paint?: PaintEvent[];
-    internal?: InternalErrorEvent[];
+    log?: LogEvent[];
+    baseline?: BaselineEvent[];
 }
 
 export interface DecodedVersion {

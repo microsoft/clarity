@@ -66,13 +66,13 @@ export interface NodeValue {
     children: number[];
     data: NodeInfo;
     selector: string;
-    region: string;
+    region: number;
     metadata: NodeMeta;
 }
 
 export interface NodeMeta {
     active: boolean;
-    boxmodel: boolean;
+    region: boolean;
     masked: boolean;
 }
 
@@ -94,19 +94,8 @@ export interface DocumentData {
     height: number;
 }
 
-export interface BoxModelData {
+export interface RegionData {
     id: number;
     box: number[];
     region: string;
-}
-
-export interface HashData {
-    id: number;
-    hash: string;
-    selector: string;
-}
-
-export interface ResourceData {
-    tag: string;
-    url: string;
 }

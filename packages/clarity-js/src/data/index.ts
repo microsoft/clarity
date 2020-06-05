@@ -1,9 +1,10 @@
 import measure from "@src/core/measure";
+import * as envelope from "@src/data/envelope";
+import * as feature from "@src/data/feature";
 import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as tag from "@src/data/tag";
-import * as target from "@src/data/target";
 import * as upgrade from "@src/data/upgrade";
 import * as upload from "@src/data/upload";
 export { consent, metadata } from "@src/data/metadata";
@@ -12,9 +13,10 @@ export { upgrade } from "@src/data/upgrade";
 
 export function start(): void {
     metric.start();
+    feature.start();
     measure(upload.start)();
-    measure(target.reset)();
     measure(metadata.start)();
+    measure(envelope.start)();
     measure(ping.start)();
     measure(tag.reset)();
     measure(upgrade.reset)();
@@ -28,7 +30,8 @@ export function end(): void {
     measure(tag.reset)();
     measure(ping.end)();
     measure(upload.end)();
-    measure(target.reset)();
+    measure(envelope.end)();
     measure(metadata.end)();
+    feature.end();
     metric.end();
 }

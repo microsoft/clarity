@@ -6,22 +6,14 @@ export let lean = false;
 let metrics: {[key: number]: number} = null;
 const METRIC_MAP = {};
 METRIC_MAP[Data.Metric.TotalBytes] = { name: "Total Bytes", unit: "KB" };
-METRIC_MAP[Data.Metric.LayoutBytes] = { name: "Layout Bytes", unit: "KB" };
-METRIC_MAP[Data.Metric.RegionBytes] = { name: "Region Bytes", unit: "KB" };
-METRIC_MAP[Data.Metric.InteractionBytes] = { name: "Interaction Bytes", unit: "KB" };
+METRIC_MAP[Data.Metric.TotalCost] = { name: "Total Cost", unit: "ms" };
+METRIC_MAP[Data.Metric.LayoutCost] = { name: "Layout Cost", unit: "ms" };
 METRIC_MAP[Data.Metric.LongTaskCount] = { name: "Long Tasks" };
-METRIC_MAP[Data.Metric.TotalDuration] = { name: "Total Duration", unit: "ms" };
-METRIC_MAP[Data.Metric.DiscoverDuration] = { name: "Discover", unit: "ms" };
-METRIC_MAP[Data.Metric.MutationDuration] = { name: "Mutation", unit: "ms" };
-METRIC_MAP[Data.Metric.MaxThreadBlockedDuration] = { name: "Thread Blocked", unit: "ms" };
+METRIC_MAP[Data.Metric.ThreadBlockTime] = { name: "Thread Blocked", unit: "ms" };
 
 export function reset(): void {
     metrics = {};
     lean = false;
-}
-
-export function page(event: Data.PageEvent): void {
-    lean = !!event.data.lean;
 }
 
 export function metric(event: Data.MetricEvent): void {
@@ -30,7 +22,9 @@ export function metric(event: Data.MetricEvent): void {
     let html = [];
     // Copy over metrics for future reference
     for (let m in event.data) {
-        if (event.data[m]) { metrics[m] = event.data[m]; }
+        if (event.data[m]) {
+            metrics[m] = event.data[m];
+        }
     }
 
     for (let entry in metrics) {

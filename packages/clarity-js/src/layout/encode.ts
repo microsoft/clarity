@@ -5,13 +5,13 @@ import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import tokenize from "@src/data/token";
 import { queue } from "@src/data/upload";
-import * as boxmodel from "./boxmodel";
+import * as region from "./region";
 import * as doc from "./document";
 import * as dom from "./dom";
 
 export default async function(type: Event, ts: number = null): Promise<void> {
     let tokens: Token[] = [ts || time(), type];
-    let timer = type === Event.Discover ? Metric.DiscoverDuration : Metric.MutationDuration;
+    let timer = Metric.LayoutCost;
     switch (type) {
         case Event.Document:
             let d = doc.data;
@@ -19,8 +19,8 @@ export default async function(type: Event, ts: number = null): Promise<void> {
             tokens.push(d.height);
             queue(tokens);
             break;
-        case Event.BoxModel:
-            let bm = boxmodel.updates();
+        case Event.Region:
+            let bm = region.updates();
             for (let value of bm) {
                 tokens.push(value.id);
                 tokens.push(value.box);

@@ -1,10 +1,8 @@
-import { Event, Token } from "@clarity-types/data";
+import { Event, Token, Metric, BooleanFlag } from "@clarity-types/data";
 import { time } from "@src/core/time";
-import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as tag from "@src/data/tag";
-import * as target from "@src/data/target";
 import * as upgrade from "@src/data/upgrade";
 import { queue, track } from "./upload";
 
@@ -16,33 +14,13 @@ export default function(event: Event): void {
             tokens.push(ping.data.gap);
             queue(tokens);
             break;
-        case Event.Page:
-            tokens.push(metadata.state.page.timestamp);
-            tokens.push(metadata.state.page.ua);
-            tokens.push(metadata.state.page.url);
-            tokens.push(metadata.state.page.referrer);
-            tokens.push(metadata.state.page.lean);
-            tokens.push(metadata.state.page.title);
-            queue(tokens);
-            break;
         case Event.Tag:
             tokens.push(tag.data.key);
             tokens.push(tag.data.value);
             queue(tokens);
             break;
-        case Event.Target:
-            let targets = target.updates();
-            if (targets.length > 0) {
-                for (let value of targets) {
-                    tokens.push(value.id);
-                    tokens.push(value.hash);
-                    tokens.push(value.box);
-                    tokens.push(value.region);
-                }
-                queue(tokens);
-            }
-            break;
         case Event.Upgrade:
+            metric.max(Metric.Playback, BooleanFlag.True);
             tokens.push(upgrade.data.key);
             queue(tokens);
             break;

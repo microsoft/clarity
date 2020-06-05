@@ -7,7 +7,7 @@ import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { iframe } from "@src/layout/dom";
 import offset from "@src/layout/offset";
-import { target, track } from "@src/data/target";
+import { target } from "@src/layout/target";
 import encode from "./encode";
 
 export let state: PointerState[] = [];
@@ -42,7 +42,7 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
     }
 
     // Check for null values before processing this event
-    if (x !== null && y !== null) { handler({ time: time(), event, data: { target: track(target(evt)), x, y } }); }
+    if (x !== null && y !== null) { handler({ time: time(), event, data: { target: target(evt), x, y } }); }
 }
 
 function touch(event: Event, root: Node, evt: TouchEvent): void {
@@ -60,7 +60,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             y = y && frame ? y + frame.offsetTop : y;
 
             // Check for null values before processing this event
-            if (x !== null && y !== null) { handler({ time: t, event, data: { target: track(target(evt)), x, y } }); }
+            if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y } }); }
         }
     }
 }

@@ -1,14 +1,10 @@
 import { Code, Severity } from "@clarity-types/data";
-import { LargestContentfulPaintEntry, LongTaskEntry } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import { setTimeout } from "@src/core/timeout";
-import * as internal from "@src/diagnostic/internal";
-import * as contentful from "@src/performance/contentfulPaint";
-import * as longtask from "@src/performance/longtask";
+import * as log from "@src/diagnostic/log";
 import * as navigation from "@src/performance/navigation";
 import * as network from "@src/performance/network";
-import * as paint from "@src/performance/paint";
 
 let observer: PerformanceObserver;
 let polling: boolean;
@@ -58,18 +54,18 @@ function process(entries: PerformanceEntryList, offset: number): void {
                     network.compute(entry as PerformanceResourceTiming);
                     break;
                 case "paint":
-                    paint.compute(entry);
+                    /* Update a metric */
                     break;
                 case "longtask":
-                    longtask.compute(entry as LongTaskEntry);
+                    /* Update a metric */
                     break;
                 case "largest-contentful-paint":
-                    contentful.compute(entry as LargestContentfulPaintEntry);
+                    /* Update a metric */
                     break;
             }
             lastEntryIndex++;
         }
-    } else { internal.error(Code.PerformanceObserver, null, Severity.Info); }
+    } else { log.log(Code.PerformanceObserver, null, Severity.Info); }
 }
 
 export function end(): void {

@@ -1,11 +1,11 @@
 import { Code, Event, Severity } from "@clarity-types/data";
-import { InternalErrorData } from "@clarity-types/diagnostic";
+import { LogData } from "@clarity-types/diagnostic";
 import encode from "./encode";
 
 let history: { [key: number]: string[] } = {};
-export let data: InternalErrorData;
+export let data: LogData;
 
-export function error(code: Code, err: Error, severity: Severity = Severity.Warning): void {
+export function log(code: Code, err: Error, severity: Severity = Severity.Warning): void {
     let errorKey = err ? `${err.name}|${err.message}`: "";
     // While rare, it's possible for code to fail repeatedly during the lifetime of the same page
     // In those cases, we only want to log the failure once and not spam logs with redundant information.
@@ -22,7 +22,7 @@ export function error(code: Code, err: Error, severity: Severity = Severity.Warn
     // Maintain history of errors in memory to avoid sending redundant information
     if (code in history) { history[code].push(errorKey); } else { history[code] = [errorKey]; }
 
-    encode(Event.InternalError);
+    encode(Event.Log);
 }
 
 export function reset(): void {

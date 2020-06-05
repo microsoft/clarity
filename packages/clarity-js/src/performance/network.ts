@@ -23,6 +23,7 @@ export function compute(entry: PerformanceResourceTiming): void {
             duration: Math.round(entry.duration),
             size: "transferSize" in entry ? Math.round(entry.transferSize) : null,
             target: null,
+            region: null,
             initiator: "initiatorType" in entry ? entry.initiatorType : null,
             protocol: "nextHopProtocol" in entry ? entry.nextHopProtocol : null,
             host: host(entry.name)

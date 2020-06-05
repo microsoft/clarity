@@ -25,11 +25,12 @@ background.onMessage.addListener(function(message: any): void {
     // Handle responses from the background page, if any
     if (message && message.payload) {
         let decoded = decode(message.payload);
+        let envelope = decoded.envelope;
         if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
         eJson.push(JSON.parse(message.payload));
         dJson.push(decoded);
         data.process(decoded);
-        id = decoded.envelope.pageId;
+        id = `${envelope.sessionId.toString(36)}-${envelope.pageId.toString(36)}`;
         visualize.replay(decoded);
     }
 });

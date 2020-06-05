@@ -13,30 +13,6 @@ export function decode(tokens: Data.Token[]): PerformanceEvent  {
                 type: tokens[5] as string
             };
             return { time, event, data: connectionData };
-        case Data.Event.ContentfulPaint:
-            let contentfulData: Performance.LargestContentfulPaintData = {
-                load: tokens[2] as number,
-                render: tokens[3] as number,
-                size: tokens[4] as number,
-                target: tokens[5] as number
-            };
-            return { time, event, data: contentfulData };
-        case Data.Event.LongTask:
-            let longTaskData: Performance.LongTaskData = {
-                duration: tokens[2] as number,
-                attributionName: tokens[3] as string,
-                attributionContainer: tokens[4] as string,
-                attributionType: tokens[5] as string,
-                name: tokens[6] as string
-            };
-            return { time, event, data: longTaskData };
-        case Data.Event.Memory:
-            let memoryData: Performance.MemoryData = {
-                limit: tokens[2] as number,
-                available: tokens[3] as number,
-                consumed: tokens[4] as number
-            };
-            return { time, event, data: memoryData };
         case Data.Event.Navigation:
             let navigationData: Performance.NavigationData = {
                 fetchStart: tokens[2] as number,
@@ -105,9 +81,6 @@ export function decode(tokens: Data.Token[]): PerformanceEvent  {
             // Process last node
             networkData.push(process(network, stringIndex));
             return { time, event, data: networkData };
-        case Data.Event.Paint:
-            let paintData: Performance.PaintData = { name: tokens[2] as string };
-            return { time, event, data: paintData };
     }
     return null;
 }
@@ -121,6 +94,7 @@ function process(network: any[] | number[], stringIndex: number): Performance.Ne
         duration: network[1] as number,
         size: network[2] as number,
         target: stringIndex > 3 ? network[3] as number : null,
+        region: stringIndex > 3 ? network[4] as number : null,
         initiator: network[stringIndex] as string,
         protocol: network[stringIndex + 1] as string,
         host: network[stringIndex + 2] as string,

@@ -1,13 +1,11 @@
 import { Layout } from "clarity-js";
 import { PartialEvent } from "./core";
 
-export interface BoxModelEvent extends PartialEvent { data: Layout.BoxModelData[]; }
-export interface HashEvent extends PartialEvent { data: Layout.HashData[]; }
+export interface RegionEvent extends PartialEvent { data: Layout.RegionData[]; }
 export interface DocumentEvent extends PartialEvent { data: Layout.DocumentData; }
 export interface DomEvent extends PartialEvent { data: DomData[]; }
-export interface ResourceEvent extends PartialEvent { data: Layout.ResourceData[]; }
 export interface LayoutEvent extends PartialEvent {
-    data: Layout.BoxModelData[] | Layout.HashData[] | Layout.DocumentData | DomData[] | Layout.ResourceData[];
+    data: Layout.RegionData[] | Layout.DocumentData | DomData[];
 }
 
 /* Redeclare enums */
@@ -20,6 +18,8 @@ export interface DomData {
     previous: number;
     tag: string;
     position: number;
+    selector: string;
+    hash: string;
     attributes?: Layout.Attributes;
     value?: string;
     next?: number; /* deprecated since v0.4.5 */

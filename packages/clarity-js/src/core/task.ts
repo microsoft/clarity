@@ -3,7 +3,7 @@ import { TaskFunction, TaskResolve, TaskTracker } from "@clarity-types/core";
 import { Code, Metric, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
 import * as metric from "@src/data/metric";
-import * as internal from "@src/diagnostic/internal";
+import * as log from "@src/diagnostic/log";
 
 // Track the start time to be able to compute duration at the end of the task
 const idleTimeout = 5000;
@@ -66,7 +66,7 @@ function run(): void {
             run();
         }).catch((error: Error): void => {
             // If one of the scheduled tasks failed, log, recover and continue processing rest of the tasks
-            internal.error(Code.RunTask, error, Severity.Warning);
+            log.log(Code.RunTask, error, Severity.Warning);
             activeTask = null;
             run();
         });
@@ -96,7 +96,7 @@ export function stop(method: Metric): void {
 
     // For the first execution, which is synchronous, time is automatically counted towards TotalDuration.
     // However, for subsequent asynchronous runs, we need to manually update TotalDuration metric.
-    if (tracker[method].calls > 0) { metric.accumulate(Metric.TotalDuration, duration); }
+    if (tracker[method].calls > 0) { metric.accumulate(Metric.TotalCost, duration); }
 }
 
 export async function suspend(method: Metric): Promise<void> {

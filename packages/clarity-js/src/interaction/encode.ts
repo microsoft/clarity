@@ -1,8 +1,8 @@
-import {Event, Metric, TargetInfo, Token} from "@clarity-types/data";
-import * as task from "@src/core/task";
+import {Event, Token} from "@clarity-types/data";
 import { time } from "@src/core/time";
-import { observe } from "@src/data/target";
 import { queue } from "@src/data/upload";
+import { metadata } from "@src/layout/target";
+import * as baseline from "./baseline";
 import * as click from "./click";
 import * as input from "./input";
 import * as pointer from "./pointer";
@@ -15,8 +15,6 @@ import * as visibility from "./visibility";
 export default async function(type: Event): Promise<void> {
     let t = time();
     let tokens: Token[] = [t, type];
-    let timer = Metric.InteractionDuration;
-    task.start(timer);
     switch (type) {
         case Event.MouseDown:
         case Event.MouseUp:
@@ -28,26 +26,37 @@ export default async function(type: Event): Promise<void> {
         case Event.TouchMove:
         case Event.TouchCancel:
             for (let i = 0; i < pointer.state.length; i++) {
-                if (task.shouldYield(timer)) { await task.suspend(timer); }
                 let entry = pointer.state[i];
+                let pTarget = metadata(entry.data.target as Node);
                 tokens = [entry.time, entry.event];
-                tokens.push(observe(entry.data.target as TargetInfo));
+                tokens.push(pTarget.id);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
+                if (pTarget.region) { tokens.push(pTarget.region); }
                 queue(tokens);
+                baseline.track(entry.event, entry.data.x, entry.data.y); // Track changes to baseline
             }
             pointer.reset();
             break;
         case Event.Click:
-            let c = click.data;
-            tokens.push(observe(c.target as TargetInfo));
-            tokens.push(c.x);
-            tokens.push(c.y);
-            tokens.push(c.button);
-            tokens.push(c.text);
-            tokens.push(c.link);
+            for (let i = 0; i < click.state.length; i++) {
+                let entry = click.state[i];
+                let cTarget = metadata(entry.data.target as Node);
+                tokens = [entry.time, entry.event];
+                tokens.push(cTarget.id);
+                tokens.push(entry.data.x);
+                tokens.push(entry.data.y);
+                tokens.push(entry.data.eX);
+                tokens.push(entry.data.eY);
+                tokens.push(entry.data.button);
+                tokens.push(entry.data.text);
+                tokens.push(entry.data.link);
+                tokens.push(cTarget.hash);
+                if (cTarget.region) { tokens.push(cTarget.region); }
+                queue(tokens);
+                baseline.track(entry.event, entry.data.x, entry.data.y); // Track changes to baseline
+            }
             click.reset();
-            queue(tokens);
             break;
         case Event.Resize:
             let r = resize.data;
@@ -65,9 +74,11 @@ export default async function(type: Event): Promise<void> {
         case Event.Input:
             for (let i = 0; i < input.state.length; i++) {
                 let entry = input.state[i];
+                let iTarget = metadata(entry.data.target as Node);
                 tokens = [entry.time, entry.event];
-                tokens.push(observe(entry.data.target as TargetInfo));
+                tokens.push(iTarget.id);
                 tokens.push(entry.data.value);
+                if (iTarget.region) { tokens.push(iTarget.region); }
                 queue(tokens);
             }
             input.reset();
@@ -75,23 +86,28 @@ export default async function(type: Event): Promise<void> {
         case Event.Selection:
             let s = selection.data;
             if (s) {
-                tokens.push(observe(s.start as TargetInfo));
+                let startTarget = metadata(s.start as Node);
+                let endTarget = metadata(s.end as Node);
+                tokens.push(startTarget.id);
                 tokens.push(s.startOffset);
-                tokens.push(observe(s.end as TargetInfo));
+                tokens.push(endTarget.id);
                 tokens.push(s.endOffset);
+                if (startTarget.region) { tokens.push(startTarget.region); }
                 selection.reset();
                 queue(tokens);
             }
             break;
         case Event.Scroll:
             for (let i = 0; i < scroll.state.length; i++) {
-                if (task.shouldYield(timer)) { await task.suspend(timer); }
                 let entry = scroll.state[i];
+                let sTarget = metadata(entry.data.target as Node);
                 tokens = [entry.time, entry.event];
-                tokens.push(observe(entry.data.target as TargetInfo));
+                tokens.push(sTarget.id);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
+                if (sTarget.region) { tokens.push(sTarget.region); }
                 queue(tokens);
+                baseline.track(entry.event, entry.data.x, entry.data.y); // Track changes to baseline
             }
             scroll.reset();
             break;
@@ -101,6 +117,17 @@ export default async function(type: Event): Promise<void> {
             visibility.reset();
             queue(tokens);
             break;
+        case Event.Baseline:
+            let b = baseline.state;
+            if (b) {
+                tokens = [b.time, b.event];
+                tokens.push(b.data.scrollX);
+                tokens.push(b.data.scrollY);
+                tokens.push(b.data.pointerX);
+                tokens.push(b.data.pointerY);
+                queue(tokens);
+            }
+            baseline.reset();
+            break;
     }
-    task.stop(timer);
 }

@@ -1,10 +1,10 @@
-import {Event, TargetInfo, Token} from "@clarity-types/data";
+import {Event, Token} from "@clarity-types/data";
 import { time } from "@src/core/time";
-import { observe } from "@src/data/target";
 import { queue } from "@src/data/upload";
 import * as image from "@src/diagnostic/image";
-import * as internal from "@src/diagnostic/internal";
+import * as log from "@src/diagnostic/log";
 import * as script from "@src/diagnostic/script";
+import { metadata } from "@src/layout/target";
 
 export default async function(type: Event): Promise<void> {
     let tokens: Token[] = [time(), type];
@@ -20,18 +20,20 @@ export default async function(type: Event): Promise<void> {
             break;
         case Event.ImageError:
             if (image.data) {
+                let imageTarget = metadata(image.data.target as Node);
                 tokens.push(image.data.source);
-                tokens.push(observe(image.data.target as TargetInfo));
+                tokens.push(imageTarget.id);
+                if (imageTarget.region) { tokens.push(imageTarget.region); }
                 queue(tokens);
             }
             break;
-        case Event.InternalError:
-            if (internal.data) {
-                tokens.push(internal.data.code);
-                tokens.push(internal.data.name);
-                tokens.push(internal.data.message);
-                tokens.push(internal.data.stack);
-                tokens.push(internal.data.severity);
+        case Event.Log:
+            if (log.data) {
+                tokens.push(log.data.code);
+                tokens.push(log.data.name);
+                tokens.push(log.data.message);
+                tokens.push(log.data.stack);
+                tokens.push(log.data.severity);
                 queue(tokens);
             }
             break;

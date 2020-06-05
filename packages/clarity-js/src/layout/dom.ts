@@ -80,12 +80,12 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let previousId = getPreviousId(node);
     let masked = true;
     let parentValue = null;
-    let region = regionMap.has(node) ? regionMap.get(node) : null;
+    let regionId = regionMap.has(node) ? getId(node) : null;
 
     if (parentId >= 0 && values[parentId]) {
         parentValue = values[parentId];
         parentValue.children.push(id);
-        region = region === null ? parentValue.region : region;
+        regionId = regionId === null ? parentValue.region : regionId;
         masked = parentValue.metadata.masked;
     }
 
@@ -106,8 +106,8 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         position: null,
         data,
         selector: Constant.EMPTY_STRING,
-        region,
-        metadata: { active: true, boxmodel: false, masked }
+        region: regionId,
+        metadata: { active: true, region: false, masked }
     };
     updateSelector(values[id]);
     metadata(data.tag, id, parentId);
@@ -140,7 +140,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
                 let childIndex = previousId === null ? values[parentId].children.length : values[parentId].children.indexOf(previousId) + 1;
                 values[parentId].children.splice(childIndex, 0, id);
                 // Update region after the move
-                value.region = regionMap.has(node) ? regionMap.get(node) : values[parentId].region;
+                value.region = regionMap.has(node) ? getId(node) : values[parentId].region;
             } else {
                 // Mark this element as deleted if the parent has been updated to null
                 remove(id, source);
@@ -290,10 +290,15 @@ export function has(node: Node): boolean {
     return getId(node) in nodes;
 }
 
-export function boxmodel(): NodeValue[] {
+export function region(regionId: number): string {
+    let node = getNode(regionId);
+    return node && regionMap.has(node) ? regionMap.get(node) : null;
+}
+
+export function regions(): NodeValue[] {
     let v = [];
     for (let id in values) {
-        if (values[id].metadata.active && values[id].metadata.boxmodel) {
+        if (values[id].metadata.active && values[id].metadata.region) {
             v.push(values[id]);
         }
     }
@@ -354,11 +359,11 @@ function metadata(tag: string, id: number, parentId: number): void {
                 break;
         }
 
-        // Enable boxmodel if this node defines a new region
+        // Toggle region boolean flag if this node defines a new region
         // This setting is not recursive and does not apply to any of the children.
         // It tells Clarity to monitor bounding rectangle (x,y,width,height) for this region.
         // E.g. region would be "SearchBox" and what's inside that region (input field, submit button, label, etc.) do not matter.
-        if (regionMap.has(nodes[id])) { value.metadata.boxmodel = true; }
+        if (regionMap.has(nodes[id])) { value.metadata.region = true; }
     }
 }
 

@@ -12,9 +12,10 @@ export interface ScriptErrorData {
 export interface ImageErrorData {
     source: string;
     target: Target;
+    region?: number;
 }
 
-export interface InternalErrorData {
+export interface LogData {
     code: Code;
     name: string;
     message: string;

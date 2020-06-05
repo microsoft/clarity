@@ -7,17 +7,17 @@ const CLARITY_HOVER = "clarity-hover";
 const ADOPTED_STYLE_SHEET = "clarity-adopted-style";
 let stylesheets: Promise<void>[] = [];
 let nodes = {};
-let boxmodels = {};
+let regions = {};
 let events = {};
 
 export function reset(): void {
     nodes = {};
-    boxmodels = {};
+    regions = {};
     stylesheets = [];
     events = {};
 }
 
-export function boxmodel(event: Layout.BoxModelEvent): void {
+export function region(event: Layout.RegionEvent): void {
     let data = event.data;
     let doc = state.player.contentDocument;
     for (let bm of data) {
@@ -35,7 +35,7 @@ export function boxmodel(event: Layout.BoxModelEvent): void {
             layer.innerText = bm.region;
             nodes[bm.id] = layer;
         }
-        boxmodels[bm.id] = bm;
+        regions[bm.id] = bm;
     }
 }
 

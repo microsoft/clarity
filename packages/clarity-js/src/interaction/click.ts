@@ -1,13 +1,15 @@
 import { Event } from "@clarity-types/data";
-import { ClickData } from "@clarity-types/interaction";
+import { ClickState } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
-import { link, target, track } from "@src/data/target";
+import { time } from "@src/core/time";
 import { iframe } from "@src/layout/dom";
 import offset from "@src/layout/offset";
+import { layout } from "@src/layout/region";
+import { link, target } from "@src/layout/target";
 import encode from "./encode";
 
-export let data: ClickData;
+export let state: ClickState[] = [];
 
 export function start(): void {
     reset();
@@ -34,22 +36,30 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
     // If present, we use the returned link element to populate text and link properties below
     let a = link(t);
 
+    // Get layout rectangle for the target element
+    let l = layout(t as Element);
+    let eX = l ? x - l[0] : 0;
+    let eY = l ? y - l[1] : 0;
+
     // Check for null values before processing this event
     if (x !== null && y !== null) {
-        data = {
-            target: track(t),
+        state.push({ time: time(), event, data: {
+            target: t,
             x,
             y,
+            eX,
+            eY,
             button: evt.button,
             text: a ? a.textContent : null,
-            link: a ? a.href : null
-        };
+            link: a ? a.href : null,
+            hash: null,
+        }});
         schedule(encode.bind(this, event));
     }
 }
 
 export function reset(): void {
-    data = null;
+    state = [];
 }
 
 export function end(): void {

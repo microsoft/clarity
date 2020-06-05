@@ -8,7 +8,8 @@ export function decode(tokens: Data.Token[]): DiagnosticEvent {
         case Data.Event.ImageError:
             let imageError: Diagnostic.ImageErrorData = {
                 source: tokens[2] as string,
-                target: tokens[3] as number
+                target: tokens[3] as number,
+                region: tokens.length > 4 ? tokens[4] as number : null
             };
             return { time, event, data: imageError };
         case Data.Event.ScriptError:
@@ -20,15 +21,15 @@ export function decode(tokens: Data.Token[]): DiagnosticEvent {
                 source: tokens[6] as string
             };
             return { time, event, data: scriptError };
-        case Data.Event.InternalError:
-            let internalError: Diagnostic.InternalErrorData = {
+        case Data.Event.Log:
+            let log: Diagnostic.LogData = {
                 code: tokens[2] as number,
                 name: tokens[3] as string,
                 message: tokens[4] as string,
                 stack: tokens[5] as string,
                 severity: tokens[6] as number
             };
-            return { time, event, data: internalError };
+            return { time, event, data: log };
     }
     return null;
 }

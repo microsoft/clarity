@@ -6,9 +6,9 @@ import measure from "@src/core/measure";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
-import { target, track } from "@src/data/target";
-import * as boxmodel from "@src/layout/boxmodel";
 import { iframe } from "@src/layout/dom";
+import * as region from "@src/layout/region";
+import { target } from "@src/layout/target";
 import encode from "./encode";
 
 export let state: ScrollState[] = [];
@@ -42,7 +42,7 @@ function recompute(event: UIEvent = null): void {
     // And, if for some reason that is not available, fall back to looking up scrollTop on document.documentElement.
     let x = element === de && "pageXOffset" in w ? Math.round(w.pageXOffset) : Math.round((element as HTMLElement).scrollLeft);
     let y = element === de && "pageYOffset" in w ? Math.round(w.pageYOffset) : Math.round((element as HTMLElement).scrollTop);
-    let current: ScrollState = { time: time(), event: Event.Scroll, data: {target: track(element), x, y} };
+    let current: ScrollState = { time: time(), event: Event.Scroll, data: {target: element, x, y} };
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
     if (event === null && x === 0 && y === 0) { return; }
@@ -62,7 +62,7 @@ export function reset(): void {
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));
-    measure(boxmodel.compute)();
+    measure(region.compute)();
 }
 
 function similar(last: ScrollState, current: ScrollState): boolean {

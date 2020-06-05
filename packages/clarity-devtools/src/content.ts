@@ -28,7 +28,7 @@ function activate(): void {
         lean: items.clarity.leanMode,
         regions,
         upload,
-        projectId: "clarity-devtools"
+        projectId: 1051133397904 // parseInt("devtools", 36);
       });
     });
     window["clarity"] = clarity;

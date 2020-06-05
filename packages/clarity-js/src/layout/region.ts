@@ -1,12 +1,12 @@
 import { Event, Metric } from "@clarity-types/data";
-import { BoxModelData } from "@clarity-types/layout";
+import { RegionData } from "@clarity-types/layout";
 import config from "@src/core/config";
 import * as task from "@src/core/task";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "@src/layout/encode";
 import * as dom from "./dom";
 
-let bm: {[key: number]: BoxModelData} = {};
+let bm: {[key: number]: RegionData} = {};
 let updateMap: number[] = [];
 let timeout: number = null;
 
@@ -16,13 +16,13 @@ export function compute(): void {
 }
 
 function schedule(): void {
-    task.schedule(boxmodel);
+    task.schedule(region);
 }
 
-async function boxmodel(): Promise<void> {
-    let timer = Metric.BoxModelDuration;
+async function region(): Promise<void> {
+    let timer = Metric.LayoutCost;
     task.start(timer);
-    let values = dom.boxmodel();
+    let values = dom.regions();
     let doc = document.documentElement;
     let x = "pageXOffset" in window ? window.pageXOffset : doc.scrollLeft;
     let y = "pageYOffset" in window ? window.pageYOffset : doc.scrollTop;
@@ -36,11 +36,11 @@ async function boxmodel(): Promise<void> {
         update(value.id, layout(dom.getNode(value.id) as Element, x, y));
     }
 
-    if (updateMap.length > 0) { await encode(Event.BoxModel); }
+    if (updateMap.length > 0) { await encode(Event.Region); }
     task.stop(timer);
 }
 
-export function updates(): BoxModelData[] {
+export function updates(): RegionData[] {
     let summary = [];
     for (let id of updateMap) {
         summary.push(bm[id]);
@@ -66,8 +66,8 @@ function update(id: number, box: number[]): void {
     if (changed) {
         if (updateMap.indexOf(id) === -1) { updateMap.push(id); }
         let value = dom.getValue(id);
-        let region = value ? value.region : null;
-        bm[id] = {id, box, region};
+        let r = value ? dom.region(value.region) : null;
+        bm[id] = {id, box, region: r};
     }
 }
 

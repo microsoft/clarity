@@ -4,11 +4,12 @@ import measure from "@src/core/measure";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "@src/data/encode";
-import * as metadata from "@src/data/metadata";
+import * as envelope from "@src/data/envelope";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
-import * as target from "@src/data/target";
-import * as performance from "@src/performance/";
+import * as baseline from "@src/interaction/baseline";
+import * as region from "@src/layout/region";
+import * as performance from "@src/performance/observer";
 
 const MAX_RETRIES = 2;
 const MAX_BACKUP_BYTES = 10 * 1024 * 1024; // 10MB
@@ -44,23 +45,13 @@ export function queue(data: Token[]): void {
         let transmit = true;
 
         switch (type) {
-            case Event.Target:
-                metric.count(Metric.TargetBytes, event.length);
-                transmit = false;
-                break;
-            case Event.Memory:
             case Event.Network:
             case Event.Connection:
-            case Event.ContentfulPaint:
-            case Event.LongTask:
             case Event.Navigation:
-            case Event.Paint:
-                metric.count(Metric.PerformanceBytes, event.length);
-                transmit = false;
-                break;
             case Event.Metric:
             case Event.Upload:
-            case Event.InternalError:
+            case Event.Log:
+            case Event.Baseline:
                 transmit = false;
                 break;
             case Event.Discover:
@@ -74,28 +65,16 @@ export function queue(data: Token[]): void {
                     transmit = false;
                     backupBytes += event.length;
                     container = backupBytes < MAX_BACKUP_BYTES ? backup : null;
-                } else { metric.count(Metric.LayoutBytes, event.length); }
-                break;
-            case Event.BoxModel:
-                metric.count(Metric.RegionBytes, event.length);
-                break;
-            case Event.Document:
-            case Event.ScriptError:
-            case Event.ImageError:
-                // By default, all events are automatically rolled up under Metric.TotalBytes
+                }
                 break;
             case Event.Upgrade:
                 // As part of upgrading experience from lean mode into full mode, we lookup anything that is backed up in memory
                 // from previous layout events and get them ready to go out to server as part of next upload.
-                for (let entry of backup) {
-                    container.push(entry);
-                    metric.count(Metric.LayoutBytes, entry.length);
-                }
+                for (let entry of backup) { container.push(entry); }
                 backup = [];
                 backupBytes = 0;
                 break;
             default:
-                metric.count(Metric.InteractionBytes, event.length);
                 break;
         }
 
@@ -135,8 +114,12 @@ export function end(): void {
 
 function upload(final: boolean = false): void {
     timeout = null;
+
+    // CAUTION: Ensure "transmit" is set to false in the queue function for following events
+    // Otherwise you run a risk of infinite loop.
     performance.compute();
-    target.compute();
+    region.compute();
+    baseline.compute();
     metric.compute();
 
     // Treat this as the last payload only if final boolean was explicitly set to true.
@@ -144,9 +127,9 @@ function upload(final: boolean = false): void {
     // could inject function arguments for internal tracking (likely stack traces for script errors).
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
     let last = final === true;
-    let payload: EncodedPayload = {e: JSON.stringify(metadata.envelope(last)), d: `[${events.join()}]`};
+    let payload: EncodedPayload = {e: JSON.stringify(envelope.envelope(last)), d: `[${events.join()}]`};
     let data = stringify(payload);
-    let sequence = metadata.state.envelope.sequence;
+    let sequence = envelope.data.sequence;
     metric.count(Metric.TotalBytes, data.length);
     send(data, sequence, last);
 
