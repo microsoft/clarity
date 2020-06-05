@@ -5,6 +5,7 @@ import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "@src/data/encode";
 import * as envelope from "@src/data/envelope";
+import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as baseline from "@src/interaction/baseline";
@@ -48,6 +49,7 @@ export function queue(data: Token[]): void {
             case Event.Network:
             case Event.Connection:
             case Event.Navigation:
+            case Event.Dimension:
             case Event.Metric:
             case Event.Upload:
             case Event.Log:
@@ -120,6 +122,7 @@ function upload(final: boolean = false): void {
     performance.compute();
     region.compute();
     baseline.compute();
+    dimension.compute();
     metric.compute();
 
     // Treat this as the last payload only if final boolean was explicitly set to true.

@@ -1,6 +1,7 @@
 import { Event, Token, Metric, BooleanFlag } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import * as metric from "@src/data/metric";
+import * as dimension from "@src/data/dimension";
 import * as ping from "@src/data/ping";
 import * as tag from "@src/data/tag";
 import * as upgrade from "@src/data/upgrade";
@@ -34,9 +35,9 @@ export default function(event: Event): void {
             if (metric.updates.length > 0) {
                 for (let d in metric.data) {
                     if (metric.data[d]) {
-                        let m = parseInt(d, 10);
-                        if (metric.updates.indexOf(m) >= 0) {
-                            tokens.push(m);
+                        let key = parseInt(d, 10);
+                        if (metric.updates.indexOf(key) >= 0) {
+                            tokens.push(key);
                             // For computation, we need microseconds precision that performance.now() API offers
                             // However, for data over the wire, we round it off to milliseconds precision.
                             tokens.push(Math.round(metric.data[d]));
@@ -44,6 +45,21 @@ export default function(event: Event): void {
                     }
                 }
                 metric.reset();
+                queue(tokens);
+            }
+            break;
+        case Event.Dimension:
+            if (dimension.updates.length > 0) {
+                for (let d in dimension.data) {
+                    if (dimension.data[d]) {
+                        let key = parseInt(d, 10);
+                        if (dimension.updates.indexOf(key) >= 0) {
+                            tokens.push(key);
+                            tokens.push(dimension.data[d]);
+                        }
+                    }
+                }
+                dimension.reset();
                 queue(tokens);
             }
             break;

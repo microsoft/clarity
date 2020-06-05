@@ -35,6 +35,7 @@ export interface DecodedPayload {
     timestamp: number;
     envelope: Data.Envelope;
     metric?: MetricEvent[];
+    dimension?: DimensionEvent[];
     ping?: PingEvent[];
     tag?: TagEvent[];
     image?: ImageErrorEvent[];
