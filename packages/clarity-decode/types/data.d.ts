@@ -9,6 +9,7 @@ import { PartialEvent } from "./core";
 /* Redeclare enums */
 export import Envelope = Data.Envelope;
 export import Code = Data.Code;
+export import Dimension = Data.Dimension;
 export import Event = Data.Event;
 export import Metric = Data.Metric;
 export import Payload = Data.Payload;
