@@ -1,6 +1,6 @@
-import { Feature, Metadata, Metric, BooleanFlag } from "@clarity-types/data";
+import { Dimension, Metadata, Metric, BooleanFlag } from "@clarity-types/data";
 import config from "@src/core/config";
-import * as feature from "@src/data/feature";
+import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import hash from "@src/data/hash";
 
@@ -22,9 +22,9 @@ export function start(): void {
       pageId: s[1]
     }
 
-    // Log features
-    feature.log(Feature.UserAgent, ua);
-    feature.log(Feature.PageTitle, title);
+    // Log dimensions
+    dimension.log(Dimension.UserAgent, ua);
+    dimension.log(Dimension.PageTitle, title);
 
     // Metrics
     metric.max(Metric.ClientTimestamp, ts);

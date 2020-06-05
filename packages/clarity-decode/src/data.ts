@@ -18,12 +18,19 @@ export function decode(tokens: Data.Token[]): DataEvent {
             let upload: Data.UploadData = { sequence: tokens[2] as number, attempts: tokens[3] as number, status: tokens[4] as number };
             return { time, event, data: upload };
         case Data.Event.Metric:
-            let i = 2; // Start from 3rd index since first two are used for time & event
+            let m = 2; // Start from 3rd index since first two are used for time & event
             let metrics: Data.MetricData = {};
-            while (i < tokens.length) {
-                metrics[tokens[i++] as number] = tokens[i++] as number;
+            while (m < tokens.length) {
+                metrics[tokens[m++] as number] = tokens[m++] as number;
             }
             return { time, event, data: metrics };
+        case Data.Event.Dimension:
+            let d = 2; // Start from 3rd index since first two are used for time & event
+            let dimensions: Data.DimensionData = {};
+            while (d < tokens.length) {
+                dimensions[tokens[d++] as number] = tokens[d++] as string[];
+            }
+            return { time, event, data: dimensions };
     }
     return null;
 }

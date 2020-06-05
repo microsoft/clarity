@@ -1,7 +1,8 @@
-import { Code, Severity } from "@clarity-types/data";
+import { Code, Severity, Metric } from "@clarity-types/data";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import { setTimeout } from "@src/core/timeout";
+import * as metric from "@src/data/metric";
 import * as log from "@src/diagnostic/log";
 import * as navigation from "@src/performance/navigation";
 import * as network from "@src/performance/network";
@@ -34,7 +35,7 @@ function observe(): void {
     if (window["PerformanceObserver"]) {
         if (observer) { observer.disconnect(); }
         observer = new PerformanceObserver(measure(handle) as PerformanceObserverCallback);
-        observer.observe({entryTypes: ["navigation", "resource", "longtask", "paint", "largest-contentful-paint"]});
+        observer.observe({entryTypes: ["navigation", "resource", "longtask", "first-input", "layout-shift", "largest-contentful-paint"]});
     } else { polling = true; }
 }
 
@@ -53,14 +54,19 @@ function process(entries: PerformanceEntryList, offset: number): void {
                 case "resource":
                     network.compute(entry as PerformanceResourceTiming);
                     break;
-                case "paint":
-                    /* Update a metric */
-                    break;
                 case "longtask":
-                    /* Update a metric */
+                    metric.count(Metric.LongTaskCount);
+                    break;
+                case "first-input":
+                    metric.count(Metric.FirstInputDelay, entry["processingStart"] - entry.startTime);
+                    break;
+                case "layout-shift":
+                    if (!entry["hadRecentInput"]) {
+                        metric.accumulate(Metric.CumulativeLayoutShift, entry["value"]);
+                    }
                     break;
                 case "largest-contentful-paint":
-                    /* Update a metric */
+                    metric.max(Metric.LargestPaint, entry.startTime);
                     break;
             }
             lastEntryIndex++;

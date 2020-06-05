@@ -7,7 +7,7 @@ export type DecodedToken = (any | any[]);
 export const enum Event {
     /* Data */
     Metric = 0,
-    Feature = 1,
+    Dimension = 1,
     Upload = 2,
     Upgrade = 3,
     Discover = 4,
@@ -56,13 +56,12 @@ export const enum Metric {
     
     /* Performance */
     LongTaskCount = 7,
-    FirstPaint = 8,
-    LargestPaint = 9,
-    CumulativeLayoutShift = 10,
-    FirstInputDelay = 11
+    LargestPaint = 8,
+    CumulativeLayoutShift = 9,
+    FirstInputDelay = 10
 }
 
-export const enum Feature {
+export const enum Dimension {
     UserAgent,
     Url,
     Referrer,
@@ -134,7 +133,7 @@ export interface Transit {
 }
 
 /* Event Data */
-export interface FeatureData {
+export interface DimensionData {
     [key: number]: string[];
 }
 

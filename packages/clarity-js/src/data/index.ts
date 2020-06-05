@@ -1,6 +1,6 @@
 import measure from "@src/core/measure";
 import * as envelope from "@src/data/envelope";
-import * as feature from "@src/data/feature";
+import * as dimension from "@src/data/dimension";
 import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
@@ -13,7 +13,7 @@ export { upgrade } from "@src/data/upgrade";
 
 export function start(): void {
     metric.start();
-    feature.start();
+    dimension.start();
     measure(upload.start)();
     measure(metadata.start)();
     measure(envelope.start)();
@@ -32,6 +32,6 @@ export function end(): void {
     measure(upload.end)();
     measure(envelope.end)();
     measure(metadata.end)();
-    feature.end();
+    dimension.end();
     metric.end();
 }

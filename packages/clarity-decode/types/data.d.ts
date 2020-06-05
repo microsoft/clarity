@@ -14,13 +14,15 @@ export import Metric = Data.Metric;
 export import Payload = Data.Payload;
 
 /* Data Events */
+export interface DimensionEvent extends PartialEvent { data: Data.DimensionData; }
 export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
 export interface TagEvent extends PartialEvent { data: Data.TagData; }
 export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
 export interface DataEvent extends PartialEvent {
-    data: Data.MetricData |
+    data: Data.DimensionData | 
+    Data.MetricData |
     Data.PingData |
     Data.TagData |
     Data.UpgradeData |

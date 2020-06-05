@@ -18,9 +18,9 @@ export function count(metric: Metric, increment: number = 1): void {
     track(metric);
 }
 
-export function accumulate(metric: Metric, time: number): void {
+export function accumulate(metric: Metric, value: number): void {
     if (!(metric in data)) { data[metric] = 0; }
-    data[metric] += time;
+    data[metric] += value;
     track(metric);
 }
 
