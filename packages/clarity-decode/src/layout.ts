@@ -19,9 +19,10 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
         case Data.Event.Region:
             let regionData: Layout.RegionData[] = [];
             for (let i = 2; i < tokens.length; i += 3) {
+                let box = tokens[i + 1] as number[];
                 let region: Layout.RegionData = {
                     id: tokens[i] as number,
-                    box: tokens[i + 1] as number[],
+                    box: {x: box[0], y: box[1], w: box[2], h: box[3], v: box[4]},
                     region: tokens[i + 2] as string
                 };
                 regionData.push(region);

@@ -25,12 +25,12 @@ export function region(event: Layout.RegionEvent): void {
         let el = element(bm.id) as HTMLElement;
         if (rectangle) {
             let layer = el ? el : doc.createElement("DIV");
-            layer.style.left = rectangle[0] + "px";
-            layer.style.top = rectangle[1] + "px";
-            layer.style.width = rectangle[2] + "px";
-            layer.style.height = rectangle[3] + "px";
+            layer.style.left = rectangle.x + "px";
+            layer.style.top = rectangle.y + "px";
+            layer.style.width = (rectangle.w - 2) + "px";
+            layer.style.height = (rectangle.h - 2) + "px";
             layer.style.position = "absolute";
-            layer.style.border = "1px solid red";
+            layer.style.border = rectangle.v ? "1px solid green" : "1px solid red";
             doc.body.appendChild(layer);
             layer.innerText = bm.region;
             nodes[bm.id] = layer;

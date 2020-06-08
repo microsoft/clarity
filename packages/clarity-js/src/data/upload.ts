@@ -46,7 +46,6 @@ export function queue(data: Token[]): void {
         let transmit = true;
 
         switch (type) {
-            case Event.Network:
             case Event.Connection:
             case Event.Navigation:
             case Event.Dimension:
@@ -133,7 +132,7 @@ function upload(final: boolean = false): void {
     let payload: EncodedPayload = {e: JSON.stringify(envelope.envelope(last)), d: `[${events.join()}]`};
     let data = stringify(payload);
     let sequence = envelope.data.sequence;
-    metric.count(Metric.TotalBytes, data.length);
+    metric.sum(Metric.TotalBytes, data.length);
     send(data, sequence, last);
 
     // Send data to upload hook, if defined in the config

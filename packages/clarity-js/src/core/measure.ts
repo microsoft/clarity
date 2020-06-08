@@ -8,11 +8,11 @@ export default function(method: Function): Function {
         let start = performance.now();
         method.apply(this, arguments);
         let duration = performance.now() - start;
-        metric.accumulate(Metric.TotalCost, duration);
+        metric.sum(Metric.TotalCost, duration);
         metric.count(Metric.InvokeCount);
         if (duration > config.longtask) {
             metric.count(Metric.LongTaskCount);
-            metric.max(Metric.ThreadBlockTime, duration);
+            metric.max(Metric.ThreadBlockedTime, duration);
         }
     };
 }

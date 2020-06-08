@@ -22,7 +22,7 @@ export function link(node: Node): HTMLAnchorElement {
 }
 
 export function metadata(node: Node): TargetMetadata {
-    let output = { id: null, region: null, hash: null, node };
+    let output: TargetMetadata = { id: null, region: null, hash: null, node };
     if (node) {
         let value = dom.get(node);
         if (value !== null) {

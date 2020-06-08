@@ -16,7 +16,7 @@ export function start(): void {
     // Populate ids for this page
     let s = session(ts);
     data = {
-      projectId: config.projectId || num(hash(location.host)),
+      projectId: config.projectId || hash(location.host),
       userId: user(),
       sessionId: s[0],
       pageId: s[1]

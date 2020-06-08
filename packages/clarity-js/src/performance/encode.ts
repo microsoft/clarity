@@ -1,12 +1,8 @@
 import {Event, Token} from "@clarity-types/data";
 import { time } from "@src/core/time";
-import tokenize from "@src/data/token";
 import { queue } from "@src/data/upload";
-import { getMatch } from "@src/layout/dom";
 import * as connection from "@src/performance/connection";
 import * as navigation from "@src/performance/navigation";
-import * as network from "@src/performance/network";
-import * as target from "@src/layout/target";
 
 export default async function(type: Event): Promise<void> {
     let t = time();
@@ -39,39 +35,6 @@ export default async function(type: Event): Promise<void> {
             tokens.push(navigation.data.decodedSize);
             navigation.reset();
             queue(tokens);
-            break;
-        case Event.Network:
-            if (network.state.length > 0) {
-                for (let state of network.state) {
-                    let data = state.data;
-                    let networkTarget = target.metadata(getMatch(state.url));
-                    data.target = networkTarget.id;
-                    data.region = networkTarget.region;
-                    let metadata = [];
-                    let keys = ["start", "duration", "size", "target", "initiator", "protocol", "host"];
-                    for (let key of keys) {
-                        switch (key) {
-                            case "target":
-                                if (data[key]) {
-                                    tokens.push(data["target"] as number);
-                                    tokens.push(data["region"]);
-                                }
-                                break;
-                            case "initiator":
-                            case "protocol":
-                            case "host":
-                                metadata.push(data[key]);
-                                break;
-                            default:
-                                tokens.push(data[key]);
-                                break;
-                        }
-                    }
-                    tokens = tokenize(tokens, metadata);
-                }
-                queue(tokens);
-                network.reset();
-            }
             break;
     }
 }

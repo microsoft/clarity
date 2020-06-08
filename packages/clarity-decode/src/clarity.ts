@@ -5,7 +5,7 @@ import { ImageErrorEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic
 import { BaselineEvent, ClickEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
 import { SelectionEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
 import { DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
-import { ConnectionEvent, NavigationEvent, NetworkEvent } from "../types/performance";
+import { ConnectionEvent, NavigationEvent } from "../types/performance";
 
 import * as data from "./data";
 import * as diagnostic from "./diagnostic";
@@ -54,10 +54,9 @@ export function decode(input: string): DecodedPayload {
                 if (payload.metric === undefined) { payload.metric = []; }
                 let metric = data.decode(entry) as MetricEvent;
                 // It's not possible to accurately include the byte count of the payload within the same payload
-                // So, we increment the bytes from the incoming payload at decode time.
-                // Also, initialize TotalBytes if it doesn't exist. For the first payload, this value can be null.
-                if (!(Data.Metric.TotalBytes in metric.data)) { metric.data[Data.Metric.TotalBytes] = 0; }
-                metric.data[Data.Metric.TotalBytes] += input.length;
+                // The value we get from clarity-js lags behind by a payload. To work around that,
+                // we increment the bytes from the incoming payload at decode time.
+                metric.data[Data.Metric.TotalBytes] = input.length;
                 payload.metric.push(metric);
                 break;
             case Data.Event.Dimension:
@@ -145,10 +144,6 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Navigation:
                 if (payload.navigation === undefined) { payload.navigation = []; }
                 payload.navigation.push(performance.decode(entry) as NavigationEvent);
-                break;
-            case Data.Event.Network:
-                if (payload.network === undefined) { payload.network = []; }
-                payload.network.push(performance.decode(entry) as NetworkEvent);
                 break;
             default:
                 console.error(`No handler for Event: ${JSON.stringify(entry)}`);

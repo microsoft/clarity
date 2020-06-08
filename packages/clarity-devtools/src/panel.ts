@@ -1,6 +1,5 @@
 import { Data, decode } from "clarity-decode";
 import { visualize } from "clarity-visualize";
-import * as data from "./data";
 
 let activeTabId = chrome.devtools.inspectedWindow.tabId;
 let background = chrome.runtime.connect({ name: "panel" });
@@ -29,7 +28,6 @@ background.onMessage.addListener(function(message: any): void {
         if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
         eJson.push(JSON.parse(message.payload));
         dJson.push(decoded);
-        data.process(decoded);
         id = `${envelope.sessionId.toString(36)}-${envelope.pageId.toString(36)}`;
         visualize.replay(decoded);
     }

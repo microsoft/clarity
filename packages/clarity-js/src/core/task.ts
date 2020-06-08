@@ -91,12 +91,12 @@ function restart(method: Metric): void {
 export function stop(method: Metric): void {
     let end = performance.now();
     let duration = end - tracker[method].start;
-    metric.accumulate(method, duration);
+    metric.sum(method, duration);
     metric.count(Metric.InvokeCount);
 
     // For the first execution, which is synchronous, time is automatically counted towards TotalDuration.
     // However, for subsequent asynchronous runs, we need to manually update TotalDuration metric.
-    if (tracker[method].calls > 0) { metric.accumulate(Metric.TotalCost, duration); }
+    if (tracker[method].calls > 0) { metric.sum(Metric.TotalCost, duration); }
 }
 
 export async function suspend(method: Metric): Promise<void> {

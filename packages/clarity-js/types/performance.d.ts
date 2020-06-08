@@ -12,23 +12,7 @@ export interface NavigatorConnection extends EventTarget {
     saveData: boolean;
 }
 
-export interface NetworkState {
-    url: string;
-    data: NetworkData;
-}
-
 /* Event Data */
-export interface NetworkData {
-    start: number;
-    duration: number;
-    size: number;
-    target: Target;
-    initiator: string;
-    protocol: string;
-    host: string;
-    region: number;
-}
-
 export interface NavigationData {
     fetchStart: number;
     connectStart: number;

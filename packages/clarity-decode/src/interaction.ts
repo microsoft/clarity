@@ -28,20 +28,23 @@ export function decode(tokens: Data.Token[]): InteractionEvent  {
                 y: tokens[4] as number,
                 eX: tokens[5] as number,
                 eY: tokens[6] as number,
-                button: tokens[5] as number,
-                text: tokens[6] as string,
-                link: tokens[7] as string,
-                hash: tokens[8] as string,
-                region: tokens.length > 9 ? tokens[9] as number : null
+                button: tokens[7] as number,
+                text: tokens[8] as string,
+                link: tokens[9] as string,
+                hash: tokens[10] as number,
+                region: tokens.length > 11 ? tokens[11] as number : null
             };
             return { time, event, data: clickData };
             break;
         case Data.Event.Baseline:
             let baselineData: Interaction.BaselineData = {
-                scrollX: tokens[2] as number,
-                scrollY: tokens[3] as number,
-                pointerX: tokens[4] as number,
-                pointerY: tokens[5] as number
+                visible: tokens[2] as number,
+                docWidth: tokens[3] as number,
+                docHeight: tokens[4] as number,
+                scrollX: tokens[5] as number,
+                scrollY: tokens[6] as number,
+                pointerX: tokens[7] as number,
+                pointerY: tokens[8] as number
             }
             return { time, event, data: baselineData };
         case Data.Event.Resize:

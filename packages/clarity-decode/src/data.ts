@@ -39,11 +39,13 @@ export function envelope(tokens: Data.Token[]): Data.Envelope {
     return {
         version: tokens[0] as string,
         sequence: tokens[1] as number,
-        projectId: tokens[2] as number,
-        userId: tokens[3] as number,
-        sessionId: tokens[4] as number,
-        pageId: tokens[5] as number,
-        upload: tokens[6] as Data.Upload,
-        end: tokens[7] as Data.BooleanFlag
+        start: tokens[2] as number,
+        duration: tokens[3] as number,
+        projectId: tokens[4] as number,
+        userId: tokens[5] as number,
+        sessionId: tokens[6] as number,
+        pageId: tokens[7] as number,
+        upload: tokens[8] as Data.Upload,
+        end: tokens[9] as Data.BooleanFlag
     };
 }

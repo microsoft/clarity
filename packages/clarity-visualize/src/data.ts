@@ -9,7 +9,7 @@ METRIC_MAP[Data.Metric.TotalBytes] = { name: "Total Bytes", unit: "KB" };
 METRIC_MAP[Data.Metric.TotalCost] = { name: "Total Cost", unit: "ms" };
 METRIC_MAP[Data.Metric.LayoutCost] = { name: "Layout Cost", unit: "ms" };
 METRIC_MAP[Data.Metric.LongTaskCount] = { name: "Long Tasks" };
-METRIC_MAP[Data.Metric.ThreadBlockTime] = { name: "Thread Blocked", unit: "ms" };
+METRIC_MAP[Data.Metric.ThreadBlockedTime] = { name: "Thread Blocked", unit: "ms" };
 
 export function reset(): void {
     metrics = {};
@@ -22,8 +22,11 @@ export function metric(event: Data.MetricEvent): void {
     let html = [];
     // Copy over metrics for future reference
     for (let m in event.data) {
-        if (event.data[m]) {
-            metrics[m] = event.data[m];
+        if (typeof event.data[m] === "number") {
+            if (!(m in metrics)) { metrics[m] = 0; }
+            let key = parseInt(m, 10);
+            metrics[m] += event.data[m];
+            lean = key === Data.Metric.Playback && event.data[m] === 0 ? true : lean;
         }
     }
 

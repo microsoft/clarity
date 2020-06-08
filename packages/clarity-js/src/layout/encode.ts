@@ -5,6 +5,7 @@ import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import tokenize from "@src/data/token";
 import { queue } from "@src/data/upload";
+import { track } from "@src/interaction/baseline";
 import * as region from "./region";
 import * as doc from "./document";
 import * as dom from "./dom";
@@ -17,13 +18,14 @@ export default async function(type: Event, ts: number = null): Promise<void> {
             let d = doc.data;
             tokens.push(d.width);
             tokens.push(d.height);
+            track(Event.Document, d.width, d.height);
             queue(tokens);
             break;
         case Event.Region:
             let bm = region.updates();
             for (let value of bm) {
                 tokens.push(value.id);
-                tokens.push(value.box);
+                tokens.push([value.box.x, value.box.y, value.box.w, value.box.h, value.box.v]);
                 tokens.push(value.region);
             }
             queue(tokens);

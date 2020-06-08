@@ -34,27 +34,21 @@ export const enum Event {
     Input = 25,
     Visibility = 26,
     Baseline = 27,
-    Network = 28,
-    Navigation = 29,    
-    Connection = 30,
-    ScriptError = 31,
-    ImageError = 32,
-    Log = 33
+    Navigation = 28,    
+    Connection = 29,
+    ScriptError = 30,
+    ImageError = 31,
+    Log = 32
 }
 
 export const enum Metric {
-    /* Data */
     ClientTimestamp = 0,
     Playback = 1,
-
-    /* Internal Clarity Metrics */
     TotalBytes = 2,
     LayoutCost = 3,
     TotalCost = 4,
     InvokeCount = 5,
-    ThreadBlockTime = 6,
-    
-    /* Performance */
+    ThreadBlockedTime = 6,
     LongTaskCount = 7,
     LargestPaint = 8,
     CumulativeLayoutShift = 9,
@@ -62,10 +56,12 @@ export const enum Metric {
 }
 
 export const enum Dimension {
-    UserAgent,
-    Url,
-    Referrer,
-    PageTitle
+    UserAgent = 0,
+    Url = 1,
+    Referrer = 2,
+    PageTitle = 3,
+    NetworkHosts = 4,
+    Tags = 5
 }
 
 export const enum Code {
@@ -114,12 +110,14 @@ export interface Metadata {
 export interface TargetMetadata {
     id: number;
     region: number;
-    hash: string;
+    hash: number;
     node: Node;
 }
 
 export interface Envelope extends Metadata {
     sequence: number;
+    start: number;
+    duration: number;
     version: string;
     upload: Upload;
     end: BooleanFlag;

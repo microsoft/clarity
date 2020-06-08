@@ -1,5 +1,5 @@
-import { Event, Metric } from "@clarity-types/data";
-import { RegionData } from "@clarity-types/layout";
+import { Event, Metric, BooleanFlag } from "@clarity-types/data";
+import { Box, RegionData } from "@clarity-types/layout";
 import config from "@src/core/config";
 import * as task from "@src/core/task";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
@@ -23,17 +23,14 @@ async function region(): Promise<void> {
     let timer = Metric.LayoutCost;
     task.start(timer);
     let values = dom.regions();
-    let doc = document.documentElement;
-    let x = "pageXOffset" in window ? window.pageXOffset : doc.scrollLeft;
-    let y = "pageYOffset" in window ? window.pageYOffset : doc.scrollTop;
+    let viewport = getViewport();
 
     for (let value of values) {
         if (task.shouldYield(timer)) {
             await task.suspend(timer);
-            x = "pageXOffset" in window ? window.pageXOffset : doc.scrollLeft;
-            y = "pageYOffset" in window ? window.pageYOffset : doc.scrollTop;
+            viewport = getViewport();
         }
-        update(value.id, layout(dom.getNode(value.id) as Element, x, y));
+        update(value.id, layout(dom.getNode(value.id) as Element, viewport));
     }
 
     if (updateMap.length > 0) { await encode(Event.Region); }
@@ -49,18 +46,24 @@ export function updates(): RegionData[] {
     return summary;
 }
 
-function update(id: number, box: number[]): void {
+function getViewport(): Box {
+    let de = document.documentElement;
+    return {
+        x: "pageXOffset" in window ? window.pageXOffset : de.scrollLeft,
+        y: "pageYOffset" in window ? window.pageYOffset : de.scrollTop,
+        w: de && "clientWidth" in de ? de.clientWidth : window.innerWidth,
+        h: de && "clientHeight" in de ? de.clientHeight : window.innerHeight,
+        v: BooleanFlag.True
+    };
+}
+
+function update(id: number, box: Box): void {
     let changed = box !== null;
+
+    // Compare the new box coordinates with what we had in memory from before
     if (id in bm && box !== null && bm[id].box !== null) {
-        changed = box.length === bm[id].box.length ? false : true;
-        if (changed === false) {
-            for (let i = 0; i < box.length; i++) {
-                if (box[i] !== bm[id].box[i]) {
-                    changed = true;
-                    break;
-                }
-            }
-        }
+        let old = bm[id].box;
+        changed = (box.x === old.x && box.y === old.y && box.w === old.w && box.h === old.h && box.v === old.v) ? false : true;
     }
 
     if (changed) {
@@ -71,25 +74,37 @@ function update(id: number, box: number[]): void {
     }
 }
 
-export function layout(element: Element, x: number = null, y: number = null): number[] {
-    let box: number[] = null;
+export function layout(element: Element, viewport: Box = null): Box {
+    let box: Box = null;
     if (typeof element.getBoundingClientRect === "function") {
+        // getBoundingClientRect returns rectangle relative positioning to viewport
         let rect = element.getBoundingClientRect();
-        x = x !== null ? x : ("pageXOffset" in window ? window.pageXOffset : document.documentElement.scrollLeft);
-        y = y !== null ? y : ("pageYOffset" in window ? window.pageYOffset : document.documentElement.scrollTop);
 
         if (rect && rect.width > 0 && rect.height > 0) {
-            // getBoundingClientRect returns relative positioning to viewport and therefore needs
-            // addition of window scroll position to get position relative to document
-            // Also: using Math.floor() instead of Math.round() below because in Edge,
+            viewport = viewport || getViewport();
+            let visible =
+                // Top of rectangle is lesser than the bottom of the viewport
+                rect.top <= viewport.h &&
+                // Bottom of rectangle is greater than the top of the viewport
+                rect.top + rect.height >= 0 &&
+                // Left of rectangle is lesser than the right of the viewport
+                rect.left <= viewport.w &&
+                // Right of rectangle is greater than the left of the viewport
+                rect.left + rect.width >= 0 &&
+                // The current page is visible
+                ("visibilityState" in document ? document.visibilityState === "visible" : true);
+
+            // Add viewport's scroll position to rectangle to get position relative to document origin
+            // Also: using Math.floor() instead of Math.round() because in Edge,
             // getBoundingClientRect returns partial pixel values (e.g. 162.5px) and Chrome already
-            // floors the value (e.g. 162px). Keeping behavior consistent across
-            box = [
-                Math.floor(rect.left + x),
-                Math.floor(rect.top + y),
-                Math.floor(rect.width),
-                Math.floor(rect.height)
-            ];
+            // floors the value (e.g. 162px). This keeps consistent behavior across browsers.
+            box = {
+                x: Math.floor(rect.left + viewport.x),
+                y: Math.floor(rect.top + viewport.y),
+                w: Math.floor(rect.width),
+                h: Math.floor(rect.height),
+                v: visible ? BooleanFlag.True : BooleanFlag.False
+            };
         }
     }
     return box;

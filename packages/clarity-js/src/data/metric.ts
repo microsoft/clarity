@@ -2,44 +2,45 @@ import { Event, Metric, MetricData } from "@clarity-types/data";
 import encode from "./encode";
 
 export let data: MetricData = null;
-export let updates: Metric[] = [];
+export let updates: MetricData = null;
 
 export function start(): void {
     data = {};
+    updates = {};
 }
 
 export function end(): void {
     data = {};
+    updates = {};
 }
 
 export function count(metric: Metric, increment: number = 1): void {
     if (!(metric in data)) { data[metric] = 0; }
+    if (!(metric in updates)) { updates[metric] = 0; }
     data[metric] += increment;
-    track(metric);
+    updates[metric] += increment;
 }
 
-export function accumulate(metric: Metric, value: number): void {
+export function sum(metric: Metric, value: number): void {
     if (!(metric in data)) { data[metric] = 0; }
+    if (!(metric in updates)) { updates[metric] = 0; }
     data[metric] += value;
-    track(metric);
+    updates[metric] += value;
 }
 
 export function max(metric: Metric, value: number): void {
     if (!(metric in data)) { data[metric] = 0; }
-    data[metric] = Math.max(value, data[metric]);
-    track(metric);
+    if (value > data[metric] || data[metric] === 0) {
+        if (!(metric in updates)) { updates[metric] = 0; }
+        updates[metric] += value - data[metric];
+        data[metric] = value;
+    }
 }
 
 export function compute(): void {
     encode(Event.Metric);
 }
 
-function track(metric: Metric): void {
-    if (updates.indexOf(metric) === -1) {
-        updates.push(metric);
-    }
-}
-
 export function reset(): void {
-    updates = [];
+    updates = {};
 }

@@ -46,6 +46,13 @@ export const enum Constant {
 
 
 /* Helper Interfaces */
+export interface Box {
+    x: number; // Left
+    y: number; // Top
+    w: number; // Width
+    h: number; // Height
+    v: number; // Visibility
+}
 
 export interface Attributes {
     [key: string]: string;
@@ -96,6 +103,6 @@ export interface DocumentData {
 
 export interface RegionData {
     id: number;
-    box: number[];
+    box: Box;
     region: string;
 }

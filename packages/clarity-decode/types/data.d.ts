@@ -3,7 +3,7 @@ import { DiagnosticEvent, ImageErrorEvent, LogEvent, ScriptErrorEvent } from "./
 import { BaselineEvent, ClickEvent, InputEvent, InteractionEvent, PointerEvent, ResizeEvent } from "./interaction";
 import { ScrollEvent, SelectionEvent, UnloadEvent, VisibilityEvent } from "./interaction";
 import { DocumentEvent, DomEvent, LayoutEvent, RegionEvent } from "./layout";
-import { ConnectionEvent, NavigationEvent, NetworkEvent } from "./performance";
+import { ConnectionEvent, NavigationEvent } from "./performance";
 import { PartialEvent } from "./core";
 
 /* Redeclare enums */
@@ -13,6 +13,9 @@ export import Dimension = Data.Dimension;
 export import Event = Data.Event;
 export import Metric = Data.Metric;
 export import Payload = Data.Payload;
+export import MetricData = Data.MetricData;
+export import DimensionData = Data.DimensionData;
+export import BooleanFlag = Data.BooleanFlag;
 
 /* Data Events */
 export interface DimensionEvent extends PartialEvent { data: Data.DimensionData; }
@@ -56,7 +59,6 @@ export interface DecodedPayload {
     doc?: DocumentEvent[];
     connection?: ConnectionEvent[];
     navigation?: NavigationEvent[];
-    network?: NetworkEvent[];
     log?: LogEvent[];
     baseline?: BaselineEvent[];
 }

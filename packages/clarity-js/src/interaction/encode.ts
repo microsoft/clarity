@@ -114,13 +114,16 @@ export default async function(type: Event): Promise<void> {
         case Event.Visibility:
             let v = visibility.data;
             tokens.push(v.visible);
-            visibility.reset();
             queue(tokens);
+            baseline.visibility(v.visible);
+            visibility.reset();
             break;
         case Event.Baseline:
             let b = baseline.state;
             if (b) {
                 tokens = [b.time, b.event];
+                tokens.push(b.data.docWidth);
+                tokens.push(b.data.docHeight);
                 tokens.push(b.data.scrollX);
                 tokens.push(b.data.scrollY);
                 tokens.push(b.data.pointerX);

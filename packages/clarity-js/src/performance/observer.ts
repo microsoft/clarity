@@ -1,11 +1,11 @@
-import { Code, Severity, Metric } from "@clarity-types/data";
+import { Code, Dimension, Metric, Severity } from "@clarity-types/data";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import { setTimeout } from "@src/core/timeout";
+import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as log from "@src/diagnostic/log";
 import * as navigation from "@src/performance/navigation";
-import * as network from "@src/performance/network";
 
 let observer: PerformanceObserver;
 let polling: boolean;
@@ -45,6 +45,7 @@ function handle(entries: PerformanceObserverEntryList): void {
 
 function process(entries: PerformanceEntryList, offset: number): void {
     if (entries && entries.length > offset) {
+        let visible = "visibilityState" in document ? document.visibilityState === "visible" : true;
         for (let i = offset; i < entries.length; i++) {
             let entry = entries[i];
             switch (entry.entryType) {
@@ -52,21 +53,21 @@ function process(entries: PerformanceEntryList, offset: number): void {
                     navigation.compute(entry as PerformanceNavigationTiming);
                     break;
                 case "resource":
-                    network.compute(entry as PerformanceResourceTiming);
+                    dimension.log(Dimension.NetworkHosts, host(entry.name));
                     break;
                 case "longtask":
                     metric.count(Metric.LongTaskCount);
                     break;
                 case "first-input":
-                    metric.count(Metric.FirstInputDelay, entry["processingStart"] - entry.startTime);
+                    if (visible) { metric.count(Metric.FirstInputDelay, entry["processingStart"] - entry.startTime); }
                     break;
                 case "layout-shift":
-                    if (!entry["hadRecentInput"]) {
-                        metric.accumulate(Metric.CumulativeLayoutShift, entry["value"]);
+                    if (visible && !entry["hadRecentInput"]) {
+                        metric.sum(Metric.CumulativeLayoutShift, entry["value"]);
                     }
                     break;
                 case "largest-contentful-paint":
-                    metric.max(Metric.LargestPaint, entry.startTime);
+                    if (visible) { metric.max(Metric.LargestPaint, entry.startTime); }
                     break;
             }
             lastEntryIndex++;
@@ -79,4 +80,10 @@ export function end(): void {
     observer = null;
     lastEntryIndex = 0;
     polling = false;
+}
+
+function host(url: string): string {
+    let a = document.createElement("a");
+    a.href = url;
+    return a.hostname;
 }

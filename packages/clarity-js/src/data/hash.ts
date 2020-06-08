@@ -1,9 +1,5 @@
 // tslint:disable: no-bitwise
-const MAX_HASH_LENGTH = 9;
-export default function(input: string): string {
-    // Don't hash the input if its less is than or same as max hash length
-    if (input && input.length <= MAX_HASH_LENGTH) { return input; }
-
+export default function(input: string): number {
     // Code inspired from C# GetHashCode: https://github.com/Microsoft/referencesource/blob/master/mscorlib/system/string.cs
     let hash = 0;
     let hashOne = 5381;
@@ -19,5 +15,5 @@ export default function(input: string): string {
     // Replace the magic number from C# implementation (1566083941) with a smaller prime number (11579)
     // This ensures we don't hit integer overflow and prevent collisions
     hash = Math.abs(hashOne + (hashTwo * 11579));
-    return hash.toString(36).slice(-1 * MAX_HASH_LENGTH); // Limit hashes to MAX_HASH_LENGTH
+    return hash;
 }

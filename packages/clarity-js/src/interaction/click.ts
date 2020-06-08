@@ -38,8 +38,8 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
 
     // Get layout rectangle for the target element
     let l = layout(t as Element);
-    let eX = l ? x - l[0] : 0;
-    let eY = l ? y - l[1] : 0;
+    let eX = l ? x - l.x : 0;
+    let eY = l ? y - l.y : 0;
 
     // Check for null values before processing this event
     if (x !== null && y !== null) {

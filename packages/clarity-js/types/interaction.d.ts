@@ -1,4 +1,4 @@
-import { Target } from "./data";
+import { BooleanFlag, Target } from "./data";
 
 /* Helper Interfaces */
 export interface PointerState {
@@ -54,7 +54,7 @@ export interface ClickData {
     button: number;
     text: string;
     link: string;
-    hash: string;
+    hash: number;
     region?: number;
 }
 
@@ -87,6 +87,9 @@ export interface VisibilityData {
 }
 
 export interface BaselineData {
+    visible: BooleanFlag;
+    docWidth: number;
+    docHeight: number;
     scrollX: number;
     scrollY: number;
     pointerX: number;
