@@ -1,3 +1,4 @@
+import { Metric } from "@clarity-types/data";
 import measure from "@src/core/measure";
 import * as envelope from "@src/data/envelope";
 import * as dimension from "@src/data/dimension";
@@ -12,8 +13,10 @@ export { tag } from "@src/data/tag";
 export { upgrade } from "@src/data/upgrade";
 
 export function start(): void {
+    // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
     metric.start();
-    dimension.start();
+    metric.count(Metric.InvokeCount);
+    measure(dimension.start)();
     measure(upload.start)();
     measure(metadata.start)();
     measure(envelope.start)();
@@ -32,6 +35,6 @@ export function end(): void {
     measure(upload.end)();
     measure(envelope.end)();
     measure(metadata.end)();
-    dimension.end();
+    measure(dimension.end)();
     metric.end();
 }

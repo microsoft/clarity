@@ -6,7 +6,7 @@ import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "@src/layout/encode";
 import * as dom from "./dom";
 
-let bm: {[key: number]: RegionData} = {};
+let bm: { [key: number]: RegionData } = {};
 let updateMap: number[] = [];
 let timeout: number = null;
 
@@ -70,7 +70,14 @@ function update(id: number, box: Box): void {
         if (updateMap.indexOf(id) === -1) { updateMap.push(id); }
         let value = dom.getValue(id);
         let r = value ? dom.region(value.region) : null;
-        bm[id] = {id, box, region: r};
+        bm[id] = { id, box, region: r };
+    }
+}
+
+export function track(id: number) {
+    if (updateMap.indexOf(id) === -1) {
+        updateMap.push(id);
+        encode(Event.Region);
     }
 }
 

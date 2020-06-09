@@ -12,6 +12,7 @@ export function start(): void {
 }
 
 export function reset(): void {
+    // Baseline state holds the previous values - if it is updated in the current payload, reset the state to current value after sending the previous state
     state = update ? { time: time(), event: Event.Baseline, data: buffer } : state;
     buffer = buffer ? buffer : { visible: BooleanFlag.True, docWidth: 0, docHeight: 0, scrollX: 0, scrollY: 0, pointerX: 0, pointerY: 0 };
     update = false;
