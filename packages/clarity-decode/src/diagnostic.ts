@@ -9,7 +9,6 @@ export function decode(tokens: Data.Token[]): DiagnosticEvent {
             let imageError: Diagnostic.ImageErrorData = {
                 source: tokens[2] as string,
                 target: tokens[3] as number,
-                region: tokens.length > 4 ? tokens[4] as number : null
             };
             return { time, event, data: imageError };
         case Data.Event.ScriptError:

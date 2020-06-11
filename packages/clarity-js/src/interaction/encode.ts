@@ -11,7 +11,6 @@ import * as scroll from "./scroll";
 import * as selection from "./selection";
 import * as unload from "./unload";
 import * as visibility from "./visibility";
-import { track } from "@src/layout/region";
 
 export default async function (type: Event): Promise<void> {
     let t = time();
@@ -41,7 +40,7 @@ export default async function (type: Event): Promise<void> {
         case Event.Click:
             for (let i = 0; i < click.state.length; i++) {
                 let entry = click.state[i];
-                let cTarget = metadata(entry.data.target as Node);
+                let cTarget = metadata(entry.data.target as Node, true);
                 tokens = [entry.time, entry.event];
                 tokens.push(cTarget.id);
                 tokens.push(entry.data.x);
@@ -52,7 +51,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.text);
                 tokens.push(entry.data.link);
                 tokens.push(cTarget.hash);
-                if (cTarget.region) { tokens.push(cTarget.region); track(cTarget.region) }
+                if (cTarget.region) { tokens.push(cTarget.region); }
                 queue(tokens);
                 baseline.track(entry.event, entry.data.x, entry.data.y); // Track changes to baseline
             }
@@ -74,7 +73,7 @@ export default async function (type: Event): Promise<void> {
         case Event.Input:
             for (let i = 0; i < input.state.length; i++) {
                 let entry = input.state[i];
-                let iTarget = metadata(entry.data.target as Node);
+                let iTarget = metadata(entry.data.target as Node, true);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
                 tokens.push(entry.data.value);
@@ -86,7 +85,7 @@ export default async function (type: Event): Promise<void> {
         case Event.Selection:
             let s = selection.data;
             if (s) {
-                let startTarget = metadata(s.start as Node);
+                let startTarget = metadata(s.start as Node, true);
                 let endTarget = metadata(s.end as Node);
                 tokens.push(startTarget.id);
                 tokens.push(s.startOffset);

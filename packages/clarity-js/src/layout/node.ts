@@ -8,7 +8,7 @@ import * as mutation from "@src/layout/mutation";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror"];
 
-export default function(node: Node, source: Source): Node {
+export default function (node: Node, source: Source): Node {
     let child: Node = null;
 
     // Do not track this change if we are attempting to remove a node before discovering it
@@ -36,12 +36,14 @@ export default function(node: Node, source: Source): Node {
             dom[call](node, parent, docData, source);
             break;
         case Node.DOCUMENT_NODE:
+            // We check for regions in the beginning when discovering document and later whenever there are new additions or modifications to DOM (mutations)
+            if (node == document) dom.extractRegions(document);
             observe(node);
             break;
         case Node.DOCUMENT_FRAGMENT_NODE:
             let shadowRoot = (node as ShadowRoot);
             if (shadowRoot.host) {
-                let type = typeof(shadowRoot.constructor);
+                let type = typeof (shadowRoot.constructor);
                 if (type === Constant.FUNCTION && shadowRoot.constructor.toString().indexOf(Constant.NATIVE_CODE) >= 0) {
                     observe(shadowRoot);
                     // See: https://wicg.github.io/construct-stylesheets/ for more details on adoptedStyleSheets.
@@ -159,7 +161,7 @@ function getCssRules(sheet: CSSStyleSheet): string {
     return value;
 }
 
-function getAttributes(attributes: NamedNodeMap): {[key: string]: string} {
+function getAttributes(attributes: NamedNodeMap): { [key: string]: string } {
     let output = {};
     if (attributes && attributes.length > 0) {
         for (let i = 0; i < attributes.length; i++) {

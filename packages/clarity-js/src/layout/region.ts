@@ -1,40 +1,27 @@
-import { Event, Metric, BooleanFlag } from "@clarity-types/data";
+import { Event, BooleanFlag } from "@clarity-types/data";
 import { Box, RegionData } from "@clarity-types/layout";
-import config from "@src/core/config";
-import * as task from "@src/core/task";
-import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "@src/layout/encode";
 import * as dom from "./dom";
 
 let bm: { [key: number]: RegionData } = {};
 let updateMap: number[] = [];
-let timeout: number = null;
 
 export function compute(): void {
-    clearTimeout(timeout);
-    timeout = setTimeout(schedule, config.lookahead);
-}
-
-function schedule(): void {
-    task.schedule(region);
+    // Making region compute synchronous for tracking regions 
+    // TODO: For modern browsers use resizeobserver 
+    region();
 }
 
 async function region(): Promise<void> {
-    let timer = Metric.LayoutCost;
-    task.start(timer);
     let values = dom.regions();
     let viewport = getViewport();
 
     for (let value of values) {
-        if (task.shouldYield(timer)) {
-            await task.suspend(timer);
-            viewport = getViewport();
-        }
+        viewport = getViewport();
         update(value.id, layout(dom.getNode(value.id) as Element, viewport));
     }
 
     if (updateMap.length > 0) { await encode(Event.Region); }
-    task.stop(timer);
 }
 
 export function updates(): RegionData[] {
@@ -77,7 +64,6 @@ function update(id: number, box: Box): void {
 export function track(id: number) {
     if (updateMap.indexOf(id) === -1) {
         updateMap.push(id);
-        encode(Event.Region);
     }
 }
 
@@ -118,7 +104,6 @@ export function layout(element: Element, viewport: Box = null): Box {
 }
 
 export function reset(): void {
-    clearTimeout(timeout);
     updateMap = [];
     bm = {};
 }
