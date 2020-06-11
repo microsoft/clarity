@@ -1,4 +1,5 @@
 import measure from "@src/core/measure";
+import * as baseline from "@src/data/baseline";
 import * as envelope from "@src/data/envelope";
 import * as dimension from "@src/data/dimension";
 import * as metadata from "@src/data/metadata";
@@ -14,6 +15,7 @@ export { upgrade } from "@src/data/upgrade";
 export function start(): void {
     // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
     metric.start();
+    measure(baseline.start)();
     measure(dimension.start)();
     measure(upload.start)();
     measure(metadata.start)();
@@ -34,5 +36,6 @@ export function end(): void {
     measure(envelope.end)();
     measure(metadata.end)();
     measure(dimension.end)();
+    measure(baseline.end)();
     metric.end();
 }

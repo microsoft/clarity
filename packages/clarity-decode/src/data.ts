@@ -31,6 +31,15 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 dimensions[tokens[d++] as number] = tokens[d++] as string[];
             }
             return { time, event, data: dimensions };
+        case Data.Event.Baseline:
+            let baselineData: Data.BaselineData = {
+                visible: tokens[2] as number,
+                docWidth: tokens[3] as number,
+                docHeight: tokens[4] as number,
+                screenWidth: tokens[5] as number,
+                screenHeight: tokens[6] as number
+            }
+            return { time, event, data: baselineData };
     }
     return null;
 }
@@ -44,7 +53,7 @@ export function envelope(tokens: Data.Token[]): Data.Envelope {
         projectId: tokens[4] as number,
         userId: tokens[5] as number,
         sessionId: tokens[6] as number,
-        pageId: tokens[7] as number,
+        pageNum: tokens[7] as number,
         upload: tokens[8] as Data.Upload,
         end: tokens[9] as Data.BooleanFlag
     };

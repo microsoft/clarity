@@ -28,7 +28,7 @@ background.onMessage.addListener(function(message: any): void {
         if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
         eJson.push(JSON.parse(message.payload));
         dJson.push(decoded);
-        id = `${envelope.sessionId.toString(36)}-${envelope.pageId.toString(36)}`;
+        id = `${envelope.sessionId.toString(36)}-${envelope.pageNum.toString(36)}`;
         visualize.replay(decoded);
     }
 });

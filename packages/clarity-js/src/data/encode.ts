@@ -1,7 +1,8 @@
 import { Event, Token, Metric, BooleanFlag } from "@clarity-types/data";
 import { time } from "@src/core/time";
-import * as metric from "@src/data/metric";
+import * as baseline from "@src/data/baseline";
 import * as dimension from "@src/data/dimension";
+import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as tag from "@src/data/tag";
 import * as upgrade from "@src/data/upgrade";
@@ -11,6 +12,19 @@ export default function(event: Event): void {
     let t = time();
     let tokens: Token[] = [t, event];
     switch (event) {
+        case Event.Baseline:
+            let b = baseline.state;
+            if (b) {
+                tokens = [b.time, b.event];
+                tokens.push(b.data.visible);
+                tokens.push(b.data.docWidth);
+                tokens.push(b.data.docHeight);
+                tokens.push(b.data.screenWidth);
+                tokens.push(b.data.screenHeight);
+                queue(tokens);
+            }
+            baseline.reset();
+            break;
         case Event.Ping:
             tokens.push(ping.data.gap);
             queue(tokens);

@@ -1,7 +1,7 @@
 import { Data } from "clarity-js";
 import { DiagnosticEvent, ImageErrorEvent, LogEvent, ScriptErrorEvent } from "./diagnostic";
-import { BaselineEvent, ClickEvent, InputEvent, InteractionEvent, PointerEvent, ResizeEvent } from "./interaction";
-import { ScrollEvent, SelectionEvent, UnloadEvent, VisibilityEvent } from "./interaction";
+import { ClickEvent, InputEvent, InteractionEvent, PointerEvent, ResizeEvent } from "./interaction";
+import { ScrollEvent, SelectionEvent, TimelineEvent, UnloadEvent, VisibilityEvent } from "./interaction";
 import { DocumentEvent, DomEvent, LayoutEvent, RegionEvent } from "./layout";
 import { ConnectionEvent, NavigationEvent } from "./performance";
 import { PartialEvent } from "./core";
@@ -18,6 +18,7 @@ export import DimensionData = Data.DimensionData;
 export import BooleanFlag = Data.BooleanFlag;
 
 /* Data Events */
+export interface BaselineEvent extends PartialEvent { data: Data.BaselineData; }
 export interface DimensionEvent extends PartialEvent { data: Data.DimensionData; }
 export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
@@ -25,7 +26,8 @@ export interface TagEvent extends PartialEvent { data: Data.TagData; }
 export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
 export interface DataEvent extends PartialEvent {
-    data: Data.DimensionData | 
+    data: Data.BaselineData |
+    Data.DimensionData | 
     Data.MetricData |
     Data.PingData |
     Data.TagData |
@@ -33,7 +35,7 @@ export interface DataEvent extends PartialEvent {
     Data.UploadData;
 }
 
-export type DecodedEvent = DataEvent | DiagnosticEvent | InteractionEvent | LayoutEvent;
+export type DecodedEvent = BaselineEvent | DataEvent | DiagnosticEvent | InteractionEvent | LayoutEvent;
 
 export interface DecodedPayload {
     timestamp: number;
@@ -50,6 +52,7 @@ export interface DecodedPayload {
     resize?: ResizeEvent[];
     scroll?: ScrollEvent[];
     selection?: SelectionEvent[];
+    timeline?: TimelineEvent[];
     unload?: UnloadEvent[];
     upgrade?: UpgradeEvent[];
     upload?: UploadEvent[];

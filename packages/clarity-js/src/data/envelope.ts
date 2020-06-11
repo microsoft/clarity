@@ -15,7 +15,7 @@ export function start(): void {
     projectId: m.projectId,
     userId: m.userId,
     sessionId: m.sessionId,
-    pageId: m.pageId,
+    pageNum: m.pageNum,
     upload: Upload.Async,
     end: BooleanFlag.False
   };
@@ -39,7 +39,7 @@ export function envelope(last: boolean): Token[] {
     data.projectId,
     data.userId,
     data.sessionId,
-    data.pageId,
+    data.pageNum,
     data.upload,
     data.end
   ];

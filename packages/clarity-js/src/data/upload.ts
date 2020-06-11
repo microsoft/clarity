@@ -8,7 +8,8 @@ import * as envelope from "@src/data/envelope";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
-import * as baseline from "@src/interaction/baseline";
+import * as baseline from "@src/data/baseline";
+import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
 import * as performance from "@src/performance/observer";
 
@@ -53,6 +54,7 @@ export function queue(data: Token[]): void {
             case Event.Upload:
             case Event.Log:
             case Event.Baseline:
+            case Event.Timeline:
                 transmit = false;
                 break;
             case Event.Discover:
@@ -121,6 +123,7 @@ function upload(final: boolean = false): void {
     performance.compute();
     region.compute();
     baseline.compute();
+    timeline.compute();
     dimension.compute();
     metric.compute();
 

@@ -35,17 +35,6 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             };
             return { time, event, data: clickData };
             break;
-        case Data.Event.Baseline:
-            let baselineData: Interaction.BaselineData = {
-                visible: tokens[2] as number,
-                docWidth: tokens[3] as number,
-                docHeight: tokens[4] as number,
-                scrollX: tokens[5] as number,
-                scrollY: tokens[6] as number,
-                pointerX: tokens[7] as number,
-                pointerY: tokens[8] as number
-            }
-            return { time, event, data: baselineData };
         case Data.Event.Resize:
             let resizeData: Interaction.ResizeData = { width: tokens[2] as number, height: tokens[3] as number };
             return { time, event, data: resizeData };
@@ -72,6 +61,14 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 y: tokens[4] as number,
             };
             return { time, event, data: scrollData };
+        case Data.Event.Timeline:
+            let timelineData: Interaction.TimelineData = {
+                type: tokens[2] as number,
+                target: tokens[3] as number,
+                x: tokens[4] as number,
+                y: tokens[5] as number,
+            };
+            return { time, event, data: timelineData };
         case Data.Event.Visibility:
             let visibleData: Interaction.VisibilityData = { visible: tokens[2] as string };
             return { time, event, data: visibleData };

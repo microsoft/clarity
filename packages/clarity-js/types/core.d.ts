@@ -69,6 +69,7 @@ export interface Config {
     expire?: number;
     ping?: number;
     timeout?: number;
+    timeline?: number;
     session?: number;
     shutdown?: number;
     cssRules?: boolean;
