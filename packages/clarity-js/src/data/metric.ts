@@ -7,6 +7,7 @@ export let updates: MetricData = null;
 export function start(): void {
     data = {};
     updates = {};
+    count(Metric.InvokeCount);
 }
 
 export function end(): void {
@@ -31,8 +32,7 @@ export function sum(metric: Metric, value: number): void {
 export function max(metric: Metric, value: number): void {
     if (!(metric in data)) { data[metric] = 0; }
     if (value > data[metric] || data[metric] === 0) {
-        if (!(metric in updates)) { updates[metric] = 0; }
-        updates[metric] += value - data[metric];
+        updates[metric] = value;
         data[metric] = value;
     }
 }

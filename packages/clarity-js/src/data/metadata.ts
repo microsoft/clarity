@@ -9,29 +9,29 @@ const CLARITY_STORAGE_SEPARATOR: string = "|";
 export let data: Metadata = null;
 
 export function start(): void {
-    const ts = Math.round(Date.now()); // ensuring that the output of Date.now() is an integer
-    const ua = navigator && "userAgent" in navigator ? navigator.userAgent : ""
-    const title = document && document.title ? document.title : "";
+  const ts = Math.round(Date.now()); // ensuring that the output of Date.now() is an integer
+  const ua = navigator && "userAgent" in navigator ? navigator.userAgent : "";
+  const title = document && document.title ? document.title : "";
 
-    // Populate ids for this page
-    let s = session(ts);
-    data = {
-      projectId: config.projectId || hash(location.host),
-      userId: user(),
-      sessionId: s[0],
-      pageId: s[1]
-    }
+  // Populate ids for this page
+  let s = session(ts);
+  data = {
+    projectId: config.projectId || hash(location.host),
+    userId: user(),
+    sessionId: s[0],
+    pageId: s[1]
+  }
 
-    // Log dimensions
-    dimension.log(Dimension.UserAgent, ua);
-    dimension.log(Dimension.PageTitle, title);
+  // Log dimensions
+  dimension.log(Dimension.UserAgent, ua);
+  dimension.log(Dimension.PageTitle, title);
 
-    // Metrics
-    metric.max(Metric.ClientTimestamp, ts);
-    metric.max(Metric.Playback, config.lean ? BooleanFlag.False : BooleanFlag.True);
+  // Metrics
+  metric.max(Metric.ClientTimestamp, ts);
+  metric.max(Metric.Playback, config.lean ? BooleanFlag.False : BooleanFlag.True);
 
-    // Track ids using a cookie if configuration allows it
-    track();
+  // Track ids using a cookie if configuration allows it
+  track();
 }
 
 export function end(): void {
@@ -64,9 +64,9 @@ function shortid() {
   let d = new Date().getTime();
   if (window.performance && performance.now) {
     // Use high-precision timer if available
-    d += performance.now(); 
+    d += performance.now();
   }
-  let uuid = "xxxx4xyx".replace(/[xy]/g, function(c) {
+  let uuid = "xxxx4xyx".replace(/[xy]/g, function (c) {
     let r = (d + Math.random() * 36) % 36 | 0;
     d = Math.floor(d / 36);
     return str((c == "x" ? r : (r & 0x3 | 0x8)));

@@ -1,4 +1,4 @@
-import {Event, Token} from "@clarity-types/data";
+import { Event, Token } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import { queue } from "@src/data/upload";
 import * as image from "@src/diagnostic/image";
@@ -6,7 +6,7 @@ import * as log from "@src/diagnostic/log";
 import * as script from "@src/diagnostic/script";
 import { metadata } from "@src/layout/target";
 
-export default async function(type: Event): Promise<void> {
+export default async function (type: Event): Promise<void> {
     let tokens: Token[] = [time(), type];
 
     switch (type) {
@@ -23,7 +23,6 @@ export default async function(type: Event): Promise<void> {
                 let imageTarget = metadata(image.data.target as Node);
                 tokens.push(image.data.source);
                 tokens.push(imageTarget.id);
-                if (imageTarget.region) { tokens.push(imageTarget.region); }
                 queue(tokens);
             }
             break;

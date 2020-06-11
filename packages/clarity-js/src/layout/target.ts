@@ -1,5 +1,6 @@
 import { TargetMetadata } from "@clarity-types/data";
 import hash from "@src/data/hash";
+import { track } from "@src/layout/region";
 import * as dom from "@src/layout/dom";
 
 export function target(evt: UIEvent): Node {
@@ -21,7 +22,7 @@ export function link(node: Node): HTMLAnchorElement {
     return null;
 }
 
-export function metadata(node: Node): TargetMetadata {
+export function metadata(node: Node, trackRegion?: boolean): TargetMetadata {
     let output: TargetMetadata = { id: null, region: null, hash: null, node };
     if (node) {
         let value = dom.get(node);
@@ -29,7 +30,11 @@ export function metadata(node: Node): TargetMetadata {
             output.id = value.id;
             output.region = value.region;
             output.hash = value.selector ? hash(value.selector) : null;
+            if (trackRegion && value.region) {
+                track(value.region)
+            }
         }
     }
+
     return output;
 }

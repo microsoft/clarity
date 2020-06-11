@@ -10,6 +10,7 @@ import { link, target } from "@src/layout/target";
 import encode from "./encode";
 
 export let state: ClickState[] = [];
+let clickPrecision = Math.pow(2, 16);
 
 export function start(): void {
     reset();
@@ -38,22 +39,24 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
 
     // Get layout rectangle for the target element
     let l = layout(t as Element);
-    let eX = l ? x - l.x : 0;
-    let eY = l ? y - l.y : 0;
+    let eX = l ? ((x - l.x) / l.w) * clickPrecision : 0;
+    let eY = l ? ((y - l.y) / l.h) * clickPrecision : 0;
 
     // Check for null values before processing this event
     if (x !== null && y !== null) {
-        state.push({ time: time(), event, data: {
-            target: t,
-            x,
-            y,
-            eX,
-            eY,
-            button: evt.button,
-            text: a ? a.textContent : null,
-            link: a ? a.href : null,
-            hash: null,
-        }});
+        state.push({
+            time: time(), event, data: {
+                target: t,
+                x,
+                y,
+                eX,
+                eY,
+                button: evt.button,
+                text: a ? a.textContent : null,
+                link: a ? a.href : null,
+                hash: null,
+            }
+        });
         schedule(encode.bind(this, event));
     }
 }

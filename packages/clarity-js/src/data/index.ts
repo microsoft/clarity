@@ -12,8 +12,9 @@ export { tag } from "@src/data/tag";
 export { upgrade } from "@src/data/upgrade";
 
 export function start(): void {
+    // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
     metric.start();
-    dimension.start();
+    measure(dimension.start)();
     measure(upload.start)();
     measure(metadata.start)();
     measure(envelope.start)();
@@ -32,6 +33,6 @@ export function end(): void {
     measure(upload.end)();
     measure(envelope.end)();
     measure(metadata.end)();
-    dimension.end();
+    measure(dimension.end)();
     metric.end();
 }

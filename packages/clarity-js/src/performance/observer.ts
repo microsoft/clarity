@@ -35,7 +35,7 @@ function observe(): void {
     if (window["PerformanceObserver"]) {
         if (observer) { observer.disconnect(); }
         observer = new PerformanceObserver(measure(handle) as PerformanceObserverCallback);
-        observer.observe({entryTypes: ["navigation", "resource", "longtask", "first-input", "layout-shift", "largest-contentful-paint"]});
+        observer.observe({ entryTypes: ["navigation", "resource", "longtask", "first-input", "layout-shift", "largest-contentful-paint"] });
     } else { polling = true; }
 }
 
@@ -59,7 +59,7 @@ function process(entries: PerformanceEntryList, offset: number): void {
                     metric.count(Metric.LongTaskCount);
                     break;
                 case "first-input":
-                    if (visible) { metric.count(Metric.FirstInputDelay, entry["processingStart"] - entry.startTime); }
+                    if (visible) { metric.max(Metric.FirstInputDelay, entry["processingStart"] - entry.startTime); }
                     break;
                 case "layout-shift":
                     if (visible && !entry["hadRecentInput"]) {

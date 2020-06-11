@@ -46,7 +46,7 @@ export async function schedule(task: TaskFunction, priority: Priority = Priority
 
     let promise = new Promise<void>((resolve: TaskResolve): void => {
         let insert = priority === Priority.High ? "unshift" : "push";
-        queuedTasks[insert]({task, resolve});
+        queuedTasks[insert]({ task, resolve });
     });
 
     // If there is no active task running, and Clarity is not in pause state,
@@ -84,8 +84,10 @@ export function start(method: Metric): void {
 
 function restart(method: Metric): void {
     let c = tracker[method].calls;
+    let y = tracker[method].yield;
     start(method);
     tracker[method].calls = c + 1;
+    tracker[method].yield = y;
 }
 
 export function stop(method: Metric): void {

@@ -1,7 +1,7 @@
 import { Data, Interaction } from "clarity-js";
 import { InteractionEvent } from "../types/interaction";
 
-export function decode(tokens: Data.Token[]): InteractionEvent  {
+export function decode(tokens: Data.Token[]): InteractionEvent {
     let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
     switch (event) {
@@ -18,7 +18,6 @@ export function decode(tokens: Data.Token[]): InteractionEvent  {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
                 y: tokens[4] as number,
-                region: tokens.length > 5 ? tokens[5] as number : null
             };
             return { time, event, data: pointerData };
         case Data.Event.Click:
@@ -71,7 +70,6 @@ export function decode(tokens: Data.Token[]): InteractionEvent  {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
                 y: tokens[4] as number,
-                region: tokens.length > 5 ? tokens[5] as number : null
             };
             return { time, event, data: scrollData };
         case Data.Event.Visibility:

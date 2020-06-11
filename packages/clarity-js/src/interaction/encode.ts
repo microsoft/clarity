@@ -1,4 +1,4 @@
-import {Event, Token} from "@clarity-types/data";
+import { Event, Token } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import { queue } from "@src/data/upload";
 import { metadata } from "@src/layout/target";
@@ -12,7 +12,7 @@ import * as selection from "./selection";
 import * as unload from "./unload";
 import * as visibility from "./visibility";
 
-export default async function(type: Event): Promise<void> {
+export default async function (type: Event): Promise<void> {
     let t = time();
     let tokens: Token[] = [t, type];
     switch (type) {
@@ -32,7 +32,6 @@ export default async function(type: Event): Promise<void> {
                 tokens.push(pTarget.id);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
-                if (pTarget.region) { tokens.push(pTarget.region); }
                 queue(tokens);
                 baseline.track(entry.event, entry.data.x, entry.data.y); // Track changes to baseline
             }
@@ -41,7 +40,7 @@ export default async function(type: Event): Promise<void> {
         case Event.Click:
             for (let i = 0; i < click.state.length; i++) {
                 let entry = click.state[i];
-                let cTarget = metadata(entry.data.target as Node);
+                let cTarget = metadata(entry.data.target as Node, true);
                 tokens = [entry.time, entry.event];
                 tokens.push(cTarget.id);
                 tokens.push(entry.data.x);
@@ -74,7 +73,7 @@ export default async function(type: Event): Promise<void> {
         case Event.Input:
             for (let i = 0; i < input.state.length; i++) {
                 let entry = input.state[i];
-                let iTarget = metadata(entry.data.target as Node);
+                let iTarget = metadata(entry.data.target as Node, true);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
                 tokens.push(entry.data.value);
@@ -86,7 +85,7 @@ export default async function(type: Event): Promise<void> {
         case Event.Selection:
             let s = selection.data;
             if (s) {
-                let startTarget = metadata(s.start as Node);
+                let startTarget = metadata(s.start as Node, true);
                 let endTarget = metadata(s.end as Node);
                 tokens.push(startTarget.id);
                 tokens.push(s.startOffset);
@@ -105,7 +104,6 @@ export default async function(type: Event): Promise<void> {
                 tokens.push(sTarget.id);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
-                if (sTarget.region) { tokens.push(sTarget.region); }
                 queue(tokens);
                 baseline.track(entry.event, entry.data.x, entry.data.y); // Track changes to baseline
             }
