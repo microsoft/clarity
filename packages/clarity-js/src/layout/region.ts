@@ -17,7 +17,6 @@ async function region(): Promise<void> {
     let viewport = getViewport();
 
     for (let value of values) {
-        viewport = getViewport();
         update(value.id, layout(dom.getNode(value.id) as Element, viewport));
     }
 
