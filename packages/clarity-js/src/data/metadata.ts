@@ -19,7 +19,7 @@ export function start(): void {
     projectId: config.projectId || hash(location.host),
     userId: user(),
     sessionId: s[0],
-    pageId: s[1]
+    pageNum: s[1]
   }
 
   // Log dimensions

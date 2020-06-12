@@ -1,14 +1,15 @@
 import { Event, Token } from "@clarity-types/data";
 import { time } from "@src/core/time";
+import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
 import { metadata } from "@src/layout/target";
-import * as baseline from "./baseline";
 import * as click from "./click";
 import * as input from "./input";
 import * as pointer from "./pointer";
 import * as resize from "./resize";
 import * as scroll from "./scroll";
 import * as selection from "./selection";
+import * as timeline from "./timeline";
 import * as unload from "./unload";
 import * as visibility from "./visibility";
 
@@ -26,6 +27,7 @@ export default async function (type: Event): Promise<void> {
         case Event.TouchMove:
         case Event.TouchCancel:
             for (let i = 0; i < pointer.state.length; i++) {
+                let last = i + 1 === pointer.state.length;
                 let entry = pointer.state[i];
                 let pTarget = metadata(entry.data.target as Node);
                 tokens = [entry.time, entry.event];
@@ -33,7 +35,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
                 queue(tokens);
-                baseline.track(entry.event, entry.data.x, entry.data.y); // Track changes to baseline
+                if (last) { timeline.track(entry.time, entry.event, pTarget.id, entry.data.x, entry.data.y); }
             }
             pointer.reset();
             break;
@@ -53,7 +55,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(cTarget.hash);
                 if (cTarget.region) { tokens.push(cTarget.region); }
                 queue(tokens);
-                baseline.track(entry.event, entry.data.x, entry.data.y); // Track changes to baseline
+                timeline.track(entry.time, entry.event, cTarget.id, entry.data.x, entry.data.y);
             }
             click.reset();
             break;
@@ -61,6 +63,7 @@ export default async function (type: Event): Promise<void> {
             let r = resize.data;
             tokens.push(r.width);
             tokens.push(r.height);
+            baseline.track(type, r.width, r.height);
             resize.reset();
             queue(tokens);
             break;
@@ -85,29 +88,42 @@ export default async function (type: Event): Promise<void> {
         case Event.Selection:
             let s = selection.data;
             if (s) {
-                let startTarget = metadata(s.start as Node, true);
+                let startTarget = metadata(s.start as Node);
                 let endTarget = metadata(s.end as Node);
                 tokens.push(startTarget.id);
                 tokens.push(s.startOffset);
                 tokens.push(endTarget.id);
                 tokens.push(s.endOffset);
-                if (startTarget.region) { tokens.push(startTarget.region); }
                 selection.reset();
                 queue(tokens);
             }
             break;
         case Event.Scroll:
             for (let i = 0; i < scroll.state.length; i++) {
+                let last = i + 1 === scroll.state.length;
                 let entry = scroll.state[i];
-                let sTarget = metadata(entry.data.target as Node);
+                let sTarget = metadata(entry.data.target as Node, true);
                 tokens = [entry.time, entry.event];
                 tokens.push(sTarget.id);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
+                if (sTarget.region) { tokens.push(sTarget.region); }
                 queue(tokens);
-                baseline.track(entry.event, entry.data.x, entry.data.y); // Track changes to baseline
+                if (last) { timeline.track(entry.time, entry.event, sTarget.id, entry.data.x, entry.data.y); }
             }
             scroll.reset();
+            break;
+        case Event.Timeline:
+            for (let i = 0; i < timeline.updates.length; i++) {
+                let entry = timeline.updates[i];
+                tokens = [entry.time, entry.event];
+                tokens.push(entry.data.type);
+                tokens.push(entry.data.target);
+                tokens.push(entry.data.x);
+                tokens.push(entry.data.y);
+                queue(tokens);
+            }
+            timeline.reset();
             break;
         case Event.Visibility:
             let v = visibility.data;
@@ -115,20 +131,6 @@ export default async function (type: Event): Promise<void> {
             queue(tokens);
             baseline.visibility(v.visible);
             visibility.reset();
-            break;
-        case Event.Baseline:
-            let b = baseline.state;
-            if (b) {
-                tokens = [b.time, b.event];
-                tokens.push(b.data.docWidth);
-                tokens.push(b.data.docHeight);
-                tokens.push(b.data.scrollX);
-                tokens.push(b.data.scrollY);
-                tokens.push(b.data.pointerX);
-                tokens.push(b.data.pointerY);
-                queue(tokens);
-            }
-            baseline.reset();
             break;
     }
 }

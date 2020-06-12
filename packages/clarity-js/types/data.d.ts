@@ -10,35 +10,36 @@ export const enum Event {
     Dimension = 1,
     Upload = 2,
     Upgrade = 3,
-    Discover = 4,
-    Mutation = 5,
-    Region = 6,
-    Document = 7,
-    Click = 8,
-    Scroll = 9,
-    Resize = 10,
-    MouseMove = 11,
-    MouseDown = 12,
-    MouseUp = 13,
-    MouseWheel = 14,
-    DoubleClick = 15,
-    TouchStart = 16,
-    TouchEnd = 17,
-    TouchMove = 18,
-    TouchCancel = 19,
-    Selection = 20,
-    Page = 21,
-    Tag = 22,
-    Ping = 23,
-    Unload = 24,
-    Input = 25,
-    Visibility = 26,
-    Baseline = 27,
-    Navigation = 28,    
-    Connection = 29,
-    ScriptError = 30,
-    ImageError = 31,
-    Log = 32
+    Baseline = 4,
+    Discover = 5,
+    Mutation = 6,
+    Region = 7,
+    Document = 8,
+    Click = 9,
+    Scroll = 10,
+    Resize = 11,
+    MouseMove = 12,
+    MouseDown = 13,
+    MouseUp = 14,
+    MouseWheel = 15,
+    DoubleClick = 16,
+    TouchStart = 17,
+    TouchEnd = 18,
+    TouchMove = 19,
+    TouchCancel = 20,
+    Selection = 21,
+    Timeline = 22,
+    Page = 23,
+    Tag = 24,
+    Ping = 25,
+    Unload = 26,
+    Input = 27,
+    Visibility = 28,
+    Navigation = 29,
+    Connection = 30,
+    ScriptError = 31,
+    ImageError = 32,
+    Log = 33
 }
 
 export const enum Metric {
@@ -104,7 +105,7 @@ export interface Metadata {
     projectId: number;
     userId: number;
     sessionId: number;
-    pageId: number;
+    pageNum: number;
 }
 
 export interface TargetMetadata {
@@ -130,7 +131,21 @@ export interface Transit {
     };
 }
 
+export interface BaselineState {
+    time: number;
+    event: number;
+    data: BaselineData;
+}
+
 /* Event Data */
+export interface BaselineData {
+    visible: BooleanFlag;
+    docWidth: number;
+    docHeight: number;
+    screenWidth: number;
+    screenHeight: number;
+}
+
 export interface DimensionData {
     [key: number]: string[];
 }

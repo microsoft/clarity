@@ -3,7 +3,7 @@
   "name": "Clarity Developer Tools",
   "description": "Get insights about how customers use your website.",
   "version": "0.6.0",
-  "version_name": "0.6.0-beta.1",
+  "version_name": "0.6.0-beta.2",
   "minimum_chrome_version": "50",
   "devtools_page": "devtools.html",
   "icons": {

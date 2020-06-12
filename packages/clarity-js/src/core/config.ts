@@ -10,6 +10,7 @@ let config: Config = {
     expire: 365, // 1 year
     ping: 60 * 1000, // 1 minute
     timeout: 5 * Time.Minute, // 5 minutes
+    timeline: 2 * Time.Second, // 2 seconds
     session: 10 * Time.Minute, // 10 minutes
     shutdown: 2 * Time.Hour, // 2 hours
     cssRules: false,

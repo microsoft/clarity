@@ -4,8 +4,8 @@ import mask from "@src/core/mask";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import tokenize from "@src/data/token";
+import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
-import { track } from "@src/interaction/baseline";
 import * as region from "./region";
 import * as doc from "./document";
 import * as dom from "./dom";
@@ -18,7 +18,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             let d = doc.data;
             tokens.push(d.width);
             tokens.push(d.height);
-            track(Event.Document, d.width, d.height);
+            baseline.track(type, d.width, d.height);
             queue(tokens);
             break;
         case Event.Region:

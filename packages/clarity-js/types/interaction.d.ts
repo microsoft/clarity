@@ -1,4 +1,4 @@
-import { BooleanFlag, Target } from "./data";
+import { BooleanFlag, Event, Target } from "./data";
 
 /* Helper Interfaces */
 export interface PointerState {
@@ -25,13 +25,20 @@ export interface InputState {
     data: InputData;
 }
 
-export interface BaselineState {
+export interface TimelineState {
     time: number;
     event: number;
-    data: BaselineData;
+    data: TimelineData;
 }
 
 /* Event Data */
+export interface TimelineData {
+    type: Event;
+    target: number;
+    x: number;
+    y: number;
+}
+
 export interface InputData {
     target: Target;
     value: string;
@@ -42,7 +49,6 @@ export interface PointerData {
     target: Target;
     x: number;
     y: number;
-    region?: number;    
 }
 
 export interface ClickData {
@@ -75,7 +81,6 @@ export interface SelectionData {
     startOffset: number;
     end: Target;
     endOffset: number;
-    region?: number;
 }
 
 export interface UnloadData {
@@ -84,14 +89,4 @@ export interface UnloadData {
 
 export interface VisibilityData {
     visible: string;
-}
-
-export interface BaselineData {
-    visible: BooleanFlag;
-    docWidth: number;
-    docHeight: number;
-    scrollX: number;
-    scrollY: number;
-    pointerX: number;
-    pointerY: number;
 }

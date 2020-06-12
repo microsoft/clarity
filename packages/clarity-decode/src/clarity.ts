@@ -1,8 +1,8 @@
 import { Data, version } from "clarity-js";
-import { DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
+import { BaselineEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
 import { MetricEvent, PingEvent, TagEvent, UpgradeEvent, UploadEvent } from "../types/data";
 import { ImageErrorEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
-import { BaselineEvent, ClickEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
+import { ClickEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent, TimelineEvent } from "../types/interaction";
 import { SelectionEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
 import { DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
 import { ConnectionEvent, NavigationEvent } from "../types/performance";
@@ -38,6 +38,10 @@ export function decode(input: string): DecodedPayload {
 
     for (let entry of encoded) {
         switch (entry[1]) {
+            case Data.Event.Baseline:
+                if (payload.baseline === undefined) { payload.baseline = []; }
+                payload.baseline.push(data.decode(entry) as BaselineEvent);
+                break;
             case Data.Event.Ping:
                 if (payload.ping === undefined) { payload.ping = []; }
                 payload.ping.push(data.decode(entry) as PingEvent);
@@ -96,9 +100,9 @@ export function decode(input: string): DecodedPayload {
                 if (payload.selection === undefined) { payload.selection = []; }
                 payload.selection.push(interaction.decode(entry) as SelectionEvent);
                 break;
-            case Data.Event.Baseline:
-                if (payload.baseline === undefined) { payload.baseline = []; }
-                payload.baseline.push(interaction.decode(entry) as BaselineEvent);
+            case Data.Event.Timeline:
+                if (payload.timeline === undefined) { payload.timeline = []; }
+                payload.timeline.push(interaction.decode(entry) as TimelineEvent);
                 break;
             case Data.Event.Input:
                 if (payload.input === undefined) { payload.input = []; }
