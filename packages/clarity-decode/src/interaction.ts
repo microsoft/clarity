@@ -17,7 +17,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let pointerData: Interaction.PointerData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
-                y: tokens[4] as number,
+                y: tokens[4] as number
             };
             return { time, event, data: pointerData };
         case Data.Event.Click:
@@ -50,8 +50,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 start: tokens[2] as number,
                 startOffset: tokens[3] as number,
                 end: tokens[4] as number,
-                endOffset: tokens[5] as number,
-                region: tokens.length > 6 ? tokens[6] as number : null
+                endOffset: tokens[5] as number
             };
             return { time, event, data: selectionData };
         case Data.Event.Scroll:
@@ -59,6 +58,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
                 y: tokens[4] as number,
+                region: tokens.length > 5 ? tokens[5] as number : null
             };
             return { time, event, data: scrollData };
         case Data.Event.Timeline:

@@ -49,7 +49,6 @@ export interface PointerData {
     target: Target;
     x: number;
     y: number;
-    region?: number;    
 }
 
 export interface ClickData {
@@ -82,7 +81,6 @@ export interface SelectionData {
     startOffset: number;
     end: Target;
     endOffset: number;
-    region?: number;
 }
 
 export interface UnloadData {

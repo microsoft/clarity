@@ -13,8 +13,6 @@ export import Dimension = Data.Dimension;
 export import Event = Data.Event;
 export import Metric = Data.Metric;
 export import Payload = Data.Payload;
-export import MetricData = Data.MetricData;
-export import DimensionData = Data.DimensionData;
 export import BooleanFlag = Data.BooleanFlag;
 
 /* Data Events */

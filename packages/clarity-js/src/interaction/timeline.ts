@@ -25,16 +25,19 @@ export function track(time: number, event: Event, target:number, x: number, y: n
 }
 
 export function compute(): void {
+    const temp = [];
     updates = [];
     let max = envelope.data.start + envelope.data.duration;
     let min = Math.max(max - config.timeline, 0);
 
     for (let s of state) { 
-        if (s.time >= min && s.time <= max) {
-            updates.push(s);
+        if (s.time >= min) {
+            if (s.time <= max) { updates.push(s); }
+            temp.push(s);
         }
     }
 
+    state = temp; // Drop events less than the min time
     encode(Event.Timeline);
 }
 
