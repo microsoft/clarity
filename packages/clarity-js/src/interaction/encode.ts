@@ -41,7 +41,6 @@ export default async function (type: Event): Promise<void> {
             break;
         case Event.Click:
             for (let i = 0; i < click.state.length; i++) {
-                let last = i + 1 === click.state.length;
                 let entry = click.state[i];
                 let cTarget = metadata(entry.data.target as Node, true);
                 tokens = [entry.time, entry.event];
@@ -118,6 +117,7 @@ export default async function (type: Event): Promise<void> {
             for (let i = 0; i < timeline.updates.length; i++) {
                 let entry = timeline.updates[i];
                 tokens = [entry.time, entry.event];
+                tokens.push(entry.data.type);
                 tokens.push(entry.data.target);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
