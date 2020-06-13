@@ -25,20 +25,6 @@ export interface InputState {
     data: InputData;
 }
 
-export interface TimelineState {
-    time: number;
-    event: number;
-    data: TimelineData;
-}
-
-/* Event Data */
-export interface TimelineData {
-    type: Event;
-    target: number;
-    x: number;
-    y: number;
-}
-
 export interface InputData {
     target: Target;
     value: string;

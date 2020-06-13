@@ -9,7 +9,7 @@ import * as pointer from "./pointer";
 import * as resize from "./resize";
 import * as scroll from "./scroll";
 import * as selection from "./selection";
-import * as timeline from "./timeline";
+import * as timeline from "../data/timeline";
 import * as unload from "./unload";
 import * as visibility from "./visibility";
 
@@ -113,23 +113,12 @@ export default async function (type: Event): Promise<void> {
             }
             scroll.reset();
             break;
-        case Event.Timeline:
-            for (let i = 0; i < timeline.updates.length; i++) {
-                let entry = timeline.updates[i];
-                tokens = [entry.time, entry.event];
-                tokens.push(entry.data.type);
-                tokens.push(entry.data.target);
-                tokens.push(entry.data.x);
-                tokens.push(entry.data.y);
-                queue(tokens);
-            }
-            timeline.reset();
-            break;
         case Event.Visibility:
             let v = visibility.data;
             tokens.push(v.visible);
             queue(tokens);
             baseline.visibility(v.visible);
+            timeline.track(t, type);
             visibility.reset();
             break;
     }

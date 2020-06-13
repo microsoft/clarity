@@ -8,6 +8,8 @@ import * as ping from "@src/data/ping";
 import * as tag from "@src/data/tag";
 import * as upgrade from "@src/data/upgrade";
 import * as upload from "@src/data/upload";
+import * as timeline from "@src/data/timeline";
+
 export { consent, metadata } from "@src/data/metadata";
 export { tag } from "@src/data/tag";
 export { upgrade } from "@src/data/upgrade";
@@ -23,12 +25,14 @@ export function start(): void {
     measure(ping.start)();
     measure(tag.reset)();
     measure(upgrade.reset)();
+    measure(timeline.start)
 }
 
 export function end(): void {
     // The ordering below should respect inter-module dependency.
     // E.g. if upgrade depends on upload, then upgrade needs to end before upload.
     // Similarly, if upload depends on metadata, upload needs to end before metadata.
+    measure(timeline.reset)();
     measure(upgrade.reset)();
     measure(tag.reset)();
     measure(ping.end)();

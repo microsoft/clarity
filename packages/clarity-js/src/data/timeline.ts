@@ -1,8 +1,7 @@
-import { Event } from "@clarity-types/data";
-import { TimelineState } from "@clarity-types/interaction";
+import { Event, TimelineState } from "@clarity-types/data";
 import config from "@src/core/config";
 import * as envelope from "@src/data/envelope";
-import encode from "@src/interaction/encode";
+import encode from "@src/data/encode";
 
 let state: TimelineState[] = [];
 export let updates: TimelineState[] = [];
@@ -16,7 +15,7 @@ export function reset(): void {
     updates = [];
 }
 
-export function track(time: number, event: Event, target:number, x: number, y: number): void {
+export function track(time: number, event: Event, target?: number, x?: number, y?: number): void {
     state.push({
         time,
         event: Event.Timeline,
@@ -30,7 +29,7 @@ export function compute(): void {
     let max = envelope.data.start + envelope.data.duration;
     let min = Math.max(max - config.timeline, 0);
 
-    for (let s of state) { 
+    for (let s of state) {
         if (s.time >= min) {
             if (s.time <= max) { updates.push(s); }
             temp.push(s);

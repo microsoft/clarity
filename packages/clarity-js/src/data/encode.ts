@@ -6,9 +6,10 @@ import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as tag from "@src/data/tag";
 import * as upgrade from "@src/data/upgrade";
+import * as timeline from "../data/timeline";
 import { queue, track } from "./upload";
 
-export default function(event: Event): void {
+export default function (event: Event): void {
     let t = time();
     let tokens: Token[] = [t, event];
     switch (event) {
@@ -70,6 +71,18 @@ export default function(event: Event): void {
                 dimension.reset();
                 queue(tokens);
             }
+            break;
+        case Event.Timeline:
+            for (let i = 0; i < timeline.updates.length; i++) {
+                let entry = timeline.updates[i];
+                tokens = [entry.time, entry.event];
+                tokens.push(entry.data.type);
+                if (entry.data.target) { tokens.push(entry.data.target); }
+                if (entry.data.x) { tokens.push(entry.data.x); }
+                if (entry.data.y) { tokens.push(entry.data.y); }
+                queue(tokens);
+            }
+            timeline.reset();
             break;
     }
 }

@@ -7,7 +7,6 @@ export interface PointerEvent extends PartialEvent { data: Interaction.PointerDa
 export interface ResizeEvent extends PartialEvent { data: Interaction.ResizeData; }
 export interface ScrollEvent extends PartialEvent { data: Interaction.ScrollData; }
 export interface SelectionEvent extends PartialEvent { data: Interaction.SelectionData; }
-export interface TimelineEvent extends PartialEvent { data: Interaction.TimelineData; }
 export interface UnloadEvent extends PartialEvent { data: Interaction.UnloadData; }
 export interface VisibilityEvent extends PartialEvent { data: Interaction.VisibilityData; }
 export interface InteractionEvent extends PartialEvent {
@@ -17,7 +16,6 @@ export interface InteractionEvent extends PartialEvent {
     Interaction.ResizeData |
     Interaction.ScrollData |
     Interaction.SelectionData |
-    Interaction.TimelineData |
     Interaction.UnloadData |
     Interaction.VisibilityData;
 }

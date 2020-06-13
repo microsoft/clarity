@@ -146,6 +146,20 @@ export interface BaselineData {
     screenHeight: number;
 }
 
+export interface TimelineState {
+    time: number;
+    event: number;
+    data: TimelineData;
+}
+
+/* Event Data */
+export interface TimelineData {
+    type: Event;
+    target?: number;
+    x?: number;
+    y?: number;
+}
+
 export interface DimensionData {
     [key: number]: string[];
 }

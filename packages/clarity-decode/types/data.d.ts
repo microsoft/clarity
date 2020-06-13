@@ -1,7 +1,7 @@
 import { Data } from "clarity-js";
 import { DiagnosticEvent, ImageErrorEvent, LogEvent, ScriptErrorEvent } from "./diagnostic";
 import { ClickEvent, InputEvent, InteractionEvent, PointerEvent, ResizeEvent } from "./interaction";
-import { ScrollEvent, SelectionEvent, TimelineEvent, UnloadEvent, VisibilityEvent } from "./interaction";
+import { ScrollEvent, SelectionEvent, UnloadEvent, VisibilityEvent } from "./interaction";
 import { DocumentEvent, DomEvent, LayoutEvent, RegionEvent } from "./layout";
 import { ConnectionEvent, NavigationEvent } from "./performance";
 import { PartialEvent } from "./core";
@@ -17,6 +17,7 @@ export import BooleanFlag = Data.BooleanFlag;
 
 /* Data Events */
 export interface BaselineEvent extends PartialEvent { data: Data.BaselineData; }
+export interface TimelineEvent extends PartialEvent { data: Data.TimelineData; }
 export interface DimensionEvent extends PartialEvent { data: Data.DimensionData; }
 export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
@@ -25,7 +26,8 @@ export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
 export interface DataEvent extends PartialEvent {
     data: Data.BaselineData |
-    Data.DimensionData | 
+    Data.TimelineData |
+    Data.DimensionData |
     Data.MetricData |
     Data.PingData |
     Data.TagData |

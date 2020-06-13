@@ -9,7 +9,7 @@ import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as baseline from "@src/data/baseline";
-import * as timeline from "@src/interaction/timeline";
+import * as timeline from "@src/data/timeline";
 import * as region from "@src/layout/region";
 import * as performance from "@src/performance/observer";
 
@@ -132,7 +132,7 @@ function upload(final: boolean = false): void {
     // could inject function arguments for internal tracking (likely stack traces for script errors).
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
     let last = final === true;
-    let payload: EncodedPayload = {e: JSON.stringify(envelope.envelope(last)), d: `[${events.join()}]`};
+    let payload: EncodedPayload = { e: JSON.stringify(envelope.envelope(last)), d: `[${events.join()}]` };
     let data = stringify(payload);
     let sequence = envelope.data.sequence;
     metric.sum(Metric.TotalBytes, data.length);

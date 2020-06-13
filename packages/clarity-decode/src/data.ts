@@ -40,6 +40,14 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 screenHeight: tokens[6] as number
             }
             return { time, event, data: baselineData };
+        case Data.Event.Timeline:
+            let timelineData: Data.TimelineData = {
+                type: tokens[2] as number,
+                target: tokens.length > 3 ? tokens[3] as number : null,
+                x: tokens.length > 4 ? tokens[4] as number : null,
+                y: tokens.length > 5 ? tokens[5] as number : null,
+            };
+            return { time, event, data: timelineData };
     }
     return null;
 }

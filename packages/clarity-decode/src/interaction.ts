@@ -61,14 +61,6 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 region: tokens.length > 5 ? tokens[5] as number : null
             };
             return { time, event, data: scrollData };
-        case Data.Event.Timeline:
-            let timelineData: Interaction.TimelineData = {
-                type: tokens[2] as number,
-                target: tokens[3] as number,
-                x: tokens[4] as number,
-                y: tokens[5] as number,
-            };
-            return { time, event, data: timelineData };
         case Data.Event.Visibility:
             let visibleData: Interaction.VisibilityData = { visible: tokens[2] as string };
             return { time, event, data: visibleData };

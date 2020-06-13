@@ -4,12 +4,10 @@ import * as pointer from "@src/interaction/pointer";
 import * as resize from "@src/interaction/resize";
 import * as scroll from "@src/interaction/scroll";
 import * as selection from "@src/interaction/selection";
-import * as timeline from "@src/interaction/timeline";
 import * as unload from "@src/interaction/unload";
 import * as visibility from "@src/interaction/visibility";
 
 export function start(): void {
-    timeline.start();
     click.start();
     pointer.start();
     input.start();
@@ -21,7 +19,6 @@ export function start(): void {
 }
 
 export function end(): void {
-    timeline.end();
     click.end();
     pointer.end();
     input.end();

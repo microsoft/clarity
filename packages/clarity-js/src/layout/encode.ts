@@ -9,9 +9,11 @@ import { queue } from "@src/data/upload";
 import * as region from "./region";
 import * as doc from "./document";
 import * as dom from "./dom";
+import * as timeline from "../data/timeline";
 
 export default async function (type: Event, ts: number = null): Promise<void> {
-    let tokens: Token[] = [ts || time(), type];
+    let eventTime = ts || time()
+    let tokens: Token[] = [eventTime, type];
     let timer = Metric.LayoutCost;
     switch (type) {
         case Event.Document:
@@ -69,7 +71,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 }
                 tokens = tokenize(tokens, metadata);
             }
-
+            if (type == Event.Mutation) { timeline.track(eventTime, type); }
             queue(tokens);
             break;
     }
