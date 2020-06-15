@@ -88,7 +88,7 @@ export function render(events: Data.DecodedEvent[]): void {
                 layout.markup(entry as Layout.DomEvent);
                 break;
             case Data.Event.Region:
-                if (data.lean) { layout.region(entry as Layout.RegionEvent); }
+                layout.region(entry as Layout.RegionEvent);
                 break;
             case Data.Event.MouseDown:
             case Data.Event.MouseUp:
