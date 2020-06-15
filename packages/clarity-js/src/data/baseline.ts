@@ -8,17 +8,17 @@ let buffer: BaselineData = null;
 let update: boolean = false;
 
 export function start(): void {
+    update = false;
     reset();
 }
 
 export function reset(): void {
     // Baseline state holds the previous values - if it is updated in the current payload, reset the state to current value after sending the previous state
     state = update ? { time: time(), event: Event.Baseline, data: buffer } : state;
-    buffer = buffer ? buffer : { visible: BooleanFlag.True, docWidth: 0, docHeight: 0, screenWidth: 0, screenHeight: 0 };
-    update = false;
+    buffer = buffer ? buffer : { visible: BooleanFlag.True, docWidth: 0, docHeight: 0, screenWidth: 0, screenHeight: 0, activityTime: 0 };
 }
 
-export function track(event: Event, width: number, height: number): void {
+export function track(event: Event, time: number, width?: number, height?: number): void {
     switch (event) {
         case Event.Document:
             buffer.docWidth = width;
@@ -28,12 +28,16 @@ export function track(event: Event, width: number, height: number): void {
             buffer.screenWidth = width;
             buffer.screenHeight = height;
             break;
+        case Event.Mutation:
+            buffer.activityTime = time;
+            break;
     }
     update = true;
 }
 
-export function visibility(visible: string): void {
+export function visibility(visible: string, time: number): void {
     buffer.visible = visible === "visible" ? BooleanFlag.True : BooleanFlag.False;
+    if (!buffer.visible) { buffer.activityTime = time; }
     update = true;
 }
 

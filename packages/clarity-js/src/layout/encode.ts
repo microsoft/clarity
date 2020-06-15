@@ -11,14 +11,15 @@ import * as doc from "./document";
 import * as dom from "./dom";
 
 export default async function (type: Event, ts: number = null): Promise<void> {
-    let tokens: Token[] = [ts || time(), type];
+    let eventTime = ts || time()
+    let tokens: Token[] = [eventTime, type];
     let timer = Metric.LayoutCost;
     switch (type) {
         case Event.Document:
             let d = doc.data;
             tokens.push(d.width);
             tokens.push(d.height);
-            baseline.track(type, d.width, d.height);
+            baseline.track(type, eventTime, d.width, d.height);
             queue(tokens);
             break;
         case Event.Region:
@@ -69,7 +70,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 }
                 tokens = tokenize(tokens, metadata);
             }
-
+            if (type == Event.Mutation) { baseline.track(type, eventTime); }
             queue(tokens);
             break;
     }

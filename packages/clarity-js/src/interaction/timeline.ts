@@ -16,11 +16,18 @@ export function reset(): void {
     updates = [];
 }
 
-export function track(time: number, event: Event, target:number, x: number, y: number): void {
+export function track(time: number, event: Event, target: number, x: number, y: number, hash?: number, region?: number): void {
     state.push({
         time,
         event: Event.Timeline,
-        data: { type: event, target, x, y }
+        data: {
+            type: event,
+            target,
+            x,
+            y,
+            hash,
+            region
+        }
     });
 }
 
@@ -30,7 +37,7 @@ export function compute(): void {
     let max = envelope.data.start + envelope.data.duration;
     let min = Math.max(max - config.timeline, 0);
 
-    for (let s of state) { 
+    for (let s of state) {
         if (s.time >= min) {
             if (s.time <= max) { updates.push(s); }
             temp.push(s);

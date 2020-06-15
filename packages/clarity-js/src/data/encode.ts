@@ -21,6 +21,7 @@ export default function(event: Event): void {
                 tokens.push(b.data.docHeight);
                 tokens.push(b.data.screenWidth);
                 tokens.push(b.data.screenHeight);
+                tokens.push(b.data.activityTime);
                 queue(tokens);
             }
             baseline.reset();
