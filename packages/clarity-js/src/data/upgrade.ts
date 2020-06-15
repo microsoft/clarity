@@ -13,7 +13,9 @@ export function reset(): void {
 // However, if there's a need for full fidelity playback, calling this function will disable lean mode
 // and send all backed up layout events to the server.
 export function upgrade(key: string): void {
-    config.lean = false;
-    data = { key };
-    encode(Event.Upgrade);
+    if (config.lean) {
+        config.lean = false;
+        data = { key };
+        encode(Event.Upgrade);
+    }
 }

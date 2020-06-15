@@ -89,6 +89,21 @@ export const enum BooleanFlag {
     True = 1
 }
 
+export const enum Constant {
+    AUTO = "Auto",
+    CLARITY = "clarity",
+    EMPTY_STRING = "",
+    SPACE = " ",
+    EXPIRES = "expires=",
+    SEMICOLON = ";",
+    EQUALS = "=",
+    PATH = ";path=/",
+    STORAGE_KEY = "_claritybeta",
+    STORAGE_SEPARATOR = "|",
+    RESPONSE_END = "END",
+    RESPONSE_UPGRADE = "UPGRADE"
+}
+
 /* Helper Interfaces */
 
 export interface Payload {

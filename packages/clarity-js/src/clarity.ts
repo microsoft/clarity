@@ -1,5 +1,5 @@
 import { Config } from "@clarity-types/core";
-import { Metadata } from "@clarity-types/data";
+import { Constant, Metadata } from "@clarity-types/data";
 import * as core from "@src/core";
 import configuration from "@src/core/config";
 import version from "@src/core/version";
@@ -12,7 +12,6 @@ import * as interaction from "@src/interaction";
 import * as layout from "@src/layout";
 import * as performance from "@src/performance";
 
-const CLARITY = "clarity";
 export let active = false;
 export { version };
 
@@ -43,7 +42,7 @@ export function start(override: Config = {}): void {
 
 function restart(): void {
   start();
-  tag(CLARITY, "restart");
+  tag(Constant.CLARITY, "restart");
 }
 
 // Suspend ends the current Clarity instance after a configured timeout period
@@ -55,7 +54,7 @@ function restart(): void {
 // Clarity will restart and start another instance seamlessly. Effectively not missing any active time, but also
 // not holding the session during inactive time periods.
 export function suspend(): void {
-  tag(CLARITY, "suspend");
+  tag(Constant.CLARITY, "suspend");
   end();
   bind(document, "mousemove", restart);
   bind(document, "touchstart", restart);
@@ -71,7 +70,7 @@ export function suspend(): void {
 // performance impact even further. For reference, we are talking 10s of milliseconds optimization here, not seconds.
 export function pause(): void {
   if (active) {
-    tag(CLARITY, "pause");
+    tag(Constant.CLARITY, "pause");
     task.pause();
   }
 }
@@ -80,7 +79,7 @@ export function pause(): void {
 export function resume(): void {
   if (active) {
     task.resume();
-    tag(CLARITY, "resume");
+    tag(Constant.CLARITY, "resume");
   }
 }
 
@@ -105,7 +104,7 @@ export function tag(key: string, value: string): void {
 
 export function upgrade(key: string): void {
   // Do not process upgrade call if Clarity is not already activated and in lean mode
-  if (active && configuration.lean) {
+  if (active) {
     measure(data.upgrade)(key);
   }
 }

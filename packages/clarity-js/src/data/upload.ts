@@ -1,4 +1,5 @@
-import { EncodedPayload, Event, Metric, Token, Transit, UploadData } from "@clarity-types/data";
+import { Constant, EncodedPayload, Event, Metric, Token, Transit, UploadData } from "@clarity-types/data";
+import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
 import { time } from "@src/core/time";
@@ -139,7 +140,7 @@ function upload(final: boolean = false): void {
     send(data, sequence, last);
 
     // Send data to upload hook, if defined in the config
-    if (config.upload) { config.upload(data, sequence, last); }
+    if (config.upload) { config.upload(data); }
 
     // Clear out events now that payload has been dispatched
     events = [];
@@ -184,7 +185,22 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
             track = { sequence, attempts: transit[sequence].attempts, status: xhr.status };
             // Send back an event only if we were not successful in our first attempt
             if (transit[sequence].attempts > 1) { encode(Event.Upload); }
+            // Handle response if it was a 200 status response with a valid body
+            if (xhr.status === 200 && xhr.responseText) { response(xhr.responseText); }
+            // Stop tracking this payload now that it's all done
             delete transit[sequence];
         }
+    }
+}
+
+function response(data: string): void {
+    let key = data && data.length > 0 ? data.split(" ")[0] : Constant.EMPTY_STRING;
+    switch (key) {
+        case Constant.RESPONSE_END:
+            clarity.end();
+            break;
+        case Constant.RESPONSE_UPGRADE:
+            clarity.upgrade(Constant.AUTO);
+            break;
     }
 }

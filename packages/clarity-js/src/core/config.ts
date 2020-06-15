@@ -18,7 +18,6 @@ let config: Config = {
     track: true,
     regions: {},
     url: "",
-    onstart: null,
     upload: null
 };
 
