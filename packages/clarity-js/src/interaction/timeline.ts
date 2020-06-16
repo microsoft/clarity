@@ -16,7 +16,7 @@ export function reset(): void {
     updates = [];
 }
 
-export function track(time: number, event: Event, target: number, x: number, y: number, hash?: number, region?: number): void {
+export function track(time: number, event: Event, target: number, x: number, y: number, region?: number): void {
     state.push({
         time,
         event: Event.Timeline,
@@ -25,7 +25,6 @@ export function track(time: number, event: Event, target: number, x: number, y: 
             target,
             x,
             y,
-            hash,
             region
         }
     });

@@ -67,8 +67,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 target: tokens[3] as number,
                 x: tokens[4] as number,
                 y: tokens[5] as number,
-                hash: tokens.length > 6 ? tokens[6] as number : null,
-                region: tokens.length > 7 ? tokens[7] as number : null
+                region: tokens.length > 6 ? tokens[6] as number : null
             };
             return { time, event, data: timelineData };
         case Data.Event.Visibility:

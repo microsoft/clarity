@@ -55,7 +55,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(cTarget.hash);
                 if (cTarget.region) { tokens.push(cTarget.region); }
                 queue(tokens);
-                timeline.track(entry.time, entry.event, cTarget.id, entry.data.x, entry.data.y, cTarget.hash, cTarget.region);
+                timeline.track(entry.time, entry.event, cTarget.id, entry.data.x, entry.data.y, cTarget.region);
             }
             click.reset();
             break;
@@ -63,7 +63,7 @@ export default async function (type: Event): Promise<void> {
             let r = resize.data;
             tokens.push(r.width);
             tokens.push(r.height);
-            baseline.track(type, t, r.width, r.height);
+            baseline.track(type, r.width, r.height);
             resize.reset();
             queue(tokens);
             break;
@@ -109,7 +109,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.y);
                 if (sTarget.region) { tokens.push(sTarget.region); }
                 queue(tokens);
-                if (last) { timeline.track(entry.time, entry.event, sTarget.id, entry.data.x, entry.data.y); }
+                if (last) { timeline.track(entry.time, entry.event, sTarget.id, entry.data.x, entry.data.y, sTarget.region); }
             }
             scroll.reset();
             break;
@@ -121,10 +121,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.target);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
-                if (entry.data.hash) {
-                    tokens.push(entry.data.hash);
-                    if (entry.data.region) { tokens.push(entry.data.region); }
-                }
+                if (entry.data.region) { tokens.push(entry.data.region); }
                 queue(tokens);
             }
             timeline.reset();

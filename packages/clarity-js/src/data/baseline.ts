@@ -18,7 +18,7 @@ export function reset(): void {
     buffer = buffer ? buffer : { visible: BooleanFlag.True, docWidth: 0, docHeight: 0, screenWidth: 0, screenHeight: 0, activityTime: 0 };
 }
 
-export function track(event: Event, time: number, width?: number, height?: number): void {
+export function track(event: Event, width: number, height: number): void {
     switch (event) {
         case Event.Document:
             buffer.docWidth = width;
@@ -28,16 +28,17 @@ export function track(event: Event, time: number, width?: number, height?: numbe
             buffer.screenWidth = width;
             buffer.screenHeight = height;
             break;
-        case Event.Mutation:
-            buffer.activityTime = time;
-            break;
     }
     update = true;
 }
 
+export function activity(time: number) {
+    buffer.activityTime = time;
+}
+
 export function visibility(visible: string, time: number): void {
     buffer.visible = visible === "visible" ? BooleanFlag.True : BooleanFlag.False;
-    if (!buffer.visible) { buffer.activityTime = time; }
+    if (!buffer.visible) { activity(time); }
     update = true;
 }
 

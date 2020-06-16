@@ -19,7 +19,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             let d = doc.data;
             tokens.push(d.width);
             tokens.push(d.height);
-            baseline.track(type, eventTime, d.width, d.height);
+            baseline.track(type, d.width, d.height);
             queue(tokens);
             break;
         case Event.Region:
@@ -70,7 +70,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 }
                 tokens = tokenize(tokens, metadata);
             }
-            if (type == Event.Mutation) { baseline.track(type, eventTime); }
+            if (type == Event.Mutation) { baseline.activity(eventTime); }
             queue(tokens);
             break;
     }

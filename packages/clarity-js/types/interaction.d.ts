@@ -37,7 +37,6 @@ export interface TimelineData {
     target: number;
     x: number;
     y: number;
-    hash?: number;
     region?: number
 }
 
