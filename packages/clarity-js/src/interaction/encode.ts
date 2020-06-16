@@ -129,7 +129,7 @@ export default async function (type: Event): Promise<void> {
             let v = visibility.data;
             tokens.push(v.visible);
             queue(tokens);
-            baseline.visibility(v.visible);
+            baseline.visibility(v.visible, t);
             visibility.reset();
             break;
     }

@@ -144,6 +144,7 @@ export interface BaselineData {
     docHeight: number;
     screenWidth: number;
     screenHeight: number;
+    activityTime: number;
 }
 
 export interface DimensionData {
