@@ -21,6 +21,10 @@ export default function(event: Event): void {
                 tokens.push(b.data.docHeight);
                 tokens.push(b.data.screenWidth);
                 tokens.push(b.data.screenHeight);
+                tokens.push(b.data.scrollX);
+                tokens.push(b.data.scrollY);
+                tokens.push(b.data.pointerX);
+                tokens.push(b.data.pointerY);
                 queue(tokens);
             }
             baseline.reset();

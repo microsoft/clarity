@@ -15,19 +15,37 @@ export function reset(): void {
     // Baseline state holds the previous values - if it is updated in the current payload,
     // reset the state to current value after sending the previous state
     state = update ? { time: time(), event: Event.Baseline, data: buffer } : state;
-    buffer = buffer ? buffer : { visible: BooleanFlag.True, docWidth: 0, docHeight: 0, screenWidth: 0, screenHeight: 0 };
+    buffer = buffer ? buffer : {
+        visible: BooleanFlag.True,
+        docWidth: 0,
+        docHeight: 0,
+        screenWidth: 0,
+        screenHeight: 0,
+        scrollX: 0,
+        scrollY: 0,
+        pointerX: 0,
+        pointerY: 0
+    };
     update = false;
 }
 
-export function track(event: Event, width: number, height: number): void {
+export function track(event: Event, x: number, y: number): void {
     switch (event) {
         case Event.Document:
-            buffer.docWidth = width;
-            buffer.docHeight = height;
+            buffer.docWidth = x;
+            buffer.docHeight = y;
             break;
         case Event.Resize:
-            buffer.screenWidth = width;
-            buffer.screenHeight = height;
+            buffer.screenWidth = x;
+            buffer.screenHeight = y;
+            break;
+        case Event.Scroll:
+            buffer.scrollX = x;
+            buffer.scrollY = y;
+            break;
+        default:
+            buffer.pointerX = x;
+            buffer.pointerY = y;
             break;
     }
     update = true;

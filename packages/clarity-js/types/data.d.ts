@@ -159,6 +159,10 @@ export interface BaselineData {
     docHeight: number;
     screenWidth: number;
     screenHeight: number;
+    scrollX: number;
+    scrollY: number;
+    pointerX: number;
+    pointerY: number;
 }
 
 export interface DimensionData {
