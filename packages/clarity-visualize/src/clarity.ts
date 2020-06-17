@@ -117,8 +117,12 @@ export function render(events: Data.DecodedEvent[]): void {
         }
     }
 
-    // Update pointer trail at the end of every frame
-    if (events.length > 0) { interaction.trail(time); }
+    if (events.length > 0) {
+        // Make any changes, if necessary, at the end of every frame
+        layout.update();
+        // Update pointer trail at the end of every frame
+        interaction.trail(time);
+    }
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {

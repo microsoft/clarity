@@ -1,9 +1,11 @@
 import { Data, Layout } from "clarity-decode";
 import { state } from "./clarity";
+import { lean } from "./data";
 
 const TIMEOUT = 3000;
 const HOVER = ":hover";
 const CLARITY_HOVER = "clarity-hover";
+const CLARITY_REGION = "clarity-region";
 const ADOPTED_STYLE_SHEET = "clarity-adopted-style";
 let visualizeRegion = true;
 let stylesheets: Promise<void>[] = [];
@@ -28,6 +30,7 @@ export function region(event: Layout.RegionEvent): void {
             let el = element(bm.id) as HTMLElement;
             if (rectangle) {
                 let layer = el ? el : doc.createElement("DIV");
+                layer.className = CLARITY_REGION;
                 layer.style.left = rectangle.x + "px";
                 layer.style.top = rectangle.y + "px";
                 layer.style.width = (rectangle.w - 2) + "px";
@@ -39,6 +42,18 @@ export function region(event: Layout.RegionEvent): void {
                 nodes[bm.id] = layer;
             }
             regions[bm.id] = bm;
+        }
+    }
+}
+
+export function update(): void {
+    if (lean === false && visualizeRegion) {
+        let doc = state.player.contentDocument;
+        visualizeRegion = lean;
+        let layers = doc.getElementsByClassName(CLARITY_REGION);
+        // Hide all visible regions if lean mode is set to false
+        for (let i = 0; i < layers.length; i++) {
+            (layers[i] as HTMLDivElement).style.display = "none";
         }
     }
 }
