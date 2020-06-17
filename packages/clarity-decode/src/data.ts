@@ -38,7 +38,11 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 docHeight: tokens[4] as number,
                 screenWidth: tokens[5] as number,
                 screenHeight: tokens[6] as number,
-                activityTime: tokens[7] as number
+                scrollX: tokens[7] as number,
+                scrollY: tokens[8] as number,
+                pointerX: tokens[9] as number,
+                pointerY: tokens[10] as number,
+                activityTime: tokens[11] as number
             }
             return { time, event, data: baselineData };
     }

@@ -14,6 +14,7 @@ export import Event = Data.Event;
 export import Metric = Data.Metric;
 export import Payload = Data.Payload;
 export import BooleanFlag = Data.BooleanFlag;
+export import Constant = Data.Constant;
 
 /* Data Events */
 export interface BaselineEvent extends PartialEvent { data: Data.BaselineData; }

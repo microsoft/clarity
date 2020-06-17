@@ -35,7 +35,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
                 queue(tokens);
-                if (last) { timeline.track(entry.time, entry.event, pTarget.id, entry.data.x, entry.data.y); }
+                if (last) { baseline.track(entry.event, entry.data.x, entry.data.y); }
             }
             pointer.reset();
             break;
@@ -129,7 +129,7 @@ export default async function (type: Event): Promise<void> {
             let v = visibility.data;
             tokens.push(v.visible);
             queue(tokens);
-            baseline.visibility(v.visible, t);
+            baseline.visibility(t, v.visible);
             visibility.reset();
             break;
     }

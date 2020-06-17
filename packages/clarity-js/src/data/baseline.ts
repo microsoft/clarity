@@ -13,37 +13,61 @@ export function start(): void {
 }
 
 export function reset(): void {
-    // Baseline state holds the previous values - if it is updated in the current payload, reset the state to current value after sending the previous state
+    // Baseline state holds the previous values - if it is updated in the current payload,
+    // reset the state to current value after sending the previous state
     state = update ? { time: time(), event: Event.Baseline, data: buffer } : state;
-    buffer = buffer ? buffer : { visible: BooleanFlag.True, docWidth: 0, docHeight: 0, screenWidth: 0, screenHeight: 0, activityTime: 0 };
+    buffer = buffer ? buffer : {
+        visible: BooleanFlag.True,
+        docWidth: 0,
+        docHeight: 0,
+        screenWidth: 0,
+        screenHeight: 0,
+        scrollX: 0,
+        scrollY: 0,
+        pointerX: 0,
+        pointerY: 0,
+        activityTime: 0
+    };
 }
 
-export function track(event: Event, width: number, height: number): void {
+export function track(event: Event, x: number, y: number): void {
     switch (event) {
         case Event.Document:
-            buffer.docWidth = width;
-            buffer.docHeight = height;
+            buffer.docWidth = x;
+            buffer.docHeight = y;
             break;
         case Event.Resize:
-            buffer.screenWidth = width;
-            buffer.screenHeight = height;
+            buffer.screenWidth = x;
+            buffer.screenHeight = y;
+            break;
+        case Event.Scroll:
+            buffer.scrollX = x;
+            buffer.scrollY = y;
+            break;
+        default:
+            buffer.pointerX = x;
+            buffer.pointerY = y;
             break;
     }
     update = true;
 }
 
-export function activity(time: number) {
-    buffer.activityTime = time;
+export function activity(t: number): void {
+    buffer.activityTime = t;
 }
 
-export function visibility(visible: string, time: number): void {
+export function visibility(t: number, visible: string): void {
     buffer.visible = visible === "visible" ? BooleanFlag.True : BooleanFlag.False;
-    if (!buffer.visible) { activity(time); }
+    if (!buffer.visible) {
+        activity(t);
+    }
     update = true;
 }
 
 export function compute(): void {
-    if (update) { encode(Event.Baseline); }
+    if (update) {
+        encode(Event.Baseline);
+    }
 }
 
 export function end(): void {

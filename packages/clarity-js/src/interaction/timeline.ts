@@ -1,6 +1,7 @@
 import { Event } from "@clarity-types/data";
 import { TimelineState } from "@clarity-types/interaction";
 import config from "@src/core/config";
+import * as baseline from "@src/data/baseline";
 import * as envelope from "@src/data/envelope";
 import encode from "@src/interaction/encode";
 
@@ -27,6 +28,11 @@ export function track(time: number, event: Event, target: number, x: number, y: 
             y,
         }
     });
+
+    // Since timeline only keeps the data for configured time, we still want to continue tracking these values
+    // as part of the baseline. For instance, in a scenario where last scroll happened 5s ago.
+    // We would still need to capture the last scroll position as part of the baseline event, even when timeline will be empty.
+    baseline.track(event, x, y);
 }
 
 export function compute(): void {

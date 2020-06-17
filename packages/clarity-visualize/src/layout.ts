@@ -1,10 +1,13 @@
 import { Data, Layout } from "clarity-decode";
 import { state } from "./clarity";
+import { lean } from "./data";
 
 const TIMEOUT = 3000;
 const HOVER = ":hover";
 const CLARITY_HOVER = "clarity-hover";
+const CLARITY_REGION = "clarity-region";
 const ADOPTED_STYLE_SHEET = "clarity-adopted-style";
+let visualizeRegion = true;
 let stylesheets: Promise<void>[] = [];
 let nodes = {};
 let regions = {};
@@ -15,27 +18,43 @@ export function reset(): void {
     regions = {};
     stylesheets = [];
     events = {};
+    visualizeRegion = true;
 }
 
 export function region(event: Layout.RegionEvent): void {
-    let data = event.data;
-    let doc = state.player.contentDocument;
-    for (let bm of data) {
-        let rectangle = bm.box;
-        let el = element(bm.id) as HTMLElement;
-        if (rectangle) {
-            let layer = el ? el : doc.createElement("DIV");
-            layer.style.left = rectangle.x + "px";
-            layer.style.top = rectangle.y + "px";
-            layer.style.width = (rectangle.w - 2) + "px";
-            layer.style.height = (rectangle.h - 2) + "px";
-            layer.style.position = "absolute";
-            layer.style.border = rectangle.v ? "1px solid green" : "1px solid red";
-            doc.body.appendChild(layer);
-            layer.innerText = bm.region;
-            nodes[bm.id] = layer;
+    if (visualizeRegion) {
+        let data = event.data;
+        let doc = state.player.contentDocument;
+        for (let bm of data) {
+            let rectangle = bm.box;
+            let el = element(bm.id) as HTMLElement;
+            if (rectangle) {
+                let layer = el ? el : doc.createElement("DIV");
+                layer.className = CLARITY_REGION;
+                layer.style.left = rectangle.x + "px";
+                layer.style.top = rectangle.y + "px";
+                layer.style.width = (rectangle.w - 2) + "px";
+                layer.style.height = (rectangle.h - 2) + "px";
+                layer.style.position = "absolute";
+                layer.style.border = rectangle.v ? "1px solid green" : "1px solid red";
+                doc.body.appendChild(layer);
+                layer.innerText = bm.region;
+                nodes[bm.id] = layer;
+            }
+            regions[bm.id] = bm;
         }
-        regions[bm.id] = bm;
+    }
+}
+
+export function update(): void {
+    if (lean === false && visualizeRegion) {
+        let doc = state.player.contentDocument;
+        visualizeRegion = lean;
+        let layers = doc.getElementsByClassName(CLARITY_REGION);
+        // Hide all visible regions if lean mode is set to false
+        for (let i = 0; i < layers.length; i++) {
+            (layers[i] as HTMLDivElement).style.display = "none";
+        }
     }
 }
 
@@ -60,6 +79,7 @@ export function markup(event: Layout.DomEvent): void {
     let data = event.data;
     let type = event.event;
     let doc = state.player.contentDocument;
+    visualizeRegion = false; // Do not render regions if we receive valid markup
     for (let node of data) {
         let parent = element(node.parent);
         let pivot = element(node.previous);
