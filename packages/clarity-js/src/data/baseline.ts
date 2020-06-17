@@ -8,6 +8,7 @@ let buffer: BaselineData = null;
 let update: boolean = false;
 
 export function start(): void {
+    update = false;
     reset();
 }
 
@@ -24,9 +25,9 @@ export function reset(): void {
         scrollX: 0,
         scrollY: 0,
         pointerX: 0,
-        pointerY: 0
+        pointerY: 0,
+        activityTime: 0
     };
-    update = false;
 }
 
 export function track(event: Event, x: number, y: number): void {
@@ -51,13 +52,22 @@ export function track(event: Event, x: number, y: number): void {
     update = true;
 }
 
-export function visibility(visible: string): void {
+export function activity(t: number): void {
+    buffer.activityTime = t;
+}
+
+export function visibility(t: number, visible: string): void {
     buffer.visible = visible === "visible" ? BooleanFlag.True : BooleanFlag.False;
+    if (!buffer.visible) {
+        activity(t);
+    }
     update = true;
 }
 
 export function compute(): void {
-    if (update) { encode(Event.Baseline); }
+    if (update) {
+        encode(Event.Baseline);
+    }
 }
 
 export function end(): void {

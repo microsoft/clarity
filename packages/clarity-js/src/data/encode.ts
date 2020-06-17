@@ -25,6 +25,7 @@ export default function(event: Event): void {
                 tokens.push(b.data.scrollY);
                 tokens.push(b.data.pointerX);
                 tokens.push(b.data.pointerY);
+                tokens.push(b.data.activityTime);
                 queue(tokens);
             }
             baseline.reset();

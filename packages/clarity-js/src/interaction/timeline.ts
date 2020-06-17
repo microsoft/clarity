@@ -17,11 +17,16 @@ export function reset(): void {
     updates = [];
 }
 
-export function track(time: number, event: Event, target:number, x: number, y: number): void {
+export function track(time: number, event: Event, target: number, x: number, y: number): void {
     state.push({
         time,
         event: Event.Timeline,
-        data: { type: event, target, x, y }
+        data: {
+            type: event,
+            target,
+            x,
+            y,
+        }
     });
 
     // Since timeline only keeps the data for configured time, we still want to continue tracking these values

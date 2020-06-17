@@ -163,6 +163,7 @@ export interface BaselineData {
     scrollY: number;
     pointerX: number;
     pointerY: number;
+    activityTime: number;
 }
 
 export interface DimensionData {
