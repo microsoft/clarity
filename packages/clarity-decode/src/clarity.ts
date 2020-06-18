@@ -1,5 +1,5 @@
 import { Data, version } from "clarity-js";
-import { BaselineEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
+import { BaselineEvent, DecodedPayload, DecodedVersion, DimensionEvent, VariableEvent } from "../types/data";
 import { MetricEvent, PingEvent, TagEvent, UpgradeEvent, UploadEvent } from "../types/data";
 import { ImageErrorEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ClickEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent, TimelineEvent } from "../types/interaction";
@@ -66,6 +66,10 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Dimension:
                 if (payload.dimension === undefined) { payload.dimension = []; }
                 payload.dimension.push(data.decode(entry) as DimensionEvent);
+                break;
+            case Data.Event.Variable:
+                if (payload.variable === undefined) { payload.variable = []; }
+                payload.variable.push(data.decode(entry) as VariableEvent);
                 break;
             case Data.Event.Upload:
                 if (payload.upload === undefined) { payload.upload = []; }

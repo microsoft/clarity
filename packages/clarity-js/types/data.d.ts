@@ -39,7 +39,8 @@ export const enum Event {
     Connection = 30,
     ScriptError = 31,
     ImageError = 32,
-    Log = 33
+    Log = 33,
+    Variable = 34
 }
 
 export const enum Metric {
@@ -61,8 +62,7 @@ export const enum Dimension {
     Url = 1,
     Referrer = 2,
     PageTitle = 3,
-    NetworkHosts = 4,
-    Tags = 5
+    NetworkHosts = 4
 }
 
 export const enum Code {
@@ -91,17 +91,24 @@ export const enum BooleanFlag {
 
 export const enum Constant {
     AUTO = "Auto",
-    CLARITY = "clarity",
+    CLARITY_TAG_RESTART = "clarity-restart",
+    CLARITY_TAG_SUSPEND = "clarity-suspend",
+    CLARITY_TAG_PAUSE = "clarity-pause",
+    CLARITY_TAG_RESUME = "clarity-resume",
     EMPTY_STRING = "",
     SPACE = " ",
     EXPIRES = "expires=",
     SEMICOLON = ";",
     EQUALS = "=",
     PATH = ";path=/",
+    STRING_TYPE = "string",
     STORAGE_KEY = "_claritybeta",
     STORAGE_SEPARATOR = "|",
     RESPONSE_END = "END",
-    RESPONSE_UPGRADE = "UPGRADE"
+    RESPONSE_UPGRADE = "UPGRADE",
+    RESERVED_USER_ID_VARIABLE = "userId",
+    RESERVED_SESSION_ID_VARIABLE = "sessionId",
+    RESERVED_PAGE_ID_VARIABLE = "pageId"
 }
 
 /* Helper Interfaces */
@@ -170,6 +177,10 @@ export interface DimensionData {
     [key: number]: string[];
 }
 
+export interface VariableData {
+    [name: string]: string;
+}
+
 export interface MetricData {
     [key: number]: number;
 }
@@ -179,8 +190,7 @@ export interface PingData {
 }
 
 export interface TagData {
-    key: string;
-    value: string[];
+    tag: string;
 }
 
 export interface UpgradeData {

@@ -6,6 +6,7 @@ import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as tag from "@src/data/tag";
 import * as upgrade from "@src/data/upgrade";
+import * as variable from "@src/data/variable";
 import { queue, track } from "./upload";
 
 export default function(event: Event): void {
@@ -35,8 +36,7 @@ export default function(event: Event): void {
             queue(tokens);
             break;
         case Event.Tag:
-            tokens.push(tag.data.key);
-            tokens.push(tag.data.value);
+            tokens.push(tag.data.tag);
             queue(tokens);
             break;
         case Event.Upgrade:
@@ -49,6 +49,17 @@ export default function(event: Event): void {
             tokens.push(track.attempts);
             tokens.push(track.status);
             queue(tokens);
+            break;
+        case Event.Variable:
+            let variableKeys = Object.keys(variable.data);
+            if (variableKeys.length > 0) {
+                for (let v of variableKeys) {
+                    tokens.push(v);
+                    tokens.push(variableKeys[v]);
+                }
+                variable.reset();
+                queue(tokens);
+            }
             break;
         case Event.Metric:
             let metricKeys = Object.keys(metric.updates);

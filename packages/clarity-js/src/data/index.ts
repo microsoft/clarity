@@ -8,9 +8,11 @@ import * as ping from "@src/data/ping";
 import * as tag from "@src/data/tag";
 import * as upgrade from "@src/data/upgrade";
 import * as upload from "@src/data/upload";
+import * as variable from "@src/data/variable";
 export { consent, metadata } from "@src/data/metadata";
 export { tag } from "@src/data/tag";
 export { upgrade } from "@src/data/upgrade";
+export { set, identify } from "@src/data/variable";
 
 export function start(): void {
     // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
@@ -22,6 +24,7 @@ export function start(): void {
     measure(envelope.start)();
     measure(ping.start)();
     measure(tag.reset)();
+    measure(variable.reset)();
     measure(upgrade.reset)();
 }
 
@@ -31,6 +34,7 @@ export function end(): void {
     // Similarly, if upload depends on metadata, upload needs to end before metadata.
     measure(upgrade.reset)();
     measure(tag.reset)();
+    measure(variable.reset)();
     measure(ping.end)();
     measure(upload.end)();
     measure(envelope.end)();
