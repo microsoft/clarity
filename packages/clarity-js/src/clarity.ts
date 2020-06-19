@@ -116,6 +116,13 @@ export function identify(userId: string, sessionId?: string, pageId?: string): v
   }
 }
 
+export function event(key: string, value: string): void {
+  // Do not process tags if Clarity is not already activated
+  if (active) {
+    measure(data.event)(key, value);
+  }
+}
+
 export function upgrade(key: string): void {
   // Do not process upgrade call if Clarity is not already activated
   if (active) {

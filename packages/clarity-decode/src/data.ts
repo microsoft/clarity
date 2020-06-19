@@ -11,6 +11,9 @@ export function decode(tokens: Data.Token[]): DataEvent {
         case Data.Event.Tag:
             let tag: Data.TagData = { tag: tokens[2] as string };
             return { time, event, data: tag };
+        case Data.Event.Custom:
+            let custom: Data.CustomData = { key: tokens[2] as string, value: tokens[3] as string };
+            return { time, event, data: custom };
         case Data.Event.Upgrade:
             let upgrade: Data.UpgradeData = { key: tokens[2] as string };
             return { time, event, data: upgrade };

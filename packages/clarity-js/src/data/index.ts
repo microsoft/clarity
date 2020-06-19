@@ -9,6 +9,7 @@ import * as tag from "@src/data/tag";
 import * as upgrade from "@src/data/upgrade";
 import * as upload from "@src/data/upload";
 import * as variable from "@src/data/variable";
+export { event } from "@src/data/custom";
 export { consent, metadata } from "@src/data/metadata";
 export { tag } from "@src/data/tag";
 export { upgrade } from "@src/data/upgrade";

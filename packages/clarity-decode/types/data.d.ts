@@ -20,6 +20,7 @@ export import Constant = Data.Constant;
 export interface BaselineEvent extends PartialEvent { data: Data.BaselineData; }
 export interface DimensionEvent extends PartialEvent { data: Data.DimensionData; }
 export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
+export interface CustomEvent extends PartialEvent { data: Data.CustomData; }
 export interface VariableEvent extends PartialEvent { data: Data.VariableData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
 export interface TagEvent extends PartialEvent { data: Data.TagData; }
@@ -29,6 +30,7 @@ export interface DataEvent extends PartialEvent {
     data: Data.BaselineData |
     Data.DimensionData | 
     Data.MetricData |
+    Data.CustomData |
     Data.VariableData |
     Data.PingData |
     Data.TagData |
@@ -66,6 +68,7 @@ export interface DecodedPayload {
     log?: LogEvent[];
     baseline?: BaselineEvent[];
     variable?: VariableEvent[];
+    custom?: CustomEvent[];
 }
 
 export interface DecodedVersion {

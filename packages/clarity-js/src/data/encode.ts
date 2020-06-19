@@ -1,6 +1,7 @@
 import { Event, Token, Metric, BooleanFlag } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
+import * as custom from "@src/data/custom";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
@@ -49,6 +50,11 @@ export default function(event: Event): void {
             tokens.push(track.attempts);
             tokens.push(track.status);
             queue(tokens, false);
+            break;
+        case Event.Custom:
+            tokens.push(custom.data.key);
+            tokens.push(custom.data.value);
+            queue(tokens);
             break;
         case Event.Variable:
             let variableKeys = Object.keys(variable.data);

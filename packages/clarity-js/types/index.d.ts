@@ -16,6 +16,7 @@ interface Clarity {
   upgrade: (key: string) => void;
   consent: () => void;
   tag: (name: string) => void;
+  event: (name: string, value: string) => void;
   set: (variable: string, value: string) => void;
   identify: (userId: string, sessionId?: string, pageId?: string) => void;
 

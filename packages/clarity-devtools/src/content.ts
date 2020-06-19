@@ -34,8 +34,8 @@ function activate(): void {
       clarity.tag("start-developer-tools");
       // Set a sample variable
       clarity.set("App", "Developer Tools");
-      // Use identify API
-      clarity.identify("X", "Y", "Z");
+      // Send a custom event
+      clarity.event("Sample", "Event");
     });
     window["clarity"] = clarity;
   }
