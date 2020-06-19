@@ -27,7 +27,7 @@ export default function(event: Event): void {
                 tokens.push(b.data.pointerX);
                 tokens.push(b.data.pointerY);
                 tokens.push(b.data.activityTime);
-                queue(tokens);
+                queue(tokens, false);
             }
             baseline.reset();
             break;
@@ -48,17 +48,17 @@ export default function(event: Event): void {
             tokens.push(track.sequence);
             tokens.push(track.attempts);
             tokens.push(track.status);
-            queue(tokens);
+            queue(tokens, false);
             break;
         case Event.Variable:
             let variableKeys = Object.keys(variable.data);
             if (variableKeys.length > 0) {
                 for (let v of variableKeys) {
                     tokens.push(v);
-                    tokens.push(variableKeys[v]);
+                    tokens.push(variable.data[v]);
                 }
                 variable.reset();
-                queue(tokens);
+                queue(tokens, false);
             }
             break;
         case Event.Metric:
@@ -72,7 +72,7 @@ export default function(event: Event): void {
                     tokens.push(Math.round(metric.updates[m]));
                 }
                 metric.reset();
-                queue(tokens);
+                queue(tokens, false);
             }
             break;
         case Event.Dimension:
@@ -84,7 +84,7 @@ export default function(event: Event): void {
                     tokens.push(dimension.updates[d]);
                 }
                 dimension.reset();
-                queue(tokens);
+                queue(tokens, false);
             }
             break;
     }

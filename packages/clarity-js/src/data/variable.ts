@@ -5,14 +5,12 @@ export let data: VariableData = null;
 
 export function set(variable: string, value: string): void {
     log(variable, value);
-    encode(Event.Variable);
 }
 
 export function identify(userId: string, sessionId: string = null, pageId: string = null): void {
     log(Constant.RESERVED_USER_ID_VARIABLE, userId);
     log(Constant.RESERVED_SESSION_ID_VARIABLE, sessionId);
     log(Constant.RESERVED_PAGE_ID_VARIABLE, pageId);
-    encode(Event.Variable);
 }
 
 function log(variable: string, value: string): void {

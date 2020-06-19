@@ -6,10 +6,9 @@ import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "@src/data/encode";
 import * as envelope from "@src/data/envelope";
-import * as dimension from "@src/data/dimension";
+import * as data from "@src/data/index";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
-import * as baseline from "@src/data/baseline";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
 import * as performance from "@src/performance/observer";
@@ -35,29 +34,14 @@ export function start(): void {
     track = null;
 }
 
-export function queue(data: Token[]): void {
+export function queue(tokens: Token[], transmit: boolean = true): void {
     if (active) {
         let now = time();
-        let type = data.length > 1 ? data[1] : null;
-        let event = JSON.stringify(data);
+        let type = tokens.length > 1 ? tokens[1] : null;
+        let event = JSON.stringify(tokens);
         let container = events;
-        // When transmit is set to true (default), it indicates that we should schedule an upload
-        // However, in certain scenarios - like metric calculation - that are triggered as part of an existing upload
-        // We do not want to trigger yet another upload, instead enrich the existing outgoing upload.
-        // In these cases, we explicitly set transmit to false.
-        let transmit = true;
 
         switch (type) {
-            case Event.Connection:
-            case Event.Navigation:
-            case Event.Dimension:
-            case Event.Metric:
-            case Event.Upload:
-            case Event.Log:
-            case Event.Baseline:
-            case Event.Timeline:
-                transmit = false;
-                break;
             case Event.Discover:
             case Event.Mutation:
                 // Layout events are queued based on the current configuration
@@ -92,10 +76,13 @@ export function queue(data: Token[]): void {
             timeout = null;
         }
 
-        // Check 2: Ideally, expectation is that pause / resume will work as designed and we will never hit the shutdown clause.
+        // Shutdown Check: Ideally, expectation is that pause / resume will work as designed and we will never hit the shutdown clause.
         // However, in some cases involving script errors, we may fail to pause Clarity instrumentation.
         // In those edge cases, we will cut the cord after a configurable shutdown value.
         // The only exception is the very last payload, for which we will attempt one final delivery to the server.
+        // Transmit Check: When transmit is set to true (default), it indicates that we should schedule an upload
+        // However, in certain scenarios - like metric calculation - which are triggered as part of an existing upload
+        // We enrich the data going out with the existing upload. In these cases, call to upload comes with 'transmit' set to false.
         if (now < config.shutdown && transmit && timeout === null) {
             if (type !== Event.Ping) { ping.reset(); }
             timeout = setTimeout(upload, config.delay);
@@ -123,34 +110,32 @@ function upload(final: boolean = false): void {
     // Otherwise you run a risk of infinite loop.
     performance.compute();
     region.compute();
-    baseline.compute();
     timeline.compute();
-    dimension.compute();
-    metric.compute();
+    data.compute();
 
     // Treat this as the last payload only if final boolean was explicitly set to true.
     // In real world tests, we noticed that certain third party scripts (e.g. https://www.npmjs.com/package/raven-js)
     // could inject function arguments for internal tracking (likely stack traces for script errors).
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
     let last = final === true;
-    let payload: EncodedPayload = {e: JSON.stringify(envelope.envelope(last)), d: `[${events.join()}]`};
-    let data = stringify(payload);
+    let encoded: EncodedPayload = {e: JSON.stringify(envelope.envelope(last)), d: `[${events.join()}]`};
+    let payload = stringify(encoded);
     let sequence = envelope.data.sequence;
-    metric.sum(Metric.TotalBytes, data.length);
-    send(data, sequence, last);
+    metric.sum(Metric.TotalBytes, payload.length);
+    send(payload, sequence, last);
 
     // Send data to upload hook, if defined in the config
-    if (config.upload) { config.upload(data); }
+    if (config.upload) { config.upload(payload); }
 
     // Clear out events now that payload has been dispatched
     events = [];
 }
 
-function stringify(payload: EncodedPayload): string {
-    return `{"e":${payload.e},"d":${payload.d}}`;
+function stringify(encoded: EncodedPayload): string {
+    return `{"e":${encoded.e},"d":${encoded.d}}`;
 }
 
-function send(data: string, sequence: number, last: boolean): void {
+function send(payload: string, sequence: number, last: boolean): void {
     // Upload data if a valid URL is defined in the config
     if (config.url.length > 0) {
         let dispatched = false;
@@ -159,7 +144,7 @@ function send(data: string, sequence: number, last: boolean): void {
         // The advantage to using sendBeacon is that browser can decide to upload asynchronously, improving chances of success
         // However, we don't want to rely on it for every payload, since we have no ability to retry if the upload failed.
         if (last && "sendBeacon" in navigator) {
-            dispatched = navigator.sendBeacon(config.url, data);
+            dispatched = navigator.sendBeacon(config.url, payload);
         }
 
         // Before initiating XHR upload, we check if the data has already been uploaded using sendBeacon
@@ -168,11 +153,11 @@ function send(data: string, sequence: number, last: boolean): void {
         //   b) It's the last payload, however, we failed to queue sendBeacon call and need to now fall back to XHR.
         //      E.g. if data is over 64KB, several user agents (like Chrome) will reject to queue the sendBeacon call.
         if (dispatched === false) {
-            if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data, attempts: 1 }; }
+            if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
             let xhr = new XMLHttpRequest();
             xhr.open("POST", config.url);
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence, last); }; }
-            xhr.send(data);
+            xhr.send(payload);
         }
     }
 }
@@ -193,8 +178,8 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
     }
 }
 
-function response(data: string): void {
-    let key = data && data.length > 0 ? data.split(" ")[0] : Constant.EMPTY_STRING;
+function response(payload: string): void {
+    let key = payload && payload.length > 0 ? payload.split(" ")[0] : Constant.EMPTY_STRING;
     switch (key) {
         case Constant.RESPONSE_END:
             clarity.end();

@@ -14,7 +14,7 @@ export default async function(type: Event): Promise<void> {
             tokens.push(connection.data.saveData);
             tokens.push(connection.data.type);
             connection.reset();
-            queue(tokens);
+            queue(tokens, false);
             break;
         case Event.Navigation:
             tokens.push(navigation.data.fetchStart);
@@ -34,7 +34,7 @@ export default async function(type: Event): Promise<void> {
             tokens.push(navigation.data.encodedSize);
             tokens.push(navigation.data.decodedSize);
             navigation.reset();
-            queue(tokens);
+            queue(tokens, false);
             break;
     }
 }

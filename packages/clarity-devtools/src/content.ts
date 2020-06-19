@@ -30,6 +30,12 @@ function activate(): void {
         upload,
         projectId: 1051133397904 // parseInt("devtools", 36);
       });
+      // Add a sample tag
+      clarity.tag("start-developer-tools");
+      // Set a sample variable
+      clarity.set("App", "Developer Tools");
+      // Use identify API
+      clarity.identify("X", "Y", "Z");
     });
     window["clarity"] = clarity;
   }

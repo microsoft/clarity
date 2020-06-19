@@ -43,3 +43,10 @@ export function end(): void {
     measure(baseline.end)();
     metric.end();
 }
+
+export function compute(): void {
+    variable.compute();
+    baseline.compute();
+    dimension.compute();
+    metric.compute();
+}
