@@ -5,7 +5,6 @@ import * as custom from "@src/data/custom";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
-import * as tag from "@src/data/tag";
 import * as upgrade from "@src/data/upgrade";
 import * as variable from "@src/data/variable";
 import { queue, track } from "./upload";
@@ -34,10 +33,6 @@ export default function(event: Event): void {
             break;
         case Event.Ping:
             tokens.push(ping.data.gap);
-            queue(tokens);
-            break;
-        case Event.Tag:
-            tokens.push(tag.data.tag);
             queue(tokens);
             break;
         case Event.Upgrade:

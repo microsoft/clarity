@@ -30,7 +30,7 @@ export const enum Event {
     Selection = 21,
     Timeline = 22,
     Page = 23,
-    Tag = 24,
+    Custom = 24,
     Ping = 25,
     Unload = 26,
     Input = 27,
@@ -40,8 +40,7 @@ export const enum Event {
     ScriptError = 31,
     ImageError = 32,
     Log = 33,
-    Variable = 34,
-    Custom = 35
+    Variable = 34
 }
 
 export const enum Metric {
@@ -99,10 +98,11 @@ export const enum BooleanFlag {
 
 export const enum Constant {
     AUTO = "Auto",
-    CLARITY_TAG_RESTART = "clarity-restart",
-    CLARITY_TAG_SUSPEND = "clarity-suspend",
-    CLARITY_TAG_PAUSE = "clarity-pause",
-    CLARITY_TAG_RESUME = "clarity-resume",
+    CLARITY = "clarity",
+    RESTART = "restart",
+    SUSPEND = "suspend",
+    PAUSE = "pause",
+    RESUME = "resume",
     EMPTY_STRING = "",
     SPACE = " ",
     EXPIRES = "expires=",
@@ -204,10 +204,6 @@ export interface MetricData {
 
 export interface PingData {
     gap: number;
-}
-
-export interface TagData {
-    tag: string;
 }
 
 export interface UpgradeData {

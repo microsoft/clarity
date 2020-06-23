@@ -30,12 +30,10 @@ function activate(): void {
         upload,
         projectId: 1051133397904 // parseInt("devtools", 36);
       });
-      // Add a sample tag
-      clarity.tag("start-developer-tools");
+      // Send a custom event
+      clarity.event("Developer Tools", "start");
       // Set a sample variable
       clarity.set("App", "Developer Tools");
-      // Send a custom event
-      clarity.event("Sample", "Event");
     });
     window["clarity"] = clarity;
   }

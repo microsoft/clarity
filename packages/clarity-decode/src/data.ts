@@ -8,9 +8,6 @@ export function decode(tokens: Data.Token[]): DataEvent {
         case Data.Event.Ping:
             let ping: Data.PingData = { gap: tokens[2] as number };
             return { time, event, data: ping };
-        case Data.Event.Tag:
-            let tag: Data.TagData = { tag: tokens[2] as string };
-            return { time, event, data: tag };
         case Data.Event.Custom:
             let custom: Data.CustomData = { key: tokens[2] as string, value: tokens[3] as string };
             return { time, event, data: custom };

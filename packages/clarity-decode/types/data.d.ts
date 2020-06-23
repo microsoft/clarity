@@ -23,7 +23,6 @@ export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
 export interface CustomEvent extends PartialEvent { data: Data.CustomData; }
 export interface VariableEvent extends PartialEvent { data: Data.VariableData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
-export interface TagEvent extends PartialEvent { data: Data.TagData; }
 export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
 export interface DataEvent extends PartialEvent {
@@ -33,7 +32,6 @@ export interface DataEvent extends PartialEvent {
     Data.CustomData |
     Data.VariableData |
     Data.PingData |
-    Data.TagData |
     Data.UpgradeData |
     Data.UploadData;
 }
@@ -46,7 +44,6 @@ export interface DecodedPayload {
     metric?: MetricEvent[];
     dimension?: DimensionEvent[];
     ping?: PingEvent[];
-    tag?: TagEvent[];
     image?: ImageErrorEvent[];
     script?: ScriptErrorEvent[];
     input?: InputEvent[];
