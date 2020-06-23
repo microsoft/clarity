@@ -10,7 +10,7 @@ import { link, target } from "@src/layout/target";
 import encode from "./encode";
 
 export let state: ClickState[] = [];
-let clickPrecision = Math.pow(2, 16) - 1;
+let clickPrecision = Math.pow(2, 15) - 1;
 
 export function start(): void {
     reset();

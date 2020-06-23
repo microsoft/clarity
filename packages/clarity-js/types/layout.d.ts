@@ -27,6 +27,7 @@ export const enum Constant {
     NAME_ATTRIBUTE = "name",
     BASE_ATTRIBUTE = "*B",
     SAME_ORIGIN_ATTRIBUTE = "*O",
+    OBJECT = "object",
     FUNCTION = "function",
     INPUT_TAG = "INPUT",
     IFRAME_TAG = "IFRAME",
@@ -42,6 +43,21 @@ export const enum Constant {
     LOAD_EVENT = "load",
     PLACEHOLDER_SELECTOR = "*?",
     DISCONNECTED_SELECTOR = "*!"
+}
+
+export const enum JsonLD { 
+    SCRIPT_TYPE = "application/ld+json",
+    TYPE_KEY = "@type",
+    RECIPE_TYPE = "recipe",
+    PRODUCT_TYPE = "product",
+    RATING_TYPE = "aggregaterating",
+    AUTHOR_TYPE = "person",
+    OFFER_TYPE = "offer",
+    BRAND_TYPE = "brand",
+    RATING_VALUE_KEY = "ratingValue",
+    RATING_COUNT_KEY = "ratingCount",
+    AVAILABILITY_KEY = "availability",
+    NAME_KEY = "name"
 }
 
 

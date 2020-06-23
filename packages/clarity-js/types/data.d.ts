@@ -55,7 +55,10 @@ export const enum Metric {
     LongTaskCount = 7,
     LargestPaint = 8,
     CumulativeLayoutShift = 9,
-    FirstInputDelay = 10
+    FirstInputDelay = 10,
+    RatingValue = 11,
+    RatingCount = 12,
+    ProductPrice = 13
 }
 
 export const enum Dimension {
@@ -63,7 +66,11 @@ export const enum Dimension {
     Url = 1,
     Referrer = 2,
     PageTitle = 3,
-    NetworkHosts = 4
+    NetworkHosts = 4,
+    SchemaType = 5,
+    ProductBrand = 6,
+    ProductAvailability = 7,
+    AuthorName = 8
 }
 
 export const enum Code {

@@ -1,7 +1,9 @@
-import { Constant, Source } from "@clarity-types/layout";
-import { Code, Severity } from "@clarity-types/data";
+import { Constant, JsonLD, Source } from "@clarity-types/layout";
+import { Code, Dimension, Metric, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
 import * as dom from "./dom";
+import * as dimension from "@src/data/dimension";
+import * as metric from "@src/data/metric";
 import * as log from "@src/diagnostic/log";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
@@ -36,8 +38,9 @@ export default function (node: Node, source: Source): Node {
             dom[call](node, parent, docData, source);
             break;
         case Node.DOCUMENT_NODE:
-            // We check for regions in the beginning when discovering document and later whenever there are new additions or modifications to DOM (mutations)
-            if (node == document) dom.extractRegions(document);
+            // We check for regions in the beginning when discovering document and
+            // later whenever there are new additions or modifications to DOM (mutations)
+            if (node === document) dom.extractRegions(document);
             observe(node);
             break;
         case Node.DOCUMENT_FRAGMENT_NODE:
@@ -78,6 +81,7 @@ export default function (node: Node, source: Source): Node {
             break;
         case Node.ELEMENT_NODE:
             let element = (node as HTMLElement);
+            let attributes = getAttributes(element.attributes);
             let tag = element.tagName;
             parent = node.parentNode ? node.parentNode as HTMLElement : null;
             // If we encounter a node that is part of SVG namespace, prefix the tag with SVG_PREFIX
@@ -87,26 +91,31 @@ export default function (node: Node, source: Source): Node {
                 case "HTML":
                     parent = insideFrame && parent ? dom.iframe(parent) : null;
                     let htmlPrefix = insideFrame ? Constant.IFRAME_PREFIX : Constant.EMPTY_STRING;
-                    let htmlData = { tag: htmlPrefix + tag, attributes: getAttributes(element.attributes) };
+                    let htmlData = { tag: htmlPrefix + tag, attributes };
                     dom[call](node, parent, htmlData, source);
                     break;
                 case "SCRIPT":
+                    if (Constant.TYPE_ATTRIBUTE in attributes && attributes[Constant.TYPE_ATTRIBUTE] === JsonLD.SCRIPT_TYPE) {
+                        try {
+                            parseLinkedData(JSON.parse((element as HTMLScriptElement).text));
+                        } catch { /* do nothing */ }
+                    }
+                    break;
                 case "NOSCRIPT":
                 case "META":
                     break;
                 case "HEAD":
-                    let head = { tag, attributes: getAttributes(element.attributes) };
+                    let head = { tag, attributes };
                     if (location) { head.attributes[Constant.BASE_ATTRIBUTE] = location.protocol + "//" + location.hostname; }
                     dom[call](node, parent, head, source);
                     break;
                 case "STYLE":
-                    let attributes = getAttributes(element.attributes);
                     let styleData = { tag, attributes, value: getStyleValue(element as HTMLStyleElement) };
                     dom[call](node, parent, styleData, source);
                     break;
                 case "IFRAME":
                     let iframe = node as HTMLIFrameElement;
-                    let frameData = { tag, attributes: getAttributes(iframe.attributes) };
+                    let frameData = { tag, attributes };
                     if (dom.sameorigin(iframe)) {
                         mutation.monitor(iframe);
                         frameData.attributes[Constant.SAME_ORIGIN_ATTRIBUTE] = "true";
@@ -117,7 +126,7 @@ export default function (node: Node, source: Source): Node {
                     dom[call](node, parent, frameData, source);
                     break;
                 default:
-                    let data = { tag, attributes: getAttributes(element.attributes) };
+                    let data = { tag, attributes };
                     if (element.shadowRoot) { child = element.shadowRoot; }
                     dom[call](node, parent, data, source);
                     break;
@@ -172,4 +181,40 @@ function getAttributes(attributes: NamedNodeMap): { [key: string]: string } {
         }
     }
     return output;
+}
+
+function parseLinkedData(json: any): void {
+    for (let key of Object.keys(json)) {
+        let value = json[key];
+        if (key === JsonLD.TYPE_KEY) {
+            value = typeof value === "string" ? value.toLowerCase() : value;
+            switch (value) {
+                case JsonLD.PRODUCT_TYPE:
+                    dimension.log(Dimension.SchemaType, json[key]);
+                    break;
+                case JsonLD.RECIPE_TYPE:
+                    dimension.log(Dimension.SchemaType, json[key]);
+                    break;
+                case JsonLD.RATING_TYPE:
+                    if (json[JsonLD.RATING_VALUE_KEY]) { metric.max(Metric.RatingValue, num(json[JsonLD.RATING_VALUE_KEY])); }
+                    if (json[JsonLD.RATING_COUNT_KEY]) { metric.max(Metric.RatingCount, num(json[JsonLD.RATING_COUNT_KEY])); }
+                    break;
+                case JsonLD.AUTHOR_TYPE:
+                    if (json[JsonLD.NAME_KEY]) { dimension.log(Dimension.AuthorName, json[JsonLD.NAME_KEY]); }
+                    break;
+                case JsonLD.OFFER_TYPE:
+                    if (json[JsonLD.AVAILABILITY_KEY]) { dimension.log(Dimension.ProductAvailability, json[JsonLD.AVAILABILITY_KEY]); }
+                    break;
+                case JsonLD.BRAND_TYPE:
+                    if (json[JsonLD.NAME_KEY]) { dimension.log(Dimension.ProductBrand, json[JsonLD.NAME_KEY]); }
+                    break;
+            }
+        }
+        // Continue parsing nested objects
+        if (value !== null && typeof(value) === Constant.OBJECT) { parseLinkedData(value); }
+    }
+}
+
+function num(input: string): number {
+    return Math.round(parseFloat(input));
 }
