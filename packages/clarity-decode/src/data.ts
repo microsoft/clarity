@@ -8,9 +8,9 @@ export function decode(tokens: Data.Token[]): DataEvent {
         case Data.Event.Ping:
             let ping: Data.PingData = { gap: tokens[2] as number };
             return { time, event, data: ping };
-        case Data.Event.Tag:
-            let tag: Data.TagData = { key: tokens[2] as string, value: tokens[3] as string[] };
-            return { time, event, data: tag };
+        case Data.Event.Custom:
+            let custom: Data.CustomData = { key: tokens[2] as string, value: tokens[3] as string };
+            return { time, event, data: custom };
         case Data.Event.Upgrade:
             let upgrade: Data.UpgradeData = { key: tokens[2] as string };
             return { time, event, data: upgrade };
@@ -45,6 +45,13 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 activityTime: tokens[11] as number
             }
             return { time, event, data: baselineData };
+        case Data.Event.Variable:
+            let v = 2; // Start from 3rd index since first two are used for time & event
+            let variables: Data.VariableData = {};
+            while (v < tokens.length) {
+                variables[tokens[v++] as string] = tokens[v++] as string;
+            }
+            return { time, event, data: variables };
     }
     return null;
 }

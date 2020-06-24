@@ -30,7 +30,7 @@ export const enum Event {
     Selection = 21,
     Timeline = 22,
     Page = 23,
-    Tag = 24,
+    Custom = 24,
     Ping = 25,
     Unload = 26,
     Input = 27,
@@ -39,7 +39,8 @@ export const enum Event {
     Connection = 30,
     ScriptError = 31,
     ImageError = 32,
-    Log = 33
+    Log = 33,
+    Variable = 34
 }
 
 export const enum Metric {
@@ -53,7 +54,10 @@ export const enum Metric {
     LongTaskCount = 7,
     LargestPaint = 8,
     CumulativeLayoutShift = 9,
-    FirstInputDelay = 10
+    FirstInputDelay = 10,
+    RatingValue = 11,
+    RatingCount = 12,
+    ProductPrice = 13
 }
 
 export const enum Dimension {
@@ -62,7 +66,10 @@ export const enum Dimension {
     Referrer = 2,
     PageTitle = 3,
     NetworkHosts = 4,
-    Tags = 5
+    SchemaType = 5,
+    ProductBrand = 6,
+    ProductAvailability = 7,
+    AuthorName = 8
 }
 
 export const enum Code {
@@ -92,16 +99,24 @@ export const enum BooleanFlag {
 export const enum Constant {
     AUTO = "Auto",
     CLARITY = "clarity",
+    RESTART = "restart",
+    SUSPEND = "suspend",
+    PAUSE = "pause",
+    RESUME = "resume",
     EMPTY_STRING = "",
     SPACE = " ",
     EXPIRES = "expires=",
     SEMICOLON = ";",
     EQUALS = "=",
     PATH = ";path=/",
+    STRING_TYPE = "string",
     STORAGE_KEY = "_claritybeta",
     STORAGE_SEPARATOR = "|",
     RESPONSE_END = "END",
-    RESPONSE_UPGRADE = "UPGRADE"
+    RESPONSE_UPGRADE = "UPGRADE",
+    RESERVED_USER_ID_VARIABLE = "userId",
+    RESERVED_SESSION_ID_VARIABLE = "sessionId",
+    RESERVED_PAGE_ID_VARIABLE = "pageId"
 }
 
 /* Helper Interfaces */
@@ -170,17 +185,25 @@ export interface DimensionData {
     [key: number]: string[];
 }
 
+export interface VariableData {
+    [name: string]: string;
+}
+
+// Eventually custom event can be expanded to contain more properties 
+// For now, restricting to key value pair where both key & value are strings
+// The way it's different from variable is that Custom Event has a notion of time
+// Whereas variables have no timing element and eventually will turn into custom dimensions
+export interface CustomData {
+    key: string;
+    value: string;
+}
+
 export interface MetricData {
     [key: number]: number;
 }
 
 export interface PingData {
     gap: number;
-}
-
-export interface TagData {
-    key: string;
-    value: string[];
 }
 
 export interface UpgradeData {

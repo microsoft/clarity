@@ -1,11 +1,12 @@
 import { Event, Token, Metric, BooleanFlag } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
+import * as custom from "@src/data/custom";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
-import * as tag from "@src/data/tag";
 import * as upgrade from "@src/data/upgrade";
+import * as variable from "@src/data/variable";
 import { queue, track } from "./upload";
 
 export default function(event: Event): void {
@@ -26,17 +27,12 @@ export default function(event: Event): void {
                 tokens.push(b.data.pointerX);
                 tokens.push(b.data.pointerY);
                 tokens.push(b.data.activityTime);
-                queue(tokens);
+                queue(tokens, false);
             }
             baseline.reset();
             break;
         case Event.Ping:
             tokens.push(ping.data.gap);
-            queue(tokens);
-            break;
-        case Event.Tag:
-            tokens.push(tag.data.key);
-            tokens.push(tag.data.value);
             queue(tokens);
             break;
         case Event.Upgrade:
@@ -48,7 +44,23 @@ export default function(event: Event): void {
             tokens.push(track.sequence);
             tokens.push(track.attempts);
             tokens.push(track.status);
+            queue(tokens, false);
+            break;
+        case Event.Custom:
+            tokens.push(custom.data.key);
+            tokens.push(custom.data.value);
             queue(tokens);
+            break;
+        case Event.Variable:
+            let variableKeys = Object.keys(variable.data);
+            if (variableKeys.length > 0) {
+                for (let v of variableKeys) {
+                    tokens.push(v);
+                    tokens.push(variable.data[v]);
+                }
+                variable.reset();
+                queue(tokens, false);
+            }
             break;
         case Event.Metric:
             let metricKeys = Object.keys(metric.updates);
@@ -61,7 +73,7 @@ export default function(event: Event): void {
                     tokens.push(Math.round(metric.updates[m]));
                 }
                 metric.reset();
-                queue(tokens);
+                queue(tokens, false);
             }
             break;
         case Event.Dimension:
@@ -73,7 +85,7 @@ export default function(event: Event): void {
                     tokens.push(dimension.updates[d]);
                 }
                 dimension.reset();
-                queue(tokens);
+                queue(tokens, false);
             }
             break;
     }

@@ -15,7 +15,11 @@ interface Clarity {
   resume: () => void;
   upgrade: (key: string) => void;
   consent: () => void;
-  tag: (key: string, value: string) => void;
+  tag: () => void; /* For backward compatibility - delete in subsequent iterations */
+  event: (name: string, value: string) => void;
+  set: (variable: string, value: string) => void;
+  identify: (userId: string, sessionId?: string, pageId?: string) => void;
+
   metadata: () => Data.Metadata;
 }
 

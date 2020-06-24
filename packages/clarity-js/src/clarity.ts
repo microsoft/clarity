@@ -42,7 +42,7 @@ export function start(override: Config = {}): void {
 
 function restart(): void {
   start();
-  tag(Constant.CLARITY, "restart");
+  event(Constant.CLARITY, Constant.RESTART);
 }
 
 // Suspend ends the current Clarity instance after a configured timeout period
@@ -54,7 +54,7 @@ function restart(): void {
 // Clarity will restart and start another instance seamlessly. Effectively not missing any active time, but also
 // not holding the session during inactive time periods.
 export function suspend(): void {
-  tag(Constant.CLARITY, "suspend");
+  event(Constant.CLARITY, Constant.SUSPEND);
   end();
   bind(document, "mousemove", restart);
   bind(document, "touchstart", restart);
@@ -70,7 +70,7 @@ export function suspend(): void {
 // performance impact even further. For reference, we are talking 10s of milliseconds optimization here, not seconds.
 export function pause(): void {
   if (active) {
-    tag(Constant.CLARITY, "pause");
+    event(Constant.CLARITY, Constant.PAUSE);
     task.pause();
   }
 }
@@ -79,7 +79,7 @@ export function pause(): void {
 export function resume(): void {
   if (active) {
     task.resume();
-    tag(Constant.CLARITY, "resume");
+    event(Constant.CLARITY, Constant.RESUME);
   }
 }
 
@@ -95,10 +95,26 @@ export function end(): void {
   }
 }
 
-export function tag(key: string, value: string): void {
+export function tag(): void { /* Do nothing - Temporarily here for backward compatibility */ }
+
+export function set(variable: string, value: string): void {
   // Do not process tags if Clarity is not already activated
   if (active) {
-    measure(data.tag)(key, value);
+    measure(data.set)(variable, value);
+  }
+}
+
+export function identify(userId: string, sessionId?: string, pageId?: string): void {
+  // Do not process tags if Clarity is not already activated
+  if (active) {
+    measure(data.identify)(userId, sessionId, pageId);
+  }
+}
+
+export function event(key: string, value: string): void {
+  // Do not process tags if Clarity is not already activated
+  if (active) {
+    measure(data.event)(key, value);
   }
 }
 

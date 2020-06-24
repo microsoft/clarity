@@ -33,7 +33,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(log.data.message);
                 tokens.push(log.data.stack);
                 tokens.push(log.data.severity);
-                queue(tokens);
+                queue(tokens, false);
             }
             break;
     }
