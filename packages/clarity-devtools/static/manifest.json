@@ -2,8 +2,8 @@
   "manifest_version": 2,
   "name": "Clarity Developer Tools",
   "description": "Get insights about how customers use your website.",
-  "version": "0.5.9",
-  "version_name": "0.5.9",  
+  "version": "0.6.0",
+  "version_name": "0.6.0",
   "minimum_chrome_version": "50",
   "devtools_page": "devtools.html",
   "icons": {
@@ -18,13 +18,27 @@
     "default_title": "Clarity Developer Tools",
     "default_popup": "popup.html"
   },
-  "content_scripts": [{
-    "matches": ["http://*/*", "https://*/*"],
-    "js": ["content.js"]
-  }],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": [
+      "background.js"
+    ],
     "persistent": false
   },
-  "permissions": ["http://*/*", "https://*/*", "storage", "tabs"]
+  "permissions": [
+    "http://*/*",
+    "https://*/*",
+    "storage",
+    "tabs"
+  ]
 }
