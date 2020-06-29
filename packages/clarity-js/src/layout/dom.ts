@@ -119,6 +119,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
     let parentId = parent ? getId(parent) : null;
     let previousId = getPreviousId(node);
     let changed = false;
+    let parentChanged = false;
 
     if (id in values) {
         let value = values[id];
@@ -137,7 +138,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
             value.parent = parentId;
             // Move this node to the right location under new parent
             if (parentId !== null && parentId >= 0) {
-                let childIndex = previousId === null ? values[parentId].children.length : values[parentId].children.indexOf(previousId) + 1;
+                let childIndex = previousId === null ? 0 : values[parentId].children.indexOf(previousId) + 1;
                 values[parentId].children.splice(childIndex, 0, id);
                 // Update region after the move
                 value.region = regionMap.has(node) ? regionMap.get(node) : values[parentId].region;
@@ -153,6 +154,8 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
                     values[oldParentId].children.splice(nodeIndex, 1);
                 }
             }
+
+            parentChanged = true;
         }
 
         // Update data
@@ -166,7 +169,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
         // Update selector
         updateSelector(value);
         metadata(data.tag, id, parentId);
-        track(id, source, changed);
+        track(id, source, changed, parentChanged);
     }
 }
 
@@ -384,12 +387,12 @@ function copy(input: NodeValue[]): NodeValue[] {
     return JSON.parse(JSON.stringify(input));
 }
 
-function track(id: number, source: Source, changed: boolean = true): void {
+function track(id: number, source: Source, changed: boolean = true, parentChanged: boolean = false): void {
     // Keep track of the order in which mutations happened, they may not be sequential
     // Edge case: If an element is added later on, and pre-discovered element is moved as a child.
     // In that case, we need to reorder the prediscovered element in the update list to keep visualization consistent.
     let uIndex = updateMap.indexOf(id);
-    if (uIndex >= 0 && source === Source.ChildListAdd) {
+    if (uIndex >= 0 && source === Source.ChildListAdd && parentChanged) {
         updateMap.splice(uIndex, 1);
         updateMap.push(id);
     } else if (uIndex === -1 && changed) { updateMap.push(id); }
