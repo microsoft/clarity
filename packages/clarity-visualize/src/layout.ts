@@ -1,5 +1,6 @@
 import { Data, Layout } from "clarity-decode";
 import { state } from "./clarity";
+import { NodeType } from "@clarity-types/layout";
 
 const TIMEOUT = 3000;
 const HOVER = ":hover";
@@ -86,7 +87,7 @@ export function markup(event: Layout.DomEvent): void {
         if (tag && tag.indexOf(Layout.Constant.IFRAME_PREFIX) === 0) { tag = node.tag.substr(Layout.Constant.IFRAME_PREFIX.length); }
         switch (tag) {
             case Layout.Constant.DOCUMENT_TAG:
-                let tagDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
+                let tagDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null) : doc;
                 if (tagDoc && tagDoc === doc && type === Data.Event.Discover) { reset(); }
                 if (typeof XMLSerializer !== "undefined" && tagDoc) {
                     tagDoc.open();
@@ -131,7 +132,7 @@ export function markup(event: Layout.DomEvent): void {
                 insert(node, parent, textElement, pivot);
                 break;
             case "HTML":
-                let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
+                let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null) : doc;
                 if (htmlDoc !== null) {
                     let docElement = element(node.id);
                     if (docElement === null) {
@@ -239,7 +240,7 @@ function insertAfter(data: Layout.DomData, parent: Node, node: Node, previous: N
 function firstChild(node: Node): ChildNode {
     let child = node.firstChild;
     // BASE tag should always be the first child to ensure resources with relative URLs are loaded correctly
-    if (child && child.nodeType === Node.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BASE_TAG) {
+    if (child && child.nodeType === NodeType.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BASE_TAG) {
         return child.nextSibling;
     }
     return child;
@@ -261,7 +262,7 @@ function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node
 }
 
 function setAttributes(node: HTMLElement, attributes: object): void {
-    let tag = node.nodeType === Node.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
+    let tag = node.nodeType === NodeType.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
     // First remove all its existing attributes
     if (node.attributes) {
         let length = node.attributes.length;
