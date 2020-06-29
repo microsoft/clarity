@@ -26,7 +26,8 @@
   "dependencies": {
     "clarity-decode": "^0.5.9",
     "clarity-js": "^0.5.9",
-    "clarity-visualize": "^0.5.9"
+    "clarity-visualize": "^0.5.9",
+    "tslint-microsoft-contrib": "^6.2.0"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^7.1.3",

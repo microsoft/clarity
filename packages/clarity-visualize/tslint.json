@@ -1,6 +1,10 @@
 {
   "extends": "tslint:recommended",
   "rules": {
+    "extends": [
+      "tslint-microsoft-contrib/recommended",
+      "tslint:recommended"
+    ],
     "max-line-length": [
       true,
       140

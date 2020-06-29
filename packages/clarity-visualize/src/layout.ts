@@ -86,7 +86,7 @@ export function markup(event: Layout.DomEvent): void {
         if (tag && tag.indexOf(Layout.Constant.IFRAME_PREFIX) === 0) { tag = node.tag.substr(Layout.Constant.IFRAME_PREFIX.length); }
         switch (tag) {
             case Layout.Constant.DOCUMENT_TAG:
-                let tagDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
+                let tagDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null) : doc;
                 if (tagDoc && tagDoc === doc && type === Data.Event.Discover) { reset(); }
                 if (typeof XMLSerializer !== "undefined" && tagDoc) {
                     tagDoc.open();
@@ -131,7 +131,7 @@ export function markup(event: Layout.DomEvent): void {
                 insert(node, parent, textElement, pivot);
                 break;
             case "HTML":
-                let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
+                let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null) : doc;
                 if (htmlDoc !== null) {
                     let docElement = element(node.id);
                     if (docElement === null) {
@@ -166,7 +166,7 @@ export function markup(event: Layout.DomEvent): void {
                 setAttributes(linkElement as HTMLElement, node.attributes);
                 if ("rel" in node.attributes && node.attributes["rel"] === "stylesheet") {
                     stylesheets.push(new Promise((resolve: () => void): void => {
-                        linkElement.onload = linkElement.onerror = style.bind(this, linkElement, resolve);
+                        linkElement.onload = linkElement.onerror = styleSheet.bind(this, linkElement, resolve);
                         setTimeout(resolve, TIMEOUT);
                     }));
                 }
@@ -178,7 +178,7 @@ export function markup(event: Layout.DomEvent): void {
                 setAttributes(styleElement as HTMLElement, node.attributes);
                 styleElement.textContent = node.value;
                 insert(node, parent, styleElement, pivot);
-                style(styleElement);
+                styleSheet(styleElement);
                 break;
             case "IFRAME":
                 let iframeElement = element(node.id) as HTMLElement;
@@ -203,7 +203,7 @@ export function markup(event: Layout.DomEvent): void {
     }
 }
 
-function style(node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void {
+function styleSheet(node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void {
     // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain
     try {
         const sheet = node.sheet as CSSStyleSheet;

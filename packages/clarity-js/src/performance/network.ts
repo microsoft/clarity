@@ -4,7 +4,7 @@ import config from "@src/core/config";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
-import encode from "./encode";
+import encode from "@src/performance/encode";
 
 export let state: NetworkState[] = [];
 let timeout: number = null;

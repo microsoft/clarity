@@ -1,6 +1,6 @@
 // Following regions are for demonstration purposes only
 export const regions = {
-    /* Bing */
+    // Bing
     Body: "body",
     Answers: ".b_ans",
     SearchBox: ".b_searchboxForm",
@@ -9,7 +9,7 @@ export const regions = {
     WebResults: ".b_algo",
     DisambiguationAnswer: ".disambig-outline",
     Footer: "#b_footer",
-    /* Wordpress */
+    // Wordpress
     Header: "header",
     SlickStream: ".slick-film-strip",
     PostPhoto: ".size-full",

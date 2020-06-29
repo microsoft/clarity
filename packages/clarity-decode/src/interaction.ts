@@ -1,7 +1,7 @@
 import { Data, Interaction } from "clarity-js";
-import { InteractionEvent } from "../types/interaction";
+import { InteractionEvent } from "@clarity-types/interaction";
 
-export function decode(tokens: Data.Token[]): InteractionEvent  {
+export function decode(tokens: Data.Token[]): InteractionEvent {
     let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
     switch (event) {

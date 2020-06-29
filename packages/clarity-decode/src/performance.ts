@@ -1,7 +1,7 @@
 import { Data, Performance } from "clarity-js";
-import { PerformanceEvent } from "../types/performance";
+import { PerformanceEvent } from "@clarity-types/performance";
 
-export function decode(tokens: Data.Token[]): PerformanceEvent  {
+export function decode(tokens: Data.Token[]): PerformanceEvent {
     let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
     switch (event) {
@@ -64,7 +64,7 @@ export function decode(tokens: Data.Token[]): PerformanceEvent  {
             let networkData: Performance.NetworkData[] = [];
             for (let i = 2; i < tokens.length; i++) {
                 let token = tokens[i];
-                let type = typeof(token);
+                let type = typeof (token);
                 switch (type) {
                     case "number":
                         if (type !== lastType && lastType !== null) {
@@ -89,7 +89,7 @@ export function decode(tokens: Data.Token[]): PerformanceEvent  {
                             network.push(token);
                         } else {
                             let subtoken = token[0];
-                            let subtype = typeof(subtoken);
+                            let subtype = typeof (subtoken);
                             switch (subtype) {
                                 case "number":
                                     for (let t of (token as number[])) {

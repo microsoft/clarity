@@ -1,4 +1,4 @@
-import { Code, Severity, Target } from "./data";
+import { Code, Severity, Target } from "@clarity-types/data";
 
 /* Event Data */
 export interface ScriptErrorData {

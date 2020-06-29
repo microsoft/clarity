@@ -26,7 +26,8 @@
     "url": "https://github.com/Microsoft/clarity/issues"
   },
   "dependencies": {
-    "clarity-js": "^0.5.9"
+    "clarity-js": "^0.5.9",
+    "tslint-microsoft-contrib": "^6.2.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.1.0",
