@@ -46,7 +46,7 @@ export async function schedule(task: TaskFunction, priority: Priority = Priority
 
     let promise = new Promise<void>((resolve: TaskResolve): void => {
         let insert = priority === Priority.High ? "unshift" : "push";
-        queuedTasks[insert]({task, resolve});
+        queuedTasks[insert]({ task, resolve });
     });
 
     // If there is no active task running, and Clarity is not in pause state,

@@ -1,4 +1,4 @@
-import {Event, Metric, TargetInfo, Token} from "@clarity-types/data";
+import { Event, Metric, TargetInfo, Token } from "@clarity-types/data";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import { observe, track } from "@src/data/target";
@@ -13,7 +13,7 @@ import * as navigation from "@src/performance/navigation";
 import * as network from "@src/performance/network";
 import * as paint from "@src/performance/paint";
 
-export default async function(type: Event): Promise<void> {
+export default async function (type: Event): Promise<void> {
     let t = time();
     let tokens: Token[] = [t, type];
     let timer = Metric.PerformanceDuration;

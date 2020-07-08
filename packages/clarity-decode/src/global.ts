@@ -1,7 +1,7 @@
 import * as decode from "@src/clarity";
 
 // Expose clarity variable globally to allow access to public interface in a browser
-if (typeof window !== "undefined") {
+if (window) {
     if ((window as any).clarity === undefined || (window as any).clarity === null) {
         (window as any).clarity = {};
     }

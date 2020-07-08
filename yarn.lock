@@ -6057,6 +6057,13 @@ tslib@1.11.1, tslib@^1.10.0, tslib@^1.8.0, tslib@^1.8.1, tslib@^1.9.0:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.11.1.tgz#eb15d128827fbee2841549e171f45ed338ac7e35"
   integrity sha512-aZW88SY8kQbU7gpV19lN24LtXh/yD4ZZg6qieAJDDg+YBsJcSmLGK9QpnUjAKVG/xefmvJGd1WUmfpT/g6AJGA==
 
+tslint-microsoft-contrib@^6.2.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/tslint-microsoft-contrib/-/tslint-microsoft-contrib-6.2.0.tgz#8aa0f40584d066d05e6a5e7988da5163b85f2ad4"
+  integrity sha512-6tfi/2tHqV/3CL77pULBcK+foty11Rr0idRDxKnteTaKm6gWF9qmaCNU17HVssOuwlYNyOmd9Jsmjd+1t3a3qw==
+  dependencies:
+    tsutils "^2.27.2 <2.29.0"
+
 tslint@6.1.1:
   version "6.1.1"
   resolved "https://registry.yarnpkg.com/tslint/-/tslint-6.1.1.tgz#ac03fbd17f85bfefaae348b353b25a88efe10cde"
@@ -6094,6 +6101,13 @@ tslint@^5.11.0:
     semver "^5.3.0"
     tslib "^1.8.0"
     tsutils "^2.29.0"
+
+"tsutils@^2.27.2 <2.29.0":
+  version "2.28.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.28.0.tgz#6bd71e160828f9d019b6f4e844742228f85169a1"
+  integrity sha512-bh5nAtW0tuhvOJnx1GLRn5ScraRLICGyJV5wJhtRWOLsxW70Kk5tZtpK3O/hW6LDnqKS9mlUMPZj9fEMJ0gxqA==
+  dependencies:
+    tslib "^1.8.1"
 
 tsutils@^2.29.0:
   version "2.29.0"

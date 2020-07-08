@@ -4,9 +4,9 @@ import config from "@src/core/config";
 import * as task from "@src/core/task";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "@src/layout/encode";
-import * as dom from "./dom";
+import * as dom from "@src/layout/dom";
 
-let bm: {[key: number]: BoxModelData} = {};
+let bm: { [key: number]: BoxModelData } = {};
 let updateMap: number[] = [];
 let timeout: number = null;
 
@@ -67,7 +67,7 @@ function update(id: number, box: number[]): void {
         if (updateMap.indexOf(id) === -1) { updateMap.push(id); }
         let value = dom.getValue(id);
         let region = value ? value.region : null;
-        bm[id] = {id, box, region};
+        bm[id] = { id, box, region };
     }
 }
 

@@ -1,5 +1,5 @@
 import { Data, Diagnostic } from "clarity-js";
-import { DiagnosticEvent } from "../types/diagnostic";
+import { DiagnosticEvent } from "@clarity-types/diagnostic";
 
 export function decode(tokens: Data.Token[]): DiagnosticEvent {
     let time = tokens[0] as number;

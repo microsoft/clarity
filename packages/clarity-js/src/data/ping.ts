@@ -3,7 +3,7 @@ import { suspend } from "@src/clarity";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
-import encode from "./encode";
+import encode from "@src/data/encode";
 
 export let data: PingData;
 let last = 0;
