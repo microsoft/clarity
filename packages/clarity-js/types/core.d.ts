@@ -1,4 +1,4 @@
-import { Metadata, Payload, Token } from "./data";
+import { Metadata, Payload, Token } from "@clarity-types/data";
 
 type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;

@@ -1,6 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { DocumentData } from "@clarity-types/layout";
-import encode from "./encode";
+import encode from "@src/layout/encode";
 
 export let data: DocumentData;
 
@@ -19,7 +19,7 @@ export function compute(): void {
     let documentScrollHeight = d ? d.scrollHeight : null;
     let documentOffsetHeight = d ? d.offsetHeight : null;
     let height = Math.max(bodyClientHeight, bodyScrollHeight, bodyOffsetHeight,
-    documentClientHeight, documentScrollHeight, documentOffsetHeight);
+        documentClientHeight, documentScrollHeight, documentOffsetHeight);
 
     // Check that width or height has changed from before, and also that width & height are not null values
     if ((data === null || width !== data.width || height !== data.height) && width !== null && height !== null) {

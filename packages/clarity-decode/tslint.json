@@ -1,5 +1,8 @@
 {
-  "extends": "tslint:recommended",
+  "extends": [
+    "tslint-microsoft-contrib/recommended",
+    "tslint:recommended"
+  ],
   "rules": {
     "max-line-length": [
       true,
@@ -20,6 +23,13 @@
     "interface-name": false,
     "interface-over-type-literal": false,
     "only-arrow-functions": false,
+    "prefer-type-cast": false,
+    "export-name": false,
+    "max-func-body-length": [
+      true,
+      200
+    ],
+    "no-for-in": false,
     "typedef": [
       true,
       "call-signature",

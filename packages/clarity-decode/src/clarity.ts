@@ -1,18 +1,18 @@
 import { Data, version } from "clarity-js";
-import { DecodedPayload, DecodedVersion } from "../types/data";
-import { MetricEvent, PageEvent, PingEvent, SummaryEvent, TagEvent, TargetEvent, UpgradeEvent, UploadEvent } from "../types/data";
-import { ImageErrorEvent, InternalErrorEvent, ScriptErrorEvent } from "../types/diagnostic";
-import { ClickEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
-import { SelectionEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
-import { BoxModelEvent, DocumentEvent, DomEvent, HashEvent, ResourceEvent } from "../types/layout";
-import { ConnectionEvent, LargestContentfulPaintEvent, LongTaskEvent, MemoryEvent } from "../types/performance";
-import { NavigationEvent, NetworkEvent, PaintEvent } from "../types/performance";
+import { DecodedPayload, DecodedVersion } from "@clarity-types/data";
+import { MetricEvent, PageEvent, PingEvent, SummaryEvent, TagEvent, TargetEvent, UpgradeEvent, UploadEvent } from "@clarity-types/data";
+import { ImageErrorEvent, InternalErrorEvent, ScriptErrorEvent } from "@clarity-types/diagnostic";
+import { ClickEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "@clarity-types/interaction";
+import { SelectionEvent, UnloadEvent, VisibilityEvent } from "@clarity-types/interaction";
+import { BoxModelEvent, DocumentEvent, DomEvent, HashEvent, ResourceEvent } from "@clarity-types/layout";
+import { ConnectionEvent, LargestContentfulPaintEvent, LongTaskEvent, MemoryEvent } from "@clarity-types/performance";
+import { NavigationEvent, NetworkEvent, PaintEvent } from "@clarity-types/performance";
 
-import * as data from "./data";
-import * as diagnostic from "./diagnostic";
-import * as interaction from "./interaction";
-import * as layout from "./layout";
-import * as performance from "./performance";
+import * as data from "@src/data";
+import * as diagnostic from "@src/diagnostic";
+import * as interaction from "@src/interaction";
+import * as layout from "@src/layout";
+import * as performance from "@src/performance";
 
 export function decode(input: string): DecodedPayload {
     let json: Data.Payload = JSON.parse(input);
@@ -34,7 +34,7 @@ export function decode(input: string): DecodedPayload {
         throw new Error(`Invalid version. Actual: ${payload.envelope.version} | Expected: ${version} (+/- 1) | ${input.substr(0, 250)}`);
     }
 
-    /* Reset components before decoding to keep them stateless */
+    // Reset components before decoding to keep them stateless
     data.reset();
     layout.reset();
 
@@ -175,7 +175,7 @@ export function decode(input: string): DecodedPayload {
         }
     }
 
-    /* Enrich decoded payload with derived events */
+    // Enrich decoded payload with derived events
     payload.summary = data.summary() as SummaryEvent[];
     if (payload.dom && payload.dom.length > 0) { payload.hash = layout.hash() as HashEvent[]; }
     if (layout.resources.length > 0) { payload.resource = layout.resource() as ResourceEvent[]; }

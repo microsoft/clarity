@@ -167,7 +167,7 @@ export function markup(event: Layout.DomEvent): void {
                 setAttributes(linkElement as HTMLElement, node.attributes);
                 if ("rel" in node.attributes && node.attributes["rel"] === "stylesheet") {
                     stylesheets.push(new Promise((resolve: () => void): void => {
-                        linkElement.onload = linkElement.onerror = style.bind(this, linkElement, resolve);
+                        linkElement.onload = linkElement.onerror = styleSheet.bind(this, linkElement, resolve);
                         setTimeout(resolve, TIMEOUT);
                     }));
                 }
@@ -179,7 +179,7 @@ export function markup(event: Layout.DomEvent): void {
                 setAttributes(styleElement as HTMLElement, node.attributes);
                 styleElement.textContent = node.value;
                 insert(node, parent, styleElement, pivot);
-                style(styleElement);
+                styleSheet(styleElement);
                 break;
             case "IFRAME":
                 let iframeElement = element(node.id) as HTMLElement;
@@ -204,7 +204,7 @@ export function markup(event: Layout.DomEvent): void {
     }
 }
 
-function style(node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void {
+function styleSheet(node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void {
     // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain
     try {
         const sheet = node.sheet as CSSStyleSheet;

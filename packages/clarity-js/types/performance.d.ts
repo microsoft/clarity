@@ -1,4 +1,4 @@
-import { BooleanFlag, Target } from "./data";
+import { BooleanFlag, Target } from "@clarity-types/data";
 
 /* Helper Interface */
 
