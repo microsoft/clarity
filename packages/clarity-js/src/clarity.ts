@@ -20,7 +20,7 @@ export function config(override: Config): boolean {
   // Process custom configuration overrides, if available
   if (active) { return false; }
   for (let key in override) {
-    if (key in config) { configuration[key] = override[key]; }
+      if (key in configuration) { configuration[key] = override[key]; }
   }
   return true;
 }

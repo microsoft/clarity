@@ -1,7 +1,7 @@
 import { Event } from "@clarity-types/data";
 import { ScriptErrorData } from "@clarity-types/diagnostic";
 import { bind } from "@src/core/event";
-import encode from "@src/diagnostic/encode";
+import encode from "./encode";
 
 export let data: ScriptErrorData;
 

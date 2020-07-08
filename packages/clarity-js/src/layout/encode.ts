@@ -1,15 +1,15 @@
-import { Event, Metric, Token } from "@clarity-types/data";
-import { Constant, NodeInfo } from "@clarity-types/layout";
+import {Event, Metric, Token} from "@clarity-types/data";
+import {Constant, NodeInfo} from "@clarity-types/layout";
 import mask from "@src/core/mask";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import tokenize from "@src/data/token";
 import { queue } from "@src/data/upload";
-import * as boxmodel from "@src/layout/boxmodel";
-import * as doc from "@src/layout/document";
-import * as dom from "@src/layout/dom";
+import * as boxmodel from "./boxmodel";
+import * as doc from "./document";
+import * as dom from "./dom";
 
-export default async function (type: Event, ts: number = null): Promise<void> {
+export default async function(type: Event, ts: number = null): Promise<void> {
     let tokens: Token[] = [ts || time(), type];
     let timer = type === Event.Discover ? Metric.DiscoverDuration : Metric.MutationDuration;
     switch (type) {
@@ -70,7 +70,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
 
             queue(tokens);
             break;
-    }
+        }
 }
 
 function attribute(masked: boolean, key: string, value: string): string {

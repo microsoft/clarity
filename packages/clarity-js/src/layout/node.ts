@@ -1,14 +1,14 @@
 import { Constant, Source } from "@clarity-types/layout";
 import { Code, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
-import * as dom from "@src/layout/dom";
+import * as dom from "./dom";
 import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror"];
 
-export default function (node: Node, source: Source): Node {
+export default function(node: Node, source: Source): Node {
     let child: Node = null;
 
     // Do not track this change if we are attempting to remove a node before discovering it
@@ -41,7 +41,7 @@ export default function (node: Node, source: Source): Node {
         case Node.DOCUMENT_FRAGMENT_NODE:
             let shadowRoot = (node as ShadowRoot);
             if (shadowRoot.host) {
-                let type = typeof (shadowRoot.constructor);
+                let type = typeof(shadowRoot.constructor);
                 if (type === Constant.FUNCTION && shadowRoot.constructor.toString().indexOf(Constant.NATIVE_CODE) >= 0) {
                     observe(shadowRoot);
                     // See: https://wicg.github.io/construct-stylesheets/ for more details on adoptedStyleSheets.
@@ -159,7 +159,7 @@ function getCssRules(sheet: CSSStyleSheet): string {
     return value;
 }
 
-function getAttributes(attributes: NamedNodeMap): { [key: string]: string } {
+function getAttributes(attributes: NamedNodeMap): {[key: string]: string} {
     let output = {};
     if (attributes && attributes.length > 0) {
         for (let i = 0; i < attributes.length; i++) {

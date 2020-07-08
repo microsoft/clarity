@@ -8,7 +8,7 @@ import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { iframe } from "@src/layout/dom";
 import offset from "@src/layout/offset";
 import { target, track } from "@src/data/target";
-import encode from "@src/interaction/encode";
+import encode from "./encode";
 
 export let state: PointerState[] = [];
 let timeout: number = null;

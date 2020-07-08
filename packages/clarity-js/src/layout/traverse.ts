@@ -1,9 +1,9 @@
 import { Metric } from "@clarity-types/data";
 import { Source } from "@clarity-types/layout";
 import * as task from "@src/core/task";
-import processNode from "@src/layout/node";
+import processNode from "./node";
 
-export default async function (root: Node, timer: Metric, source: Source): Promise<void> {
+export default async function(root: Node, timer: Metric, source: Source): Promise<void> {
     let queue = [root];
     while (queue.length > 0) {
         let node = queue.shift();

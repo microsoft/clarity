@@ -1,4 +1,4 @@
-import { Target } from "@clarity-types/data";
+import { Target } from "./data";
 
 /* Helper Interfaces */
 export interface PointerState {

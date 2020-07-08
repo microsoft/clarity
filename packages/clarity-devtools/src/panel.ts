@@ -1,6 +1,6 @@
-import * as data from "@src/data";
 import { Data, decode } from "clarity-decode";
 import { visualize } from "clarity-visualize";
+import * as data from "./data";
 
 let activeTabId = chrome.devtools.inspectedWindow.tabId;
 let background = chrome.runtime.connect({ name: "panel" });
@@ -11,8 +11,8 @@ let dJson: Data.DecodedPayload[] = [];
 
 function save(encoded: boolean = true): void {
     let json = encoded ? JSON.stringify(eJson) : JSON.stringify(dJson, null, 2);
-    let blob = new Blob([json], { type: "application/json" });
-    let url = URL.createObjectURL(blob);
+    let blob = new Blob([json], {type: "application/json"});
+    let url  = URL.createObjectURL(blob);
 
     let a = document.createElement("a");
     let suffix = encoded ? "encoded" : "decoded";

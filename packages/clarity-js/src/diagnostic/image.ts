@@ -3,7 +3,7 @@ import { ImageErrorData } from "@clarity-types/diagnostic";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { track } from "@src/data/target";
-import encode from "@src/diagnostic/encode";
+import encode from "./encode";
 
 export let data: ImageErrorData;
 

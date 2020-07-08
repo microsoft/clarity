@@ -1,7 +1,7 @@
 import { Event } from "@clarity-types/data";
 import { PaintState } from "@clarity-types/performance";
 import { time } from "@src/core/time";
-import encode from "@src/performance/encode";
+import encode from "./encode";
 
 // Reference: https://www.w3.org/TR/paint-timing/
 export let state: PaintState = null;

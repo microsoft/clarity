@@ -6,9 +6,9 @@ import * as ping from "@src/data/ping";
 import * as tag from "@src/data/tag";
 import * as target from "@src/data/target";
 import * as upgrade from "@src/data/upgrade";
-import { queue, track } from "@src/data/upload";
+import { queue, track } from "./upload";
 
-export default function (event: Event): void {
+export default function(event: Event): void {
     let t = time();
     let tokens: Token[] = [t, event];
     switch (event) {

@@ -1,6 +1,6 @@
 import { BooleanFlag, Event } from "@clarity-types/data";
 import { ConnectionData, NavigatorConnection } from "@clarity-types/performance";
-import encode from "@src/performance/encode";
+import encode from "./encode";
 
 // Reference: https://wicg.github.io/netinfo/
 export let data: ConnectionData;

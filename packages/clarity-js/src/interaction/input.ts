@@ -8,7 +8,7 @@ import { time } from "@src/core/time";
 import { target, track } from "@src/data/target";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { get } from "@src/layout/dom";
-import encode from "@src/interaction/encode";
+import encode from "./encode";
 
 let timeout: number = null;
 export let state: InputState[] = [];

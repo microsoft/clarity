@@ -1,6 +1,6 @@
-import * as image from "@src/diagnostic/image";
-import * as internal from "@src/diagnostic/internal";
-import * as script from "@src/diagnostic/script";
+import * as image from "./image";
+import * as internal from "./internal";
+import * as script from "./script";
 
 export function start(): void {
     script.start();

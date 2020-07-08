@@ -1,6 +1,6 @@
-import { Attributes, Constant } from "@clarity-types/layout";
+import { Attributes, Constant } from "../../types/layout";
 
-export default function (tag: string, prefix: string, attributes: Attributes, position: number): string {
+export default function(tag: string, prefix: string, attributes: Attributes, position: number): string {
     let suffix = position ? `:nth-of-type(${position})` : Constant.EMPTY_STRING;
     switch (tag) {
         case "STYLE":

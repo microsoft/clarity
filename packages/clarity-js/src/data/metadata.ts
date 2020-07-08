@@ -9,30 +9,30 @@ const CLARITY_STORAGE_SEPARATOR: string = "|";
 export let state: PageState = null;
 
 export function start(): void {
-  let ts = Math.round(Date.now()); // ensuring that the output of Date.now() is an integer
-  let projectId = config.projectId || hash(location.host);
-  let userId = user();
-  let sessionId = session(ts);
-  let pageId = guid();
-  let ua = navigator && "userAgent" in navigator ? navigator.userAgent : "";
-  let upload = Upload.Async;
-  let lean = config.lean ? BooleanFlag.True : BooleanFlag.False;
-  let title = document && document.title ? document.title : null;
-  let e: Envelope = { sequence: 0, version, pageId, userId, sessionId, projectId, upload, end: BooleanFlag.False };
-  let p: PageData = { timestamp: ts, ua, url: location.href, referrer: document.referrer, lean, title };
+    let ts = Math.round(Date.now()); // ensuring that the output of Date.now() is an integer
+    let projectId = config.projectId || hash(location.host);
+    let userId = user();
+    let sessionId = session(ts);
+    let pageId = guid();
+    let ua = navigator && "userAgent" in navigator ? navigator.userAgent : "";
+    let upload = Upload.Async;
+    let lean = config.lean ? BooleanFlag.True : BooleanFlag.False;
+    let title = document && document.title ? document.title : null;
+    let e: Envelope = { sequence: 0, version, pageId, userId, sessionId, projectId, upload, end: BooleanFlag.False };
+    let p: PageData = { timestamp: ts, ua, url: location.href, referrer: document.referrer, lean, title };
 
-  state = { page: p, envelope: e };
-  track();
-  encode(Event.Page);
+    state = { page: p, envelope: e };
+    track();
+    encode(Event.Page);
 
-  // For backward compatibility (starting 0.5.7)
-  // This configuration option "onstart" will be removed in subsequent versions
-  // And, is replaced by clarity.metadata() call.
-  if (config.onstart) { config.onstart({ projectId, userId, sessionId, pageId }); }
+    // For backward compatibility (starting 0.5.7)
+    // This configuration option "onstart" will be removed in subsequent versions
+    // And, is replaced by clarity.metadata() call.
+    if (config.onstart) { config.onstart({ projectId, userId, sessionId, pageId}); }
 }
 
 export function end(): void {
-  state = null;
+    state = null;
 }
 
 export function metadata(): Metadata {
@@ -46,12 +46,12 @@ export function metadata(): Metadata {
 }
 
 export function envelope(last: boolean): Token[] {
-  let e = state.envelope;
-  e.upload = last && "sendBeacon" in navigator ? Upload.Beacon : Upload.Async;
-  e.end = last ? BooleanFlag.True : BooleanFlag.False;
-  e.sequence++;
+    let e = state.envelope;
+    e.upload = last && "sendBeacon" in navigator ? Upload.Beacon : Upload.Async;
+    e.end = last ? BooleanFlag.True : BooleanFlag.False;
+    e.sequence++;
 
-  return [e.sequence, e.version, e.projectId, e.userId, e.sessionId, e.pageId, e.upload, e.end];
+    return [e.sequence, e.version, e.projectId, e.userId, e.sessionId, e.pageId, e.upload, e.end];
 }
 
 export function consent(): void {
@@ -65,7 +65,6 @@ function track(): void {
     expiry.setDate(expiry.getDate() + config.expire);
     let expires = expiry ? "expires=" + expiry.toUTCString() : "";
     let value = state.envelope.userId + ";" + expires + ";path=/";
-    // tslint:disable-next-line:no-cookies - access cookie only with consent
     document.cookie = CLARITY_STORAGE_KEY + "=" + value;
   }
 }
@@ -77,9 +76,9 @@ function guid() {
   let d = new Date().getTime();
   if (window.performance && performance.now) {
     // Use high-precision timer if available
-    d += performance.now();
+    d += performance.now(); 
   }
-  let uuid = "xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+  let uuid = "xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx".replace(/[xy]/g, function(c) {
     let r = (d + Math.random() * 16) % 16 | 0;
     d = Math.floor(d / 16);
     return str((c == "x" ? r : (r & 0x3 | 0x8)), 16);
@@ -107,7 +106,6 @@ function str(number: number, base: number = 10): string {
 
 function user(): string {
   let id;
-  // tslint:disable-next-line:no-cookies - access cookie only with consent
   let cookies: string[] = document.cookie.split(";");
   if (cookies) {
     for (let i = 0; i < cookies.length; i++) {
@@ -117,5 +115,5 @@ function user(): string {
       }
     }
   }
-  return id || guid();
+  return id ||  guid();
 }
