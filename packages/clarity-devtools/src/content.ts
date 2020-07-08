@@ -1,5 +1,5 @@
+import { regions } from "@src/regions";
 import { clarity, Layout } from "clarity-js";
-import { regions } from "./regions";
 
 chrome.runtime.onMessage.addListener(function(message: any): void {
   if (message.action === "activate") {

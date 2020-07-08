@@ -1,18 +1,18 @@
-import {Event, Metric, TargetInfo, Token} from "@clarity-types/data";
+import { Event, Metric, TargetInfo, Token } from "@clarity-types/data";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import { observe } from "@src/data/target";
 import { queue } from "@src/data/upload";
-import * as click from "./click";
-import * as input from "./input";
-import * as pointer from "./pointer";
-import * as resize from "./resize";
-import * as scroll from "./scroll";
-import * as selection from "./selection";
-import * as unload from "./unload";
-import * as visibility from "./visibility";
+import * as click from "@src/interaction/click";
+import * as input from "@src/interaction/input";
+import * as pointer from "@src/interaction/pointer";
+import * as resize from "@src/interaction/resize";
+import * as scroll from "@src/interaction/scroll";
+import * as selection from "@src/interaction/selection";
+import * as unload from "@src/interaction/unload";
+import * as visibility from "@src/interaction/visibility";
 
-export default async function(type: Event): Promise<void> {
+export default async function (type: Event): Promise<void> {
     let t = time();
     let tokens: Token[] = [t, type];
     let timer = Metric.InteractionDuration;

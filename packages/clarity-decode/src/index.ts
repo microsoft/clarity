@@ -1,1 +1,1 @@
-export { decode } from "./clarity";
+export { decode } from "@src/clarity";

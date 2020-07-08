@@ -1,6 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { NavigationData } from "@clarity-types/performance";
-import encode from "./encode";
+import encode from "@src/performance/encode";
 
 export let data: NavigationData = null;
 
