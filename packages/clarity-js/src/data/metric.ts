@@ -1,5 +1,5 @@
 import { Event, Metric, MetricData } from "@clarity-types/data";
-import encode from "@src/data/encode";
+import encode from "./encode";
 
 export let data: MetricData = null;
 export let updates: Metric[] = [];

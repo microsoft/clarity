@@ -1,6 +1,6 @@
-import * as clarity from "@src/clarity";
-import hash from "@src/data/hash";
-import selector from "@src/layout/selector";
+import * as clarity from "./clarity";
+import hash from "./data/hash";
+import selector from "./layout/selector";
 
 const helper = { hash, selector }
 const version = clarity.version;

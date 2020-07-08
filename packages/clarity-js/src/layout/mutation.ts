@@ -11,7 +11,7 @@ import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
 import traverse from "@src/layout/traverse";
-import processNode from "@src/layout/node";
+import processNode from "./node";
 
 let observers: MutationObserver[] = [];
 let mutations: MutationQueue[] = [];
@@ -19,25 +19,25 @@ let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
 
 export function start(): void {
-  observers = [];
+    observers = [];
 
-  if (insertRule === null) { insertRule = CSSStyleSheet.prototype.insertRule; }
-  if (deleteRule === null) { deleteRule = CSSStyleSheet.prototype.deleteRule; }
+    if (insertRule === null) { insertRule = CSSStyleSheet.prototype.insertRule; }
+    if (deleteRule === null) { deleteRule = CSSStyleSheet.prototype.deleteRule; }
 
-  // Some popular open source libraries, like styled-components, optimize performance
-  // by injecting CSS using insertRule API vs. appending text node. A side effect of
-  // using javascript API is that it doesn't trigger DOM mutation and therefore we
-  // need to override the insertRule API and listen for changes manually.
-  CSSStyleSheet.prototype.insertRule = function (rule: string, index?: number): number {
-    let value = insertRule.call(this, rule, index);
-    generate(this.ownerNode, Constant.CHARACTER_DATA);
-    return value;
-  };
+    // Some popular open source libraries, like styled-components, optimize performance
+    // by injecting CSS using insertRule API vs. appending text node. A side effect of
+    // using javascript API is that it doesn't trigger DOM mutation and therefore we
+    // need to override the insertRule API and listen for changes manually.
+    CSSStyleSheet.prototype.insertRule = function(rule: string, index?: number): number {
+      let value = insertRule.call(this, rule, index);
+      generate(this.ownerNode, Constant.CHARACTER_DATA);
+      return value;
+    };
 
-  CSSStyleSheet.prototype.deleteRule = function (index?: number): void {
-    deleteRule.call(this, index);
-    generate(this.ownerNode, Constant.CHARACTER_DATA);
-  };
+    CSSStyleSheet.prototype.deleteRule = function(index?: number): void {
+      deleteRule.call(this, index);
+      generate(this.ownerNode, Constant.CHARACTER_DATA);
+    };
 }
 
 export function observe(node: Node): void {
@@ -82,53 +82,53 @@ export function end(): void {
 
 function handle(m: MutationRecord[]): void {
   // Queue up mutation records for asynchronous processing
-  mutations.push({ time: time(), mutations: m });
+  mutations.push({ time: time(), mutations: m});
   task.schedule(process, Priority.High).then((): void => {
-    measure(doc.compute)();
-    measure(boxmodel.compute)();
+      measure(doc.compute)();
+      measure(boxmodel.compute)();
   });
 }
 
 async function process(): Promise<void> {
-  let timer = Metric.MutationDuration;
-  task.start(timer);
-  while (mutations.length > 0) {
-    let record = mutations.shift();
-    for (let mutation of record.mutations) {
-      let target = mutation.target;
-      switch (mutation.type) {
-        case Constant.ATTRIBUTES:
-          if (task.shouldYield(timer)) { await task.suspend(timer); }
-          dom.extractRegions(target as HTMLElement);
-          processNode(target, Source.Attributes);
-          break;
-        case Constant.CHARACTER_DATA:
-          if (task.shouldYield(timer)) { await task.suspend(timer); }
-          dom.extractRegions(target as HTMLElement);
-          processNode(target, Source.CharacterData);
-          break;
-        case Constant.CHILD_LIST:
-          // Process additions
-          let addedLength = mutation.addedNodes ? mutation.addedNodes.length : 0;
-          for (let j = 0; j < addedLength; j++) {
-            let addedNode = mutation.addedNodes[j];
-            dom.extractRegions(addedNode as HTMLElement);
-            traverse(addedNode, timer, Source.ChildListAdd);
-          }
-          // Process removes
-          let removedLength = mutation.removedNodes ? mutation.removedNodes.length : 0;
-          for (let j = 0; j < removedLength; j++) {
-            if (task.shouldYield(timer)) { await task.suspend(timer); }
-            processNode(mutation.removedNodes[j], Source.ChildListRemove);
-          }
-          break;
-        default:
-          break;
+    let timer = Metric.MutationDuration;
+    task.start(timer);
+    while (mutations.length > 0) {
+      let record = mutations.shift();
+      for (let mutation of record.mutations) {
+        let target = mutation.target;
+        switch (mutation.type) {
+          case Constant.ATTRIBUTES:
+              if (task.shouldYield(timer)) { await task.suspend(timer); }
+              dom.extractRegions(target as HTMLElement);
+              processNode(target, Source.Attributes);
+              break;
+          case Constant.CHARACTER_DATA:
+              if (task.shouldYield(timer)) { await task.suspend(timer); }
+              dom.extractRegions(target as HTMLElement);
+              processNode(target, Source.CharacterData);
+              break;
+          case Constant.CHILD_LIST:
+            // Process additions
+            let addedLength = mutation.addedNodes ? mutation.addedNodes.length : 0;
+            for (let j = 0; j < addedLength; j++) {
+              let addedNode = mutation.addedNodes[j];
+              dom.extractRegions(addedNode as HTMLElement);
+              traverse(addedNode, timer, Source.ChildListAdd);
+            }
+            // Process removes
+            let removedLength = mutation.removedNodes ? mutation.removedNodes.length : 0;
+            for (let j = 0; j < removedLength; j++) {
+              if (task.shouldYield(timer)) { await task.suspend(timer); }
+              processNode(mutation.removedNodes[j], Source.ChildListRemove);
+            }
+            break;
+          default:
+            break;
+        }
       }
+      await encode(Event.Mutation, record.time);
     }
-    await encode(Event.Mutation, record.time);
-  }
-  task.stop(timer);
+    task.stop(timer);
 }
 
 function generate(target: Node, type: MutationRecordType): void {

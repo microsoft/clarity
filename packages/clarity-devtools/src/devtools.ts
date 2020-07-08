@@ -8,7 +8,7 @@ chrome.devtools.panels.elements.createSidebarPane("Clarity", function(sidebar: a
     function updateClarityInfo(): void {
         let code = "(" + inspect.toString() + ")()";
         let inspectedWindow = chrome.devtools.inspectedWindow as any;
-        inspectedWindow.eval(code, { useContentScriptContext: true }, function(result: any): void {
+        inspectedWindow.eval(code, {useContentScriptContext: true}, function(result: any): void {
             sidebar.setObject(result);
         });
     }
@@ -26,5 +26,6 @@ function inspect(): any {
     let id = hookEnabled && value ? value.id : null;
     let history = hookEnabled && id ? window[DEVTOOLS_HOOK].history(id) : null;
     let parent = hookEnabled && value ? window[DEVTOOLS_HOOK].getNode(value.parent) : null;
-    return { id, tag, node: $0, parent, value, history };
+    let output = { id, tag, node: $0, parent, value, history };
+    return output;
 }

@@ -1,6 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { MemoryData, PerformanceMemory } from "@clarity-types/performance";
-import encode from "@src/performance/encode";
+import encode from "./encode";
 
 // Reference: https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory
 export let data: MemoryData = null;

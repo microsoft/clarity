@@ -2,7 +2,7 @@ import { Event } from "@clarity-types/data";
 import { LargestContentfulPaintData, LargestContentfulPaintEntry } from "@clarity-types/performance";
 import { schedule } from "@src/core/task";
 import { track } from "@src/data/target";
-import encode from "@src/performance/encode";
+import encode from "./encode";
 
 // Reference: https://wicg.github.io/largest-contentful-paint/
 export let data: LargestContentfulPaintData = null;

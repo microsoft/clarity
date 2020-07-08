@@ -5,7 +5,7 @@ import { schedule } from "@src/core/task";
 import { link, target, track } from "@src/data/target";
 import { iframe } from "@src/layout/dom";
 import offset from "@src/layout/offset";
-import encode from "@src/interaction/encode";
+import encode from "./encode";
 
 export let data: ClickData;
 

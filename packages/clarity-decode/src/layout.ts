@@ -1,5 +1,5 @@
 import { helper, Data, Layout } from "clarity-js";
-import { DomData, LayoutEvent } from "@clarity-types/layout";
+import { DomData, LayoutEvent } from "../types/layout";
 
 let placeholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNiOAMAANUAz5n+TlUAAAAASUVORK5CYII=";
 export let hashes: { [key: number]: Layout.HashData } = {};
@@ -39,7 +39,7 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             let domData: DomData[] = [];
             for (let i = 2; i < tokens.length; i++) {
                 let token = tokens[i];
-                let type = typeof (token);
+                let type = typeof(token);
                 switch (type) {
                     case "number":
                         if (type !== lastType && lastType !== null) {
@@ -55,7 +55,7 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                         break;
                     case "object":
                         let subtoken = token[0];
-                        let subtype = typeof (subtoken);
+                        let subtype = typeof(subtoken);
                         switch (subtype) {
                             case "number":
                                 for (let t of (token as number[])) {
@@ -85,7 +85,7 @@ export function resource(): LayoutEvent[] {
 }
 
 function process(node: any[] | number[], tagIndex: number): DomData {
-    let [tag, position]: string[] = node[tagIndex] ? node[tagIndex].split("~") : [node[tagIndex]];
+    let [tag, position]: string[]  = node[tagIndex] ? node[tagIndex].split("~") : [node[tagIndex]];
     let output: DomData = {
         id: node[0],
         parent: tagIndex > 1 ? node[1] : null,
@@ -137,7 +137,7 @@ function getResource(tag: string, attributes: Layout.Attributes): void {
     switch (tag) {
         case "LINK":
             if ("href" in attributes && "rel" in attributes && attributes["rel"] === "stylesheet") {
-                resources.push({ tag, url: attributes["href"] });
+                resources.push({ tag, url: attributes["href"]});
             }
             break;
     }

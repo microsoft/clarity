@@ -1,5 +1,5 @@
 import { Data } from "clarity-js";
-import { DataEvent } from "@clarity-types/data";
+import { DataEvent } from "../types/data";
 
 let summaries: { [key: number]: Data.SummaryData[] } = null;
 const SUMMARY_THRESHOLD = 30;
