@@ -76,6 +76,7 @@ export interface Config {
     lean?: boolean;
     track?: boolean;
     regions?: RegionTracker;
+    cookies?: string[];
     url?: string;
     upload?: (data: string) => void;
 }

@@ -17,6 +17,7 @@ let config: Config = {
     lean: false,
     track: true,
     regions: {},
+    cookies: [],
     url: "",
     upload: null
 };

@@ -18,11 +18,11 @@ export function start(): void {
     metric.start();
     measure(baseline.start)();
     measure(dimension.start)();
+    measure(variable.reset)();
     measure(upload.start)();
     measure(metadata.start)();
     measure(envelope.start)();
     measure(ping.start)();
-    measure(variable.reset)();
     measure(upgrade.reset)();
 }
 
@@ -31,11 +31,11 @@ export function end(): void {
     // E.g. if upgrade depends on upload, then upgrade needs to end before upload.
     // Similarly, if upload depends on metadata, upload needs to end before metadata.
     measure(upgrade.reset)();
-    measure(variable.reset)();
     measure(ping.end)();
     measure(upload.end)();
     measure(envelope.end)();
     measure(metadata.end)();
+    measure(variable.reset)();
     measure(dimension.end)();
     measure(baseline.end)();
     metric.end();

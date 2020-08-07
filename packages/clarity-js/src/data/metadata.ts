@@ -3,6 +3,7 @@ import config from "@src/core/config";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import hash from "@src/data/hash";
+import { set } from "@src/data/variable";
 
 export let data: Metadata = null;
 
@@ -27,6 +28,12 @@ export function start(): void {
   // Metrics
   metric.max(Metric.ClientTimestamp, ts);
   metric.max(Metric.Playback, config.lean ? BooleanFlag.False : BooleanFlag.True);
+
+  // Read cookies specified in configuration
+  for (let key of config.cookies) {
+    let value = cookie(key);
+    if (value) { set(key, value); }
+  }
 
   // Track ids using a cookie if configuration allows it
   track();
@@ -99,15 +106,19 @@ function num(string: string, base: number = 36): number {
 }
 
 function user(): number {
-  let id;
+  let id = cookie(Constant.STORAGE_KEY);
+  return id && id.length === 8 ? num(id) : num(shortid());
+}
+
+function cookie(key: string): string {
   let cookies: string[] = document.cookie.split(Constant.SEMICOLON);
   if (cookies) {
     for (let i = 0; i < cookies.length; i++) {
       let pair: string[] = cookies[i].split(Constant.EQUALS);
-      if (pair.length > 1 && pair[0].indexOf(Constant.STORAGE_KEY) >= 0 && pair[1].length === 8) {
-        id = pair[1];
+      if (pair.length > 1 && pair[0].indexOf(key) >= 0) {
+        return pair[1];
       }
     }
   }
-  return num(id || shortid());
+  return null;
 }
