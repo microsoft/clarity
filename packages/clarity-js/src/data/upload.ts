@@ -14,10 +14,10 @@ import * as region from "@src/layout/region";
 import * as performance from "@src/performance/observer";
 
 const MAX_RETRIES = 2;
-const MAX_BACKUP_BYTES = 10 * 1024 * 1024; // 10MB
-let backupBytes: number = 0;
-let backup: string[];
-let events: string[];
+const MAX_PLAYBACK_BYTES = 10 * 1024 * 1024; // 10MB
+let playbackBytes: number = 0;
+let playback: string[];
+let analysis: string[];
 let timeout: number = null;
 let transit: Transit;
 let active: boolean;
@@ -26,10 +26,10 @@ export let track: UploadData;
 
 export function start(): void {
     active = true;
-    backupBytes = 0;
+    playbackBytes = 0;
     queuedTime = 0;
-    backup = [];
-    events = [];
+    playback = [];
+    analysis = [];
     transit = {};
     track = null;
 }
@@ -39,34 +39,19 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         let now = time();
         let type = tokens.length > 1 ? tokens[1] : null;
         let event = JSON.stringify(tokens);
-        let container = events;
 
         switch (type) {
             case Event.Discover:
             case Event.Mutation:
-                // Layout events are queued based on the current configuration
-                // If lean mode is on, instead of sending these events to server, we back them up in memory.
-                // Later, if an upgrade call is called later in the session, we retrieve in memory backup and send them to server.
-                // At the moment, we limit backup to grow until MAX_BACKUP_BYTES. Anytime we grow past this size, we start dropping events.
+                // At the moment, we limit playback to grow until MAX_PLAYBACK_BYTES. Anytime we grow past this size, we start dropping events.
                 // This is not ideal, and more of a fail safe mechanism.
-                if (config.lean) {
-                    transmit = false;
-                    backupBytes += event.length;
-                    container = backupBytes < MAX_BACKUP_BYTES ? backup : null;
-                }
-                break;
-            case Event.Upgrade:
-                // As part of upgrading experience from lean mode into full mode, we lookup anything that is backed up in memory
-                // from previous layout events and get them ready to go out to server as part of next upload.
-                for (let entry of backup) { container.push(entry); }
-                backup = [];
-                backupBytes = 0;
+                playbackBytes += event.length;
+                if (playbackBytes < MAX_PLAYBACK_BYTES) { playback.push(event); }
                 break;
             default:
+                analysis.push(event);
                 break;
         }
-
-        if (container) { container.push(event); }
 
         // Following two checks are precautionary and act as a fail safe mechanism to get out of unexpected situations.
         // Check 1: If for any reason the upload hasn't happened after waiting for 2x the config.delay time,
@@ -94,10 +79,10 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
 export function end(): void {
     clearTimeout(timeout);
     upload(true);
-    backupBytes = 0;
+    playbackBytes = 0;
     queuedTime = 0;
-    backup = [];
-    events = [];
+    playback = [];
+    analysis = [];
     transit = {};
     track = null;
     active = false;
@@ -118,7 +103,9 @@ function upload(final: boolean = false): void {
     // could inject function arguments for internal tracking (likely stack traces for script errors).
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
     let last = final === true;
-    let encoded: EncodedPayload = {e: JSON.stringify(envelope.envelope(last)), d: `[${events.join()}]`};
+    let a = `[${analysis.join()}]`;
+    let p = config.lean ? Constant.EMPTY_STRING : `[${playback.join()}]`;
+    let encoded: EncodedPayload = {e: JSON.stringify(envelope.envelope(last)), a, p};
     let payload = stringify(encoded);
     let sequence = envelope.data.sequence;
     metric.sum(Metric.TotalBytes, payload.length);
@@ -128,11 +115,15 @@ function upload(final: boolean = false): void {
     if (config.upload) { config.upload(payload); }
 
     // Clear out events now that payload has been dispatched
-    events = [];
+    analysis = [];
+    if (!config.lean) {
+        playback = [];
+        playbackBytes = 0;
+    }
 }
 
 function stringify(encoded: EncodedPayload): string {
-    return `{"e":${encoded.e},"d":${encoded.d}}`;
+    return encoded.p.length > 0 ? `{"e":${encoded.e},"a":${encoded.a},"p":${encoded.p}}` : `{"e":${encoded.e},"a":${encoded.a}}`;
 }
 
 function send(payload: string, sequence: number, last: boolean): void {

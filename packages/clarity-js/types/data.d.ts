@@ -123,12 +123,14 @@ export const enum Constant {
 
 export interface Payload {
     e: Token[];
-    d: Token[][];
+    a: Token[][];
+    p: Token[][];
 }
 
 export interface EncodedPayload {
     e: string;
-    d: string;
+    a: string;
+    p: string;
 }
 
 export interface Metadata {
