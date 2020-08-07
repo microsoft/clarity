@@ -14,7 +14,7 @@ let config: Config = {
     session: 10 * Time.Minute, // 10 minutes
     shutdown: 2 * Time.Hour, // 2 hours
     cssRules: false,
-    lean: false,
+    lean: true,
     track: true,
     regions: {},
     cookies: [],

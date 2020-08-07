@@ -110,6 +110,7 @@ export const enum Constant {
     EQUALS = "=",
     PATH = ";path=/",
     STRING_TYPE = "string",
+    UPGRADE_KEY = "_clarityupgrade",
     STORAGE_KEY = "_claritybeta",
     STORAGE_SEPARATOR = "|",
     RESPONSE_END = "END",

@@ -21,6 +21,9 @@ export function start(): void {
     pageNum: s[1]
   }
 
+  // Check if the session should start off in full mode based on the signal from session storage
+  config.lean = config.track && sessionStorage && sessionStorage.getItem(Constant.UPGRADE_KEY) ? false : config.lean;
+
   // Log dimensions
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);
