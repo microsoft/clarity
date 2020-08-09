@@ -109,7 +109,7 @@ function num(string: string, base: number = 36): number {
 }
 
 function user(): number {
-  let id = cookie(Constant.STORAGE_KEY);
+  let id = cookie(Constant.CLARITY_COOKIE);
   return id && id.length === 8 ? num(id) : num(shortid());
 }
 
@@ -118,7 +118,7 @@ function cookie(key: string): string {
   if (cookies) {
     for (let i = 0; i < cookies.length; i++) {
       let pair: string[] = cookies[i].split(Constant.EQUALS);
-      if (pair.length > 1 && pair[0].indexOf(key) >= 0) {
+      if (pair.length > 1 && pair[0] && pair[0].trim() === key) {
         return pair[1];
       }
     }
