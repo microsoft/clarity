@@ -161,8 +161,8 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
             track = { sequence, attempts: transit[sequence].attempts, status: xhr.status };
             // Send back an event only if we were not successful in our first attempt
             if (transit[sequence].attempts > 1) { encode(Event.Upload); }
-            // Handle response if it was a 200 status response with a valid body
-            if (xhr.status === 200 && xhr.responseText) { response(xhr.responseText); }
+            // Handle response if it was a 200 or 500 status response with a valid body
+            if ((xhr.status === 200 || xhr.status === 500) && xhr.responseText) { response(xhr.responseText); }
             // Stop tracking this payload now that it's all done
             delete transit[sequence];
         }
