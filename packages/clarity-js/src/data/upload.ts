@@ -61,6 +61,10 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             timeout = null;
         }
 
+        // Failsafe Check: If the failsafe limit is set, and we hit the limit on number of payloads for this page, we will stop scheduling more uploads.
+        // The only exception is the very last payload, for which we will attempt one final delivery to the server.
+        if (config.failsafe && envelope.data.sequence >= config.failsafe) { transmit = false; }
+
         // Shutdown Check: Ideally, expectation is that pause / resume will work as designed and we will never hit the shutdown clause.
         // However, in some cases involving script errors, we may fail to pause Clarity instrumentation.
         // In those edge cases, we will cut the cord after a configurable shutdown value.

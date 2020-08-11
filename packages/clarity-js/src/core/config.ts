@@ -13,6 +13,7 @@ let config: Config = {
     timeline: 2 * Time.Second, // 2 seconds
     session: 10 * Time.Minute, // 10 minutes
     shutdown: 2 * Time.Hour, // 2 hours
+    failsafe: 100, // Limit of maximum of 100 payloads per page
     cssRules: false,
     lean: true,
     track: true,
