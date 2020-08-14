@@ -60,28 +60,18 @@ function track(): void {
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + config.expire);
     let expires = expiry ? Constant.EXPIRES + expiry.toUTCString() : Constant.EMPTY_STRING;
-    let value = data.userId + Constant.SEMICOLON + expires + Constant.PATH;
-    document.cookie = Constant.STORAGE_KEY + Constant.EQUALS + value;
+    let value = `${data.userId}${Constant.SEMICOLON}${expires}${Constant.PATH}`;
+    document.cookie = Constant.CLARITY_COOKIE + Constant.EQUALS + value;
   }
 }
 
-// Credit: http://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
-// Excluding 3rd party code from tslint
-// tslint:disable
-function shortid() {
-  let d = new Date().getTime();
-  if (window.performance && performance.now) {
-    // Use high-precision timer if available
-    d += performance.now();
+function shortid(): number {
+  if (window && window.crypto && window.crypto.getRandomValues && Uint32Array) {
+    return window.crypto.getRandomValues(new Uint32Array(1))[0];
+  } else {
+    return Math.floor(Math.random() * Math.pow(2, 32));
   }
-  let uuid = "xxxx4xyx".replace(/[xy]/g, function (c) {
-    let r = (d + Math.random() * 36) % 36 | 0;
-    d = Math.floor(d / 36);
-    return str((c == "x" ? r : (r & 0x3 | 0x8)));
-  });
-  return uuid;
 }
-// tslint:enable
 
 function session(ts: number): number[] {
   let id = shortid();
@@ -90,27 +80,23 @@ function session(ts: number): number[] {
     let value = sessionStorage.getItem(Constant.STORAGE_KEY);
     if (value && value.indexOf(Constant.STORAGE_SEPARATOR) >= 0) {
       let parts = value.split(Constant.STORAGE_SEPARATOR);
-      if (parts.length === 3 && ts - num(parts[1], 10) < config.session) {
-        id = parts[0];
+      if (parts.length === 3 && ts - num(parts[1]) < config.session) {
+        id = num(parts[0]);
         count = num(parts[2]) + 1;
       }
     }
-    sessionStorage.setItem(Constant.STORAGE_KEY, `${id}${Constant.STORAGE_SEPARATOR}${ts}${Constant.STORAGE_SEPARATOR}${str(count)}`);
+    sessionStorage.setItem(Constant.STORAGE_KEY, `${id}${Constant.STORAGE_SEPARATOR}${ts}${Constant.STORAGE_SEPARATOR}${count}`);
   }
-  return [num(id), count];
+  return [id, count];
 }
 
-function str(number: number, base: number = 36): string {
-  return number.toString(base);
-}
-
-function num(string: string, base: number = 36): number {
+function num(string: string, base: number = 10): number {
   return parseInt(string, base);
 }
 
 function user(): number {
   let id = cookie(Constant.CLARITY_COOKIE);
-  return id && id.length === 8 ? num(id) : num(shortid());
+  return id && id.length > 0 ? num(id) : shortid();
 }
 
 function cookie(key: string): string {
