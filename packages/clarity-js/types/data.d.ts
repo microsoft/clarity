@@ -110,7 +110,9 @@ export const enum Constant {
     EQUALS = "=",
     PATH = ";path=/",
     STRING_TYPE = "string",
-    STORAGE_KEY = "_claritybeta",
+    UPGRADE_KEY = "_club", // Clarity Upgrade Beta
+    CLARITY_COOKIE = "_clcb", // Clarity Cookie Beta
+    STORAGE_KEY = "_clsb", // Clarity Storage Beta
     STORAGE_SEPARATOR = "|",
     RESPONSE_END = "END",
     RESPONSE_UPGRADE = "UPGRADE",
@@ -122,13 +124,15 @@ export const enum Constant {
 /* Helper Interfaces */
 
 export interface Payload {
-    e: Token[];
-    d: Token[][];
+    e: Token[]; /* Envelope */
+    a: Token[][]; /* Events that are used for data analysis */
+    p: Token[][]; /* Events that are primarily used for session playback */
 }
 
 export interface EncodedPayload {
-    e: string;
-    d: string;
+    e: string; /* Envelope */
+    a: string; /* Analytics Payload */
+    p: string; /* Playback Payload */
 }
 
 export interface Metadata {

@@ -1,4 +1,4 @@
-import { Event, UpgradeData } from "@clarity-types/data";
+import { Constant, Event, UpgradeData } from "@clarity-types/data";
 import config from "@src/core/config";
 import encode from "@src/data/encode";
 
@@ -16,6 +16,12 @@ export function upgrade(key: string): void {
     if (config.lean) {
         config.lean = false;
         data = { key };
+
+        // If tracking is enabled, persist the setting in session storage
+        if (config.track && sessionStorage) {
+            sessionStorage.setItem(Constant.UPGRADE_KEY, `1`);
+        }
+
         encode(Event.Upgrade);
     }
 }
