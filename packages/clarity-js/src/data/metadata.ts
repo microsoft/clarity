@@ -27,6 +27,8 @@ export function start(): void {
   // Log dimensions
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);
+  dimension.log(Dimension.Url, location.href);
+  dimension.log(Dimension.Referrer, document.referrer);
 
   // Metrics
   metric.max(Metric.ClientTimestamp, ts);
