@@ -18,8 +18,13 @@ export function decode(input: string): DecodedPayload {
     let envelope = data.envelope(json.e);
     let timestamp = Date.now();
     let payload: DecodedPayload = { timestamp, envelope };
+
     // Sort encoded events by time to simplify summary computation
-    let encoded: Data.Token[][] = json.d.sort((a: Data.Token[], b: Data.Token[]): number => (a[0] as number) - (b[0] as number));
+    // It's possible for individual events to be out of order, dependent on how they are buffered on the client
+    // E.g. scroll events are queued internally before they are sent over the wire.
+    // By comparison, events like resize & click are sent out immediately.
+    let encoded: Data.Token[][] = json.p ? json.a.concat(json.p) : json.a;
+    encoded = encoded.sort((a: Data.Token[], b: Data.Token[]): number => (a[0] as number) - (b[0] as number));
 
     // Check if the incoming version is compatible with the current running code
     // We do an exact match for the major version and minor version.

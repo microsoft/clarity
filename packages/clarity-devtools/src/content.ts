@@ -25,6 +25,7 @@ function activate(): void {
       clarity.start({
         lookahead: 10,
         delay: 50,
+        failsafe: 0,
         lean: items.clarity.leanMode,
         regions,
         upload,

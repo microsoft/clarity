@@ -72,10 +72,12 @@ export interface Config {
     timeline?: number;
     session?: number;
     shutdown?: number;
+    failsafe?: number;
     cssRules?: boolean;
     lean?: boolean;
     track?: boolean;
     regions?: RegionTracker;
+    cookies?: string[];
     url?: string;
     upload?: (data: string) => void;
 }

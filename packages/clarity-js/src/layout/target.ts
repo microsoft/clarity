@@ -23,7 +23,8 @@ export function link(node: Node): HTMLAnchorElement {
 }
 
 export function metadata(node: Node, trackRegion?: boolean): TargetMetadata {
-    let output: TargetMetadata = { id: null, region: null, hash: null, node };
+    // If the node is null, we return a reserved value for id: 0. Valid assignment of id begins from 1+.
+    let output: TargetMetadata = { id: 0, region: null, hash: null, node };
     if (node) {
         let value = dom.get(node);
         if (value !== null) {

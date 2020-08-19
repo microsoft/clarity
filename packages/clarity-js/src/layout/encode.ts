@@ -1,5 +1,6 @@
 import { Event, Metric, Token } from "@clarity-types/data";
 import { Constant, NodeInfo } from "@clarity-types/layout";
+import config from "@src/core/config";
 import mask from "@src/core/mask";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
@@ -71,7 +72,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 tokens = tokenize(tokens, metadata);
             }
             if (type == Event.Mutation) { baseline.activity(eventTime); }
-            queue(tokens);
+            queue(tokens, !config.lean);
             break;
     }
 }
