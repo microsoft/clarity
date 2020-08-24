@@ -5,6 +5,7 @@ let activeTabId = chrome.devtools.inspectedWindow.tabId;
 let background = chrome.runtime.connect({ name: "panel" });
 background.postMessage({ action: "init", tabId: activeTabId });
 let id = "";
+let events: Data.DecodedEvent[] = [];
 let eJson: string[] = [];
 let dJson: Data.DecodedPayload[] = [];
 
@@ -29,9 +30,25 @@ background.onMessage.addListener(function(message: any): void {
         eJson.push(JSON.parse(message.payload));
         dJson.push(decoded);
         id = `${envelope.sessionId.toString(36)}-${envelope.pageNum.toString(36)}`;
-        visualize.replay(decoded);
+        let merged = visualize.merge([decoded]);
+        events = events.concat(merged.events).sort(sort);
+        visualize.dom(merged.dom);
     }
 });
+
+function replay(): void {
+    // Execute only if there are events to render
+    if (events.length > 0) {
+        let event = events[0];
+        let end = event.time + 16; // 60FPS => 16ms / frame
+        let index = 0;
+        while (event && event.time < end) {
+            event = event[++index];
+        }
+        visualize.render(events.splice(0, index));
+    }
+    requestAnimationFrame(replay);
+}
 
 function resize(width: number, height: number): void {
     let margin = 10;
@@ -65,6 +82,7 @@ function reset(envelope: Data.Envelope): void {
     iframe.setAttribute("scrolling", "no");
     document.body.appendChild(iframe);
     console.log("Clearing out previous session... moving on to next one.");
+    events = [];
     eJson = [];
     dJson = [];
     id = "";
@@ -76,3 +94,10 @@ function reset(envelope: Data.Envelope): void {
     (download.lastChild as HTMLElement).onclick = function(): void { save(false); };
     visualize.setup(envelope.version, iframe, resize, metadata);
 }
+
+function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
+    return a.time - b.time;
+}
+
+// Call replay on every animation frame to emulate near real-time playback
+requestAnimationFrame(replay);

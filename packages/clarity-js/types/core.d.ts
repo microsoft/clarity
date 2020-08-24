@@ -16,6 +16,10 @@ export const enum Time {
     Hour = 60 * 60 * 1000
 }
 
+export const enum Setting {
+    LongTask = 30, // 30ms
+}
+
 /* Helper Interfaces */
 
 export interface TaskTracker {
@@ -61,18 +65,7 @@ export interface BrowserEvent {
 
 export interface Config {
     projectId?: number;
-    longtask?: number;
-    lookahead?: number;
-    distance?: number;
-    interval?: number;
     delay?: number;
-    expire?: number;
-    ping?: number;
-    timeout?: number;
-    timeline?: number;
-    session?: number;
-    shutdown?: number;
-    failsafe?: number;
     cssRules?: boolean;
     lean?: boolean;
     track?: boolean;

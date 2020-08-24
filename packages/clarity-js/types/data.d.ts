@@ -1,3 +1,4 @@
+import { Time } from "@clarity-types/core";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[]);
 export type DecodedToken = (any | any[]);
@@ -94,6 +95,15 @@ export const enum Upload {
 export const enum BooleanFlag {
     False = 0,
     True = 1
+}
+
+export const enum Setting {
+    Expire = 365, // 1 Year
+    SessionTimeout = 30 * Time.Minute, // 10 minutes
+    PingInterval = 1 * Time.Minute, // 1 Minute
+    PingTimeout = 5 * Time.Minute, // 5 Minutes
+    PayloadLimit = 128, // Do not allow more than specified payloads per page
+    ShutdownLimit = 2 * Time.Hour, // Shutdown instrumentation after specified time
 }
 
 export const enum Constant {

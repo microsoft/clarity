@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { PointerState } from "@clarity-types/interaction";
-import config from "@src/core/config";
+import { PointerState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -76,7 +75,7 @@ function handler(current: PointerState): void {
             state.push(current);
 
             clearTimeout(timeout);
-            timeout = setTimeout(process, config.lookahead, current.event);
+            timeout = setTimeout(process, Setting.LookAhead, current.event);
             break;
         default:
             state.push(current);
@@ -98,7 +97,8 @@ function similar(last: PointerState, current: PointerState): boolean {
     let dy = last.data.y - current.data.y;
     let distance = Math.sqrt(dx * dx + dy * dy);
     let gap = current.time - last.time;
-    return current.event === last.event && distance < config.distance && gap < config.interval && current.data.target === last.data.target;
+    let match = current.data.target === last.data.target;
+    return current.event === last.event && match && distance < Setting.Distance && gap < Setting.Interval;
 }
 
 export function end(): void {

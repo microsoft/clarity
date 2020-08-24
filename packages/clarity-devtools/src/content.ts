@@ -23,9 +23,7 @@ function activate(): void {
     }, (items: any) => {
       if (items.clarity.showText) { document.body.setAttribute(Layout.Constant.UNMASK_ATTRIBUTE, "true"); }
       clarity.start({
-        lookahead: 10,
-        delay: 50,
-        failsafe: 0,
+        delay: 500,
         lean: items.clarity.leanMode,
         regions,
         upload,

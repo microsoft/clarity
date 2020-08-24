@@ -1,4 +1,4 @@
-import { Constant, Dimension, Metadata, Metric, BooleanFlag } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, Metric, Setting } from "@clarity-types/data";
 import config from "@src/core/config";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
@@ -60,7 +60,7 @@ export function consent(): void {
 function track(): void {
   if (config.track) {
     let expiry = new Date();
-    expiry.setDate(expiry.getDate() + config.expire);
+    expiry.setDate(expiry.getDate() + Setting.Expire);
     let expires = expiry ? Constant.EXPIRES + expiry.toUTCString() : Constant.EMPTY_STRING;
     let value = `${data.userId}${Constant.SEMICOLON}${expires}${Constant.PATH}`;
     document.cookie = Constant.CLARITY_COOKIE + Constant.EQUALS + value;
@@ -82,7 +82,7 @@ function session(ts: number): number[] {
     let value = sessionStorage.getItem(Constant.STORAGE_KEY);
     if (value && value.indexOf(Constant.STORAGE_SEPARATOR) >= 0) {
       let parts = value.split(Constant.STORAGE_SEPARATOR);
-      if (parts.length === 3 && ts - num(parts[1]) < config.session) {
+      if (parts.length === 3 && ts - num(parts[1]) < Setting.SessionTimeout) {
         id = num(parts[0]);
         count = num(parts[2]) + 1;
       }

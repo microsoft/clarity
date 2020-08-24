@@ -50,19 +50,6 @@ export function merge(decoded: Data.DecodedPayload[]): MergedPayload {
     return merged;
 }
 
-export function replay(decoded: Data.DecodedPayload): void {
-    if (state === null) { throw new Error(`Initialize visualization by calling "setup" prior to making this call.`); }
-
-    // Merge payloads and parse all events out of them, sorted by time
-    let merged = merge([decoded]);
-
-    // Render initial markup before rendering rest of the events
-    layout.dom(merged.dom);
-
-    // Render all events
-    render(merged.events);
-}
-
 export function reset(): void {
     state = null
     data.reset();

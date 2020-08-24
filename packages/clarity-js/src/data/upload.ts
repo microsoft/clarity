@@ -1,4 +1,4 @@
-import { Constant, EncodedPayload, Event, Metric, Token, Transit, UploadData } from "@clarity-types/data";
+import { Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
@@ -43,7 +43,8 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         switch (type) {
             case Event.Discover:
             case Event.Mutation:
-                // At the moment, we limit playback to grow until MAX_PLAYBACK_BYTES. Anytime we grow past this size, we start dropping events.
+                // At the moment, we limit playback to grow until MAX_PLAYBACK_BYTES.
+                // Anytime we grow past this size, we start dropping events.
                 // This is not ideal, and more of a fail safe mechanism.
                 playbackBytes += event.length;
                 if (playbackBytes < MAX_PLAYBACK_BYTES) { playback.push(event); }
@@ -61,18 +62,17 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             timeout = null;
         }
 
-        // Failsafe Check: If the failsafe limit is set, and we hit the limit on number of payloads for this page, we will stop scheduling more uploads.
+        // Limit Checks:
+        // 1) If we hit the limit on number of payloads for this page, we stop scheduling more uploads
+        // 2) If we have been sending data for more than shutdown limit, stop scheduling more uploads
         // The only exception is the very last payload, for which we will attempt one final delivery to the server.
-        if (config.failsafe && envelope.data.sequence >= config.failsafe) { transmit = false; }
+        if (envelope.data.sequence >= Setting.PayloadLimit) { transmit = false; }
+        if (now > Setting.ShutdownLimit) { transmit = false; }
 
-        // Shutdown Check: Ideally, expectation is that pause / resume will work as designed and we will never hit the shutdown clause.
-        // However, in some cases involving script errors, we may fail to pause Clarity instrumentation.
-        // In those edge cases, we will cut the cord after a configurable shutdown value.
-        // The only exception is the very last payload, for which we will attempt one final delivery to the server.
         // Transmit Check: When transmit is set to true (default), it indicates that we should schedule an upload
         // However, in certain scenarios - like metric calculation - which are triggered as part of an existing upload
         // We enrich the data going out with the existing upload. In these cases, call to upload comes with 'transmit' set to false.
-        if (now < config.shutdown && transmit && timeout === null) {
+        if (transmit && timeout === null) {
             if (type !== Event.Ping) { ping.reset(); }
             timeout = setTimeout(upload, config.delay);
             queuedTime = now;
