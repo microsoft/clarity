@@ -70,7 +70,7 @@ function similar(last: ScrollState, current: ScrollState): boolean {
     return (dx * dx + dy * dy < Setting.Distance * Setting.Distance) && (current.time - last.time < Setting.Interval);
 }
 
-export function end(): void {
+export function stop(): void {
     clearTimeout(timeout);
     state = [];
 }

@@ -22,15 +22,19 @@ export const enum Setting {
 
 /* Helper Interfaces */
 
-export interface TaskTracker {
+export interface Module {
+    start: () => void;
+    stop: () => void;
+}
+
+export interface Tasks {
     [key: number]: TaskInfo;
 }
 
-export interface RegionTracker {
+export interface Regions {
     /* In the following key-value pair, key is the given name and value is CSS selector */
     [key: string]: string;
 }
-
 export interface TaskInfo {
     start: number;
     calls: number;
@@ -69,7 +73,9 @@ export interface Config {
     cssRules?: boolean;
     lean?: boolean;
     track?: boolean;
-    regions?: RegionTracker;
+    mask?: boolean;
+    suppress?: string[];
+    regions?: Regions;
     cookies?: string[];
     url?: string;
     upload?: (data: string) => void;

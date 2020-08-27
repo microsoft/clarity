@@ -31,38 +31,38 @@ export default function (node: Node, source: Source): Node {
     switch (node.nodeType) {
         case Node.DOCUMENT_TYPE_NODE:
             parent = insideFrame && node.parentNode ? dom.iframe(node.parentNode) : parent;
-            let docTypePrefix = insideFrame ? Constant.IFRAME_PREFIX : Constant.EMPTY_STRING;
+            let docTypePrefix = insideFrame ? Constant.IFramePrefix : Constant.Empty;
             let doctype = node as DocumentType;
             let docAttributes = { name: doctype.name, publicId: doctype.publicId, systemId: doctype.systemId };
-            let docData = { tag: docTypePrefix + Constant.DOCUMENT_TAG, attributes: docAttributes };
+            let docData = { tag: docTypePrefix + Constant.DocumentTag, attributes: docAttributes };
             dom[call](node, parent, docData, source);
             break;
         case Node.DOCUMENT_NODE:
             // We check for regions in the beginning when discovering document and
             // later whenever there are new additions or modifications to DOM (mutations)
-            if (node === document) dom.extractRegions(document);
+            if (node === document) dom.parse(document);
             observe(node);
             break;
         case Node.DOCUMENT_FRAGMENT_NODE:
             let shadowRoot = (node as ShadowRoot);
             if (shadowRoot.host) {
                 let type = typeof (shadowRoot.constructor);
-                if (type === Constant.FUNCTION && shadowRoot.constructor.toString().indexOf(Constant.NATIVE_CODE) >= 0) {
+                if (type === Constant.Function && shadowRoot.constructor.toString().indexOf(Constant.NativeCode) >= 0) {
                     observe(shadowRoot);
                     // See: https://wicg.github.io/construct-stylesheets/ for more details on adoptedStyleSheets.
                     // At the moment, we are only able to capture "open" shadow DOM nodes. If they are closed, they are not accessible.
                     // In future we may decide to proxy "attachShadow" call to gain access, but at the moment, we don't want to
                     // cause any unintended side effect to the page. We will re-evaluate after we gather more real world data on this.
-                    let style = Constant.EMPTY_STRING as string;
+                    let style = Constant.Empty as string;
                     let adoptedStyleSheets: CSSStyleSheet[] = "adoptedStyleSheets" in shadowRoot ? shadowRoot["adoptedStyleSheets"] : [];
                     for (let styleSheet of adoptedStyleSheets) { style += getCssRules(styleSheet); }
-                    let fragementData = { tag: Constant.SHADOW_DOM_TAG, attributes: { style } };
+                    let fragementData = { tag: Constant.ShadowDomTag, attributes: { style } };
                     dom[call](node, shadowRoot.host, fragementData, source);
                 } else {
                     // If the browser doesn't support shadow DOM natively, we detect that, and send appropriate tag back.
                     // The differentiation is important because we don't have to observe pollyfill shadow DOM nodes,
                     // the same way we observe real shadow DOM nodes (encapsulation provided by the browser).
-                    dom[call](node, shadowRoot.host, { tag: Constant.POLYFILL_SHADOWDOM_TAG, attributes: {} }, source);
+                    dom[call](node, shadowRoot.host, { tag: Constant.PolyfillShadowDomTag, attributes: {} }, source);
                 }
             }
             break;
@@ -75,7 +75,7 @@ export default function (node: Node, source: Source): Node {
             // The only exception is when we receive a mutation to remove the text node, in that case
             // parent will be null, but we can still process the node by checking it's an update call.
             if (call === "update" || (parent && dom.has(parent) && parent.tagName !== "STYLE")) {
-                let textData = { tag: Constant.TEXT_TAG, value: node.nodeValue };
+                let textData = { tag: Constant.TextTag, value: node.nodeValue };
                 dom[call](node, parent, textData, source);
             }
             break;
@@ -85,17 +85,17 @@ export default function (node: Node, source: Source): Node {
             let tag = element.tagName;
             parent = node.parentNode ? node.parentNode as HTMLElement : null;
             // If we encounter a node that is part of SVG namespace, prefix the tag with SVG_PREFIX
-            if (element.namespaceURI === Constant.SVG_NAMESPACE) { tag = Constant.SVG_PREFIX + tag; }
+            if (element.namespaceURI === Constant.SvgNamespace) { tag = Constant.SvgPrefix + tag; }
 
             switch (tag) {
                 case "HTML":
                     parent = insideFrame && parent ? dom.iframe(parent) : null;
-                    let htmlPrefix = insideFrame ? Constant.IFRAME_PREFIX : Constant.EMPTY_STRING;
+                    let htmlPrefix = insideFrame ? Constant.IFramePrefix : Constant.Empty;
                     let htmlData = { tag: htmlPrefix + tag, attributes };
                     dom[call](node, parent, htmlData, source);
                     break;
                 case "SCRIPT":
-                    if (Constant.TYPE_ATTRIBUTE in attributes && attributes[Constant.TYPE_ATTRIBUTE] === JsonLD.SCRIPT_TYPE) {
+                    if (Constant.Type in attributes && attributes[Constant.Type] === JsonLD.ScriptType) {
                         try {
                             parseLinkedData(JSON.parse((element as HTMLScriptElement).text));
                         } catch { /* do nothing */ }
@@ -106,7 +106,7 @@ export default function (node: Node, source: Source): Node {
                     break;
                 case "HEAD":
                     let head = { tag, attributes };
-                    if (location) { head.attributes[Constant.BASE_ATTRIBUTE] = location.protocol + "//" + location.hostname; }
+                    if (location) { head.attributes[Constant.Base] = location.protocol + "//" + location.hostname; }
                     dom[call](node, parent, head, source);
                     break;
                 case "STYLE":
@@ -118,7 +118,7 @@ export default function (node: Node, source: Source): Node {
                     let frameData = { tag, attributes };
                     if (dom.sameorigin(iframe)) {
                         mutation.monitor(iframe);
-                        frameData.attributes[Constant.SAME_ORIGIN_ATTRIBUTE] = "true";
+                        frameData.attributes[Constant.SameOrigin] = "true";
                         if (iframe.contentDocument && iframe.contentWindow && iframe.contentDocument.readyState !== "loading") {
                             child = iframe.contentDocument;
                         }
@@ -153,7 +153,7 @@ function getStyleValue(style: HTMLStyleElement): string {
 }
 
 function getCssRules(sheet: CSSStyleSheet): string {
-    let value = Constant.EMPTY_STRING as string;
+    let value = Constant.Empty as string;
     let cssRules = null;
     // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain
     try { cssRules = sheet ? sheet.cssRules : []; } catch (e) {
@@ -186,32 +186,32 @@ function getAttributes(attributes: NamedNodeMap): { [key: string]: string } {
 function parseLinkedData(json: any): void {
     for (let key of Object.keys(json)) {
         let value = json[key];
-        if (key === JsonLD.TYPE_KEY) {
+        if (key === JsonLD.Type) {
             value = typeof value === "string" ? value.toLowerCase() : value;
             switch (value) {
-                case JsonLD.PRODUCT_TYPE:
+                case JsonLD.Product:
                     dimension.log(Dimension.SchemaType, json[key]);
                     break;
-                case JsonLD.RECIPE_TYPE:
+                case JsonLD.Recipe:
                     dimension.log(Dimension.SchemaType, json[key]);
                     break;
-                case JsonLD.RATING_TYPE:
-                    if (json[JsonLD.RATING_VALUE_KEY]) { metric.max(Metric.RatingValue, num(json[JsonLD.RATING_VALUE_KEY])); }
-                    if (json[JsonLD.RATING_COUNT_KEY]) { metric.max(Metric.RatingCount, num(json[JsonLD.RATING_COUNT_KEY])); }
+                case JsonLD.Rating:
+                    if (json[JsonLD.RatingValue]) { metric.max(Metric.RatingValue, num(json[JsonLD.RatingValue])); }
+                    if (json[JsonLD.RatingCount]) { metric.max(Metric.RatingCount, num(json[JsonLD.RatingCount])); }
                     break;
-                case JsonLD.AUTHOR_TYPE:
-                    if (json[JsonLD.NAME_KEY]) { dimension.log(Dimension.AuthorName, json[JsonLD.NAME_KEY]); }
+                case JsonLD.Author:
+                    if (json[JsonLD.Name]) { dimension.log(Dimension.AuthorName, json[JsonLD.Name]); }
                     break;
-                case JsonLD.OFFER_TYPE:
-                    if (json[JsonLD.AVAILABILITY_KEY]) { dimension.log(Dimension.ProductAvailability, json[JsonLD.AVAILABILITY_KEY]); }
+                case JsonLD.Offer:
+                    if (json[JsonLD.Availability]) { dimension.log(Dimension.ProductAvailability, json[JsonLD.Availability]); }
                     break;
-                case JsonLD.BRAND_TYPE:
-                    if (json[JsonLD.NAME_KEY]) { dimension.log(Dimension.ProductBrand, json[JsonLD.NAME_KEY]); }
+                case JsonLD.Brand:
+                    if (json[JsonLD.Name]) { dimension.log(Dimension.ProductBrand, json[JsonLD.Name]); }
                     break;
             }
         }
         // Continue parsing nested objects
-        if (value !== null && typeof(value) === Constant.OBJECT) { parseLinkedData(value); }
+        if (value !== null && typeof(value) === Constant.Object) { parseLinkedData(value); }
     }
 }
 

@@ -103,9 +103,9 @@ export function markup(event: Layout.DomEvent): void {
         }
 
         let tag = node.tag;
-        if (tag && tag.indexOf(Layout.Constant.IFRAME_PREFIX) === 0) { tag = node.tag.substr(Layout.Constant.IFRAME_PREFIX.length); }
+        if (tag && tag.indexOf(Layout.Constant.IFramePrefix) === 0) { tag = node.tag.substr(Layout.Constant.IFramePrefix.length); }
         switch (tag) {
-            case Layout.Constant.DOCUMENT_TAG:
+            case Layout.Constant.DocumentTag:
                 let tagDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
                 if (tagDoc && tagDoc === doc && type === Data.Event.Discover) { reset(); }
                 if (typeof XMLSerializer !== "undefined" && tagDoc) {
@@ -120,12 +120,12 @@ export function markup(event: Layout.DomEvent): void {
                     tagDoc.close();
                 }
                 break;
-            case Layout.Constant.POLYFILL_SHADOWDOM_TAG:
+            case Layout.Constant.PolyfillShadowDomTag:
                 // In case of polyfill, map shadow dom to it's parent for rendering purposes
                 // All its children should be inserted as regular children to the parent node.
                 nodes[node.id] = parent;
                 break;
-            case Layout.Constant.SHADOW_DOM_TAG:
+            case Layout.Constant.ShadowDomTag:
                 if (parent) {
                     let shadowRoot = element(node.id);
                     shadowRoot = shadowRoot ? shadowRoot : (parent as HTMLElement).attachShadow({ mode: "open" });
@@ -144,7 +144,7 @@ export function markup(event: Layout.DomEvent): void {
                     nodes[node.id] = shadowRoot;
                 }
                 break;
-            case Layout.Constant.TEXT_TAG:
+            case Layout.Constant.TextTag:
                 let textElement = element(node.id);
                 textElement = textElement ? textElement : doc.createTextNode(null);
                 textElement.nodeValue = node.value;
@@ -155,7 +155,7 @@ export function markup(event: Layout.DomEvent): void {
                 if (htmlDoc !== null) {
                     let docElement = element(node.id);
                     if (docElement === null) {
-                        let newDoc = htmlDoc.implementation.createHTMLDocument(Layout.Constant.EMPTY_STRING);
+                        let newDoc = htmlDoc.implementation.createHTMLDocument(Layout.Constant.Empty);
                         docElement = newDoc.documentElement;
                         let p = htmlDoc.importNode(docElement, true);
                         htmlDoc.replaceChild(p, htmlDoc.documentElement);
@@ -170,9 +170,9 @@ export function markup(event: Layout.DomEvent): void {
                 let headElement = element(node.id);
                 if (headElement === null) {
                     headElement = doc.createElement(node.tag);
-                    if (node.attributes && Layout.Constant.BASE_ATTRIBUTE in node.attributes) {
+                    if (node.attributes && Layout.Constant.Base in node.attributes) {
                         let base = doc.createElement("base");
-                        base.href = node.attributes[Layout.Constant.BASE_ATTRIBUTE];
+                        base.href = node.attributes[Layout.Constant.Base];
                         headElement.appendChild(base);
                     }
                 }
@@ -205,8 +205,9 @@ export function markup(event: Layout.DomEvent): void {
                 iframeElement = iframeElement ? iframeElement : createElement(doc, node.tag);
                 if (!node.attributes) { node.attributes = {}; }
                 node.attributes["data-id"] = `${node.id}`;
+                node.attributes["data-hash"] = `${node.hash}`;
                 setAttributes(iframeElement as HTMLElement, node.attributes);
-                if (!(Layout.Constant.SAME_ORIGIN_ATTRIBUTE in node.attributes)) { iframeElement.style.backgroundColor = "maroon"; }
+                if (!(Layout.Constant.SameOrigin in node.attributes)) { iframeElement.style.backgroundColor = "maroon"; }
                 insert(node, parent, iframeElement, pivot);
                 break;
             default:
@@ -214,6 +215,7 @@ export function markup(event: Layout.DomEvent): void {
                 domElement = domElement ? domElement : createElement(doc, node.tag);
                 if (!node.attributes) { node.attributes = {}; }
                 node.attributes["data-id"] = `${node.id}`;
+                node.attributes["data-hash"] = `${node.hash}`;
                 setAttributes(domElement as HTMLElement, node.attributes);
                 insert(node, parent, domElement, pivot);
                 break;
@@ -241,8 +243,8 @@ function style(node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = n
 }
 
 function createElement(doc: Document, tag: string): HTMLElement {
-    if (tag && tag.indexOf(Layout.Constant.SVG_PREFIX) === 0) {
-        return doc.createElementNS(Layout.Constant.SVG_NAMESPACE as string, tag.substr(Layout.Constant.SVG_PREFIX.length)) as HTMLElement;
+    if (tag && tag.indexOf(Layout.Constant.SvgPrefix) === 0) {
+        return doc.createElementNS(Layout.Constant.SvgNamespace as string, tag.substr(Layout.Constant.SvgPrefix.length)) as HTMLElement;
     }
     return doc.createElement(tag);
 }
@@ -259,7 +261,7 @@ function insertAfter(data: Layout.DomData, parent: Node, node: Node, previous: N
 function firstChild(node: Node): ChildNode {
     let child = node.firstChild;
     // BASE tag should always be the first child to ensure resources with relative URLs are loaded correctly
-    if (child && child.nodeType === Node.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BASE_TAG) {
+    if (child && child.nodeType === Node.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BaseTag) {
         return child.nextSibling;
     }
     return child;

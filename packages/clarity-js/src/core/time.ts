@@ -9,6 +9,6 @@ export function time(ts: number = null): number {
     return Math.max(Math.round(ts - startTime), 0);
 }
 
-export function end(): void {
+export function stop(): void {
     startTime = 0;
 }

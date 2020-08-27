@@ -1,5 +1,5 @@
 import { Event, PingData, Setting } from "@clarity-types/data";
-import { suspend } from "@src/clarity";
+import { suspend } from "@src/core";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "./encode";
@@ -29,7 +29,7 @@ function ping(): void {
     } else { suspend(); }
 }
 
-export function end(): void {
+export function stop(): void {
     clearTimeout(timeout);
     last = 0;
     interval = 0;

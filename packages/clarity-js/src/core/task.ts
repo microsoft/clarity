@@ -1,12 +1,12 @@
 import { AsyncTask, Priority, RequestIdleCallbackDeadline, RequestIdleCallbackOptions } from "@clarity-types/core";
-import { Setting, TaskFunction, TaskResolve, TaskTracker } from "@clarity-types/core";
+import { Setting, TaskFunction, TaskResolve, Tasks } from "@clarity-types/core";
 import { Code, Metric, Severity } from "@clarity-types/data";
 import * as metric from "@src/data/metric";
 import * as log from "@src/diagnostic/log";
 
 // Track the start time to be able to compute duration at the end of the task
 const idleTimeout = 5000;
-let tracker: TaskTracker = {};
+let tracker: Tasks = {};
 let queuedTasks: AsyncTask[] = [];
 let activeTask: AsyncTask = null;
 let pauseTask: Promise<void> = null;

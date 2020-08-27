@@ -60,7 +60,7 @@ export function reset(): void {
     data = { start: 0, startOffset: 0, end: 0, endOffset: 0 };
 }
 
-export function end(): void {
+export function stop(): void {
     reset();
     clearTimeout(timeout);
 }

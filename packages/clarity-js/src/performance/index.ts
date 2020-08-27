@@ -8,8 +8,8 @@ export function start(): void {
     observer.start();
 }
 
-export function end(): void {
-    observer.end();
-    connection.end();
+export function stop(): void {
+    observer.stop();
+    connection.stop();
     navigation.reset();
 }

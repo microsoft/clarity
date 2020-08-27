@@ -21,7 +21,7 @@ export function start(): void {
   };
 }
 
-export function end(): void {
+export function stop(): void {
     data = null;
 }
 

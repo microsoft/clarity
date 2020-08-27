@@ -75,7 +75,7 @@ function process(entries: PerformanceEntryList, offset: number): void {
     } else { log.log(Code.PerformanceObserver, null, Severity.Info); }
 }
 
-export function end(): void {
+export function stop(): void {
     if (observer) { observer.disconnect(); }
     observer = null;
     lastEntryIndex = 0;

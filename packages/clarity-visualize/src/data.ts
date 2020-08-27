@@ -34,12 +34,12 @@ export function metric(event: Data.MetricEvent): void {
         if (metrics[entry] && entry in METRIC_MAP) {
             let m = metrics[entry];
             let map = METRIC_MAP[entry];
-            let unit = "unit" in map ? map.unit : Layout.Constant.EMPTY_STRING;
+            let unit = "unit" in map ? map.unit : Layout.Constant.Empty;
             html.push(`<li><h2>${value(m, unit)}<span>${unit}</span></h2>${map.name}</li>`);
         }
     }
 
-    state.metadata.innerHTML = `<ul>${html.join(Layout.Constant.EMPTY_STRING)}</ul>`;
+    state.metadata.innerHTML = `<ul>${html.join(Layout.Constant.Empty)}</ul>`;
 }
 
 function value(num: number, unit: string): number {

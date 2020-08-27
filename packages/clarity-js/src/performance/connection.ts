@@ -32,6 +32,6 @@ export function reset(): void {
     data = null;
 }
 
-export function end(): void {
+export function stop(): void {
     reset();
 }

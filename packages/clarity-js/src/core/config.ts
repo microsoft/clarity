@@ -6,6 +6,8 @@ let config: Config = {
     cssRules: false,
     lean: true,
     track: true,
+    mask: true,
+    suppress: [],
     regions: {},
     cookies: [],
     url: "",

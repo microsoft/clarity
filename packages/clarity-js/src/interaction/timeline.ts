@@ -51,7 +51,7 @@ export function compute(): void {
     encode(Event.Timeline);
 }
 
-export function end(): void {
+export function stop(): void {
     state = [];
     reset();
 }

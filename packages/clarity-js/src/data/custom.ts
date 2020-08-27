@@ -6,8 +6,8 @@ export let data: CustomData = null;
 export function event(key: string, value: string): void {
     if (key &&
         value &&
-        typeof key === Constant.STRING_TYPE &&
-        typeof value === Constant.STRING_TYPE &&
+        typeof key === Constant.String &&
+        typeof value === Constant.String &&
         key.length < 255 &&
         value.length < 255) {
         data = { key, value};

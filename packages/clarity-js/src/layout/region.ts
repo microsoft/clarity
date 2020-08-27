@@ -55,12 +55,12 @@ function update(id: number, box: Box): void {
     if (changed) {
         if (updateMap.indexOf(id) === -1) { updateMap.push(id); }
         let value = dom.getValue(id);
-        let r = value ? dom.region(value.region) : null;
+        let r = value ? dom.getRegion(value.region) : null;
         bm[id] = { id, box, region: r };
     }
 }
 
-export function track(id: number) {
+export function track(id: number): void {
     if (updateMap.indexOf(id) === -1) {
         updateMap.push(id);
     }

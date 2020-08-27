@@ -101,7 +101,7 @@ function similar(last: PointerState, current: PointerState): boolean {
     return current.event === last.event && match && distance < Setting.Distance && gap < Setting.Interval;
 }
 
-export function end(): void {
+export function stop(): void {
     clearTimeout(timeout);
     // Send out any pending pointer events in the pipeline
     if (state.length > 0) { process(state[state.length - 1].event); }

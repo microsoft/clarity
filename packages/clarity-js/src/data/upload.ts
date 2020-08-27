@@ -1,4 +1,4 @@
-import { Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData } from "@clarity-types/data";
+import { Check, Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
@@ -7,14 +7,13 @@ import { clearTimeout, setTimeout } from "@src/core/timeout";
 import encode from "@src/data/encode";
 import * as envelope from "@src/data/envelope";
 import * as data from "@src/data/index";
+import * as limit from "@src/data/limit";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
 import * as performance from "@src/performance/observer";
 
-const MAX_RETRIES = 2;
-const MAX_PLAYBACK_BYTES = 10 * 1024 * 1024; // 10MB
 let playbackBytes: number = 0;
 let playback: string[];
 let analysis: string[];
@@ -47,7 +46,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
                 // Anytime we grow past this size, we start dropping events.
                 // This is not ideal, and more of a fail safe mechanism.
                 playbackBytes += event.length;
-                if (playbackBytes < MAX_PLAYBACK_BYTES) { playback.push(event); }
+                playback.push(event);
                 break;
             default:
                 analysis.push(event);
@@ -62,13 +61,6 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             timeout = null;
         }
 
-        // Limit Checks:
-        // 1) If we hit the limit on number of payloads for this page, we stop scheduling more uploads
-        // 2) If we have been sending data for more than shutdown limit, stop scheduling more uploads
-        // The only exception is the very last payload, for which we will attempt one final delivery to the server.
-        if (envelope.data.sequence >= Setting.PayloadLimit) { transmit = false; }
-        if (now > Setting.ShutdownLimit) { transmit = false; }
-
         // Transmit Check: When transmit is set to true (default), it indicates that we should schedule an upload
         // However, in certain scenarios - like metric calculation - which are triggered as part of an existing upload
         // We enrich the data going out with the existing upload. In these cases, call to upload comes with 'transmit' set to false.
@@ -76,11 +68,12 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             if (type !== Event.Ping) { ping.reset(); }
             timeout = setTimeout(upload, config.delay);
             queuedTime = now;
+            limit.check(playbackBytes);
         }
     }
 }
 
-export function end(): void {
+export function stop(): void {
     clearTimeout(timeout);
     upload(true);
     playbackBytes = 0;
@@ -108,7 +101,7 @@ function upload(final: boolean = false): void {
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
     let last = final === true;
     let a = `[${analysis.join()}]`;
-    let p = config.lean ? Constant.EMPTY_STRING : `[${playback.join()}]`;
+    let p = config.lean ? Constant.Empty : `[${playback.join()}]`;
     let encoded: EncodedPayload = {e: JSON.stringify(envelope.envelope(last)), a, p};
     let payload = stringify(encoded);
     let sequence = envelope.data.sequence;
@@ -159,7 +152,7 @@ function send(payload: string, sequence: number, last: boolean): void {
 
 function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
     if (xhr && xhr.readyState === XMLHttpRequest.DONE && sequence in transit) {
-        if ((xhr.status < 200 || xhr.status > 208) && transit[sequence].attempts <= MAX_RETRIES) {
+        if ((xhr.status < 200 || xhr.status > 208) && transit[sequence].attempts <= Setting.RetryLimit) {
             send(transit[sequence].data, sequence, last);
         } else {
             track = { sequence, attempts: transit[sequence].attempts, status: xhr.status };
@@ -167,6 +160,8 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
             if (transit[sequence].attempts > 1) { encode(Event.Upload); }
             // Handle response if it was a 200 or 500 status response with a valid body
             if ((xhr.status === 200 || xhr.status === 500) && xhr.responseText) { response(xhr.responseText); }
+            // If we exhausted our retries the trigger Clarity shutdown for this page
+            if (transit[sequence].attempts > Setting.RetryLimit) { limit.trigger(Check.Retry); }
             // Stop tracking this payload now that it's all done
             delete transit[sequence];
         }
@@ -174,13 +169,13 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
 }
 
 function response(payload: string): void {
-    let key = payload && payload.length > 0 ? payload.split(" ")[0] : Constant.EMPTY_STRING;
+    let key = payload && payload.length > 0 ? payload.split(" ")[0] : Constant.Empty;
     switch (key) {
-        case Constant.RESPONSE_END:
-            clarity.end();
+        case Constant.End:
+            clarity.stop();
             break;
-        case Constant.RESPONSE_UPGRADE:
-            clarity.upgrade(Constant.AUTO);
+        case Constant.Upgrade:
+            clarity.upgrade(Constant.Auto);
             break;
     }
 }

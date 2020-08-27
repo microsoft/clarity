@@ -6,21 +6,17 @@ import * as Interaction from "./interaction";
 import * as Performance from "./performance";
 
 interface Clarity {
-  version: string;
-  active: boolean;
-  config: (config: Core.Config) => boolean;
-  start: (config: Core.Config) => void;
+  config: (config: Core.Config) => void;
+  start: () => void;
   end: () => void;
   pause: () => void;
   resume: () => void;
   upgrade: (key: string) => void;
   consent: () => void;
-  tag: () => void; /* For backward compatibility - delete in subsequent iterations */
   event: (name: string, value: string) => void;
   set: (variable: string, value: string) => void;
   identify: (userId: string, sessionId?: string, pageId?: string) => void;
-
-  metadata: () => Data.Metadata;
+  metadata: (callback: Data.MetadataCallback) => void;
 }
 
 interface Helper {
