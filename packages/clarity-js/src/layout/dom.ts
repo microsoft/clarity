@@ -60,9 +60,19 @@ export function parse(root: ParentNode): void {
         }
 
         // Extract nodes with explicit masked configuration
-        for (const entry of config.suppress) {
-            let element = root.querySelector(entry);
-            if (element) { maskedMap.set(element, true); }
+        for (const entry of config.mask) {
+            let elements = root.querySelectorAll(entry);
+            for (let i = 0; i < elements.length; i++) {
+                maskedMap.set(elements[i], true);
+            }
+        }
+
+        // Extract nodes with explicit unmasked configuration
+        for (const entry of config.unmask) {
+            let elements = root.querySelectorAll(entry);
+            for (let i = 0; i < elements.length; i++) {
+                maskedMap.set(elements[i], false);
+            }
         }
     }
 }
@@ -82,7 +92,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let id = getId(node, true);
     let parentId = parent ? getId(parent) : null;
     let previousId = getPreviousId(node);
-    let masked = config.mask;
+    let masked = !config.content;
     let parentValue = null;
     let regionId = regionMap.has(node) ? getId(node) : null;
 

@@ -21,11 +21,11 @@ function activate(): void {
     chrome.storage.sync.get({
       clarity: { showText: true, leanMode: false }
     }, (items: any) => {
-      if (items.clarity.showText) { document.body.setAttribute(Layout.Constant.UnmaskData, "true"); }
       clarity.config({
         delay: 500,
         lean: items.clarity.leanMode,
         regions,
+        content: items.clarity.showText,
         upload,
         projectId: 1051133397904 // parseInt("devtools", 36);
       });

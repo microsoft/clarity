@@ -73,8 +73,9 @@ export interface Config {
     cssRules?: boolean;
     lean?: boolean;
     track?: boolean;
-    mask?: boolean;
-    suppress?: string[];
+    content?: boolean;
+    mask?: string[];
+    unmask?: string[];
     regions?: Regions;
     cookies?: string[];
     url?: string;
