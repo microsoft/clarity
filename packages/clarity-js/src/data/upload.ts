@@ -42,9 +42,6 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         switch (type) {
             case Event.Discover:
             case Event.Mutation:
-                // At the moment, we limit playback to grow until MAX_PLAYBACK_BYTES.
-                // Anytime we grow past this size, we start dropping events.
-                // This is not ideal, and more of a fail safe mechanism.
                 playbackBytes += event.length;
                 playback.push(event);
                 break;

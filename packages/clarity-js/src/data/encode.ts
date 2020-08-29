@@ -100,7 +100,7 @@ export default function(event: Event): void {
                 for (let e of eventKeys) {
                     let key = parseInt(e, 10);
                     tokens.push(key);
-                    tokens.push(summary.data[e]);
+                    tokens.push([].concat(...summary.data[e]));
                 }
                 summary.reset();
                 queue(tokens, false);

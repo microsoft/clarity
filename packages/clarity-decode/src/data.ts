@@ -38,7 +38,12 @@ export function decode(tokens: Data.Token[]): DataEvent {
             let s = 2; // Start from 3rd index since first two are used for time & event
             let summary: Data.SummaryData = {};
             while (s < tokens.length) {
-                summary[tokens[s++] as number] = tokens[s++] as number[];
+                let key = tokens[s++] as number;
+                let values = tokens[s++] as number[];
+                summary[key] = [];
+                for (let i = 0; i < values.length - 1; i += 2) {
+                    summary[key].push([values[i], values[i+1]]);
+                }
             }
             return { time, event, data: summary };
         case Data.Event.Baseline:

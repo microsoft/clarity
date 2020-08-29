@@ -242,7 +242,7 @@ export interface LimitData {
 }
 
 export interface SummaryData {
-    [event: number]: number[];
+    [event: number]: [number, number][]; // Array of [start, duration] for every event type
 }
 
 export interface UpgradeData {

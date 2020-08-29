@@ -13,14 +13,15 @@ export function stop(): void {
 
 export function track(event: Event, time: number): void {
     if (!(event in data)) {
-        data[event] = [time];
+        data[event] = [[time, 0]];
     } else {
         let e = data[event];
         let last = e[e.length - 1];
-        // Capture summary information only if the new event occurs after configured interval
-        if (time - last > Setting.SummaryInterval) {
-            data[event].push(time);
-        }
+        // Add a new entry only if the new event occurs after configured interval
+        // Otherwise, extend the duration of the previous entry
+        if (time - last[0] > Setting.SummaryInterval) {
+            data[event].push([time, 0]);
+        } else { last[1] = time - last[0]; }
     }
 }
 
