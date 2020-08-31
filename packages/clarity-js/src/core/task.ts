@@ -1,13 +1,12 @@
 import { AsyncTask, Priority, RequestIdleCallbackDeadline, RequestIdleCallbackOptions } from "@clarity-types/core";
-import { TaskFunction, TaskResolve, TaskTracker } from "@clarity-types/core";
+import { Setting, TaskFunction, TaskResolve, Tasks } from "@clarity-types/core";
 import { Code, Metric, Severity } from "@clarity-types/data";
-import config from "@src/core/config";
 import * as metric from "@src/data/metric";
 import * as log from "@src/diagnostic/log";
 
 // Track the start time to be able to compute duration at the end of the task
 const idleTimeout = 5000;
-let tracker: TaskTracker = {};
+let tracker: Tasks = {};
 let queuedTasks: AsyncTask[] = [];
 let activeTask: AsyncTask = null;
 let pauseTask: Promise<void> = null;
@@ -79,7 +78,7 @@ export function shouldYield(method: Metric): boolean {
 }
 
 export function start(method: Metric): void {
-    tracker[method] = { start: performance.now(), calls: 0, yield: config.longtask };
+    tracker[method] = { start: performance.now(), calls: 0, yield: Setting.LongTask };
 }
 
 function restart(method: Metric): void {
@@ -139,13 +138,13 @@ function requestIdleCallbackPolyfill(callback: (deadline: RequestIdleCallbackDea
         let currentTime = performance.now();
         let elapsed = currentTime - startTime;
         let duration = currentTime - event.data;
-        if (duration > config.longtask && elapsed < options.timeout) {
+        if (duration > Setting.LongTask && elapsed < options.timeout) {
             requestAnimationFrame((): void => { outgoing.postMessage(currentTime); });
         } else {
             let didTimeout = elapsed > options.timeout;
             callback({
                 didTimeout,
-                timeRemaining: (): number => didTimeout ? config.longtask : Math.max(0, config.longtask - duration)
+                timeRemaining: (): number => didTimeout ? Setting.LongTask : Math.max(0, Setting.LongTask - duration)
             });
         }
     };

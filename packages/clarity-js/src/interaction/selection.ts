@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { SelectionData } from "@clarity-types/interaction";
-import config from "@src/core/config";
+import { SelectionData, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
@@ -49,7 +48,7 @@ function recompute(root: Node): void {
     previous = current;
 
     clearTimeout(timeout);
-    timeout = setTimeout(process, config.lookahead, Event.Selection);
+    timeout = setTimeout(process, Setting.LookAhead, Event.Selection);
 }
 
 function process(event: Event): void {
@@ -61,7 +60,7 @@ export function reset(): void {
     data = { start: 0, startOffset: 0, end: 0, endOffset: 0 };
 }
 
-export function end(): void {
+export function stop(): void {
     reset();
     clearTimeout(timeout);
 }

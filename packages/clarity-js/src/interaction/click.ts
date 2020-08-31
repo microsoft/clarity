@@ -65,6 +65,6 @@ export function reset(): void {
     state = [];
 }
 
-export function end(): void {
+export function stop(): void {
     reset();
 }

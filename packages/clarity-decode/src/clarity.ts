@@ -1,6 +1,6 @@
 import { Data, version } from "clarity-js";
-import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent, VariableEvent } from "../types/data";
-import { MetricEvent, PingEvent, UpgradeEvent, UploadEvent } from "../types/data";
+import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
+import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent } from "../types/data";
 import { ImageErrorEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ClickEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent, TimelineEvent } from "../types/interaction";
 import { SelectionEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
@@ -51,6 +51,10 @@ export function decode(input: string): DecodedPayload {
                 if (payload.ping === undefined) { payload.ping = []; }
                 payload.ping.push(data.decode(entry) as PingEvent);
                 break;
+            case Data.Event.Limit:
+                if (payload.limit === undefined) { payload.limit = []; }
+                payload.limit.push(data.decode(entry) as LimitEvent);
+                break;
             case Data.Event.Upgrade:
                 if (payload.upgrade === undefined) { payload.upgrade = []; }
                 payload.upgrade.push(data.decode(entry) as UpgradeEvent);
@@ -67,6 +71,10 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Dimension:
                 if (payload.dimension === undefined) { payload.dimension = []; }
                 payload.dimension.push(data.decode(entry) as DimensionEvent);
+                break;
+            case Data.Event.Summary:
+                if (payload.summary === undefined) { payload.summary = []; }
+                payload.summary.push(data.decode(entry) as SummaryEvent);
                 break;
             case Data.Event.Custom:
                 if (payload.custom === undefined) { payload.custom = []; }

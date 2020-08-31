@@ -1,4 +1,5 @@
-import { Event, Dimension, DimensionData } from "@clarity-types/data";
+import { Check, Event, Dimension, DimensionData, Setting } from "@clarity-types/data";
+import * as limit from "@src/data/limit";
 import encode from "./encode";
 
 export let data: DimensionData = null;
@@ -9,7 +10,7 @@ export function start(): void {
     updates = {};
 }
 
-export function end(): void {
+export function stop(): void {
     data = {};
     updates = {};
 }
@@ -22,6 +23,8 @@ export function log(dimension: Dimension, value: string): void {
         // This allows us to only send back new values in subsequent payloads
         if (!(dimension in updates)) { updates[dimension] = []; }
         updates[dimension].push(value);
+        // Limit check to ensure we have a cap on number of dimensions we can collect
+        if (data[dimension].length > Setting.CollectionLimit) { limit.trigger(Check.Collection); }
     }
 }
 

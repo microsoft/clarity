@@ -20,16 +20,16 @@ export function start(): void {
     unload.start();
 }
 
-export function end(): void {
-    timeline.end();
-    click.end();
-    pointer.end();
-    input.end();
-    resize.end();
-    visibility.end();
-    scroll.end();
-    selection.end();
-    unload.end()
+export function stop(): void {
+    timeline.stop();
+    click.stop();
+    pointer.stop();
+    input.stop();
+    resize.stop();
+    visibility.stop();
+    scroll.stop();
+    selection.stop();
+    unload.stop()
 }
 
 export function observe(root: Node): void {

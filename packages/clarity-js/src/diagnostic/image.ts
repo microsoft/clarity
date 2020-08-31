@@ -18,6 +18,6 @@ function handler(error: ErrorEvent): void {
     }
 }
 
-export function end(): void {
+export function stop(): void {
     data = null;
 }

@@ -1,6 +1,9 @@
+import { Time } from "@clarity-types/core";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[]);
 export type DecodedToken = (any | any[]);
+
+export type MetadataCallback = (data: Metadata, playback: boolean) => void;
 
 /* Enum */
 
@@ -40,7 +43,9 @@ export const enum Event {
     ScriptError = 31,
     ImageError = 32,
     Log = 33,
-    Variable = 34
+    Variable = 34,
+    Limit = 35,
+    Summary = 36
 }
 
 export const enum Metric {
@@ -72,6 +77,15 @@ export const enum Dimension {
     AuthorName = 8
 }
 
+export const enum Check {
+    None = 0,
+    Payload = 1,
+    Shutdown = 2,
+    Retry = 3,
+    Bytes = 4,
+    Collection = 5
+}
+
 export const enum Code {
     RunTask = 0,
     CssRules = 1,
@@ -96,29 +110,42 @@ export const enum BooleanFlag {
     True = 1
 }
 
+export const enum Setting {
+    Expire = 365, // 1 Year
+    SessionTimeout = 30 * Time.Minute, // 10 minutes
+    PingInterval = 1 * Time.Minute, // 1 Minute
+    PingTimeout = 5 * Time.Minute, // 5 Minutes
+    SummaryInterval = 100, // Same events within 100ms will be collapsed into single summary
+    PayloadLimit = 128, // Do not allow more than specified payloads per page
+    ShutdownLimit = 2 * Time.Hour, // Shutdown instrumentation after specified time
+    RetryLimit = 2, // Maximum number of attempts to upload a payload before giving up
+    PlaybackBytesLimit = 10 * 1024 * 1024, // 10MB
+    CollectionLimit = 128, // Number of unique entries for dimensions
+}
+
 export const enum Constant {
-    AUTO = "Auto",
-    CLARITY = "clarity",
-    RESTART = "restart",
-    SUSPEND = "suspend",
-    PAUSE = "pause",
-    RESUME = "resume",
-    EMPTY_STRING = "",
-    SPACE = " ",
-    EXPIRES = "expires=",
-    SEMICOLON = ";",
-    EQUALS = "=",
-    PATH = ";path=/",
-    STRING_TYPE = "string",
-    UPGRADE_KEY = "_club", // Clarity Upgrade Beta
-    CLARITY_COOKIE = "_clcb", // Clarity Cookie Beta
-    STORAGE_KEY = "_clsb", // Clarity Storage Beta
-    STORAGE_SEPARATOR = "|",
-    RESPONSE_END = "END",
-    RESPONSE_UPGRADE = "UPGRADE",
-    RESERVED_USER_ID_VARIABLE = "userId",
-    RESERVED_SESSION_ID_VARIABLE = "sessionId",
-    RESERVED_PAGE_ID_VARIABLE = "pageId"
+    Auto = "Auto",
+    Clarity = "clarity",
+    Restart = "restart",
+    Suspend = "suspend",
+    Pause = "pause",
+    Resume = "resume",
+    Empty = "",
+    Space = " ",
+    Expires = "expires=",
+    Semicolon = ";",
+    Equals = "=",
+    Path = ";path=/",
+    String = "string",
+    UpgradeKey = "_club", // Clarity Upgrade Beta
+    CookieKey = "_clcb", // Clarity Cookie Beta
+    StorageKey = "_clsb", // Clarity Storage Beta
+    Separator = "|",
+    End = "END",
+    Upgrade = "UPGRADE",
+    UserId = "userId",
+    SessionId = "sessionId",
+    PageId = "pageId"
 }
 
 /* Helper Interfaces */
@@ -208,6 +235,14 @@ export interface MetricData {
 
 export interface PingData {
     gap: number;
+}
+
+export interface LimitData {
+    check: number;
+}
+
+export interface SummaryData {
+    [event: number]: [number, number][]; // Array of [start, duration] for every event type
 }
 
 export interface UpgradeData {

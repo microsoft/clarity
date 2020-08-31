@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { InputData, InputState } from "@clarity-types/interaction";
-import config from "@src/core/config";
+import { InputData, InputState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import mask from "@src/core/mask";
 import { schedule } from "@src/core/task";
@@ -47,7 +46,7 @@ function recompute(evt: UIEvent): void {
         state.push({ time: time(), event: Event.Input, data });
 
         clearTimeout(timeout);
-        timeout = setTimeout(process, config.lookahead, Event.Input);
+        timeout = setTimeout(process, Setting.LookAhead, Event.Input);
     }
 }
 
@@ -59,7 +58,7 @@ export function reset(): void {
     state = [];
 }
 
-export function end(): void {
+export function stop(): void {
     clearTimeout(timeout);
     reset();
 }

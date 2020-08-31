@@ -12,9 +12,9 @@ export function start(): void {
     region.reset();
 }
 
-export function end(): void {
-    dom.end();
-    mutation.end();
+export function stop(): void {
+    dom.stop();
+    mutation.stop();
     region.reset();
     doc.reset();
 }

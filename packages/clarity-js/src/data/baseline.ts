@@ -70,6 +70,6 @@ export function compute(): void {
     }
 }
 
-export function end(): void {
+export function stop(): void {
     reset();
 }

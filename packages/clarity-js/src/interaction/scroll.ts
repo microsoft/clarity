@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { ScrollState } from "@clarity-types/interaction";
-import config from "@src/core/config";
+import { ScrollState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import { schedule } from "@src/core/task";
@@ -53,7 +52,7 @@ function recompute(event: UIEvent = null): void {
     state.push(current);
 
     clearTimeout(timeout);
-    timeout = setTimeout(process, config.lookahead, Event.Scroll);
+    timeout = setTimeout(process, Setting.LookAhead, Event.Scroll);
 }
 
 export function reset(): void {
@@ -68,10 +67,10 @@ function process(event: Event): void {
 function similar(last: ScrollState, current: ScrollState): boolean {
     let dx = last.data.x - current.data.x;
     let dy = last.data.y - current.data.y;
-    return (dx * dx + dy * dy < config.distance * config.distance) && (current.time - last.time < config.interval);
+    return (dx * dx + dy * dy < Setting.Distance * Setting.Distance) && (current.time - last.time < Setting.Interval);
 }
 
-export function end(): void {
+export function stop(): void {
     clearTimeout(timeout);
     state = [];
 }

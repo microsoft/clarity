@@ -10,7 +10,7 @@ export function start(): void {
     count(Metric.InvokeCount);
 }
 
-export function end(): void {
+export function stop(): void {
     data = {};
     updates = {};
 }

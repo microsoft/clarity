@@ -19,15 +19,16 @@ let selectorMap: number[] = [];
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
 let regionMap: WeakMap<Node, string> = null; // Maps region nodes => region name
 let iframeMap: WeakMap<Document, HTMLIFrameElement> = null; // Maps iframe's contentDocument => parent iframe element
+let maskedMap: WeakMap<Node, boolean> = null; // Maps node => boolean
 
 let urlMap: { [url: string]: number } = {};
 
 export function start(): void {
     reset();
-    extractRegions(document);
+    parse(document);
 }
 
-export function end(): void {
+export function stop(): void {
     reset();
 }
 
@@ -42,17 +43,36 @@ function reset(): void {
     idMap = new WeakMap();
     regionMap = new WeakMap();
     iframeMap = new WeakMap();
-    if (Constant.DEVTOOLS_HOOK in window) { window[Constant.DEVTOOLS_HOOK] = { get, getNode, history }; }
+    maskedMap = new WeakMap();
+    if (Constant.DevHook in window) { window[Constant.DevHook] = { get, getNode, history }; }
 }
 
-export function extractRegions(root: ParentNode): void {
-    for (let key in config.regions) {
-        // We check for regions in the beginning (document) and later whenever there are new additions or modifications to DOM (mutations)
-        // Since mutations may happen on leaf nodes too, e.g. textnodes, which may not support all selector APIs.
-        // We ensure that the root note supports querySelector API before executing the code below to identify new regions.
-        if (config.regions[key] && "querySelector" in root) {
+// We parse new root nodes for any regions or masked nodes in the beginning (document) and 
+// later whenever there are new additions or modifications to DOM (mutations)
+export function parse(root: ParentNode): void {
+    // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
+    // We ensure that the root note supports querySelector API before executing the code below to identify new regions.
+    if ("querySelector" in root) {
+        // Extract regions
+        for (const key of Object.keys(config.regions)) {
             let element = root.querySelector(config.regions[key]);
             if (element) { regionMap.set(element, key); }
+        }
+
+        // Extract nodes with explicit masked configuration
+        for (const entry of config.mask) {
+            let elements = root.querySelectorAll(entry);
+            for (let i = 0; i < elements.length; i++) {
+                maskedMap.set(elements[i], true);
+            }
+        }
+
+        // Extract nodes with explicit unmasked configuration
+        for (const entry of config.unmask) {
+            let elements = root.querySelectorAll(entry);
+            for (let i = 0; i < elements.length; i++) {
+                maskedMap.set(elements[i], false);
+            }
         }
     }
 }
@@ -72,7 +92,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let id = getId(node, true);
     let parentId = parent ? getId(parent) : null;
     let previousId = getPreviousId(node);
-    let masked = true;
+    let masked = !config.content;
     let parentValue = null;
     let regionId = regionMap.has(node) ? getId(node) : null;
 
@@ -84,12 +104,10 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     }
 
     // Check to see if this particular node should be masked or not
-    masked = mask(data, masked);
+    masked = mask(node, data, masked);
 
-    // If there's an explicit CLARITY_REGION_ATTRIBUTE set on the element, use it to mark a region on the page
-    if (data.attributes && Constant.CLARITY_REGION_ATTRIBUTE in data.attributes) {
-        regionMap.set(node, data.attributes[Constant.CLARITY_REGION_ATTRIBUTE]);
-    }
+    // If there's an explicit region attribute set on the element, use it to mark a region on the page
+    if (data.attributes && Constant.RegionData in data.attributes) { regionMap.set(node, data.attributes[Constant.RegionData]); }
 
     nodes[id] = node;
     values[id] = {
@@ -99,10 +117,11 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         children: [],
         position: null,
         data,
-        selector: Constant.EMPTY_STRING,
+        selector: Constant.Empty,
         region: regionId,
         metadata: { active: true, region: false, masked }
     };
+
     updateSelector(values[id]);
     metadata(data.tag, id, parentId);
     track(id, source);
@@ -166,7 +185,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
 
 export function sameorigin(node: Node): boolean {
     let output = false;
-    if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === Constant.IFRAME_TAG) {
+    if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === Constant.IFrameTag) {
         let frame = node as HTMLIFrameElement;
         // To determine if the iframe is same-origin or not, we try accessing it's contentDocument.
         // If the browser throws an exception, we assume it's cross-origin and move on.
@@ -187,16 +206,19 @@ export function iframe(node: Node): HTMLIFrameElement {
     return doc && iframeMap.has(doc) ? iframeMap.get(doc) : null;
 }
 
-function mask(data: NodeInfo, masked: boolean): boolean {
+function mask(node: Node, data: NodeInfo, masked: boolean): boolean {
     let attributes = data.attributes;
     let tag = data.tag.toUpperCase();
+
+    // If this node was explicitly configured to contain sensitive content, use that information and return the value
+    if (maskedMap.has(node)) { return maskedMap.get(node); }
 
     // Do not proceed if attributes are missing for the node
     if (attributes === null || attributes === undefined) { return masked; }
 
     // Check for blacklist fields (e.g. address, phone, etc.) only if the input node is not already masked
-    if (masked === false && tag === Constant.INPUT_TAG) {
-        let field: string = Constant.EMPTY_STRING;
+    if (masked === false && tag === Constant.InputTag) {
+        let field: string = Constant.Empty;
         // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
         for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
         for (let name of DISALLOWED_NAMES) {
@@ -208,11 +230,11 @@ function mask(data: NodeInfo, masked: boolean): boolean {
     }
 
     // Check for blacklist types (e.g. password, email, etc.) and set the masked property appropriately
-    if (Constant.TYPE_ATTRIBUTE in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.TYPE_ATTRIBUTE]) >= 0) { masked = true; }
+    if (Constant.Type in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.Type]) >= 0) { masked = true; }
 
     // Following two conditions supersede any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
-    if (Constant.MASK_ATTRIBUTE in attributes) { masked = true; }
-    if (Constant.UNMASK_ATTRIBUTE in attributes) { masked = false; }
+    if (Constant.MaskData in attributes) { masked = true; }
+    if (Constant.UnmaskData in attributes) { masked = false; }
 
     return masked;
 }
@@ -228,7 +250,7 @@ function diff(a: NodeInfo, b: NodeInfo, field: string): boolean {
 
 function position(parent: NodeValue, child: NodeValue): number {
     let tag = child.data.tag;
-    let hasClassName = child.data.attributes && !(Constant.CLASS_ATTRIBUTE in child.data.attributes);
+    let hasClassName = child.data.attributes && !(Constant.Class in child.data.attributes);
     // Find relative position of the element to generate :nth-of-type selector
     // We restrict relative positioning to two cases:
     //   a) For specific whitelist of tags
@@ -284,7 +306,7 @@ export function has(node: Node): boolean {
     return getId(node) in nodes;
 }
 
-export function region(regionId: number): string {
+export function getRegion(regionId: number): string {
     let node = getNode(regionId);
     return node && regionMap.has(node) ? regionMap.get(node) : null;
 }
@@ -305,7 +327,7 @@ export function updates(): NodeValue[] {
         if (id in values) {
             let v = values[id];
             let p = v.parent;
-            let hasId = "attributes" in v.data && Constant.ID_ATTRIBUTE in v.data.attributes;
+            let hasId = "attributes" in v.data && Constant.Id in v.data.attributes;
             v.data.path = p === null || p in updateMap || hasId || v.selector.length === 0 ? null : values[p].selector;
             output.push(values[id]);
         }
@@ -332,16 +354,16 @@ function metadata(tag: string, id: number, parentId: number): void {
             case "AUDIO":
             case "LINK":
                 // Track mapping between URL and corresponding nodes
-                if (Constant.HREF_ATTRIBUTE in attributes && attributes[Constant.HREF_ATTRIBUTE].length > 0) {
-                    urlMap[getFullUrl(attributes[Constant.HREF_ATTRIBUTE])] = id;
+                if (Constant.Href in attributes && attributes[Constant.Href].length > 0) {
+                    urlMap[getFullUrl(attributes[Constant.Href])] = id;
                 }
-                if (Constant.SRC_ATTRIBUTE in attributes && attributes[Constant.SRC_ATTRIBUTE].length > 0) {
-                    if (attributes[Constant.SRC_ATTRIBUTE].indexOf(Constant.DATA_PREFIX) !== 0) {
-                        urlMap[getFullUrl(attributes[Constant.SRC_ATTRIBUTE])] = id;
+                if (Constant.Src in attributes && attributes[Constant.Src].length > 0) {
+                    if (attributes[Constant.Src].indexOf(Constant.DataPrefix) !== 0) {
+                        urlMap[getFullUrl(attributes[Constant.Src])] = id;
                     }
                 }
-                if (Constant.SRCSET_ATTRIBUTE in attributes && attributes[Constant.SRCSET_ATTRIBUTE].length > 0) {
-                    let srcset = attributes[Constant.SRCSET_ATTRIBUTE];
+                if (Constant.Srcset in attributes && attributes[Constant.Srcset].length > 0) {
+                    let srcset = attributes[Constant.Srcset];
                     let urls = srcset.split(",");
                     for (let u of urls) {
                         let parts = u.trim().split(" ");
@@ -393,7 +415,7 @@ function track(id: number, source: Source, changed: boolean = true): void {
         updateMap.push(id);
     } else if (uIndex === -1 && changed) { updateMap.push(id); }
 
-    if (Constant.DEVTOOLS_HOOK in window) {
+    if (Constant.DevHook in window) {
         let value = copy([values[id]])[0];
         let change = { time: time(), source, value };
         if (!(id in changes)) { changes[id] = []; }

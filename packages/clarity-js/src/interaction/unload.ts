@@ -15,13 +15,13 @@ export function start(): void {
 function recompute(evt: UIEvent): void {
     data = { name: evt.type };
     encode(Event.Unload);
-    clarity.end();
+    clarity.stop();
 }
 
 export function reset(): void {
     data = null;
 }
 
-export function end(): void {
+export function stop(): void {
     reset();
 }

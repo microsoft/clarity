@@ -8,7 +8,7 @@ export function start(): void {
     log.reset();
 }
 
-export function end(): void {
-    image.end();
+export function stop(): void {
+    image.stop();
     log.reset();
 }

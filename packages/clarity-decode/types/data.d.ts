@@ -23,6 +23,8 @@ export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
 export interface CustomEvent extends PartialEvent { data: Data.CustomData; }
 export interface VariableEvent extends PartialEvent { data: Data.VariableData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
+export interface LimitEvent extends PartialEvent { data: Data.LimitData; }
+export interface SummaryEvent extends PartialEvent { data: Data.SummaryData; }
 export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
 export interface DataEvent extends PartialEvent {
@@ -32,6 +34,8 @@ export interface DataEvent extends PartialEvent {
     Data.CustomData |
     Data.VariableData |
     Data.PingData |
+    Data.LimitData |
+    Data.SummaryData |
     Data.UpgradeData |
     Data.UploadData;
 }
@@ -44,6 +48,7 @@ export interface DecodedPayload {
     metric?: MetricEvent[];
     dimension?: DimensionEvent[];
     ping?: PingEvent[];
+    limit?: LimitEvent[];
     image?: ImageErrorEvent[];
     script?: ScriptErrorEvent[];
     input?: InputEvent[];
@@ -52,6 +57,7 @@ export interface DecodedPayload {
     resize?: ResizeEvent[];
     scroll?: ScrollEvent[];
     selection?: SelectionEvent[];
+    summary?: SummaryEvent[];
     timeline?: TimelineEvent[];
     unload?: UnloadEvent[];
     upgrade?: UpgradeEvent[];

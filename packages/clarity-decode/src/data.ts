@@ -8,6 +8,9 @@ export function decode(tokens: Data.Token[]): DataEvent {
         case Data.Event.Ping:
             let ping: Data.PingData = { gap: tokens[2] as number };
             return { time, event, data: ping };
+        case Data.Event.Limit:
+            let limit: Data.LimitData = { check: tokens[2] as number };
+            return { time, event, data: limit };
         case Data.Event.Custom:
             let custom: Data.CustomData = { key: tokens[2] as string, value: tokens[3] as string };
             return { time, event, data: custom };
@@ -31,6 +34,18 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 dimensions[tokens[d++] as number] = tokens[d++] as string[];
             }
             return { time, event, data: dimensions };
+        case Data.Event.Summary:
+            let s = 2; // Start from 3rd index since first two are used for time & event
+            let summary: Data.SummaryData = {};
+            while (s < tokens.length) {
+                let key = tokens[s++] as number;
+                let values = tokens[s++] as number[];
+                summary[key] = [];
+                for (let i = 0; i < values.length - 1; i += 2) {
+                    summary[key].push([values[i], values[i+1]]);
+                }
+            }
+            return { time, event, data: summary };
         case Data.Event.Baseline:
             let baselineData: Data.BaselineData = {
                 visible: tokens[2] as number,

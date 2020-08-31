@@ -1,4 +1,5 @@
-import { Constant, Dimension, Metadata, Metric, BooleanFlag } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, Metric, Setting } from "@clarity-types/data";
+import * as core from "@src/core";
 import config from "@src/core/config";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
@@ -9,8 +10,8 @@ export let data: Metadata = null;
 
 export function start(): void {
   const ts = Math.round(Date.now()); // ensuring that the output of Date.now() is an integer
-  const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.EMPTY_STRING;
-  const title = document && document.title ? document.title : Constant.EMPTY_STRING;
+  const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
+  const title = document && document.title ? document.title : Constant.Empty;
 
   // Populate ids for this page
   let s = session(ts);
@@ -22,7 +23,7 @@ export function start(): void {
   }
 
   // Check if the session should start off in full mode based on the signal from session storage
-  config.lean = config.track && sessionStorage && sessionStorage.getItem(Constant.UPGRADE_KEY) ? false : config.lean;
+  config.lean = config.track && sessionStorage && sessionStorage.getItem(Constant.UpgradeKey) ? false : config.lean;
 
   // Log dimensions
   dimension.log(Dimension.UserAgent, ua);
@@ -44,12 +45,14 @@ export function start(): void {
   track();
 }
 
-export function end(): void {
+export function stop(): void {
   /* Intentionally Blank */
 }
 
-export function metadata(): Metadata {
-  return data;
+export function metadata(callback: MetadataCallback): void {
+  if (core.active()) {
+    callback(data, !config.lean);
+  }
 }
 
 export function consent(): void {
@@ -60,10 +63,10 @@ export function consent(): void {
 function track(): void {
   if (config.track) {
     let expiry = new Date();
-    expiry.setDate(expiry.getDate() + config.expire);
-    let expires = expiry ? Constant.EXPIRES + expiry.toUTCString() : Constant.EMPTY_STRING;
-    let value = `${data.userId}${Constant.SEMICOLON}${expires}${Constant.PATH}`;
-    document.cookie = Constant.CLARITY_COOKIE + Constant.EQUALS + value;
+    expiry.setDate(expiry.getDate() + Setting.Expire);
+    let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
+    let value = `${data.userId}${Constant.Semicolon}${expires}${Constant.Path}`;
+    document.cookie = Constant.CookieKey + Constant.Equals + value;
   }
 }
 
@@ -79,15 +82,15 @@ function session(ts: number): number[] {
   let id = shortid();
   let count = 1;
   if (config.track && sessionStorage) {
-    let value = sessionStorage.getItem(Constant.STORAGE_KEY);
-    if (value && value.indexOf(Constant.STORAGE_SEPARATOR) >= 0) {
-      let parts = value.split(Constant.STORAGE_SEPARATOR);
-      if (parts.length === 3 && ts - num(parts[1]) < config.session) {
+    let value = sessionStorage.getItem(Constant.StorageKey);
+    if (value && value.indexOf(Constant.Separator) >= 0) {
+      let parts = value.split(Constant.Separator);
+      if (parts.length === 3 && ts - num(parts[1]) < Setting.SessionTimeout) {
         id = num(parts[0]);
         count = num(parts[2]) + 1;
       }
     }
-    sessionStorage.setItem(Constant.STORAGE_KEY, `${id}${Constant.STORAGE_SEPARATOR}${ts}${Constant.STORAGE_SEPARATOR}${count}`);
+    sessionStorage.setItem(Constant.StorageKey, `${id}${Constant.Separator}${ts}${Constant.Separator}${count}`);
   }
   return [id, count];
 }
@@ -97,15 +100,15 @@ function num(string: string, base: number = 10): number {
 }
 
 function user(): number {
-  let id = cookie(Constant.CLARITY_COOKIE);
+  let id = cookie(Constant.CookieKey);
   return id && id.length > 0 ? num(id) : shortid();
 }
 
 function cookie(key: string): string {
-  let cookies: string[] = document.cookie.split(Constant.SEMICOLON);
+  let cookies: string[] = document.cookie.split(Constant.Semicolon);
   if (cookies) {
     for (let i = 0; i < cookies.length; i++) {
-      let pair: string[] = cookies[i].split(Constant.EQUALS);
+      let pair: string[] = cookies[i].split(Constant.Equals);
       if (pair.length > 1 && pair[0] && pair[0].trim() === key) {
         return pair[1];
       }

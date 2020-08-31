@@ -16,17 +16,25 @@ export const enum Time {
     Hour = 60 * 60 * 1000
 }
 
+export const enum Setting {
+    LongTask = 30, // 30ms
+}
+
 /* Helper Interfaces */
 
-export interface TaskTracker {
+export interface Module {
+    start: () => void;
+    stop: () => void;
+}
+
+export interface Tasks {
     [key: number]: TaskInfo;
 }
 
-export interface RegionTracker {
+export interface Regions {
     /* In the following key-value pair, key is the given name and value is CSS selector */
     [key: string]: string;
 }
-
 export interface TaskInfo {
     start: number;
     calls: number;
@@ -61,22 +69,14 @@ export interface BrowserEvent {
 
 export interface Config {
     projectId?: number;
-    longtask?: number;
-    lookahead?: number;
-    distance?: number;
-    interval?: number;
     delay?: number;
-    expire?: number;
-    ping?: number;
-    timeout?: number;
-    timeline?: number;
-    session?: number;
-    shutdown?: number;
-    failsafe?: number;
     cssRules?: boolean;
     lean?: boolean;
     track?: boolean;
-    regions?: RegionTracker;
+    content?: boolean;
+    mask?: string[];
+    unmask?: string[];
+    regions?: Regions;
     cookies?: string[];
     url?: string;
     upload?: (data: string) => void;

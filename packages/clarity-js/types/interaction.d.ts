@@ -1,4 +1,14 @@
+import { Time } from "./core";
 import { BooleanFlag, Event, Target } from "./data";
+
+/* Enum */
+
+export const enum Setting {
+    LookAhead = 500, // 500ms
+    Distance = 20, // 20 pixels
+    Interval = 25, // 25 milliseconds
+    TimelineSpan = 2 * Time.Second, // 2 seconds
+}
 
 /* Helper Interfaces */
 export interface PointerState {

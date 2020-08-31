@@ -19,7 +19,7 @@ chrome.devtools.panels.elements.createSidebarPane("Clarity", function(sidebar: a
 });
 
 function inspect(): any {
-    let DEVTOOLS_HOOK: string = Layout.Constant.DEVTOOLS_HOOK;
+    const DEVTOOLS_HOOK: string = Layout.Constant.DevHook;
     let hookEnabled = DEVTOOLS_HOOK in window && "history" in window[DEVTOOLS_HOOK];
     let tag = $0 ? $0.tagName : "*NA*";
     let value = hookEnabled && $0 ? window[DEVTOOLS_HOOK].get($0) : null;

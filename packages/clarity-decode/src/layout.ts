@@ -85,7 +85,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
     let hasAttribute = false;
     let attributes: Layout.Attributes = {};
     let value = null;
-    let prefix = output.parent in hashes ? `${hashes[output.parent]}>` : (output.parent ? Layout.Constant.EMPTY_STRING : null);
+    let prefix = output.parent in hashes ? `${hashes[output.parent]}>` : (output.parent ? Layout.Constant.Empty : null);
 
     for (let i = tagIndex + 1; i < node.length; i++) {
         let token = node[i] as string;
@@ -95,7 +95,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
             value = token;
         } else if (lastChar === ">" && keyIndex === -1) {
             prefix = token;
-        } else if (output.tag !== Layout.Constant.TEXT_TAG && keyIndex > 0) {
+        } else if (output.tag !== Layout.Constant.TextTag && keyIndex > 0) {
             hasAttribute = true;
             let k = token.substr(0, keyIndex);
             let v = token.substr(keyIndex + 1);
@@ -107,7 +107,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
                     break;
             }
             attributes[k] = v;
-        } else if (output.tag === Layout.Constant.TEXT_TAG) {
+        } else if (output.tag === Layout.Constant.TextTag) {
             value = token;
         }
     }

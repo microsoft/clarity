@@ -5,6 +5,7 @@ import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
+import * as summary from "@src/data/summary";
 import * as log from "@src/diagnostic/log";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
@@ -30,13 +31,13 @@ export function start(): void {
     // need to override the insertRule API and listen for changes manually.
     CSSStyleSheet.prototype.insertRule = function(rule: string, index?: number): number {
       let value = insertRule.call(this, rule, index);
-      generate(this.ownerNode, Constant.CHARACTER_DATA);
+      generate(this.ownerNode, Constant.CharacterData);
       return value;
     };
 
     CSSStyleSheet.prototype.deleteRule = function(index?: number): void {
       deleteRule.call(this, index);
-      generate(this.ownerNode, Constant.CHARACTER_DATA);
+      generate(this.ownerNode, Constant.CharacterData);
     };
 }
 
@@ -57,11 +58,11 @@ export function monitor(frame: HTMLIFrameElement): void {
   // This includes cases where iframe location is updated without explicitly updating src attribute
   // E.g. iframe.contentWindow.location.href = "new-location";
   if (dom.has(frame) === false) {
-    bind(frame, Constant.LOAD_EVENT, generate.bind(this, frame, Constant.CHILD_LIST), true);
+    bind(frame, Constant.LoadEvent, generate.bind(this, frame, Constant.ChildList), true);
   }
 }
 
-export function end(): void {
+export function stop(): void {
   for (let observer of observers) { if (observer) { observer.disconnect(); } }
   observers = [];
 
@@ -82,7 +83,9 @@ export function end(): void {
 
 function handle(m: MutationRecord[]): void {
   // Queue up mutation records for asynchronous processing
-  mutations.push({ time: time(), mutations: m});
+  let now = time();
+  summary.track(Event.Mutation, now);
+  mutations.push({ time: now, mutations: m});
   task.schedule(process, Priority.High).then((): void => {
       measure(doc.compute)();
       measure(region.compute)();
@@ -97,22 +100,22 @@ async function process(): Promise<void> {
       for (let mutation of record.mutations) {
         let target = mutation.target;
         switch (mutation.type) {
-          case Constant.ATTRIBUTES:
+          case Constant.Attributes:
               if (task.shouldYield(timer)) { await task.suspend(timer); }
-              dom.extractRegions(target as HTMLElement);
+              dom.parse(target as HTMLElement);
               processNode(target, Source.Attributes);
               break;
-          case Constant.CHARACTER_DATA:
+          case Constant.CharacterData:
               if (task.shouldYield(timer)) { await task.suspend(timer); }
-              dom.extractRegions(target as HTMLElement);
+              dom.parse(target as HTMLElement);
               processNode(target, Source.CharacterData);
               break;
-          case Constant.CHILD_LIST:
+          case Constant.ChildList:
             // Process additions
             let addedLength = mutation.addedNodes ? mutation.addedNodes.length : 0;
             for (let j = 0; j < addedLength; j++) {
               let addedNode = mutation.addedNodes[j];
-              dom.extractRegions(addedNode as HTMLElement);
+              dom.parse(addedNode as HTMLElement);
               traverse(addedNode, timer, Source.ChildListAdd);
             }
             // Process removes

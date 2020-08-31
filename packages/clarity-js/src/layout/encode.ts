@@ -83,7 +83,7 @@ function attribute(masked: boolean, key: string, value: string): string {
         case "srcset":
         case "title":
         case "alt":
-            return `${key}=${masked ? Constant.EMPTY_STRING : value}`;
+            return `${key}=${masked ? Constant.Empty : value}`;
         case "value":
         case "placeholder":
             return `${key}=${masked ? mask(value) : value}`;

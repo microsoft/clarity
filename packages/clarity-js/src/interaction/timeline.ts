@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { TimelineState } from "@clarity-types/interaction";
-import config from "@src/core/config";
+import { Setting, TimelineState } from "@clarity-types/interaction";
 import * as baseline from "@src/data/baseline";
 import * as envelope from "@src/data/envelope";
 import encode from "@src/interaction/encode";
@@ -39,7 +38,7 @@ export function compute(): void {
     const temp = [];
     updates = [];
     let max = envelope.data.start + envelope.data.duration;
-    let min = Math.max(max - config.timeline, 0);
+    let min = Math.max(max - Setting.TimelineSpan, 0);
 
     for (let s of state) {
         if (s.time >= min) {
@@ -52,7 +51,7 @@ export function compute(): void {
     encode(Event.Timeline);
 }
 
-export function end(): void {
+export function stop(): void {
     state = [];
     reset();
 }

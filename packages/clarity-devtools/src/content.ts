@@ -16,21 +16,20 @@ chrome.runtime.sendMessage({ action: "activate" }, function(response: any): void
 });
 
 function activate(): void {
-  if (clarity && clarity.active === false) {
-    window[Layout.Constant.DEVTOOLS_HOOK] = {};
+  if (clarity) {
+    window[Layout.Constant.DevHook] = {};
     chrome.storage.sync.get({
       clarity: { showText: true, leanMode: false }
     }, (items: any) => {
-      if (items.clarity.showText) { document.body.setAttribute(Layout.Constant.UNMASK_ATTRIBUTE, "true"); }
-      clarity.start({
-        lookahead: 10,
-        delay: 50,
-        failsafe: 0,
+      clarity.config({
+        delay: 500,
         lean: items.clarity.leanMode,
         regions,
+        content: items.clarity.showText,
         upload,
         projectId: 1051133397904 // parseInt("devtools", 36);
       });
+      clarity.start();
       // Send a custom event
       clarity.event("Developer Tools", "start");
       // Set a sample variable

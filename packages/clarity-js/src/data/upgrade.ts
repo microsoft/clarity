@@ -4,7 +4,7 @@ import encode from "@src/data/encode";
 
 export let data: UpgradeData = null;
 
-export function reset(): void {
+export function start(): void {
     data = null;
 }
 
@@ -19,9 +19,13 @@ export function upgrade(key: string): void {
 
         // If tracking is enabled, persist the setting in session storage
         if (config.track && sessionStorage) {
-            sessionStorage.setItem(Constant.UPGRADE_KEY, `1`);
+            sessionStorage.setItem(Constant.UpgradeKey, `1`);
         }
 
         encode(Event.Upgrade);
     }
+}
+
+export function stop(): void {
+    data = null;
 }

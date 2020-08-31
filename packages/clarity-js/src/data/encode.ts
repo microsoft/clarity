@@ -3,8 +3,10 @@ import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
 import * as custom from "@src/data/custom";
 import * as dimension from "@src/data/dimension";
+import * as limit from "@src/data/limit";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
+import * as summary from "@src/data/summary";
 import * as upgrade from "@src/data/upgrade";
 import * as variable from "@src/data/variable";
 import { queue, track } from "./upload";
@@ -34,6 +36,10 @@ export default function(event: Event): void {
         case Event.Ping:
             tokens.push(ping.data.gap);
             queue(tokens);
+            break;
+        case Event.Limit:
+            tokens.push(limit.data.check);
+            queue(tokens, false);
             break;
         case Event.Upgrade:
             metric.max(Metric.Playback, BooleanFlag.True);
@@ -85,6 +91,18 @@ export default function(event: Event): void {
                     tokens.push(dimension.updates[d]);
                 }
                 dimension.reset();
+                queue(tokens, false);
+            }
+            break;
+        case Event.Summary:
+            let eventKeys = Object.keys(summary.data);
+            if (eventKeys.length > 0) {
+                for (let e of eventKeys) {
+                    let key = parseInt(e, 10);
+                    tokens.push(key);
+                    tokens.push([].concat(...summary.data[e]));
+                }
+                summary.reset();
                 queue(tokens, false);
             }
             break;
