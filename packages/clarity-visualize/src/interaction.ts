@@ -188,7 +188,7 @@ function hover(): void {
         depth = 0;
         let targetNode = targetId ? element(targetId) as HTMLElement : null;
         while (targetNode && depth < config.hoverDepth) {
-            if ("setAttribute" in targetNode) { targetNode.setAttribute(CLARITY_HOVER, Layout.Constant.EMPTY_STRING); }
+            if ("setAttribute" in targetNode) { targetNode.setAttribute(CLARITY_HOVER, Layout.Constant.Empty); }
             targetNode = targetNode.parentElement;
             depth++;
         }
