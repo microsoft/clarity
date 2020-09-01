@@ -43,7 +43,7 @@ export function check(): boolean {
 
 export function config(override: Config): boolean {
     // Process custom configuration overrides, if available
-    if (status) { return false; }
+    if (override === null || status) { return false; }
     for (let key in override) {
         if (key in configuration) { configuration[key] = override[key]; }
     }

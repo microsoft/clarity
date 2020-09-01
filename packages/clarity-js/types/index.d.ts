@@ -6,8 +6,7 @@ import * as Interaction from "./interaction";
 import * as Performance from "./performance";
 
 interface Clarity {
-  config: (config: Core.Config) => void;
-  start: () => void;
+  start: (config?: Core.Config) => void;
   end: () => void;
   pause: () => void;
   resume: () => void;

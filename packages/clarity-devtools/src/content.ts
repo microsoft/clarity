@@ -21,7 +21,7 @@ function activate(): void {
     chrome.storage.sync.get({
       clarity: { showText: true, leanMode: false }
     }, (items: any) => {
-      clarity.config({
+      clarity.start({
         delay: 500,
         lean: items.clarity.leanMode,
         regions,
@@ -29,7 +29,6 @@ function activate(): void {
         upload,
         projectId: 1051133397904 // parseInt("devtools", 36);
       });
-      clarity.start();
       // Send a custom event
       clarity.event("Developer Tools", "start");
       // Set a sample variable

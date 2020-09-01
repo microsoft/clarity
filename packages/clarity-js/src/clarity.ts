@@ -1,5 +1,4 @@
-
-import { Module } from "@clarity-types/core";
+import { Config, Module } from "@clarity-types/core";
 import { Constant } from "@clarity-types/data";
 import * as core from "@src/core";
 import measure from "@src/core/measure";
@@ -11,14 +10,14 @@ import * as interaction from "@src/interaction";
 import * as layout from "@src/layout";
 import * as performance from "@src/performance";
 export { version };
-export { config } from "@src/core";
 export { consent, event, identify, set, upgrade, metadata } from "@src/data";
 
 const modules: Module[] = [diagnostic, layout, interaction, performance];
 
-export function start(): void {
+export function start(config: Config = null): void {
   // Check that browser supports required APIs and we do not attempt to start Clarity multiple times
   if (core.check()) {
+    core.config(config);
     core.start();
     data.start();
     modules.forEach(x => measure(x.start)());
