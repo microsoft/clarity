@@ -7,7 +7,7 @@ import * as clarity from "@src/clarity";
     if (typeof window !== "undefined") {
         const w = window as any;
         const queue = w.clarity ? (w.clarity.q || []) : [];
-        w.clarity = function(method: string, ...args: any[]): void { return clarity[method](args); }
-        while (queue.length > 0) { w.clarity(queue.pop()); }
+        w.clarity = function(method: string, ...args: any[]): void { return clarity[method](...args); }
+        while (queue.length > 0) { w.clarity(...queue.shift()); }
     }
 })();
