@@ -1,4 +1,5 @@
 import { Constant, Event, VariableData } from "@clarity-types/data";
+import * as core from "@src/core";
 import encode from "./encode";
 
 export let data: VariableData = null;
@@ -18,7 +19,8 @@ export function identify(userId: string, sessionId: string = null, pageId: strin
 }
 
 function log(variable: string, value: string): void {
-    if (variable &&
+    if (core.active() &&
+        variable &&
         value &&
         typeof variable === Constant.String &&
         typeof value === Constant.String &&

@@ -1,10 +1,12 @@
 import { Constant, CustomData, Event } from "@clarity-types/data";
+import * as core from "@src/core";
 import encode from "./encode";
 
 export let data: CustomData = null;
 
 export function event(key: string, value: string): void {
-    if (key &&
+    if (core.active() &&
+        key &&
         value &&
         typeof key === Constant.String &&
         typeof value === Constant.String &&
