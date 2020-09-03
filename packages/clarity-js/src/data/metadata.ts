@@ -56,8 +56,10 @@ export function metadata(callback: MetadataCallback): void {
 }
 
 export function consent(): void {
-  config.track = true;
-  track();
+  if (core.active()) {
+    config.track = true;
+    track();
+  }
 }
 
 function track(): void {

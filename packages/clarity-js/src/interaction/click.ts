@@ -39,8 +39,17 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
 
     // Get layout rectangle for the target element
     let l = layout(t as Element);
-    let eX = l ? Math.floor(((x - l.x) / l.w) * clickPrecision) : 0;
-    let eY = l ? Math.floor(((y - l.y) / l.h) * clickPrecision) : 0;
+
+    // Reference: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail
+    // This property helps differentiate between a keyboard navigation vs. pointer click
+    // In case of a keyboard navigation, we use center of target element as (x,y)
+    if (evt.detail === 0 && l) {
+        x = l.x + (l.w / 2);
+        y = l.y + (l.h / 2);
+    }
+
+    let eX = l ? Math.max(Math.floor(((x - l.x) / l.w) * clickPrecision), 0) : 0;
+    let eY = l ? Math.max(Math.floor(((y - l.y) / l.h) * clickPrecision), 0) : 0;
 
     // Check for null values before processing this event
     if (x !== null && y !== null) {
