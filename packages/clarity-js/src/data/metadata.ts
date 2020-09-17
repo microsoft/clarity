@@ -16,7 +16,7 @@ export function start(): void {
   // Populate ids for this page
   let s = session(ts);
   data = {
-    projectId: config.projectId || hash(location.host),
+    projectId: config.projectId || str(hash(location.host)),
     userId: user(),
     sessionId: s[0],
     pageNum: s[1]
@@ -62,6 +62,10 @@ export function consent(): void {
   }
 }
 
+function str(input: number): string {
+  return input.toString(36);
+}
+
 function track(): void {
   if (config.track) {
     let expiry = new Date();
@@ -72,15 +76,15 @@ function track(): void {
   }
 }
 
-function shortid(): number {
+function shortid(): string {
+  let id = Math.floor(Math.random() * Math.pow(2, 32));
   if (window && window.crypto && window.crypto.getRandomValues && Uint32Array) {
-    return window.crypto.getRandomValues(new Uint32Array(1))[0];
-  } else {
-    return Math.floor(Math.random() * Math.pow(2, 32));
+    id = window.crypto.getRandomValues(new Uint32Array(1))[0];
   }
+  return str(id);
 }
 
-function session(ts: number): number[] {
+function session(ts: number): [string, number] {
   let id = shortid();
   let count = 1;
   if (config.track && sessionStorage) {
@@ -88,7 +92,7 @@ function session(ts: number): number[] {
     if (value && value.indexOf(Constant.Separator) >= 0) {
       let parts = value.split(Constant.Separator);
       if (parts.length === 3 && ts - num(parts[1]) < Setting.SessionTimeout) {
-        id = num(parts[0]);
+        id = parts[0];
         count = num(parts[2]) + 1;
       }
     }
@@ -101,9 +105,9 @@ function num(string: string, base: number = 10): number {
   return parseInt(string, base);
 }
 
-function user(): number {
+function user(): string {
   let id = cookie(Constant.CookieKey);
-  return id && id.length > 0 ? num(id) : shortid();
+  return id && id.length > 0 ? id : shortid();
 }
 
 function cookie(key: string): string {

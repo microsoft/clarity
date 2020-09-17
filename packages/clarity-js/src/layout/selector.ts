@@ -16,9 +16,7 @@ export default function(tag: string, prefix: string, attributes: Attributes, pos
             if (prefix === null) { return Constant.Empty; }
             tag = tag.indexOf(Constant.SvgPrefix) === 0 ? tag.substr(Constant.SvgPrefix.length) : tag;
             let selector = `${prefix}${tag}${suffix}`;
-            if (Constant.Id in attributes && attributes[Constant.Id].length > 0) {
-                selector = `${tag}#${attributes.id}`;
-            } else if (Constant.Class in attributes && attributes[Constant.Class].length > 0) {
+            if (Constant.Class in attributes && attributes[Constant.Class].length > 0) {
                 selector = `${prefix}${tag}.${attributes.class.trim().split(/\s+/).join(".")}${suffix}`;
             }
             return selector;

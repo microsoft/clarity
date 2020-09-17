@@ -11,7 +11,7 @@ let config: Config = {
     unmask: [],
     regions: {},
     cookies: [],
-    url: "",
+    report: null,
     upload: null
 };
 

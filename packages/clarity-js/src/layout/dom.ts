@@ -260,8 +260,10 @@ function position(parent: NodeValue, child: NodeValue): number {
         let idx = parent ? parent.children.indexOf(child.id) : -1;
         while (idx-- > 0) {
             let sibling = values[parent.children[idx]];
-            if (child.data.tag === sibling.data.tag) { child.position = sibling.position + 1; }
-            break;
+            if (child.data.tag === sibling.data.tag) {
+                child.position = sibling.position + 1;
+                break;
+            }
         }
     }
     return child.position;
@@ -408,7 +410,7 @@ function copy(input: NodeValue[]): NodeValue[] {
 function track(id: number, source: Source, changed: boolean = true): void {
     // Keep track of the order in which mutations happened, they may not be sequential
     // Edge case: If an element is added later on, and pre-discovered element is moved as a child.
-    // In that case, we need to reorder the prediscovered element in the update list to keep visualization consistent.
+    // In that case, we need to reorder the pre-discovered element in the update list to keep visualization consistent.
     let uIndex = updateMap.indexOf(id);
     if (uIndex >= 0 && source === Source.ChildListAdd) {
         updateMap.splice(uIndex, 1);

@@ -2,6 +2,7 @@ import { Config } from "@clarity-types/core";
 import { Constant } from "@clarity-types/data";
 import configuration from "@src/core/config";
 import * as event from "@src/core/event";
+import * as report from "@src/core/report";
 import * as task from "@src/core/task";
 import * as time from "@src/core/time";
 import * as clarity from "@src/clarity";
@@ -14,9 +15,11 @@ export function start(): void {
     time.start();
     task.reset();
     event.reset();
+    report.reset();
 }
 
 export function stop(): void {
+    report.reset();
     event.reset();
     task.reset();
     time.stop();

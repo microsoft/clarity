@@ -27,7 +27,7 @@ function activate(): void {
         regions,
         content: items.clarity.showText,
         upload,
-        projectId: 1051133397904 // parseInt("devtools", 36);
+        projectId: "devtools"
       });
       // Send a custom event
       clarity.event("Developer Tools", "start");

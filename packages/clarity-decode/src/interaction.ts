@@ -31,7 +31,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 text: tokens[8] as string,
                 link: tokens[9] as string,
                 hash: tokens[10] as number,
-                region: tokens.length > 11 ? tokens[11] as number : null
+                selector: tokens[11] as string,
+                region: tokens.length > 12 ? tokens[12] as number : null
             };
             return { time, event, data: clickData };
             break;

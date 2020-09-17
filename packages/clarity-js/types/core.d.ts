@@ -2,6 +2,7 @@ import { Metadata, Payload, Token } from "./data";
 
 type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
+type UploadCallback = (data: string) => void;
 
 /* Enum */
 
@@ -67,8 +68,16 @@ export interface BrowserEvent {
     capture: boolean;
 }
 
+export interface Report {
+    m: string; // Message
+    p: string; // Project Id
+    u: string; // User Id
+    s: string; // Session Id
+    n: number; // Page Number
+}
+
 export interface Config {
-    projectId?: number;
+    projectId?: string;
     delay?: number;
     cssRules?: boolean;
     lean?: boolean;
@@ -78,6 +87,6 @@ export interface Config {
     unmask?: string[];
     regions?: Regions;
     cookies?: string[];
-    url?: string;
-    upload?: (data: string) => void;
+    report?: string;
+    upload?: string | UploadCallback;
 }
