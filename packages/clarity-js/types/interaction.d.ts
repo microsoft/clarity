@@ -71,7 +71,6 @@ export interface ClickData {
     text: string;
     link: string;
     hash: number;
-    selector: string;
     region?: number;
 }
 

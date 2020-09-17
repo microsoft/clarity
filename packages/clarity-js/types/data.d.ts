@@ -174,7 +174,6 @@ export interface TargetMetadata {
     id: number;
     region: number;
     hash: number;
-    selector: string;
     node: Node;
 }
 

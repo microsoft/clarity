@@ -63,8 +63,7 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 button: evt.button,
                 text: t ? text(t) : null,
                 link: a ? a.href : null,
-                hash: null,
-                selector: null,
+                hash: null
             }
         });
         schedule(encode.bind(this, event));
