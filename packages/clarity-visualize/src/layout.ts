@@ -85,23 +85,6 @@ export function markup(event: Layout.DomEvent): void {
         let pivot = element(node.previous);
         let insert = insertAfter;
 
-        // For backward compatibility. Until v0.4.4 we used the next element to determine right ordering within DOM
-        // Starting with v0.4.5, we moved away from the next element and instead starting sending previous element
-        // This change fixes several edge cases where positioning of DOM could get inconsistent.
-        // Example:
-        // -- Let's say there's a parent X with two children: A, C. Then, A is mutated and a child B is inserted before C: X -> (A, B, C)
-        // -- However, if we rely on pivot "next", then DOM will instead look incorrect like: X -> B, C, A. Because, payload will be:
-        // ---- A: (Parent: X, Next: null // because B is yet undiscovered) | B: (Parent: X, Next: C // because C is already discovered)
-        // ---- When we process A, since next is null, we will end up moving A as the last child (X -> C, A)
-        // ---- Then we get to B, since next is a valid node C, we will place it before C, making DOM look like: (X -> B, C, A)
-        // -- To avoid the above issue we rely on pivot "previous" node and that turns mutations from above example into:
-        // ---- A: (Parent X, Prev: null // it's the first child) | B: (Parent: X, Prev: A // because A is already known)
-        // ---- This leads us to desired DOM structure: X -> (A, B, C).
-        if ("next" in node) {
-            pivot = element(node.next);
-            insert = insertBefore;
-        }
-
         let tag = node.tag;
         if (tag && tag.indexOf(Layout.Constant.IFramePrefix) === 0) { tag = node.tag.substr(Layout.Constant.IFramePrefix.length); }
         switch (tag) {
@@ -130,16 +113,16 @@ export function markup(event: Layout.DomEvent): void {
                     let shadowRoot = element(node.id);
                     shadowRoot = shadowRoot ? shadowRoot : (parent as HTMLElement).attachShadow({ mode: "open" });
                     if ("style" in node.attributes) {
-                        let style = doc.createElement("style");
+                        let shadowStyle = doc.createElement("style");
                         // Support for adoptedStyleSheet is limited and not available in all browsers.
                         // To ensure that we can replay session in any browser, we turn adoptedStyleSheets from recording
                         // into classic style tags at the playback time.
                         if (shadowRoot.firstChild && (shadowRoot.firstChild as HTMLElement).id === ADOPTED_STYLE_SHEET) {
-                            style = shadowRoot.firstChild as HTMLStyleElement;
+                            shadowStyle = shadowRoot.firstChild as HTMLStyleElement;
                         }
-                        style.id = ADOPTED_STYLE_SHEET;
-                        style.textContent = node.attributes["style"];
-                        shadowRoot.appendChild(style);
+                        shadowStyle.id = ADOPTED_STYLE_SHEET;
+                        shadowStyle.textContent = node.attributes["style"];
+                        shadowRoot.appendChild(shadowStyle);
                     }
                     nodes[node.id] = shadowRoot;
                 }

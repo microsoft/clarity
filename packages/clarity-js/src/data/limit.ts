@@ -1,5 +1,6 @@
 import { Check, Event, LimitData, Setting } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
+import { report } from "@src/core/report";
 import { time } from "@src/core/time";
 import * as envelope from "@src/data/envelope";
 import encode from "./encode";
@@ -23,6 +24,7 @@ export function check(bytes: number): void {
 }
 
 export function trigger(reason: Check): void {
+    report(`Limit #${reason}`);
     data.check = reason;
     clarity.stop();
 }

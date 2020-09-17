@@ -29,7 +29,7 @@ background.onMessage.addListener(function(message: any): void {
         if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
         eJson.push(JSON.parse(message.payload));
         dJson.push(decoded);
-        id = `${envelope.sessionId.toString(36)}-${envelope.pageNum.toString(36)}`;
+        id = `${envelope.sessionId}-${envelope.pageNum.toString(36)}`;
         let merged = visualize.merge([decoded]);
         events = events.concat(merged.events).sort(sort);
         visualize.dom(merged.dom);

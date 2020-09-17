@@ -71,7 +71,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 }
                 tokens = tokenize(tokens, metadata);
             }
-            if (type == Event.Mutation) { baseline.activity(eventTime); }
+            if (type === Event.Mutation) { baseline.activity(eventTime); }
             queue(tokens, !config.lean);
             break;
     }

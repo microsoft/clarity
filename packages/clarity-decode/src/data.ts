@@ -77,9 +77,9 @@ export function envelope(tokens: Data.Token[]): Data.Envelope {
         sequence: tokens[1] as number,
         start: tokens[2] as number,
         duration: tokens[3] as number,
-        projectId: tokens[4] as number,
-        userId: tokens[5] as number,
-        sessionId: tokens[6] as number,
+        projectId: tokens[4] as string,
+        userId: tokens[5] as string,
+        sessionId: tokens[6] as string,
         pageNum: tokens[7] as number,
         upload: tokens[8] as Data.Upload,
         end: tokens[9] as Data.BooleanFlag

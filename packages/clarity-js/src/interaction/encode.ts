@@ -1,4 +1,5 @@
 import { Event, Token } from "@clarity-types/data";
+import mask from "@src/core/mask";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
@@ -50,7 +51,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.eX);
                 tokens.push(entry.data.eY);
                 tokens.push(entry.data.button);
-                tokens.push(entry.data.text);
+                tokens.push(cTarget.masked ? mask(entry.data.text) : entry.data.text);
                 tokens.push(entry.data.link);
                 tokens.push(cTarget.hash);
                 if (cTarget.region) { tokens.push(cTarget.region); }

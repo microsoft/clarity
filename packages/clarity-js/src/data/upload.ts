@@ -1,3 +1,4 @@
+import { UploadCallback } from "@clarity-types/core";
 import { Check, Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
@@ -105,9 +106,6 @@ function upload(final: boolean = false): void {
     metric.sum(Metric.TotalBytes, payload.length);
     send(payload, sequence, last);
 
-    // Send data to upload hook, if defined in the config
-    if (config.upload) { config.upload(payload); }
-
     // Clear out events now that payload has been dispatched
     analysis = [];
     if (!config.lean) {
@@ -122,14 +120,15 @@ function stringify(encoded: EncodedPayload): string {
 
 function send(payload: string, sequence: number, last: boolean): void {
     // Upload data if a valid URL is defined in the config
-    if (config.url.length > 0) {
+    if (typeof config.upload === Constant.String) {
+        const url = config.upload as string;
         let dispatched = false;
 
         // If it's the last payload, attempt to upload using sendBeacon first.
         // The advantage to using sendBeacon is that browser can decide to upload asynchronously, improving chances of success
         // However, we don't want to rely on it for every payload, since we have no ability to retry if the upload failed.
         if (last && "sendBeacon" in navigator) {
-            dispatched = navigator.sendBeacon(config.url, payload);
+            dispatched = navigator.sendBeacon(url, payload);
         }
 
         // Before initiating XHR upload, we check if the data has already been uploaded using sendBeacon
@@ -140,10 +139,13 @@ function send(payload: string, sequence: number, last: boolean): void {
         if (dispatched === false) {
             if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
             let xhr = new XMLHttpRequest();
-            xhr.open("POST", config.url);
+            xhr.open("POST", url);
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence, last); }; }
             xhr.send(payload);
         }
+    } else if (config.upload) {
+        const callback = config.upload as UploadCallback;
+        callback(payload);
     }
 }
 

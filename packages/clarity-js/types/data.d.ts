@@ -116,6 +116,7 @@ export const enum Setting {
     PingInterval = 1 * Time.Minute, // 1 Minute
     PingTimeout = 5 * Time.Minute, // 5 Minutes
     SummaryInterval = 100, // Same events within 100ms will be collapsed into single summary
+    ClickText = 25, // Maximum number of characters to send as part of Click event's text field
     PayloadLimit = 128, // Do not allow more than specified payloads per page
     ShutdownLimit = 2 * Time.Hour, // Shutdown instrumentation after specified time
     RetryLimit = 2, // Maximum number of attempts to upload a payload before giving up
@@ -137,9 +138,9 @@ export const enum Constant {
     Equals = "=",
     Path = ";path=/",
     String = "string",
-    UpgradeKey = "_club", // Clarity Upgrade Beta
-    CookieKey = "_clcb", // Clarity Cookie Beta
-    StorageKey = "_clsb", // Clarity Storage Beta
+    UpgradeKey = "_cluc", // Clarity Upgrade Beta
+    CookieKey = "_clcc", // Clarity Cookie Beta
+    StorageKey = "_clsc", // Clarity Storage Beta
     Separator = "|",
     End = "END",
     Upgrade = "UPGRADE",
@@ -163,9 +164,9 @@ export interface EncodedPayload {
 }
 
 export interface Metadata {
-    projectId: number;
-    userId: number;
-    sessionId: number;
+    projectId: string;
+    userId: string;
+    sessionId: string;
     pageNum: number;
 }
 
@@ -173,6 +174,7 @@ export interface TargetMetadata {
     id: number;
     region: number;
     hash: number;
+    masked: boolean;
     node: Node;
 }
 

@@ -116,6 +116,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
     if (selector.length > 0) {
         output.selector = selector;
         output.hash = helper.hash(selector);
+        hashes[output.id] = selector;
     }
 
     if (hasAttribute) { output.attributes = attributes; }

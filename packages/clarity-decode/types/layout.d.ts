@@ -22,5 +22,4 @@ export interface DomData {
     hash: number;
     attributes?: Layout.Attributes;
     value?: string;
-    next?: number; /* deprecated since v0.4.5 */
 }
