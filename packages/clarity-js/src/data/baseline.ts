@@ -43,7 +43,6 @@ export function reset(): void {
         pointerY: 0,
         activityTime: 0
     };
-    console.log("reset");
 }
 
 export function track(event: Event, x: number, y: number): void {
