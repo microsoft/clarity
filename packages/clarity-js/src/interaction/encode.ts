@@ -1,4 +1,5 @@
 import { Event, Token } from "@clarity-types/data";
+import { Privacy } from "@clarity-types/layout";
 import mask from "@src/core/mask";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
@@ -53,7 +54,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.button);
                 tokens.push(entry.data.count);
                 tokens.push(entry.data.context);
-                tokens.push(cTarget.masked ? mask(entry.data.text) : entry.data.text);
+                tokens.push(cTarget.privacy !== Privacy.None ? mask(entry.data.text) : entry.data.text);
                 tokens.push(entry.data.link);
                 tokens.push(cTarget.element);
                 if (cTarget.region) { tokens.push(cTarget.region); }

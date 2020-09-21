@@ -174,15 +174,6 @@ export interface Metadata {
     pageNum: number;
 }
 
-export interface TargetMetadata {
-    id: number;
-    region: number;
-    element: string;
-    masked: boolean;
-    selector: string;
-    node: Node;
-}
-
 export interface Envelope extends Metadata {
     sequence: number;
     start: number;

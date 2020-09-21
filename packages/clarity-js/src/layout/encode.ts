@@ -1,5 +1,5 @@
 import { Event, Metric, Token } from "@clarity-types/data";
-import { Constant, NodeInfo } from "@clarity-types/layout";
+import { Constant, NodeInfo, Privacy } from "@clarity-types/layout";
 import config from "@src/core/config";
 import mask from "@src/core/mask";
 import * as task from "@src/core/task";
@@ -56,7 +56,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                             case "attributes":
                                 for (let attr in data[key]) {
                                     if (data[key][attr] !== undefined) {
-                                        metadata.push(attribute(value.metadata.masked, attr, data[key][attr]));
+                                        metadata.push(attribute(value.metadata.privacy, attr, data[key][attr]));
                                     }
                                 }
                                 break;
@@ -64,7 +64,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                                 let parent = dom.getNode(value.parent);
                                 let parentTag = dom.get(parent) ? dom.get(parent).data.tag : null;
                                 let tag = value.data.tag === "STYLE" ? value.data.tag : parentTag;
-                                metadata.push(text(value.metadata.masked, tag, data[key]));
+                                metadata.push(text(value.metadata.privacy, tag, data[key]));
                                 break;
                         }
                     }
@@ -77,27 +77,27 @@ export default async function (type: Event, ts: number = null): Promise<void> {
     }
 }
 
-function attribute(masked: boolean, key: string, value: string): string {
+function attribute(privacy: Privacy, key: string, value: string): string {
     switch (key) {
         case "src":
         case "srcset":
         case "title":
         case "alt":
-            return `${key}=${masked ? Constant.Empty : value}`;
+            return `${key}=${privacy === Privacy.MaskTextImage || privacy === Privacy.Exclude ? Constant.Empty : value}`;
         case "value":
         case "placeholder":
-            return `${key}=${masked ? mask(value) : value}`;
+            return `${key}=${privacy !== Privacy.None ? mask(value) : value}`;
         default:
             return `${key}=${value}`;
     }
 }
 
-function text(masked: boolean, tag: string, value: string): string {
+function text(privacy: Privacy, tag: string, value: string): string {
     switch (tag) {
         case "STYLE":
         case "TITLE":
             return value;
         default:
-            return masked ? mask(value) : value;
+            return privacy !== Privacy.None ? mask(value) : value;
     }
 }
