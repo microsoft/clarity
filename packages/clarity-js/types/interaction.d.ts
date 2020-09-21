@@ -3,6 +3,13 @@ import { BooleanFlag, Event, Target } from "./data";
 
 /* Enum */
 
+export const enum BrowsingContext {
+    Self = 0,
+    Blank = 1,
+    Parent = 2,
+    Top = 3
+}
+
 export const enum Setting {
     LookAhead = 500, // 500ms
     Distance = 20, // 20 pixels
@@ -68,9 +75,11 @@ export interface ClickData {
     eX: number;
     eY: number;
     button: number;
+    count: number;
+    context: BrowsingContext;
     text: string;
     link: string;
-    hash: number;
+    element: string;
     region?: number;
 }
 

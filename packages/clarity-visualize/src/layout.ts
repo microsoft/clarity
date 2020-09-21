@@ -188,7 +188,7 @@ export function markup(event: Layout.DomEvent): void {
                 iframeElement = iframeElement ? iframeElement : createElement(doc, node.tag);
                 if (!node.attributes) { node.attributes = {}; }
                 node.attributes["data-id"] = `${node.id}`;
-                node.attributes["data-hash"] = `${node.hash}`;
+                node.attributes["data-element"] = `${node.element}`;
                 setAttributes(iframeElement as HTMLElement, node.attributes);
                 if (!(Layout.Constant.SameOrigin in node.attributes)) { iframeElement.style.backgroundColor = "maroon"; }
                 insert(node, parent, iframeElement, pivot);
@@ -198,7 +198,7 @@ export function markup(event: Layout.DomEvent): void {
                 domElement = domElement ? domElement : createElement(doc, node.tag);
                 if (!node.attributes) { node.attributes = {}; }
                 node.attributes["data-id"] = `${node.id}`;
-                node.attributes["data-hash"] = `${node.hash}`;
+                node.attributes["data-element"] = `${node.element}`;
                 setAttributes(domElement as HTMLElement, node.attributes);
                 insert(node, parent, domElement, pivot);
                 break;

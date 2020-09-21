@@ -137,6 +137,10 @@ export const enum Constant {
     Semicolon = ";",
     Equals = "=",
     Path = ";path=/",
+    Target = "target",
+    Blank = "_blank",
+    Parent = "_parent",
+    Top = "_top",
     String = "string",
     UpgradeKey = "_cluc", // Clarity Upgrade Beta
     CookieKey = "_clcc", // Clarity Cookie Beta
@@ -173,8 +177,9 @@ export interface Metadata {
 export interface TargetMetadata {
     id: number;
     region: number;
-    hash: number;
+    element: string;
     masked: boolean;
+    selector: string;
     node: Node;
 }
 

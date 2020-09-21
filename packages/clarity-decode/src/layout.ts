@@ -2,10 +2,10 @@ import { helper, Data, Layout } from "clarity-js";
 import { DomData, LayoutEvent } from "../types/layout";
 
 let placeholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNiOAMAANUAz5n+TlUAAAAASUVORK5CYII=";
-let hashes: { [key: number]: string } = {};
+let elements: { [key: number]: string } = {};
 
 export function reset(): void {
-    hashes = {};
+    elements = {};
 }
 
 export function decode(tokens: Data.Token[]): LayoutEvent {
@@ -80,12 +80,12 @@ function process(node: any[] | number[], tagIndex: number): DomData {
         tag,
         position: position ? parseInt(position, 10) : null,
         selector: null,
-        hash: null
+        element: null
     };
     let hasAttribute = false;
     let attributes: Layout.Attributes = {};
     let value = null;
-    let prefix = output.parent in hashes ? `${hashes[output.parent]}>` : (output.parent ? Layout.Constant.Empty : null);
+    let prefix = output.parent in elements ? `${elements[output.parent]}>` : (output.parent ? Layout.Constant.Empty : null);
 
     for (let i = tagIndex + 1; i < node.length; i++) {
         let token = node[i] as string;
@@ -115,8 +115,8 @@ function process(node: any[] | number[], tagIndex: number): DomData {
     let selector = helper.selector(output.tag, prefix, attributes, output.position);
     if (selector.length > 0) {
         output.selector = selector;
-        output.hash = helper.hash(selector);
-        hashes[output.id] = selector;
+        output.element = helper.hash(selector);
+        elements[output.id] = selector;
     }
 
     if (hasAttribute) { output.attributes = attributes; }

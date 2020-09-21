@@ -19,7 +19,7 @@ interface Clarity {
 }
 
 interface Helper {
-  hash: (input: string) => number;
+  hash: (input: string) => string;
   selector: (tag: string, prefix: string, attributes: Layout.Attributes, position: number) => string;
 }
 

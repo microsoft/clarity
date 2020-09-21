@@ -19,7 +19,7 @@ export interface DomData {
     tag: string;
     position: number;
     selector: string;
-    hash: number;
+    element: string;
     attributes?: Layout.Attributes;
     value?: string;
 }

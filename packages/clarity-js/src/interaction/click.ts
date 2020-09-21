@@ -1,5 +1,5 @@
 import { Constant, Event, Setting } from "@clarity-types/data";
-import { ClickState } from "@clarity-types/interaction";
+import { BrowsingContext, ClickState } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -61,9 +61,11 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 eX,
                 eY,
                 button: evt.button,
-                text: t ? text(t) : null,
+                count: evt.detail,
+                context: context(a),
+                text: text(t),
                 link: a ? a.href : null,
-                hash: null
+                element: null
             }
         });
         schedule(encode.bind(this, event));
@@ -79,6 +81,17 @@ function text(element: Node): string {
         output = element.textContent.trim().replace(/\s+/g, Constant.Space).substr(0, Setting.ClickText);
     }
     return output;
+}
+
+function context(a: HTMLAnchorElement): BrowsingContext {
+    if (a && a.hasAttribute(Constant.Target)) {
+        switch (a.getAttribute(Constant.Target)) {
+            case Constant.Blank: return BrowsingContext.Blank;
+            case Constant.Parent: return BrowsingContext.Parent;
+            case Constant.Top: return BrowsingContext.Top;
+        }
+    }
+    return BrowsingContext.Self;
 }
 
 export function reset(): void {
