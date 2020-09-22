@@ -28,8 +28,8 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
     // In case of iframe, we adjust (x,y) to be relative to top parent's origin
     if (frame) {
         let distance = offset(frame);
-        x = x ? x + distance.x : x;
-        y = y ? y + distance.y : y;
+        x = x ? x + Math.round(distance.x) : x;
+        y = y ? y + Math.round(distance.y) : y;
     }
 
     let t = target(evt);
