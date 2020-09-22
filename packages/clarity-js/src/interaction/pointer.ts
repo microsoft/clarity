@@ -55,8 +55,8 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             let entry = touches[i];
             let x = "clientX" in entry ? Math.round(entry["clientX"] + d.scrollLeft) : null;
             let y = "clientY" in entry ? Math.round(entry["clientY"] + d.scrollTop) : null;
-            x = x && frame ? x + frame.offsetLeft : x;
-            y = y && frame ? y + frame.offsetTop : y;
+            x = x && frame ? x + Math.round(frame.offsetLeft) : x;
+            y = y && frame ? y + Math.round(frame.offsetTop) : y;
 
             // Check for null values before processing this event
             if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y } }); }
