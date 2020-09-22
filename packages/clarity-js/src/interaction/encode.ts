@@ -101,7 +101,6 @@ export default async function (type: Event): Promise<void> {
             break;
         case Event.Scroll:
             for (let i = 0; i < scroll.state.length; i++) {
-                let last = i + 1 === scroll.state.length;
                 let entry = scroll.state[i];
                 let sTarget = metadata(entry.data.target as Node, true);
                 tokens = [entry.time, entry.event];
@@ -110,7 +109,6 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.y);
                 if (sTarget.region) { tokens.push(sTarget.region); }
                 queue(tokens);
-                if (last) { timeline.track(entry.time, entry.event, sTarget.id, entry.data.x, entry.data.y); }
             }
             scroll.reset();
             break;
