@@ -44,7 +44,8 @@ function recompute(event: UIEvent = null): void {
     let current: ScrollState = { time: time(), event: Event.Scroll, data: {target: element, x, y} };
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
-    if (event === null && x === 0 && y === 0) { return; }
+    // Or, if x or y come back as null
+    if ((event === null && x === 0 && y === 0) || (x === null || y === null)) { return; }
 
     let length = state.length;
     let last = length > 1 ? state[length - 2] : null;
