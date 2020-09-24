@@ -28,8 +28,8 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
     // In case of iframe, we adjust (x,y) to be relative to top parent's origin
     if (frame) {
         let distance = offset(frame);
-        x = x ? x + distance.x : x;
-        y = y ? y + distance.y : y;
+        x = x ? x + Math.round(distance.x) : x;
+        y = y ? y + Math.round(distance.y) : y;
     }
 
     let t = target(evt);
@@ -44,8 +44,8 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
     // This property helps differentiate between a keyboard navigation vs. pointer click
     // In case of a keyboard navigation, we use center of target element as (x,y)
     if (evt.detail === 0 && l) {
-        x = l.x + (l.w / 2);
-        y = l.y + (l.h / 2);
+        x = Math.round(l.x + (l.w / 2));
+        y = Math.round(l.y + (l.h / 2));
     }
 
     let eX = l ? Math.max(Math.floor(((x - l.x) / l.w) * clickPrecision), 0) : 0;
