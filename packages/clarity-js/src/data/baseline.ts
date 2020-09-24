@@ -15,10 +15,8 @@ export function start(): void {
 export function reset(): void {
     // Baseline state holds the previous values - if it is updated in the current payload,
     // reset the state to current value after sending the previous state
-    state = update ?
-        { time: time(),
-          event: Event.Baseline,
-          data: {
+    if (update) {
+        state = { time: time(), event: Event.Baseline, data: {
             visible: buffer.visible,
             docWidth: buffer.docWidth,
             docHeight: buffer.docHeight,
@@ -30,7 +28,8 @@ export function reset(): void {
             pointerY: buffer.pointerY,
             activityTime: buffer.activityTime
           }
-        } : state;
+        };
+    }
     buffer = buffer ? buffer : {
         visible: BooleanFlag.True,
         docWidth: 0,
