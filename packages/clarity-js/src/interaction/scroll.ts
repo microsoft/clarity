@@ -1,4 +1,4 @@
-import { Constant, Event } from "@clarity-types/data";
+import { Event } from "@clarity-types/data";
 import { ScrollState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -45,8 +45,6 @@ function recompute(event: UIEvent = null): void {
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
     if ((event === null && x === 0 && y === 0) || (x === null || y === null)) { return; }
-    // Also, don't send any scroll events if we don't have a valid numberic value for x or y
-    if (typeof x !== Constant.Number || typeof y !== Constant.Number) { return; }
 
     let length = state.length;
     let last = length > 1 ? state[length - 2] : null;
