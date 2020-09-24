@@ -136,6 +136,7 @@ export const enum Constant {
     Expires = "expires=",
     Semicolon = ";",
     Equals = "=",
+    Number = "number",
     Path = ";path=/",
     String = "string",
     UpgradeKey = "_cluc", // Clarity Upgrade Beta
