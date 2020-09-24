@@ -28,15 +28,16 @@ export default async function (type: Event): Promise<void> {
         case Event.TouchMove:
         case Event.TouchCancel:
             for (let i = 0; i < pointer.state.length; i++) {
-                let last = i + 1 === pointer.state.length;
                 let entry = pointer.state[i];
                 let pTarget = metadata(entry.data.target as Node);
-                tokens = [entry.time, entry.event];
-                tokens.push(pTarget.id);
-                tokens.push(entry.data.x);
-                tokens.push(entry.data.y);
-                queue(tokens);
-                if (last) { baseline.track(entry.event, entry.data.x, entry.data.y); }
+                if (pTarget.id > 0) {
+                    tokens = [entry.time, entry.event];
+                    tokens.push(pTarget.id);
+                    tokens.push(entry.data.x);
+                    tokens.push(entry.data.y);
+                    queue(tokens);
+                    baseline.track(entry.event, entry.data.x, entry.data.y);
+                }
             }
             pointer.reset();
             break;
@@ -101,16 +102,17 @@ export default async function (type: Event): Promise<void> {
             break;
         case Event.Scroll:
             for (let i = 0; i < scroll.state.length; i++) {
-                let last = i + 1 === scroll.state.length;
                 let entry = scroll.state[i];
                 let sTarget = metadata(entry.data.target as Node, true);
-                tokens = [entry.time, entry.event];
-                tokens.push(sTarget.id);
-                tokens.push(entry.data.x);
-                tokens.push(entry.data.y);
-                if (sTarget.region) { tokens.push(sTarget.region); }
-                queue(tokens);
-                if (last) { timeline.track(entry.time, entry.event, sTarget.id, entry.data.x, entry.data.y); }
+                if (sTarget.id > 0) {
+                    tokens = [entry.time, entry.event];
+                    tokens.push(sTarget.id);
+                    tokens.push(entry.data.x);
+                    tokens.push(entry.data.y);
+                    if (sTarget.region) { tokens.push(sTarget.region); }
+                    queue(tokens);
+                    baseline.track(entry.event, entry.data.x, entry.data.y);
+                }
             }
             scroll.reset();
             break;
