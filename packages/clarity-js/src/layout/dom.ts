@@ -329,8 +329,7 @@ export function updates(): NodeValue[] {
         if (id in values) {
             let v = values[id];
             let p = v.parent;
-            let hasId = "attributes" in v.data && Constant.Id in v.data.attributes;
-            v.data.path = p === null || p in updateMap || hasId || v.selector.length === 0 ? null : values[p].selector;
+            v.data.path = p === null || p in updateMap || v.selector.length === 0 ? null : values[p].selector;
             output.push(values[id]);
         }
     }
