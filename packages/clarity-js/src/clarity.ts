@@ -40,8 +40,8 @@ export function start(override: Config = {}): void {
     measure(performance.start)();
 
     // if we have method configured to call for full traffic, call it now
-    if (!configuration.lean && configuration.onfull) {
-      configuration.onfull();
+    if (!configuration.lean && configuration.onupgrade) {
+      configuration.onupgrade();
     }
   }
 }
@@ -113,8 +113,8 @@ export function upgrade(key: string): void {
   if (active && configuration.lean) {
     measure(data.upgrade)(key);
     // if we have method configured to call for full traffic, call it now
-    if (configuration.onfull) {
-      configuration.onfull();
+    if (configuration.onupgrade) {
+      configuration.onupgrade();
     }
   }
 }

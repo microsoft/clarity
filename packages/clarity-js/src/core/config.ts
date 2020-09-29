@@ -19,7 +19,7 @@ let config: Config = {
     url: "",
     onstart: null,
     upload: null,
-    onfull: null
+    onupgrade: null
 };
 
 export default config;
