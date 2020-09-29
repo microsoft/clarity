@@ -23,6 +23,10 @@ export function upgrade(key: string): void {
         }
 
         encode(Event.Upgrade);
+        
+        if (config.onupgrade) {
+            config.onupgrade();
+          }
     }
 }
 
