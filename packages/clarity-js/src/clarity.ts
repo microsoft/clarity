@@ -39,7 +39,6 @@ export function start(override: Config = {}): void {
     measure(interaction.start)();
     measure(performance.start)();
 
-    // if we have method configured to call for full traffic, call it now
     if (!configuration.lean && configuration.onupgrade) {
       configuration.onupgrade();
     }
@@ -112,7 +111,6 @@ export function upgrade(key: string): void {
   // Do not process upgrade call if Clarity is not already activated and in lean mode
   if (active && configuration.lean) {
     measure(data.upgrade)(key);
-    // if we have method configured to call for full traffic, call it now
     if (configuration.onupgrade) {
       configuration.onupgrade();
     }
