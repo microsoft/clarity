@@ -76,6 +76,7 @@ export interface Config {
     track?: boolean;
     regions?: RegionTracker;
     url?: string;
+    onfull?: () => void;
     onstart?: (data: Metadata) => void;
     upload?: (data: string, sequence?: number, last?: boolean) => void;
 }

@@ -18,7 +18,8 @@ let config: Config = {
     regions: {},
     url: "",
     onstart: null,
-    upload: null
+    upload: null,
+    onfull: null
 };
 
 export default config;
