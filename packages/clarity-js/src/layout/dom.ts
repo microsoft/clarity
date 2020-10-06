@@ -12,6 +12,7 @@ const DISALLOWED_NAMES = ["address", "cell", "code", "dob", "email", "mobile", "
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
 let changes: NodeChange[][] = [];
+let boxMap: number[] = [];
 let updateMap: number[] = [];
 let selectorMap: number[] = [];
 
@@ -36,6 +37,7 @@ function reset(): void {
     index = 1;
     nodes = [];
     values = [];
+    boxMap = [];
     updateMap = [];
     changes = [];
     selectorMap = [];
@@ -109,6 +111,9 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     // If there's an explicit region attribute set on the element, use it to mark a region on the page
     if (data.attributes && Constant.RegionData in data.attributes) { regionMap.set(node, data.attributes[Constant.RegionData]); }
 
+    // If this element is a text node, and is masked, then track box model for the parent element
+    if (data.tag === Constant.TextTag && privacy !== Privacy.None && parentId && boxMap.indexOf(parentId) < 0) { boxMap.push(parentId); }
+
     nodes[id] = node;
     values[id] = {
         id,
@@ -119,7 +124,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         data,
         selector: Constant.Empty,
         region: regionId,
-        metadata: { active: true, region: false, privacy }
+        metadata: { active: true, region: false, privacy, width: null, height: null }
     };
 
     updateSelector(values[id]);
@@ -321,6 +326,26 @@ export function regions(): NodeValue[] {
         }
     }
     return v;
+}
+
+export function boxes(): HTMLElement[] {
+    let output = [];
+    for (let id of boxMap) {
+        if (id in values && id in nodes) {
+            let v = values[id];
+            let e = nodes[id] as HTMLElement;
+            if (typeof e.getBoundingClientRect === "function") {
+                let r = e.getBoundingClientRect();
+                if (r.width >= 0 && r.height >= 0) {
+                    v.metadata.width = Math.round(r.width);
+                    v.metadata.height = Math.round(r.height);
+                }
+            }
+            output.push(e);
+        }
+    }
+    boxMap = [];
+    return output;
 }
 
 export function updates(): NodeValue[] {

@@ -71,6 +71,9 @@ export function render(events: Data.DecodedEvent[]): void {
             case Data.Event.Metric:
                 data.metric(entry as Data.MetricEvent);
                 break;
+            case Data.Event.Box:
+                layout.box(entry as Layout.BoxEvent);
+                break;
             case Data.Event.Mutation:
                 layout.markup(entry as Layout.DomEvent);
                 break;

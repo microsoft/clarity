@@ -28,11 +28,11 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 eX: tokens[5] as number,
                 eY: tokens[6] as number,
                 button: tokens[7] as number,
-                count: tokens[8] as number,
+                reaction: tokens[8] as number,
                 context: tokens[9] as number,
                 text: tokens[10] as string,
                 link: tokens[11] as string,
-                element: tokens[12] as string,
+                hash: tokens[12] as string,
                 region: tokens.length > 13 ? tokens[13] as number : null
             };
             return { time, event, data: clickData };

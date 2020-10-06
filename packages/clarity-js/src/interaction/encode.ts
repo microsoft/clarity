@@ -53,11 +53,11 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.eX);
                 tokens.push(entry.data.eY);
                 tokens.push(entry.data.button);
-                tokens.push(entry.data.count);
+                tokens.push(entry.data.reaction);
                 tokens.push(entry.data.context);
                 tokens.push(cTarget.privacy !== Privacy.None ? mask(entry.data.text) : entry.data.text);
                 tokens.push(entry.data.link);
-                tokens.push(cTarget.element);
+                tokens.push(cTarget.hash);
                 if (cTarget.region) { tokens.push(cTarget.region); }
                 queue(tokens);
                 timeline.track(entry.time, entry.event, cTarget.id, entry.data.x, entry.data.y);

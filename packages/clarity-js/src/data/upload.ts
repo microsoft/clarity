@@ -41,6 +41,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         let event = JSON.stringify(tokens);
 
         switch (type) {
+            case Event.Box:
             case Event.Discover:
             case Event.Mutation:
                 playbackBytes += event.length;

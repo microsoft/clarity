@@ -75,11 +75,11 @@ export interface ClickData {
     eX: number;
     eY: number;
     button: number;
-    count: number;
+    reaction: number;
     context: BrowsingContext;
     text: string;
     link: string;
-    element: string;
+    hash: string;
     region?: number;
 }
 

@@ -7,6 +7,7 @@ import { time } from "@src/core/time";
 import tokenize from "@src/data/token";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
+import * as box from "./box";
 import * as region from "./region";
 import * as doc from "./document";
 import * as dom from "./dom";
@@ -32,6 +33,15 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             }
             queue(tokens);
             break;
+        case Event.Box:
+            let b = box.data;
+            for (let entry of b) {
+                tokens.push(entry.id);
+                tokens.push(entry.width);
+                tokens.push(entry.height);
+            }
+            queue(tokens);
+            break;
         case Event.Discover:
         case Event.Mutation:
             let values = dom.updates();
@@ -45,10 +55,12 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     if (data[key]) {
                         switch (key) {
                             case "tag":
+                                let m = value.metadata;
                                 tokens.push(value.id);
                                 if (value.parent && active) { tokens.push(value.parent); }
                                 if (value.previous && active) { tokens.push(value.previous); }
                                 metadata.push(value.position ? `${data[key]}~${value.position}` : data[key]);
+                                if (m.width && m.height) { metadata.push(`${Constant.Box}${str(m.width)}.${str(m.height)}`); }
                                 break;
                             case "path":
                                 metadata.push(`${value.data.path}>`);
@@ -75,6 +87,10 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             queue(tokens, !config.lean);
             break;
     }
+}
+
+function str(input: number): string {
+    return input.toString(36);
 }
 
 function attribute(privacy: Privacy, key: string, value: string): string {

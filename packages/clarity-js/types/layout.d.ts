@@ -20,6 +20,8 @@ export const enum Constant {
     Href = "href",
     Src = "src",
     Srcset = "srcset",
+    Box = "#",
+    Period = ".",
     MaskData = "data-clarity-mask",
     UnmaskData = "data-clarity-unmask",
     RegionData = "data-clarity-region",
@@ -40,7 +42,9 @@ export const enum Constant {
     ChildList = "childList",
     Attributes = "attributes",
     CharacterData = "characterData",
-    LoadEvent = "load"
+    LoadEvent = "load",
+    Pixel = "px",
+    BorderBox = "border-box"
 }
 
 export const enum JsonLD { 
@@ -101,6 +105,8 @@ export interface NodeMeta {
     active: boolean;
     region: boolean;
     privacy: Privacy;
+    width: number;
+    height: number;
 }
 
 export interface NodeChange {
@@ -127,10 +133,16 @@ export interface RegionData {
     region: string;
 }
 
+export interface BoxData {
+    id: number;
+    width: number;
+    height: number;
+}
+
 export interface TargetMetadata {
     id: number;
     region: number;
-    element: string;
+    hash: string;
     privacy: Privacy;
     selector: string;
     node: Node;

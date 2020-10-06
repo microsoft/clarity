@@ -2,10 +2,10 @@ import { helper, Data, Layout } from "clarity-js";
 import { DomData, LayoutEvent } from "../types/layout";
 
 let placeholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNiOAMAANUAz5n+TlUAAAAASUVORK5CYII=";
-let elements: { [key: number]: string } = {};
+let hashes: { [key: number]: string } = {};
 
 export function reset(): void {
-    elements = {};
+    hashes = {};
 }
 
 export function decode(tokens: Data.Token[]): LayoutEvent {
@@ -28,6 +28,17 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                 regionData.push(region);
             }
             return { time, event, data: regionData };
+        case Data.Event.Box:
+            let boxData: Layout.BoxData[] = [];
+            for (let i = 2; i < tokens.length; i += 3) {
+                let box: Layout.BoxData = {
+                    id: tokens[i] as number,
+                    width: tokens[i + 1] as number / Data.Setting.BoxPrecision,
+                    height: tokens[i + 2] as number / Data.Setting.BoxPrecision
+                };
+                boxData.push(box);
+            }
+            return { time, event, data: boxData };
         case Data.Event.Discover:
         case Data.Event.Mutation:
             let lastType = null;
@@ -80,21 +91,28 @@ function process(node: any[] | number[], tagIndex: number): DomData {
         tag,
         position: position ? parseInt(position, 10) : null,
         selector: null,
-        element: null
+        hash: null
     };
     let hasAttribute = false;
     let attributes: Layout.Attributes = {};
     let value = null;
-    let prefix = output.parent in elements ? `${elements[output.parent]}>` : (output.parent ? Layout.Constant.Empty : null);
+    let prefix = output.parent in hashes ? `${hashes[output.parent]}>` : (output.parent ? Layout.Constant.Empty : null);
 
     for (let i = tagIndex + 1; i < node.length; i++) {
         let token = node[i] as string;
         let keyIndex = token.indexOf("=");
+        let firstChar = token[0];
         let lastChar = token[token.length - 1];
         if (i === (node.length - 1) && output.tag === "STYLE") {
             value = token;
         } else if (lastChar === ">" && keyIndex === -1) {
             prefix = token;
+        } else if (output.tag !== Layout.Constant.TextTag && firstChar === Layout.Constant.Box && keyIndex === -1) {
+            let parts = token.split(Layout.Constant.Period);
+            if (parts.length === 2) {
+                output.width = num(parts[0]) / Data.Setting.BoxPrecision;
+                output.height = num(parts[1]) / Data.Setting.BoxPrecision;
+            }
         } else if (output.tag !== Layout.Constant.TextTag && keyIndex > 0) {
             hasAttribute = true;
             let k = token.substr(0, keyIndex);
@@ -115,12 +133,16 @@ function process(node: any[] | number[], tagIndex: number): DomData {
     let selector = helper.selector(output.tag, prefix, attributes, output.position);
     if (selector.length > 0) {
         output.selector = selector;
-        output.element = helper.hash(selector);
-        elements[output.id] = selector;
+        output.hash = helper.hash(selector);
+        hashes[output.id] = selector;
     }
 
     if (hasAttribute) { output.attributes = attributes; }
     if (value) { output.value = value; }
 
     return output;
+}
+
+function num(input: string): number {
+    return input ? parseInt(input, 36) : null;
 }
