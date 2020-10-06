@@ -21,9 +21,6 @@ export function start(config: Config = null): void {
     core.start();
     data.start();
     modules.forEach(x => measure(x.start)());
-    if (!config.lean && config.onupgrade) {
-      config.onupgrade();
-    }
   }
 }
 

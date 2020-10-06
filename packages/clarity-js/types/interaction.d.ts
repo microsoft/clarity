@@ -54,6 +54,8 @@ export interface TimelineData {
     target: number;
     x: number;
     y: number;
+    reaction: number;
+    context: number;
 }
 
 export interface InputData {

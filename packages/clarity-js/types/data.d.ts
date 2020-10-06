@@ -129,6 +129,7 @@ export const enum Setting {
 
 export const enum Constant {
     Auto = "Auto",
+    Config = "Config",
     Clarity = "clarity",
     Restart = "restart",
     Suspend = "suspend",

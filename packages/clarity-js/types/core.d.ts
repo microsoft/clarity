@@ -89,5 +89,5 @@ export interface Config {
     cookies?: string[];
     report?: string;
     upload?: string | UploadCallback;
-    onupgrade: () => void;
+    upgrade?: (key: string) => void;
 }

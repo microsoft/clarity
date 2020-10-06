@@ -5,6 +5,7 @@ import encode from "@src/data/encode";
 export let data: UpgradeData = null;
 
 export function start(): void {
+    if (!config.lean && config.upgrade) { config.upgrade(Constant.Config); }
     data = null;
 }
 
@@ -22,11 +23,10 @@ export function upgrade(key: string): void {
             sessionStorage.setItem(Constant.UpgradeKey, `1`);
         }
 
+        // Callback upgrade handler, if configured
+        if (config.upgrade) { config.upgrade(key); }
+
         encode(Event.Upgrade);
-        
-        if (config.onupgrade) {
-            config.onupgrade();
-          }
     }
 }
 
