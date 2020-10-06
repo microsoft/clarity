@@ -354,7 +354,7 @@ export function updates(): NodeValue[] {
         if (id in values) {
             let v = values[id];
             let p = v.parent;
-            v.data.path = p === null || p in updateMap || v.selector.length === 0 ? null : values[p].selector;
+            v.data.path = p === null || updateMap.indexOf(p) >= 0 || v.selector.length === 0 ? null : values[p].selector;
             output.push(values[id]);
         }
     }
