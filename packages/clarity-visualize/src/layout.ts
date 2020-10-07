@@ -46,6 +46,22 @@ export function region(event: Layout.RegionEvent): void {
     }
 }
 
+export function box(event: Layout.BoxEvent): void {
+    let data = event.data;
+    for (let b of data) {
+        let el = element(b.id) as HTMLElement;
+        resize(el, b.width, b.height);
+    }
+}
+
+function resize(el: HTMLElement, width: number, height: number): void {
+    if (el && width && height) {
+        el.style.width = width + Layout.Constant.Pixel;
+        el.style.height = height + Layout.Constant.Pixel;
+        el.style.boxSizing = Layout.Constant.BorderBox; // Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing
+    }
+}
+
 export function update(): void {
     if (lean === false && visualizeRegion) {
         let doc = state.player.contentDocument;
@@ -194,12 +210,13 @@ export function markup(event: Layout.DomEvent): void {
                 insert(node, parent, iframeElement, pivot);
                 break;
             default:
-                let domElement = element(node.id);
+                let domElement = element(node.id) as HTMLElement;
                 domElement = domElement ? domElement : createElement(doc, node.tag);
                 if (!node.attributes) { node.attributes = {}; }
                 node.attributes["data-id"] = `${node.id}`;
                 node.attributes["data-hash"] = `${node.hash}`;
                 setAttributes(domElement as HTMLElement, node.attributes);
+                resize(domElement, node.width, node.height);
                 insert(node, parent, domElement, pivot);
                 break;
         }

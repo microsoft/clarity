@@ -4,8 +4,9 @@ import { PartialEvent } from "./core";
 export interface RegionEvent extends PartialEvent { data: Layout.RegionData[]; }
 export interface DocumentEvent extends PartialEvent { data: Layout.DocumentData; }
 export interface DomEvent extends PartialEvent { data: DomData[]; }
+export interface BoxEvent extends PartialEvent { data: Layout.BoxData[]; }
 export interface LayoutEvent extends PartialEvent {
-    data: Layout.RegionData[] | Layout.DocumentData | DomData[];
+    data: Layout.RegionData[] | Layout.DocumentData | DomData[] | Layout.BoxData[];
 }
 
 /* Redeclare enums */
@@ -19,7 +20,9 @@ export interface DomData {
     tag: string;
     position: number;
     selector: string;
-    hash: number;
+    hash: string;
     attributes?: Layout.Attributes;
     value?: string;
+    width?: number;
+    height?: number;
 }

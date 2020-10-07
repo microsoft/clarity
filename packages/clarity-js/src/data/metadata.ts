@@ -1,9 +1,9 @@
 import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, Metric, Setting } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
+import hash from "@src/core/hash";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
-import hash from "@src/data/hash";
 import { set } from "@src/data/variable";
 
 export let data: Metadata = null;
@@ -16,7 +16,7 @@ export function start(): void {
   // Populate ids for this page
   let s = session(ts);
   data = {
-    projectId: config.projectId || str(hash(location.host)),
+    projectId: config.projectId || hash(location.host),
     userId: user(),
     sessionId: s[0],
     pageNum: s[1]
@@ -62,10 +62,6 @@ export function consent(): void {
   }
 }
 
-function str(input: number): string {
-  return input.toString(36);
-}
-
 function track(): void {
   if (config.track) {
     let expiry = new Date();
@@ -81,7 +77,7 @@ function shortid(): string {
   if (window && window.crypto && window.crypto.getRandomValues && Uint32Array) {
     id = window.crypto.getRandomValues(new Uint32Array(1))[0];
   }
-  return str(id);
+  return id.toString(36);
 }
 
 function session(ts: number): [string, number] {

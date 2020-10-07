@@ -3,6 +3,13 @@ import { BooleanFlag, Event, Target } from "./data";
 
 /* Enum */
 
+export const enum BrowsingContext {
+    Self = 0,
+    Blank = 1,
+    Parent = 2,
+    Top = 3
+}
+
 export const enum Setting {
     LookAhead = 500, // 500ms
     Distance = 20, // 20 pixels
@@ -47,6 +54,8 @@ export interface TimelineData {
     target: number;
     x: number;
     y: number;
+    reaction: number;
+    context: number;
 }
 
 export interface InputData {
@@ -68,9 +77,11 @@ export interface ClickData {
     eX: number;
     eY: number;
     button: number;
+    reaction: number;
+    context: BrowsingContext;
     text: string;
     link: string;
-    hash: number;
+    hash: string;
     region?: number;
 }
 

@@ -28,13 +28,14 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 eX: tokens[5] as number,
                 eY: tokens[6] as number,
                 button: tokens[7] as number,
-                text: tokens[8] as string,
-                link: tokens[9] as string,
-                hash: tokens[10] as number,
-                region: tokens.length > 11 ? tokens[11] as number : null
+                reaction: tokens[8] as number,
+                context: tokens[9] as number,
+                text: tokens[10] as string,
+                link: tokens[11] as string,
+                hash: tokens[12] as string,
+                region: tokens.length > 13 ? tokens[13] as number : null
             };
             return { time, event, data: clickData };
-            break;
         case Data.Event.Resize:
             let resizeData: Interaction.ResizeData = { width: tokens[2] as number, height: tokens[3] as number };
             return { time, event, data: resizeData };
@@ -66,7 +67,9 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 type: tokens[2] as number,
                 target: tokens[3] as number,
                 x: tokens[4] as number,
-                y: tokens[5] as number
+                y: tokens[5] as number,
+                reaction: tokens[6] as number,
+                context: tokens[7] as number
             };
             return { time, event, data: timelineData };
         case Data.Event.Visibility:

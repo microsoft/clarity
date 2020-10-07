@@ -4,18 +4,30 @@ import { visualize } from "clarity-visualize";
 let activeTabId = chrome.devtools.inspectedWindow.tabId;
 let background = chrome.runtime.connect({ name: "panel" });
 background.postMessage({ action: "init", tabId: activeTabId });
-let id = "";
+let sessionId = "";
+let pageNum = 0;
 let events: Data.DecodedEvent[] = [];
-let eJson: string[] = [];
-let dJson: Data.DecodedPayload[] = [];
+let eJson: string[][] = []; // Encoded JSON for the whole session
+let pJson: string[] = []; // Encoded JSON for the page
+let dJson: Data.DecodedPayload[] = []; // Decoded JSON for the page
 
 function save(encoded: boolean = true): void {
-    let json = encoded ? JSON.stringify(eJson) : JSON.stringify(dJson, null, 2);
-    let blob = new Blob([json], {type: "application/json"});
+    let data;
+    let id = `${sessionId}-${pageNum}`;
+    let suffix = "decoded";
+    if (encoded) {
+        // Temporarily append data from the current page
+        eJson.push(pJson);
+        // Beautify data by injecting line breaks
+        data = JSON.stringify(eJson).replace(/\[\{"e"/g, '\r\n  [{"e"').replace("]}]]", "]}]\r\n]");
+        // Clean up temporary data from above
+        eJson.pop();
+        id = sessionId;
+        suffix = "encoded";
+    } else { data = JSON.stringify(dJson, null, 2); }
+    let blob = new Blob([data], {type: "application/json"});
     let url  = URL.createObjectURL(blob);
-
     let a = document.createElement("a");
-    let suffix = encoded ? "encoded" : "decoded";
     a.setAttribute("download", `clarity-${id.toUpperCase()}-${suffix}.json`);
     a.href = url;
     a.click();
@@ -25,11 +37,9 @@ background.onMessage.addListener(function(message: any): void {
     // Handle responses from the background page, if any
     if (message && message.payload) {
         let decoded = decode(message.payload);
-        let envelope = decoded.envelope;
         if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
-        eJson.push(JSON.parse(message.payload));
+        pJson.push(JSON.parse(message.payload));
         dJson.push(decoded);
-        id = `${envelope.sessionId}-${envelope.pageNum.toString(36)}`;
         let merged = visualize.merge([decoded]);
         events = events.concat(merged.events).sort(sort);
         visualize.dom(merged.dom);
@@ -82,10 +92,14 @@ function reset(envelope: Data.Envelope): void {
     iframe.setAttribute("scrolling", "no");
     document.body.appendChild(iframe);
     console.log("Clearing out previous session... moving on to next one.");
+    if (sessionId !== envelope.sessionId) {
+        eJson = [];
+        sessionId = envelope.sessionId;
+    } else { eJson.push(pJson); }
     events = [];
-    eJson = [];
+    pJson = [];
     dJson = [];
-    id = "";
+    pageNum = envelope.pageNum;
     info.style.display = "none";
     metadata.style.display = "block";
     download.style.display = "block";

@@ -1,5 +1,5 @@
 // tslint:disable: no-bitwise
-export default function(input: string): number {
+export default function(input: string): string {
     // Code inspired from C# GetHashCode: https://github.com/Microsoft/referencesource/blob/master/mscorlib/system/string.cs
     let hash = 0;
     let hashOne = 5381;
@@ -15,5 +15,5 @@ export default function(input: string): number {
     // Replace the magic number from C# implementation (1566083941) with a smaller prime number (11579)
     // This ensures we don't hit integer overflow and prevent collisions
     hash = Math.abs(hashOne + (hashTwo * 11579));
-    return hash;
+    return hash.toString(36);
 }

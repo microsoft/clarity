@@ -45,7 +45,8 @@ export const enum Event {
     Log = 33,
     Variable = 34,
     Limit = 35,
-    Summary = 36
+    Summary = 36,
+    Box = 37,
 }
 
 export const enum Metric {
@@ -122,10 +123,13 @@ export const enum Setting {
     RetryLimit = 2, // Maximum number of attempts to upload a payload before giving up
     PlaybackBytesLimit = 10 * 1024 * 1024, // 10MB
     CollectionLimit = 128, // Number of unique entries for dimensions
+    ClickPrecision = 32767, // 2^15 - 1
+    BoxPrecision = 100, // Up to 2 decimal points (e.g. 34.56)
 }
 
 export const enum Constant {
     Auto = "Auto",
+    Config = "Config",
     Clarity = "clarity",
     Restart = "restart",
     Suspend = "suspend",
@@ -137,6 +141,10 @@ export const enum Constant {
     Semicolon = ";",
     Equals = "=",
     Path = ";path=/",
+    Target = "target",
+    Blank = "_blank",
+    Parent = "_parent",
+    Top = "_top",
     String = "string",
     UpgradeKey = "_cluc", // Clarity Upgrade Beta
     CookieKey = "_clcc", // Clarity Cookie Beta
@@ -168,14 +176,6 @@ export interface Metadata {
     userId: string;
     sessionId: string;
     pageNum: number;
-}
-
-export interface TargetMetadata {
-    id: number;
-    region: number;
-    hash: number;
-    masked: boolean;
-    node: Node;
 }
 
 export interface Envelope extends Metadata {

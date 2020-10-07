@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { InputData, InputState, Setting } from "@clarity-types/interaction";
+import { Privacy } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
 import mask from "@src/core/mask";
 import { schedule } from "@src/core/task";
@@ -34,7 +35,7 @@ function recompute(evt: UIEvent): void {
                 v = input.value;
                 break;
             default:
-                v = value.metadata.masked ? mask(input.value) : input.value;
+                v = value.metadata.privacy !== Privacy.None ? mask(input.value) : input.value;
                 break;
         }
 

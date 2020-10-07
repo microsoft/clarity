@@ -20,6 +20,8 @@ export const enum Constant {
     Href = "href",
     Src = "src",
     Srcset = "srcset",
+    Box = "#",
+    Period = ".",
     MaskData = "data-clarity-mask",
     UnmaskData = "data-clarity-unmask",
     RegionData = "data-clarity-region",
@@ -40,7 +42,9 @@ export const enum Constant {
     ChildList = "childList",
     Attributes = "attributes",
     CharacterData = "characterData",
-    LoadEvent = "load"
+    LoadEvent = "load",
+    Pixel = "px",
+    BorderBox = "border-box"
 }
 
 export const enum JsonLD { 
@@ -58,6 +62,12 @@ export const enum JsonLD {
     Name = "name"
 }
 
+export const enum Privacy {
+    None = 0,
+    MaskText = 1,
+    MaskTextImage = 2,
+    Exclude = 3
+}
 
 /* Helper Interfaces */
 export interface Box {
@@ -94,7 +104,9 @@ export interface NodeValue {
 export interface NodeMeta {
     active: boolean;
     region: boolean;
-    masked: boolean;
+    privacy: Privacy;
+    width: number;
+    height: number;
 }
 
 export interface NodeChange {
@@ -119,4 +131,19 @@ export interface RegionData {
     id: number;
     box: Box;
     region: string;
+}
+
+export interface BoxData {
+    id: number;
+    width: number;
+    height: number;
+}
+
+export interface TargetMetadata {
+    id: number;
+    region: number;
+    hash: string;
+    privacy: Privacy;
+    selector: string;
+    node: Node;
 }

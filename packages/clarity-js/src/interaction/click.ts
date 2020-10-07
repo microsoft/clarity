@@ -1,5 +1,5 @@
-import { Constant, Event, Setting } from "@clarity-types/data";
-import { ClickState } from "@clarity-types/interaction";
+import { BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
+import { BrowsingContext, ClickState } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -9,8 +9,8 @@ import { layout } from "@src/layout/region";
 import { link, target } from "@src/layout/target";
 import encode from "./encode";
 
+const UserInputTags = ["input", "textarea", "radio", "button", "canvas"];
 export let state: ClickState[] = [];
-let clickPrecision = Math.pow(2, 15) - 1;
 
 export function start(): void {
     reset();
@@ -48,8 +48,8 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
         y = Math.round(l.y + (l.h / 2));
     }
 
-    let eX = l ? Math.max(Math.floor(((x - l.x) / l.w) * clickPrecision), 0) : 0;
-    let eY = l ? Math.max(Math.floor(((y - l.y) / l.h) * clickPrecision), 0) : 0;
+    let eX = l ? Math.max(Math.floor(((x - l.x) / l.w) * Setting.ClickPrecision), 0) : 0;
+    let eY = l ? Math.max(Math.floor(((y - l.y) / l.h) * Setting.ClickPrecision), 0) : 0;
 
     // Check for null values before processing this event
     if (x !== null && y !== null) {
@@ -61,7 +61,9 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 eX,
                 eY,
                 button: evt.button,
-                text: t ? text(t) : null,
+                reaction: reaction(t),
+                context: context(a),
+                text: text(t),
                 link: a ? a.href : null,
                 hash: null
             }
@@ -79,6 +81,27 @@ function text(element: Node): string {
         output = element.textContent.trim().replace(/\s+/g, Constant.Space).substr(0, Setting.ClickText);
     }
     return output;
+}
+
+function reaction(element: Node): BooleanFlag {
+    if (element.nodeType === Node.ELEMENT_NODE) {
+        let tag = (element as HTMLElement).tagName.toLowerCase();
+        if (UserInputTags.indexOf(tag) >= 0) {
+            return BooleanFlag.False;
+        }
+    }
+    return BooleanFlag.True;
+}
+
+function context(a: HTMLAnchorElement): BrowsingContext {
+    if (a && a.hasAttribute(Constant.Target)) {
+        switch (a.getAttribute(Constant.Target)) {
+            case Constant.Blank: return BrowsingContext.Blank;
+            case Constant.Parent: return BrowsingContext.Parent;
+            case Constant.Top: return BrowsingContext.Top;
+        }
+    }
+    return BrowsingContext.Self;
 }
 
 export function reset(): void {

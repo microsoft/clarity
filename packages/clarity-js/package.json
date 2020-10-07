@@ -1,6 +1,6 @@
 {
   "name": "clarity-js",
-  "version": "0.6.0-beta.10",
+  "version": "0.6.0-beta.11",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
   "author": "Microsoft Corp.",
   "license": "MIT",
@@ -28,6 +28,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.1.0",
     "@rollup/plugin-node-resolve": "^7.1.3",
+    "@types/resize-observer-browser": "^0.1.3",
     "del-cli": "3.0.0",
     "husky": "4.2.3",
     "lint-staged": "10.1.2",

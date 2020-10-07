@@ -1,4 +1,4 @@
-import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
+import { Constant, NodeChange, NodeInfo, NodeValue, Privacy, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
 import selector from "@src/layout/selector";
@@ -12,6 +12,7 @@ const DISALLOWED_NAMES = ["address", "cell", "code", "dob", "email", "mobile", "
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
 let changes: NodeChange[][] = [];
+let boxMap: number[] = [];
 let updateMap: number[] = [];
 let selectorMap: number[] = [];
 
@@ -19,7 +20,7 @@ let selectorMap: number[] = [];
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
 let regionMap: WeakMap<Node, string> = null; // Maps region nodes => region name
 let iframeMap: WeakMap<Document, HTMLIFrameElement> = null; // Maps iframe's contentDocument => parent iframe element
-let maskedMap: WeakMap<Node, boolean> = null; // Maps node => boolean
+let privacyMap: WeakMap<Node, Privacy> = null; // Maps node => Privacy (enum)
 
 let urlMap: { [url: string]: number } = {};
 
@@ -36,6 +37,7 @@ function reset(): void {
     index = 1;
     nodes = [];
     values = [];
+    boxMap = [];
     updateMap = [];
     changes = [];
     selectorMap = [];
@@ -43,11 +45,11 @@ function reset(): void {
     idMap = new WeakMap();
     regionMap = new WeakMap();
     iframeMap = new WeakMap();
-    maskedMap = new WeakMap();
+    privacyMap = new WeakMap();
     if (Constant.DevHook in window) { window[Constant.DevHook] = { get, getNode, history }; }
 }
 
-// We parse new root nodes for any regions or masked nodes in the beginning (document) and 
+// We parse new root nodes for any regions or masked nodes in the beginning (document) and
 // later whenever there are new additions or modifications to DOM (mutations)
 export function parse(root: ParentNode): void {
     // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
@@ -63,7 +65,7 @@ export function parse(root: ParentNode): void {
         for (const entry of config.mask) {
             let elements = root.querySelectorAll(entry);
             for (let i = 0; i < elements.length; i++) {
-                maskedMap.set(elements[i], true);
+                privacyMap.set(elements[i], Privacy.MaskTextImage);
             }
         }
 
@@ -71,7 +73,7 @@ export function parse(root: ParentNode): void {
         for (const entry of config.unmask) {
             let elements = root.querySelectorAll(entry);
             for (let i = 0; i < elements.length; i++) {
-                maskedMap.set(elements[i], false);
+                privacyMap.set(elements[i], Privacy.None);
             }
         }
     }
@@ -92,7 +94,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let id = getId(node, true);
     let parentId = parent ? getId(parent) : null;
     let previousId = getPreviousId(node);
-    let masked = !config.content;
+    let privacy = config.content ? Privacy.None : Privacy.MaskText;
     let parentValue = null;
     let regionId = regionMap.has(node) ? getId(node) : null;
 
@@ -100,14 +102,17 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         parentValue = values[parentId];
         parentValue.children.push(id);
         regionId = regionId === null ? parentValue.region : regionId;
-        masked = parentValue.metadata.masked;
+        privacy = parentValue.metadata.privacy;
     }
 
     // Check to see if this particular node should be masked or not
-    masked = mask(node, data, masked);
+    privacy = getPrivacy(node, data, privacy);
 
     // If there's an explicit region attribute set on the element, use it to mark a region on the page
     if (data.attributes && Constant.RegionData in data.attributes) { regionMap.set(node, data.attributes[Constant.RegionData]); }
+
+    // If this element is a text node, and is masked, then track box model for the parent element
+    if (data.tag === Constant.TextTag && privacy !== Privacy.None && parentId && boxMap.indexOf(parentId) < 0) { boxMap.push(parentId); }
 
     nodes[id] = node;
     values[id] = {
@@ -119,7 +124,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         data,
         selector: Constant.Empty,
         region: regionId,
-        metadata: { active: true, region: false, masked }
+        metadata: { active: true, region: false, privacy, width: null, height: null }
     };
 
     updateSelector(values[id]);
@@ -206,37 +211,37 @@ export function iframe(node: Node): HTMLIFrameElement {
     return doc && iframeMap.has(doc) ? iframeMap.get(doc) : null;
 }
 
-function mask(node: Node, data: NodeInfo, masked: boolean): boolean {
+function getPrivacy(node: Node, data: NodeInfo, privacy: Privacy): Privacy {
     let attributes = data.attributes;
     let tag = data.tag.toUpperCase();
 
     // If this node was explicitly configured to contain sensitive content, use that information and return the value
-    if (maskedMap.has(node)) { return maskedMap.get(node); }
+    if (privacyMap.has(node)) { return privacyMap.get(node); }
 
     // Do not proceed if attributes are missing for the node
-    if (attributes === null || attributes === undefined) { return masked; }
+    if (attributes === null || attributes === undefined) { return privacy; }
 
-    // Check for blacklist fields (e.g. address, phone, etc.) only if the input node is not already masked
-    if (masked === false && tag === Constant.InputTag) {
+    // Check for disallowed list of fields (e.g. address, phone, etc.) only if the input node is not already masked
+    if (privacy === Privacy.None && tag === Constant.InputTag) {
         let field: string = Constant.Empty;
         // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
         for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
         for (let name of DISALLOWED_NAMES) {
             if (field.indexOf(name) >= 0) {
-                masked = true;
+                privacy = Privacy.MaskText;
                 continue;
             }
         }
     }
 
-    // Check for blacklist types (e.g. password, email, etc.) and set the masked property appropriately
-    if (Constant.Type in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.Type]) >= 0) { masked = true; }
+    // Check for disallowed list of types (e.g. password, email, etc.) and set the masked property appropriately
+    if (Constant.Type in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.Type]) >= 0) { privacy = Privacy.MaskText; }
 
     // Following two conditions supersede any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
-    if (Constant.MaskData in attributes) { masked = true; }
-    if (Constant.UnmaskData in attributes) { masked = false; }
+    if (Constant.MaskData in attributes) { privacy = Privacy.MaskTextImage; }
+    if (Constant.UnmaskData in attributes) { privacy = Privacy.None; }
 
-    return masked;
+    return privacy;
 }
 
 function diff(a: NodeInfo, b: NodeInfo, field: string): boolean {
@@ -323,14 +328,33 @@ export function regions(): NodeValue[] {
     return v;
 }
 
+export function boxes(): HTMLElement[] {
+    let output = [];
+    for (let id of boxMap) {
+        if (id in values && id in nodes) {
+            let v = values[id];
+            let e = nodes[id] as HTMLElement;
+            if (typeof e.getBoundingClientRect === "function") {
+                let r = e.getBoundingClientRect();
+                if (r.width >= 0 && r.height >= 0) {
+                    v.metadata.width = Math.round(r.width);
+                    v.metadata.height = Math.round(r.height);
+                }
+            }
+            output.push(e);
+        }
+    }
+    boxMap = [];
+    return output;
+}
+
 export function updates(): NodeValue[] {
     let output = [];
     for (let id of updateMap) {
         if (id in values) {
             let v = values[id];
             let p = v.parent;
-            let hasId = "attributes" in v.data && Constant.Id in v.data.attributes;
-            v.data.path = p === null || p in updateMap || hasId || v.selector.length === 0 ? null : values[p].selector;
+            v.data.path = p === null || updateMap.indexOf(p) >= 0 || v.selector.length === 0 ? null : values[p].selector;
             output.push(values[id]);
         }
     }

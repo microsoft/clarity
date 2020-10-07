@@ -28,6 +28,17 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                 regionData.push(region);
             }
             return { time, event, data: regionData };
+        case Data.Event.Box:
+            let boxData: Layout.BoxData[] = [];
+            for (let i = 2; i < tokens.length; i += 3) {
+                let box: Layout.BoxData = {
+                    id: tokens[i] as number,
+                    width: tokens[i + 1] as number / Data.Setting.BoxPrecision,
+                    height: tokens[i + 2] as number / Data.Setting.BoxPrecision
+                };
+                boxData.push(box);
+            }
+            return { time, event, data: boxData };
         case Data.Event.Discover:
         case Data.Event.Mutation:
             let lastType = null;
@@ -90,11 +101,18 @@ function process(node: any[] | number[], tagIndex: number): DomData {
     for (let i = tagIndex + 1; i < node.length; i++) {
         let token = node[i] as string;
         let keyIndex = token.indexOf("=");
+        let firstChar = token[0];
         let lastChar = token[token.length - 1];
         if (i === (node.length - 1) && output.tag === "STYLE") {
             value = token;
         } else if (lastChar === ">" && keyIndex === -1) {
             prefix = token;
+        } else if (output.tag !== Layout.Constant.TextTag && firstChar === Layout.Constant.Box && keyIndex === -1) {
+            let parts = token.split(Layout.Constant.Period);
+            if (parts.length === 2) {
+                output.width = num(parts[0]) / Data.Setting.BoxPrecision;
+                output.height = num(parts[1]) / Data.Setting.BoxPrecision;
+            }
         } else if (output.tag !== Layout.Constant.TextTag && keyIndex > 0) {
             hasAttribute = true;
             let k = token.substr(0, keyIndex);
@@ -123,4 +141,8 @@ function process(node: any[] | number[], tagIndex: number): DomData {
     if (value) { output.value = value; }
 
     return output;
+}
+
+function num(input: string): number {
+    return input ? parseInt(input, 36) : null;
 }

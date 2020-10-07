@@ -1,5 +1,5 @@
 import { Event, Metric, Token } from "@clarity-types/data";
-import { Constant, NodeInfo } from "@clarity-types/layout";
+import { Constant, NodeInfo, Privacy } from "@clarity-types/layout";
 import config from "@src/core/config";
 import mask from "@src/core/mask";
 import * as task from "@src/core/task";
@@ -7,6 +7,7 @@ import { time } from "@src/core/time";
 import tokenize from "@src/data/token";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
+import * as box from "./box";
 import * as region from "./region";
 import * as doc from "./document";
 import * as dom from "./dom";
@@ -32,6 +33,15 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             }
             queue(tokens);
             break;
+        case Event.Box:
+            let b = box.data;
+            for (let entry of b) {
+                tokens.push(entry.id);
+                tokens.push(entry.width);
+                tokens.push(entry.height);
+            }
+            queue(tokens);
+            break;
         case Event.Discover:
         case Event.Mutation:
             let values = dom.updates();
@@ -45,10 +55,12 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     if (data[key]) {
                         switch (key) {
                             case "tag":
+                                let m = value.metadata;
                                 tokens.push(value.id);
                                 if (value.parent && active) { tokens.push(value.parent); }
                                 if (value.previous && active) { tokens.push(value.previous); }
                                 metadata.push(value.position ? `${data[key]}~${value.position}` : data[key]);
+                                if (m.width && m.height) { metadata.push(`${Constant.Box}${str(m.width)}.${str(m.height)}`); }
                                 break;
                             case "path":
                                 metadata.push(`${value.data.path}>`);
@@ -56,7 +68,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                             case "attributes":
                                 for (let attr in data[key]) {
                                     if (data[key][attr] !== undefined) {
-                                        metadata.push(attribute(value.metadata.masked, attr, data[key][attr]));
+                                        metadata.push(attribute(value.metadata.privacy, attr, data[key][attr]));
                                     }
                                 }
                                 break;
@@ -64,7 +76,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                                 let parent = dom.getNode(value.parent);
                                 let parentTag = dom.get(parent) ? dom.get(parent).data.tag : null;
                                 let tag = value.data.tag === "STYLE" ? value.data.tag : parentTag;
-                                metadata.push(text(value.metadata.masked, tag, data[key]));
+                                metadata.push(text(value.metadata.privacy, tag, data[key]));
                                 break;
                         }
                     }
@@ -77,27 +89,31 @@ export default async function (type: Event, ts: number = null): Promise<void> {
     }
 }
 
-function attribute(masked: boolean, key: string, value: string): string {
+function str(input: number): string {
+    return input.toString(36);
+}
+
+function attribute(privacy: Privacy, key: string, value: string): string {
     switch (key) {
         case "src":
         case "srcset":
         case "title":
         case "alt":
-            return `${key}=${masked ? Constant.Empty : value}`;
+            return `${key}=${privacy === Privacy.MaskTextImage || privacy === Privacy.Exclude ? Constant.Empty : value}`;
         case "value":
         case "placeholder":
-            return `${key}=${masked ? mask(value) : value}`;
+            return `${key}=${privacy !== Privacy.None ? mask(value) : value}`;
         default:
             return `${key}=${value}`;
     }
 }
 
-function text(masked: boolean, tag: string, value: string): string {
+function text(privacy: Privacy, tag: string, value: string): string {
     switch (tag) {
         case "STYLE":
         case "TITLE":
             return value;
         default:
-            return masked ? mask(value) : value;
+            return privacy !== Privacy.None ? mask(value) : value;
     }
 }

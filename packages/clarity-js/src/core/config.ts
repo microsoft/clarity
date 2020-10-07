@@ -12,7 +12,8 @@ let config: Config = {
     regions: {},
     cookies: [],
     report: null,
-    upload: null
+    upload: null,
+    upgrade: null
 };
 
 export default config;
