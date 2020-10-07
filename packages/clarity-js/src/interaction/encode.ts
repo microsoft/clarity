@@ -127,6 +127,8 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.target);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
+                tokens.push(entry.data.reaction);
+                tokens.push(entry.data.context);
                 queue(tokens, false);
             }
             timeline.reset();
