@@ -1,4 +1,5 @@
-import { BooleanFlag, Token, Upload, Envelope } from "@clarity-types/data";
+import { BooleanFlag, Constant, Token, Upload, Envelope } from "@clarity-types/data";
+import config from "@src/core/config";
 import { time } from "@src/core/time";
 import version from "@src/core/version";
 import * as metadata from "@src/data/metadata";
@@ -26,6 +27,8 @@ export function stop(): void {
 }
 
 export function envelope(last: boolean): Token[] {
+  // Update the session storage once we are ready to send our first payload back to the server
+  if (data.sequence === 0) { setSession(data.sessionId, data.pageNum); }
   data.start = data.start + data.duration;
   data.duration = time() - data.start;
   data.sequence++;
@@ -43,4 +46,11 @@ export function envelope(last: boolean): Token[] {
     data.upload,
     data.end
   ];
+}
+
+function setSession(id: string, count: number): void {
+  if (config.track && sessionStorage) {
+    let ts = Math.round(Date.now());
+    sessionStorage.setItem(Constant.StorageKey, `${id}${Constant.Separator}${ts}${Constant.Separator}${count}`);
+  }
 }

@@ -14,12 +14,12 @@ export function start(): void {
   const title = document && document.title ? document.title : Constant.Empty;
 
   // Populate ids for this page
-  let s = session(ts);
+  let session = getSession(ts);
   data = {
     projectId: config.projectId || hash(location.host),
     userId: user(),
-    sessionId: s[0],
-    pageNum: s[1]
+    sessionId: session[0],
+    pageNum: session[1]
   }
 
   // Check if the session should start off in full mode based on the signal from session storage
@@ -80,7 +80,7 @@ function shortid(): string {
   return id.toString(36);
 }
 
-function session(ts: number): [string, number] {
+function getSession(ts: number): [string, number] {
   let id = shortid();
   let count = 1;
   if (config.track && sessionStorage) {
@@ -92,7 +92,6 @@ function session(ts: number): [string, number] {
         count = num(parts[2]) + 1;
       }
     }
-    sessionStorage.setItem(Constant.StorageKey, `${id}${Constant.Separator}${ts}${Constant.Separator}${count}`);
   }
   return [id, count];
 }

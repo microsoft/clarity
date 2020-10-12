@@ -99,17 +99,22 @@ function upload(final: boolean = false): void {
     // could inject function arguments for internal tracking (likely stack traces for script errors).
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
     let last = final === true;
-    let a = `[${analysis.join()}]`;
-    let p = config.lean ? Constant.Empty : `[${playback.join()}]`;
-    let encoded: EncodedPayload = {e: JSON.stringify(envelope.envelope(last)), a, p};
-    let payload = stringify(encoded);
+    let e = JSON.stringify(envelope.envelope(last));
     let sequence = envelope.data.sequence;
+    let a = `[${analysis.join()}]`;
+
+    // Check if we can send playback bytes over the wire or not
+    // For better instrumentation coverage, we send playback bytes from second sequence onwards
+    let sendPlaybackBytes = config.lean === false && sequence > 1;
+    let p = sendPlaybackBytes ? `[${playback.join()}]` : Constant.Empty;
+    let encoded: EncodedPayload = {e, a, p};
+    let payload = stringify(encoded);
     metric.sum(Metric.TotalBytes, payload.length);
     send(payload, sequence, last);
 
     // Clear out events now that payload has been dispatched
     analysis = [];
-    if (!config.lean) {
+    if (sendPlaybackBytes) {
         playback = [];
         playbackBytes = 0;
     }
