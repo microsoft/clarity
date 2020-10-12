@@ -32,14 +32,15 @@ export interface Tasks {
     [key: number]: TaskInfo;
 }
 
-export interface Regions {
-    /* In the following key-value pair, key is the given name and value is CSS selector */
-    [key: string]: string;
-}
 export interface TaskInfo {
     start: number;
     calls: number;
     yield: number;
+}
+
+export interface Regions {
+    /* In the following key-value pair, key is the given name and value is CSS selector */
+    [key: string]: string;
 }
 
 export interface RequestIdleCallbackOptions {

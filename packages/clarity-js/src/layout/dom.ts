@@ -1,3 +1,4 @@
+import { Setting } from "@clarity-types/data";
 import { Constant, NodeChange, NodeInfo, NodeValue, Privacy, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
@@ -12,7 +13,6 @@ const DISALLOWED_NAMES = ["address", "cell", "code", "dob", "email", "mobile", "
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
 let changes: NodeChange[][] = [];
-let boxMap: number[] = [];
 let updateMap: number[] = [];
 let selectorMap: number[] = [];
 
@@ -37,7 +37,6 @@ function reset(): void {
     index = 1;
     nodes = [];
     values = [];
-    boxMap = [];
     updateMap = [];
     changes = [];
     selectorMap = [];
@@ -111,9 +110,6 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     // If there's an explicit region attribute set on the element, use it to mark a region on the page
     if (data.attributes && Constant.RegionData in data.attributes) { regionMap.set(node, data.attributes[Constant.RegionData]); }
 
-    // If this element is a text node, and is masked, then track box model for the parent element
-    if (data.tag === Constant.TextTag && privacy !== Privacy.None && parentId && boxMap.indexOf(parentId) < 0) { boxMap.push(parentId); }
-
     nodes[id] = node;
     values[id] = {
         id,
@@ -124,10 +120,11 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         data,
         selector: Constant.Empty,
         region: regionId,
-        metadata: { active: true, region: false, privacy, width: null, height: null }
+        metadata: { active: true, region: false, privacy, size: null }
     };
 
     updateSelector(values[id]);
+    size(values[id], parentValue);
     metadata(data.tag, id, parentId);
     track(id, source);
 }
@@ -328,26 +325,6 @@ export function regions(): NodeValue[] {
     return v;
 }
 
-export function boxes(): HTMLElement[] {
-    let output = [];
-    for (let id of boxMap) {
-        if (id in values && id in nodes) {
-            let v = values[id];
-            let e = nodes[id] as HTMLElement;
-            if (typeof e.getBoundingClientRect === "function") {
-                let r = e.getBoundingClientRect();
-                if (r.width >= 0 && r.height >= 0) {
-                    v.metadata.width = Math.round(r.width);
-                    v.metadata.height = Math.round(r.height);
-                }
-            }
-            output.push(e);
-        }
-    }
-    boxMap = [];
-    return output;
-}
-
 export function updates(): NodeValue[] {
     let output = [];
     for (let id of updateMap) {
@@ -369,6 +346,18 @@ function remove(id: number, source: Source): void {
         value.parent = null;
         track(id, source);
     }
+}
+
+function size(value: NodeValue, parent: NodeValue): void {
+    let data = value.data;
+    let tag = data.tag;
+
+    // If this element is a text node, is masked, and longer than configured length, then track box model for the parent element
+    let isLongText = tag === Constant.TextTag && data.value && data.value.length > Setting.ResizeObserverThreshold;
+    if (isLongText && value.metadata.privacy !== Privacy.None && parent && parent.metadata.size === null) { parent.metadata.size = []; }
+
+    // If this element is a image node, and is masked, then track box model for the current element
+    if (data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.MaskTextImage) { value.metadata.size = []; }
 }
 
 function metadata(tag: string, id: number, parentId: number): void {

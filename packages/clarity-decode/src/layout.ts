@@ -1,7 +1,9 @@
 import { helper, Data, Layout } from "clarity-js";
 import { DomData, LayoutEvent } from "../types/layout";
 
-let placeholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNiOAMAANUAz5n+TlUAAAAASUVORK5CYII=";
+const MaskedChar = "•";
+const AverageWordLength = 6;
+const Space = " ";
 let hashes: { [key: number]: string } = {};
 
 export function reset(): void {
@@ -85,7 +87,7 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
 function process(node: any[] | number[], tagIndex: number): DomData {
     let [tag, position]: string[]  = node[tagIndex] ? node[tagIndex].split("~") : [node[tagIndex]];
     let output: DomData = {
-        id: node[0],
+        id: Math.abs(node[0]),
         parent: tagIndex > 1 ? node[1] : null,
         previous: tagIndex > 2 ? node[2] : null,
         tag,
@@ -93,6 +95,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
         selector: null,
         hash: null
     };
+    let masked = node[0] < 0;
     let hasAttribute = false;
     let attributes: Layout.Attributes = {};
     let value = null;
@@ -108,7 +111,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
         } else if (lastChar === ">" && keyIndex === -1) {
             prefix = token;
         } else if (output.tag !== Layout.Constant.TextTag && firstChar === Layout.Constant.Box && keyIndex === -1) {
-            let parts = token.split(Layout.Constant.Period);
+            let parts = token.substr(1).split(Layout.Constant.Period);
             if (parts.length === 2) {
                 output.width = num(parts[0]) / Data.Setting.BoxPrecision;
                 output.height = num(parts[1]) / Data.Setting.BoxPrecision;
@@ -117,16 +120,9 @@ function process(node: any[] | number[], tagIndex: number): DomData {
             hasAttribute = true;
             let k = token.substr(0, keyIndex);
             let v = token.substr(keyIndex + 1);
-            switch (k) {
-                case "src":
-                    v = v.length === 0 && output.tag === "IMG" ? placeholderImage : v;
-                    break;
-                default:
-                    break;
-            }
             attributes[k] = v;
         } else if (output.tag === Layout.Constant.TextTag) {
-            value = token;
+            value = masked ? unmask(token) : token;
         }
     }
 
@@ -145,4 +141,21 @@ function process(node: any[] | number[], tagIndex: number): DomData {
 
 function num(input: string): number {
     return input ? parseInt(input, 36) : null;
+}
+
+function unmask(value: string): string {
+    let trimmed = value.trim();
+    if (trimmed.length > 0) {
+        let length = num(trimmed);
+        if (length > 0) {
+            let quotient = Math.floor(length / AverageWordLength);
+            let remainder = length % AverageWordLength;
+            let output = Array(remainder + 1).join(MaskedChar);
+            for (let i = 0; i < quotient; i++) {
+                output += (i === 0 && remainder === 0 ? MaskedChar : Space) + Array(AverageWordLength).join(MaskedChar);
+            }
+            return output;
+        }
+    }
+    return value;
 }

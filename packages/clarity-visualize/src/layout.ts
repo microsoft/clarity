@@ -1,12 +1,9 @@
 import { Data, Layout } from "clarity-decode";
+import { Asset, Constant, Setting } from "@clarity-types/visualize";
 import { state } from "./clarity";
 import { lean } from "./data";
 
 const TIMEOUT = 3000;
-const HOVER = ":hover";
-const CLARITY_HOVER = "clarity-hover";
-const CLARITY_REGION = "clarity-region";
-const ADOPTED_STYLE_SHEET = "clarity-adopted-style";
 let visualizeRegion = true;
 let stylesheets: Promise<void>[] = [];
 let nodes = {};
@@ -30,7 +27,7 @@ export function region(event: Layout.RegionEvent): void {
             let el = element(bm.id) as HTMLElement;
             if (rectangle) {
                 let layer = el ? el : doc.createElement("DIV");
-                layer.className = CLARITY_REGION;
+                layer.className = Constant.Region;
                 layer.style.left = rectangle.x + "px";
                 layer.style.top = rectangle.y + "px";
                 layer.style.width = (rectangle.w - 2) + "px";
@@ -66,10 +63,10 @@ export function update(): void {
     if (lean === false && visualizeRegion) {
         let doc = state.player.contentDocument;
         visualizeRegion = lean;
-        let layers = doc.getElementsByClassName(CLARITY_REGION);
+        let layers = doc.getElementsByClassName(Constant.Region);
         // Hide all visible regions if lean mode is set to false
         for (let i = 0; i < layers.length; i++) {
-            (layers[i] as HTMLDivElement).style.display = "none";
+            (layers[i] as HTMLDivElement).style.display = Constant.None;
         }
     }
 }
@@ -81,13 +78,13 @@ export function element(nodeId: number): Node {
 export async function dom(event: Layout.DomEvent): Promise<void> {
     if (event) {
         // When setting up player for the first time, start off with hidden IFRAME
-        state.player.style.visibility = "hidden";
+        state.player.style.visibility = Constant.Hidden;
         // Render all DOM events to reconstruct the page
         markup(event);
         // Wait on all stylesheets to finish loading
         await Promise.all(stylesheets);
         // Toggle back the visibility of IFRAME
-        state.player.style.visibility = "visible";
+        state.player.style.visibility = Constant.Visible;
     }
 }
 
@@ -133,10 +130,10 @@ export function markup(event: Layout.DomEvent): void {
                         // Support for adoptedStyleSheet is limited and not available in all browsers.
                         // To ensure that we can replay session in any browser, we turn adoptedStyleSheets from recording
                         // into classic style tags at the playback time.
-                        if (shadowRoot.firstChild && (shadowRoot.firstChild as HTMLElement).id === ADOPTED_STYLE_SHEET) {
+                        if (shadowRoot.firstChild && (shadowRoot.firstChild as HTMLElement).id === Constant.AdoptedStyleSheet) {
                             shadowStyle = shadowRoot.firstChild as HTMLStyleElement;
                         }
-                        shadowStyle.id = ADOPTED_STYLE_SHEET;
+                        shadowStyle.id = Constant.AdoptedStyleSheet;
                         shadowStyle.textContent = node.attributes["style"];
                         shadowRoot.appendChild(shadowStyle);
                     }
@@ -161,7 +158,7 @@ export function markup(event: Layout.DomEvent): void {
                         if (htmlDoc.head) { htmlDoc.head.parentNode.removeChild(htmlDoc.head); }
                         if (htmlDoc.body) { htmlDoc.body.parentNode.removeChild(htmlDoc.body); }
                     }
-                    setAttributes(htmlDoc.documentElement as HTMLElement, node.attributes);
+                    setAttributes(htmlDoc.documentElement as HTMLElement, node);
                     nodes[node.id] = htmlDoc.documentElement;
                 }
                 break;
@@ -174,15 +171,20 @@ export function markup(event: Layout.DomEvent): void {
                         base.href = node.attributes[Layout.Constant.Base];
                         headElement.appendChild(base);
                     }
+
+                    // Add custom styles to assist with visualization
+                    let custom = doc.createElement("style");
+                    custom.innerText = getCustomStyle();
+                    headElement.appendChild(custom);
                 }
-                setAttributes(headElement as HTMLElement, node.attributes);
+                setAttributes(headElement as HTMLElement, node);
                 insert(node, parent, headElement, pivot);
                 break;
             case "LINK":
                 let linkElement = element(node.id) as HTMLLinkElement;
                 linkElement = linkElement ? linkElement : createElement(doc, node.tag) as HTMLLinkElement;
                 if (!node.attributes) { node.attributes = {}; }
-                setAttributes(linkElement as HTMLElement, node.attributes);
+                setAttributes(linkElement as HTMLElement, node);
                 if ("rel" in node.attributes && node.attributes["rel"] === "stylesheet") {
                     stylesheets.push(new Promise((resolve: () => void): void => {
                         linkElement.onload = linkElement.onerror = style.bind(this, linkElement, resolve);
@@ -194,7 +196,7 @@ export function markup(event: Layout.DomEvent): void {
             case "STYLE":
                 let styleElement = element(node.id) as HTMLStyleElement;
                 styleElement = styleElement ? styleElement : doc.createElement(node.tag) as HTMLStyleElement;
-                setAttributes(styleElement as HTMLElement, node.attributes);
+                setAttributes(styleElement as HTMLElement, node);
                 styleElement.textContent = node.value;
                 insert(node, parent, styleElement, pivot);
                 style(styleElement);
@@ -203,19 +205,16 @@ export function markup(event: Layout.DomEvent): void {
                 let iframeElement = element(node.id) as HTMLElement;
                 iframeElement = iframeElement ? iframeElement : createElement(doc, node.tag);
                 if (!node.attributes) { node.attributes = {}; }
-                node.attributes["data-id"] = `${node.id}`;
-                node.attributes["data-hash"] = `${node.hash}`;
-                setAttributes(iframeElement as HTMLElement, node.attributes);
-                if (!(Layout.Constant.SameOrigin in node.attributes)) { iframeElement.style.backgroundColor = "maroon"; }
+                setAttributes(iframeElement as HTMLElement, node);
                 insert(node, parent, iframeElement, pivot);
                 break;
             default:
                 let domElement = element(node.id) as HTMLElement;
                 domElement = domElement ? domElement : createElement(doc, node.tag);
                 if (!node.attributes) { node.attributes = {}; }
-                node.attributes["data-id"] = `${node.id}`;
-                node.attributes["data-hash"] = `${node.hash}`;
-                setAttributes(domElement as HTMLElement, node.attributes);
+                node.attributes[Constant.Id] = `${node.id}`;
+                node.attributes[Constant.Hash] = `${node.hash}`;
+                setAttributes(domElement as HTMLElement, node);
                 resize(domElement, node.width, node.height);
                 insert(node, parent, domElement, pivot);
                 break;
@@ -231,8 +230,8 @@ function style(node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = n
         const sheet = node.sheet as CSSStyleSheet;
         let cssRules = sheet ? sheet.cssRules : [];
         for (let i = 0; i < cssRules.length; i++) {
-            if (cssRules[i].cssText.indexOf(HOVER) >= 0) {
-                let css = cssRules[i].cssText.replace(/:hover/g, `[${CLARITY_HOVER}]`);
+            if (cssRules[i].cssText.indexOf(Constant.Hover) >= 0) {
+                let css = cssRules[i].cssText.replace(/:hover/g, `[${Constant.CustomHover}]`);
                 sheet.removeRule(i);
                 sheet.insertRule(css, i);
             }
@@ -282,7 +281,8 @@ function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node
     nodes[data.id] = node;
 }
 
-function setAttributes(node: HTMLElement, attributes: object): void {
+function setAttributes(node: HTMLElement, data: Layout.DomData): void {
+    let attributes = data.attributes;
     let tag = node.nodeType === Node.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
     // First remove all its existing attributes
     if (node.attributes) {
@@ -300,10 +300,19 @@ function setAttributes(node: HTMLElement, attributes: object): void {
                 let v = attributes[attribute];
                 if (attribute.indexOf("xlink:") === 0) {
                     node.setAttributeNS("http://www.w3.org/1999/xlink", attribute, v);
+                } else if (attribute.indexOf(Layout.Constant.SameOrigin) === 0) {
+                    node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
                 } else if (attribute.indexOf("*") === 0) {
                     // Do nothing if we encounter internal Clarity attributes
                 } else if (tag === "iframe" && (attribute.indexOf("src") === 0 || attribute.indexOf("allow") === 0) || attribute === "sandbox") {
                     node.setAttribute(`data-clarity-${attribute}`, v);
+                } else if (tag === "img" && attribute.indexOf("src") === 0 && (v === null || v.length === 0)) {
+                    node.setAttribute(attribute, Asset.Transparent);
+                    let size = Constant.Large;
+                    if (data.width) {
+                        size = data.width <= Setting.Medium ? Constant.Medium : (data.width <= Setting.Small ? Constant.Small : size);
+                    }
+                    node.setAttribute(Constant.Hide, size);
                 } else {
                     node.setAttribute(attribute, v);
                 }
@@ -313,4 +322,13 @@ function setAttributes(node: HTMLElement, attributes: object): void {
             }
         }
     }
+}
+
+function getCustomStyle(): string {
+    // tslint:disable-next-line: max-line-length
+    return `img[${Constant.Hide}] { background-color: #CCC; background-image: url(${Asset.Hide}); background-repeat:no-repeat; background-position: center; }` +
+        `img[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
+        `img[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
+        `img[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
+        `iframe[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }`;
 }
