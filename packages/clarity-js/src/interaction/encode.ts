@@ -60,7 +60,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(cTarget.hash);
                 if (cTarget.region) { tokens.push(cTarget.region); }
                 queue(tokens);
-                timeline.track(entry.time, entry.event, cTarget.id, entry.data.x, entry.data.y);
+                timeline.track(entry.time, entry.event, cTarget.id, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
             click.reset();
             break;

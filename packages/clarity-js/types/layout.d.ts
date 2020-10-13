@@ -33,6 +33,8 @@ export const enum Constant {
     Function = "function",
     InputTag = "INPUT",
     IFrameTag = "IFRAME",
+    ImageTag = "IMG",
+    SvgTag = "svg:svg",
     BaseTag = "BASE",
     NativeCode = "[native code]",
     DocumentTag = "*D",
@@ -44,7 +46,7 @@ export const enum Constant {
     CharacterData = "characterData",
     LoadEvent = "load",
     Pixel = "px",
-    BorderBox = "border-box"
+    BorderBox = "border-box",
 }
 
 export const enum JsonLD { 
@@ -105,8 +107,7 @@ export interface NodeMeta {
     active: boolean;
     region: boolean;
     privacy: Privacy;
-    width: number;
-    height: number;
+    size: number[];
 }
 
 export interface NodeChange {

@@ -125,6 +125,8 @@ export const enum Setting {
     CollectionLimit = 128, // Number of unique entries for dimensions
     ClickPrecision = 32767, // 2^15 - 1
     BoxPrecision = 100, // Up to 2 decimal points (e.g. 34.56)
+    ResizeObserverThreshold = 15, // At least 15 characters before we attach a resize observer for the node
+    ScriptErrorLimit = 5, // Do not send the same script error more than 5 times per page
 }
 
 export const enum Constant {
@@ -154,7 +156,8 @@ export const enum Constant {
     Upgrade = "UPGRADE",
     UserId = "userId",
     SessionId = "sessionId",
-    PageId = "pageId"
+    PageId = "pageId",
+    ResizeObserver = "ResizeObserver"
 }
 
 /* Helper Interfaces */

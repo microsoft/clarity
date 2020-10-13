@@ -8,9 +8,9 @@ import tokenize from "@src/data/token";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
 import * as box from "./box";
-import * as region from "./region";
 import * as doc from "./document";
 import * as dom from "./dom";
+import * as region from "./region";
 
 export default async function (type: Event, ts: number = null): Promise<void> {
     let eventTime = ts || time()
@@ -40,6 +40,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 tokens.push(entry.width);
                 tokens.push(entry.height);
             }
+            box.reset();
             queue(tokens);
             break;
         case Event.Discover:
@@ -51,16 +52,18 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 let data: NodeInfo = value.data;
                 let active = value.metadata.active;
                 let keys = active ? ["tag", "path", "attributes", "value"] : ["tag"];
+                box.compute(value.id);
                 for (let key of keys) {
                     if (data[key]) {
                         switch (key) {
                             case "tag":
-                                let m = value.metadata;
-                                tokens.push(value.id);
+                                let size = value.metadata.size;
+                                let factor = data[key] === Constant.TextTag && value.metadata.privacy !== Privacy.None ? -1 : 1;
+                                tokens.push(value.id * factor);
                                 if (value.parent && active) { tokens.push(value.parent); }
                                 if (value.previous && active) { tokens.push(value.previous); }
                                 metadata.push(value.position ? `${data[key]}~${value.position}` : data[key]);
-                                if (m.width && m.height) { metadata.push(`${Constant.Box}${str(m.width)}.${str(m.height)}`); }
+                                if (size && size.length === 2) { metadata.push(`${Constant.Box}${str(size[0])}.${str(size[1])}`); }
                                 break;
                             case "path":
                                 metadata.push(`${value.data.path}>`);
@@ -114,6 +117,6 @@ function text(privacy: Privacy, tag: string, value: string): string {
         case "TITLE":
             return value;
         default:
-            return privacy !== Privacy.None ? mask(value) : value;
+            return privacy !== Privacy.None ? mask(value, true) : value;
     }
 }

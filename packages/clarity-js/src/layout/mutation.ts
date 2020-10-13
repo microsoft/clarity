@@ -7,7 +7,6 @@ import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import * as summary from "@src/data/summary";
 import * as log from "@src/diagnostic/log";
-import * as box from "@src/layout/box";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
@@ -90,7 +89,6 @@ function handle(m: MutationRecord[]): void {
   task.schedule(process, Priority.High).then((): void => {
       measure(doc.compute)();
       measure(region.compute)();
-      measure(box.compute)();
   });
 }
 

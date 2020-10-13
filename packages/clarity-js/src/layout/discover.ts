@@ -4,7 +4,6 @@ import { Source } from "@clarity-types/layout";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
-import * as box from "@src/layout/box";
 import * as doc from "@src/layout/document";
 import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
@@ -14,7 +13,6 @@ export function start(): void {
     task.schedule(discover, Priority.High).then((): void => {
         measure(doc.compute)();
         measure(region.compute)();
-        measure(box.compute)();
     });
 }
 
