@@ -76,10 +76,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                                 }
                                 break;
                             case "value":
-                                let parent = dom.getNode(value.parent);
-                                let parentTag = dom.get(parent) ? dom.get(parent).data.tag : null;
-                                let tag = value.data.tag === "STYLE" ? value.data.tag : parentTag;
-                                metadata.push(text(value.metadata.privacy, tag, data[key]));
+                                metadata.push(value.metadata.privacy !== Privacy.None ? mask(data[key], true) : data[key]);
                                 break;
                         }
                     }
@@ -108,15 +105,5 @@ function attribute(privacy: Privacy, key: string, value: string): string {
             return `${key}=${privacy !== Privacy.None ? mask(value) : value}`;
         default:
             return `${key}=${value}`;
-    }
-}
-
-function text(privacy: Privacy, tag: string, value: string): string {
-    switch (tag) {
-        case "STYLE":
-        case "TITLE":
-            return value;
-        default:
-            return privacy !== Privacy.None ? mask(value, true) : value;
     }
 }

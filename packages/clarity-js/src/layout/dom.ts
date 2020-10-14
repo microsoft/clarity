@@ -95,17 +95,19 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let previousId = getPreviousId(node);
     let privacy = config.content ? Privacy.None : Privacy.MaskText;
     let parentValue = null;
+    let parentTag = Constant.Empty;
     let regionId = regionMap.has(node) ? getId(node) : null;
 
     if (parentId >= 0 && values[parentId]) {
         parentValue = values[parentId];
+        parentTag = parentValue.data.tag;
         parentValue.children.push(id);
         regionId = regionId === null ? parentValue.region : regionId;
         privacy = parentValue.metadata.privacy;
     }
 
     // Check to see if this particular node should be masked or not
-    privacy = getPrivacy(node, data, privacy);
+    privacy = getPrivacy(node, data, parentTag, privacy);
 
     // If there's an explicit region attribute set on the element, use it to mark a region on the page
     if (data.attributes && Constant.RegionData in data.attributes) { regionMap.set(node, data.attributes[Constant.RegionData]); }
@@ -208,7 +210,7 @@ export function iframe(node: Node): HTMLIFrameElement {
     return doc && iframeMap.has(doc) ? iframeMap.get(doc) : null;
 }
 
-function getPrivacy(node: Node, data: NodeInfo, privacy: Privacy): Privacy {
+function getPrivacy(node: Node, data: NodeInfo, parentTag: string, privacy: Privacy): Privacy {
     let attributes = data.attributes;
     let tag = data.tag.toUpperCase();
 
@@ -237,6 +239,10 @@ function getPrivacy(node: Node, data: NodeInfo, privacy: Privacy): Privacy {
     // Following two conditions supersede any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
     if (Constant.MaskData in attributes) { privacy = Privacy.MaskTextImage; }
     if (Constant.UnmaskData in attributes) { privacy = Privacy.None; }
+
+    // If it's a text node belonging to a STYLE or TITLE tag; then reset the privacy setting to ensure we capture the content
+    let cTag = tag === Constant.TextTag ? parentTag : tag;
+    if (cTag === Constant.StyleTag || cTag === Constant.TitleTag) { privacy = Privacy.None; }
 
     return privacy;
 }
