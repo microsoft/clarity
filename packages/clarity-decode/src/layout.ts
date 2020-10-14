@@ -145,7 +145,7 @@ function num(input: string): number {
 
 function unmask(value: string): string {
     let trimmed = value.trim();
-    if (trimmed.length > 0) {
+    if (trimmed.length > 0 && trimmed.indexOf(Space) === -1) {
         let length = num(trimmed);
         if (length > 0) {
             let quotient = Math.floor(length / AverageWordLength);
