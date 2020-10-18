@@ -1,7 +1,6 @@
 import { helper, Data, Layout } from "clarity-js";
 import { DomData, LayoutEvent } from "../types/layout";
 
-const MaskedChar = "•";
 const AverageWordLength = 6;
 const Space = " ";
 let hashes: { [key: number]: string } = {};
@@ -150,9 +149,9 @@ function unmask(value: string): string {
         if (length > 0) {
             let quotient = Math.floor(length / AverageWordLength);
             let remainder = length % AverageWordLength;
-            let output = Array(remainder + 1).join(MaskedChar);
+            let output = Array(remainder + 1).join(Data.Constant.Mask);
             for (let i = 0; i < quotient; i++) {
-                output += (i === 0 && remainder === 0 ? MaskedChar : Space) + Array(AverageWordLength).join(MaskedChar);
+                output += (i === 0 && remainder === 0 ? Data.Constant.Mask : Space) + Array(AverageWordLength).join(Data.Constant.Mask);
             }
             return output;
         }

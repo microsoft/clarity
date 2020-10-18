@@ -16,12 +16,14 @@ const CLARITY_TOUCH_RING = "clarity-touch-ring";
 const TITLE = "title";
 const ROUND = "round";
 const PIXEL = "px";
+const TRAIL_START_COLOR = [242,97,12]; // rgb(242,97,12)
+const TRAIL_END_COLOR = [249,220,209]; // rgb(249,220,209)
 
 const config = {
-    pointerWidth: 32,
-    pointerHeight: 32,
-    pointerOffsetX: 3,
-    pointerOffsetY: 2,
+    pointerWidth: 29,
+    pointerHeight: 38,
+    pointerOffsetX: 4,
+    pointerOffsetY: 4,
     clickWidth: 22,
     clickHeight: 22,
     pixelLife: 3000,
@@ -122,10 +124,10 @@ export function pointer(event: Interaction.PointerEvent): void {
             "@keyframes disappear { 90% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(1.3, 1.3); opacity: 0; } }" +
             `#${CLARITY_CANVAS} { position: absolute; left: 0; top: 0; z-index: ${config.zIndex} }` +
             `#${CLARITY_POINTER} { position: absolute; z-index: ${config.zIndex + 2}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
-            `.${CLARITY_CLICK}, .${CLARITY_CLICK_RING}, .${CLARITY_TOUCH}, .${CLARITY_TOUCH_RING} { position: absolute; z-index: ${config.zIndex + 1}; border-radius: 50%; background: radial-gradient(rgba(255,0,0,0.8), transparent); width: ${config.clickWidth}px; height: ${config.clickHeight}px;}` +
-            `.${CLARITY_CLICK_RING} { background: transparent; border: 1px solid rgba(255,0,0,0.8); }` +
+            `.${CLARITY_CLICK}, .${CLARITY_CLICK_RING}, .${CLARITY_TOUCH}, .${CLARITY_TOUCH_RING} { position: absolute; z-index: ${config.zIndex + 1}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${config.clickWidth}px; height: ${config.clickHeight}px;}` +
+            `.${CLARITY_CLICK_RING} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
             `.${CLARITY_TOUCH} { background: radial-gradient(rgba(255,255,0,1), transparent); }` +
-            `.${CLARITY_TOUCH_RING} { background: transparent; border: 1px solid rgba(255,0,0,0.8); }` +
+            `.${CLARITY_TOUCH_RING} { background: transparent; border: 1px solid rgba(255,255,0,0.8); }` +
             `.${CLARITY_POINTER_CLICK} { background-image: url(${Asset.Click}); }` +
             `.${CLARITY_POINTER_NONE} { background: none; }` +
             `.${CLARITY_POINTER_MOVE} { background-image: url(${Asset.Pointer}); }`;
@@ -327,26 +329,11 @@ export function trail(now: number): void {
 }
 
 function color(factor: number): string {
-    let range: number = ((factor * 100) % 25) / 25.0;
-    let r: number = 0;
-    let g: number = 0;
-    let b: number = 0;
-    if (factor === 1) {
-        r = 255;
-    } else if (factor >= 0.75) {
-        r = 255;
-        g = Math.round(255 - 255 * range);
-    } else if (factor >= 0.5) {
-        r = Math.round(255 * range);
-        g = 255;
-    } else if (factor >= 0.25) {
-        g = 255;
-        b = Math.round(255 - 255 * range);
-    } else {
-        g = Math.round(255 * range);
-        b = 255;
-    }
-    return `rgba(${r}, ${g}, ${b}, ${factor})`;
+    let s = TRAIL_START_COLOR;
+    let e = TRAIL_END_COLOR;
+    let c = [];
+    for (let i = 0; i < 3; i++) { c[i] = Math.round(e[i] + factor * (s[i] - e[i])); }
+    return `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${factor})`;
 }
 
 // Reference: https://en.wikipedia.org/wiki/Cubic_Hermite_spline#Cardinal_spline

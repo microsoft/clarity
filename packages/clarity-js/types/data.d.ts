@@ -157,7 +157,8 @@ export const enum Constant {
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
-    ResizeObserver = "ResizeObserver"
+    ResizeObserver = "ResizeObserver",
+    Mask = "•"
 }
 
 /* Helper Interfaces */
