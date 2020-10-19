@@ -126,8 +126,8 @@ export function pointer(event: Interaction.PointerEvent): void {
             `#${CLARITY_POINTER} { position: absolute; z-index: ${config.zIndex + 2}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
             `.${CLARITY_CLICK}, .${CLARITY_CLICK_RING}, .${CLARITY_TOUCH}, .${CLARITY_TOUCH_RING} { position: absolute; z-index: ${config.zIndex + 1}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${config.clickWidth}px; height: ${config.clickHeight}px;}` +
             `.${CLARITY_CLICK_RING} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
-            `.${CLARITY_TOUCH} { background: radial-gradient(rgba(255,255,0,1), transparent); }` +
-            `.${CLARITY_TOUCH_RING} { background: transparent; border: 1px solid rgba(255,255,0,0.8); }` +
+            `.${CLARITY_TOUCH} { background: radial-gradient(rgba(242,97,12,1), transparent); }` +
+            `.${CLARITY_TOUCH_RING} { background: transparent; border: 1px solid rgba(242,97,12,0.8); }` +
             `.${CLARITY_POINTER_CLICK} { background-image: url(${Asset.Click}); }` +
             `.${CLARITY_POINTER_NONE} { background: none; }` +
             `.${CLARITY_POINTER_MOVE} { background-image: url(${Asset.Pointer}); }`;
