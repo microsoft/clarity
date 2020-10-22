@@ -169,13 +169,15 @@ function transform(): Heatmap[] {
 
 function visible(el: HTMLElement, r: DOMRect, height: number): boolean {
     let doc = state.player.contentDocument;
-    let elements = doc.elementsFromPoint(r.left + (r.width / 2), r.top + (r.height / 2));
-    let visibility = false;
-    for (let e of elements) {
-        // Ignore if top element ends up being the canvas element we added for heatmap visualization
-        if (e.tagName === Constant.Canvas || (e.id && e.id.indexOf(Constant.ClarityPrefix) === 0)) { continue; }
-        visibility = e === el;
-        break;
+    let elements = doc.elementsFromPoint(r.left, r.top);
+    let visibility = r.height > height ? true : false;
+    if (visibility === false) {
+        for (let e of elements) {
+            // Ignore if top element ends up being the canvas element we added for heatmap visualization
+            if (e.tagName === Constant.Canvas || (e.id && e.id.indexOf(Constant.ClarityPrefix) === 0)) { continue; }
+            visibility = e === el;
+            break;
+        }
     }
     return visibility && r.bottom >= 0 && r.top <= height;
 }
