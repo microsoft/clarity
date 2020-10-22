@@ -18,7 +18,7 @@ export function reset(): void {
 
 export function track(time: number,
     event: Event,
-    target: string,
+    hash: string,
     x: number,
     y: number,
     reaction: number = BooleanFlag.True,
@@ -28,7 +28,7 @@ export function track(time: number,
         event: Event.Timeline,
         data: {
             type: event,
-            target,
+            hash,
             x,
             y,
             reaction,

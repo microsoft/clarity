@@ -124,7 +124,7 @@ export default async function (type: Event): Promise<void> {
                 let entry = timeline.updates[i];
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.type);
-                tokens.push(entry.data.target);
+                tokens.push(entry.data.hash);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
                 tokens.push(entry.data.reaction);
