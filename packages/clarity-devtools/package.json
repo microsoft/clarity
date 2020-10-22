@@ -1,6 +1,6 @@
 {
   "name": "clarity-devtools",
-  "version": "0.6.0-beta.13",
+  "version": "0.6.0-beta.14",
   "private": true,
   "description": "Adds Clarity debugging support to browser devtools",
   "author": "Microsoft Corp.",
@@ -24,9 +24,9 @@
     "url": "https://github.com/Microsoft/clarity/issues"
   },
   "dependencies": {
-    "clarity-decode": "^0.6.0-beta.13",
-    "clarity-js": "^0.6.0-beta.13",
-    "clarity-visualize": "^0.6.0-beta.13"
+    "clarity-decode": "^0.6.0-beta.14",
+    "clarity-js": "^0.6.0-beta.14",
+    "clarity-visualize": "^0.6.0-beta.14"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^7.1.3",

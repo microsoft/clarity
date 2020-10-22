@@ -51,7 +51,7 @@ export interface TimelineState {
 /* Event Data */
 export interface TimelineData {
     type: Event;
-    target: number;
+    hash: string;
     x: number;
     y: number;
     reaction: number;

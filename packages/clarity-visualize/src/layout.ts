@@ -43,6 +43,11 @@ export function region(event: Layout.RegionEvent): void {
     }
 }
 
+export function get(hash: string): Element {
+    let doc = state.player.contentDocument;
+    return doc.querySelector(`[${Constant.Hash}="${hash}"]`);
+}
+
 export function box(event: Layout.BoxEvent): void {
     let data = event.data;
     for (let b of data) {
@@ -86,6 +91,18 @@ export async function dom(event: Layout.DomEvent): Promise<void> {
         // Toggle back the visibility of IFRAME
         state.player.style.visibility = Constant.Visible;
     }
+}
+
+export function exists(hash: string): boolean {
+    if (hash) {
+        let doc = state.player.contentDocument;
+        let match = doc.querySelector(`[${Constant.Hash}="${hash}"]`);
+        if (match) {
+            match.scrollIntoView({behavior: 'auto', block: 'center', inline: 'center'});
+            return true;
+        }
+    }
+    return false;
 }
 
 export function markup(event: Layout.DomEvent): void {

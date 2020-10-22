@@ -1,9 +1,8 @@
-import { Asset, Point } from "@clarity-types/visualize";
+import { Asset, Constant, Point } from "@clarity-types/visualize";
 import { Data, Interaction, Layout  } from "clarity-decode";
 import { state } from "./clarity";
 import { element } from "./layout";
 
-const CLARITY_CANVAS = "clarity-canvas";
 const CLARITY_CLICK = "clarity-click";
 const CLARITY_POINTER = "clarity-pointer";
 const CLARITY_TOUCH = "clarity-touch";
@@ -15,13 +14,14 @@ const CLARITY_CLICK_RING = "clarity-click-ring";
 const CLARITY_TOUCH_RING = "clarity-touch-ring";
 const TITLE = "title";
 const ROUND = "round";
-const PIXEL = "px";
+const TRAIL_START_COLOR = [242,97,12]; // rgb(242,97,12)
+const TRAIL_END_COLOR = [249,220,209]; // rgb(249,220,209)
 
 const config = {
-    pointerWidth: 32,
-    pointerHeight: 32,
-    pointerOffsetX: 3,
-    pointerOffsetY: 2,
+    pointerWidth: 29,
+    pointerHeight: 38,
+    pointerOffsetX: 4,
+    pointerOffsetY: 4,
     clickWidth: 22,
     clickHeight: 22,
     pixelLife: 3000,
@@ -56,8 +56,8 @@ export function scroll(event: Interaction.ScrollEvent): void {
     if (scrollTarget === de || scrollTarget === doc.body) {
         let canvas = overlay();
         if (canvas) {
-            canvas.style.left = data.x + PIXEL;
-            canvas.style.top = data.y + PIXEL;
+            canvas.style.left = data.x + Constant.Pixel;
+            canvas.style.top = data.y + Constant.Pixel;
             canvas.width = de.clientWidth;
             canvas.height = de.clientHeight;
         }
@@ -120,12 +120,12 @@ export function pointer(event: Interaction.PointerEvent): void {
             "@keyframes pulsate-two { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(5, 5); opacity: 0; } }" +
             "@keyframes pulsate-touch { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(2, 2); opacity: 0; } }" +
             "@keyframes disappear { 90% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(1.3, 1.3); opacity: 0; } }" +
-            `#${CLARITY_CANVAS} { position: absolute; left: 0; top: 0; z-index: ${config.zIndex} }` +
+            `#${Constant.InteractionCanvas} { position: absolute; left: 0; top: 0; z-index: ${config.zIndex + 1} }` +
             `#${CLARITY_POINTER} { position: absolute; z-index: ${config.zIndex + 2}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
-            `.${CLARITY_CLICK}, .${CLARITY_CLICK_RING}, .${CLARITY_TOUCH}, .${CLARITY_TOUCH_RING} { position: absolute; z-index: ${config.zIndex + 1}; border-radius: 50%; background: radial-gradient(rgba(255,0,0,0.8), transparent); width: ${config.clickWidth}px; height: ${config.clickHeight}px;}` +
-            `.${CLARITY_CLICK_RING} { background: transparent; border: 1px solid rgba(255,0,0,0.8); }` +
-            `.${CLARITY_TOUCH} { background: radial-gradient(rgba(255,255,0,1), transparent); }` +
-            `.${CLARITY_TOUCH_RING} { background: transparent; border: 1px solid rgba(255,0,0,0.8); }` +
+            `.${CLARITY_CLICK}, .${CLARITY_CLICK_RING}, .${CLARITY_TOUCH}, .${CLARITY_TOUCH_RING} { position: absolute; z-index: ${config.zIndex + 1}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${config.clickWidth}px; height: ${config.clickHeight}px;}` +
+            `.${CLARITY_CLICK_RING} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
+            `.${CLARITY_TOUCH} { background: radial-gradient(rgba(242,97,12,1), transparent); }` +
+            `.${CLARITY_TOUCH_RING} { background: transparent; border: 1px solid rgba(242,97,12,0.8); }` +
             `.${CLARITY_POINTER_CLICK} { background-image: url(${Asset.Click}); }` +
             `.${CLARITY_POINTER_NONE} { background: none; }` +
             `.${CLARITY_POINTER_MOVE} { background-image: url(${Asset.Pointer}); }`;
@@ -133,8 +133,8 @@ export function pointer(event: Interaction.PointerEvent): void {
         p.appendChild(style);
     }
 
-    p.style.left = (data.x - config.pointerOffsetX) + PIXEL;
-    p.style.top = (data.y - config.pointerOffsetY) + PIXEL;
+    p.style.left = (data.x - config.pointerOffsetX) + Constant.Pixel;
+    p.style.top = (data.y - config.pointerOffsetY) + Constant.Pixel;
     let title = "Pointer"
     switch (type) {
         case Data.Event.Click:
@@ -164,7 +164,7 @@ export function pointer(event: Interaction.PointerEvent): void {
             p.className = CLARITY_POINTER_MOVE;
             break;
     }
-    p.setAttribute(TITLE, `${title} (${data.x}${PIXEL}, ${data.y}${PIXEL})`);
+    p.setAttribute(TITLE, `${title} (${data.x}${Constant.Pixel}, ${data.y}${Constant.Pixel})`);
 }
 
 function hover(): void {
@@ -200,9 +200,9 @@ function addPoint(point: Point): void {
 function drawTouch(doc: Document, x: number, y: number, title: string): void {
     let touch = doc.createElement("DIV");
     touch.className = CLARITY_TOUCH;
-    touch.setAttribute(TITLE, `${title} (${x}${PIXEL}, ${y}${PIXEL})`);
-    touch.style.left = (x - config.clickWidth / 2) + PIXEL;
-    touch.style.top = (y - config.clickWidth / 2) + PIXEL
+    touch.setAttribute(TITLE, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
+    touch.style.left = (x - config.clickWidth / 2) + Constant.Pixel;
+    touch.style.top = (y - config.clickWidth / 2) + Constant.Pixel
     touch.style.animation = "disappear 1 1s";
     touch.style.animationFillMode = "forwards";
     doc.body.appendChild(touch);
@@ -210,8 +210,8 @@ function drawTouch(doc: Document, x: number, y: number, title: string): void {
     // First pulsating ring
     let ringOne = touch.cloneNode() as HTMLElement;
     ringOne.className = CLARITY_TOUCH_RING;
-    ringOne.style.left = "-0.5" + PIXEL;
-    ringOne.style.top = "-0.5" + PIXEL;
+    ringOne.style.left = "-0.5" + Constant.Pixel;
+    ringOne.style.top = "-0.5" + Constant.Pixel;
     ringOne.style.animation = "pulsate-touch 1 1s";
     ringOne.style.animationFillMode = "forwards";
     touch.appendChild(ringOne);
@@ -220,16 +220,16 @@ function drawTouch(doc: Document, x: number, y: number, title: string): void {
 function drawClick(doc: Document, x: number, y: number, title: string): void {
     let click = doc.createElement("DIV");
     click.className = CLARITY_CLICK;
-    click.setAttribute(TITLE, `${title} (${x}${PIXEL}, ${y}${PIXEL})`);
-    click.style.left = (x - config.clickWidth / 2) + PIXEL;
-    click.style.top = (y - config.clickHeight / 2) + PIXEL
+    click.setAttribute(TITLE, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
+    click.style.left = (x - config.clickWidth / 2) + Constant.Pixel;
+    click.style.top = (y - config.clickHeight / 2) + Constant.Pixel
     doc.body.appendChild(click);
 
     // First pulsating ring
     let ringOne = click.cloneNode() as HTMLElement;
     ringOne.className = CLARITY_CLICK_RING;
-    ringOne.style.left = "-0.5" + PIXEL;
-    ringOne.style.top = "-0.5" + PIXEL;
+    ringOne.style.left = "-0.5" + Constant.Pixel;
+    ringOne.style.top = "-0.5" + Constant.Pixel;
     ringOne.style.animation = "pulsate-one 1 1s";
     ringOne.style.animationFillMode = "forwards";
     click.appendChild(ringOne);
@@ -248,10 +248,10 @@ function overlay(): HTMLCanvasElement {
     // Create canvas for visualizing interactions
     let doc = state.player.contentDocument;
     let de = doc.documentElement;
-    let canvas = doc.getElementById(CLARITY_CANVAS) as HTMLCanvasElement;
+    let canvas = doc.getElementById(Constant.InteractionCanvas) as HTMLCanvasElement;
     if (canvas === null) {
         canvas = document.createElement("canvas");
-        canvas.id = CLARITY_CANVAS;
+        canvas.id = Constant.InteractionCanvas;
         canvas.width = 0;
         canvas.height = 0;
         doc.body.appendChild(canvas);
@@ -327,26 +327,11 @@ export function trail(now: number): void {
 }
 
 function color(factor: number): string {
-    let range: number = ((factor * 100) % 25) / 25.0;
-    let r: number = 0;
-    let g: number = 0;
-    let b: number = 0;
-    if (factor === 1) {
-        r = 255;
-    } else if (factor >= 0.75) {
-        r = 255;
-        g = Math.round(255 - 255 * range);
-    } else if (factor >= 0.5) {
-        r = Math.round(255 * range);
-        g = 255;
-    } else if (factor >= 0.25) {
-        g = 255;
-        b = Math.round(255 - 255 * range);
-    } else {
-        g = Math.round(255 * range);
-        b = 255;
-    }
-    return `rgba(${r}, ${g}, ${b}, ${factor})`;
+    let s = TRAIL_START_COLOR;
+    let e = TRAIL_END_COLOR;
+    let c = [];
+    for (let i = 0; i < 3; i++) { c[i] = Math.round(e[i] + factor * (s[i] - e[i])); }
+    return `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${factor})`;
 }
 
 // Reference: https://en.wikipedia.org/wiki/Cubic_Hermite_spline#Cardinal_spline
