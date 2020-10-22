@@ -1,33 +1,40 @@
-import { MergedPayload, PlaybackState, ResizeHandler } from "@clarity-types/visualize";
+import { Visualize } from "@clarity-types/index";
+import { Activity, Constant, MergedPayload, PlaybackState, ResizeHandler } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import * as data from "./data";
+import * as heatmap from "./heatmap";
 import * as interaction from "./interaction";
 import * as layout from "./layout";
 export { dom } from "./layout";
 
-const DOM = "dom";
-
 export let state: PlaybackState = null;
 
-export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement): void {
-    if (decoded.length === 0) { return; }
-    state = { version: decoded[0].envelope.version, player, onresize: null, metadata: null };
+export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement, hash: string = null): Visualize {
+    if (decoded && decoded.length > 0) {
+        setup(decoded[0].envelope.version, player);
 
-    // Flatten the payload and parse all events out of them, sorted by time
-    let merged = merge(decoded);
+        // Flatten the payload and parse all events out of them, sorted by time
+        let merged = merge(decoded);
 
-    // Render initial markup before rendering rest of the events
-    layout.dom(merged.dom);
+        // Render initial markup before rendering rest of the events
+        layout.dom(merged.dom);
 
-    // Render all mutations on top of the initial markup
-    while (merged.events.length > 0) {
-        let entry = merged.events.shift();
-        switch (entry.event) {
-            case Data.Event.Mutation:
-                layout.markup(entry as Layout.DomEvent);
-                break;
+        // Render all mutations on top of the initial markup
+        while (merged.events.length > 0 && layout.exists(hash) === false) {
+            let entry = merged.events.shift();
+            switch (entry.event) {
+                case Data.Event.Mutation:
+                    layout.markup(entry as Layout.DomEvent);
+                    break;
+            }
         }
     }
+    return this;
+}
+
+export function clickmap(activity: Activity): void {
+    if (state === null) { throw new Error(`Initialize heatmap by calling "html" or "setup" prior to making this call.`); }
+    heatmap.click(activity);
 }
 
 export function merge(decoded: Data.DecodedPayload[]): MergedPayload {
@@ -39,7 +46,7 @@ export function merge(decoded: Data.DecodedPayload[]): MergedPayload {
             let p = payload[key];
             if (Array.isArray(p)) {
                 for (let entry of p) {
-                    if (key === DOM && entry.event === Data.Event.Discover) {
+                    if (key === Constant.Dom && entry.event === Data.Event.Discover) {
                         merged.dom = entry;
                     } else { merged.events.push(entry); }
                 }
@@ -51,15 +58,17 @@ export function merge(decoded: Data.DecodedPayload[]): MergedPayload {
 }
 
 export function reset(): void {
-    state = null
     data.reset();
     interaction.reset();
     layout.reset();
+    heatmap.reset();
+    state = null;
 }
 
-export function setup(version: string, player: HTMLIFrameElement, onresize: ResizeHandler = null, metadata: HTMLElement = null): void {
+export function setup(version: string, player: HTMLIFrameElement, onresize: ResizeHandler = null, metadata: HTMLElement = null): Visualize {
     reset();
     state = { version, player, onresize, metadata };
+    return this;
 }
 
 export function render(events: Data.DecodedEvent[]): void {
