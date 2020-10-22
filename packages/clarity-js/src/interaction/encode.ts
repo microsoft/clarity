@@ -60,7 +60,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(cTarget.hash);
                 if (cTarget.region) { tokens.push(cTarget.region); }
                 queue(tokens);
-                timeline.track(entry.time, entry.event, cTarget.id, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
+                timeline.track(entry.time, entry.event, cTarget.hash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
             click.reset();
             break;
@@ -124,7 +124,7 @@ export default async function (type: Event): Promise<void> {
                 let entry = timeline.updates[i];
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.type);
-                tokens.push(entry.data.target);
+                tokens.push(entry.data.hash);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
                 tokens.push(entry.data.reaction);

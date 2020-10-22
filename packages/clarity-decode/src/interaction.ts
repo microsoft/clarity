@@ -65,7 +65,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
         case Data.Event.Timeline:
             let timelineData: Interaction.TimelineData = {
                 type: tokens[2] as number,
-                target: tokens[3] as number,
+                hash: tokens[3] as string,
                 x: tokens[4] as number,
                 y: tokens[5] as number,
                 reaction: tokens[6] as number,
