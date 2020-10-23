@@ -33,7 +33,7 @@ export function start(): void {
 
   // Metrics
   metric.max(Metric.ClientTimestamp, ts);
-  metric.max(Metric.Playback, config.lean ? BooleanFlag.False : BooleanFlag.True);
+  metric.max(Metric.Playback, BooleanFlag.False);
 
   // Read cookies specified in configuration
   for (let key of config.cookies) {

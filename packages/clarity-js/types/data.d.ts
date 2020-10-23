@@ -148,9 +148,9 @@ export const enum Constant {
     Parent = "_parent",
     Top = "_top",
     String = "string",
-    UpgradeKey = "_cluc", // Clarity Upgrade Beta
-    CookieKey = "_clcc", // Clarity Cookie Beta
-    StorageKey = "_clsc", // Clarity Storage Beta
+    UpgradeKey = "_clup", // Clarity Upgrade
+    CookieKey = "_clck", // Clarity Cookie Key
+    StorageKey = "_clsk", // Clarity Storage Key
     Separator = "|",
     End = "END",
     Upgrade = "UPGRADE",

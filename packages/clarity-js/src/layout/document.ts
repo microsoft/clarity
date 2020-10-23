@@ -8,6 +8,11 @@ export function reset(): void {
     data = null;
 }
 
+export function start(): void {
+    reset();
+    compute();
+}
+
 export function compute(): void {
     let body = document.body;
     let d = document.documentElement;
@@ -26,4 +31,8 @@ export function compute(): void {
         data = { width, height };
         encode(Event.Document);
     }
+}
+
+export function end(): void {
+    reset();
 }

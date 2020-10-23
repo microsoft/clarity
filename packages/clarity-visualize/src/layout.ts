@@ -97,10 +97,7 @@ export function exists(hash: string): boolean {
     if (hash) {
         let doc = state.player.contentDocument;
         let match = doc.querySelector(`[${Constant.Hash}="${hash}"]`);
-        if (match) {
-            match.scrollIntoView({behavior: 'auto', block: 'center', inline: 'center'});
-            return true;
-        }
+        return match ? true : false;
     }
     return false;
 }

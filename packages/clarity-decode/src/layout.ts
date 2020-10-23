@@ -101,7 +101,8 @@ function process(node: any[] | number[], tagIndex: number): DomData {
     let prefix = output.parent in hashes ? `${hashes[output.parent]}>` : (output.parent ? Layout.Constant.Empty : null);
 
     for (let i = tagIndex + 1; i < node.length; i++) {
-        let token = node[i] as string;
+        // Explicitly convert the token into a string value
+        let token = node[i].toString();
         let keyIndex = token.indexOf("=");
         let firstChar = token[0];
         let lastChar = token[token.length - 1];

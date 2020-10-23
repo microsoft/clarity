@@ -10,6 +10,7 @@ let max: number = null;
 let offscreenRing: HTMLCanvasElement = null;
 let gradientPixels: ImageData = null;
 let timeout = null;
+let observer: ResizeObserver = null;
 
 export function reset(): void {
     data = null;
@@ -17,6 +18,14 @@ export function reset(): void {
     offscreenRing = null;
     gradientPixels = null;
     timeout = null;
+
+    // Reset resize observer
+    if (observer) {
+        observer.disconnect();
+        observer = null;
+    }
+
+    // Remove scroll and resize event listeners
     if (state && state.player && state.player.contentWindow) {
         let win = state.player.contentWindow;
         win.removeEventListener("scroll", redraw, true);
@@ -47,7 +56,7 @@ export function click(activity: Activity): void {
     for (let i = 0; i < pixels.data.length; i += 4) {
         // For each pixel, we have 4 entries in data array: (r,g,b,a)
         // To pick the right color from gradient pixels, we look at the alpha value of the pixel
-        // Alpha value ranges from 0 - 100
+        // Alpha value ranges from 0-255
         let alpha = pixels.data[i+3];
         if (alpha > 0) {
             let offset = (alpha - 1) * 4;
@@ -75,6 +84,8 @@ function overlay(): HTMLCanvasElement {
         doc.body.appendChild(canvas);
         win.addEventListener("scroll", redraw, true);
         win.addEventListener("resize", redraw, true);
+        observer = window["ResizeObserver"] ? new ResizeObserver(redraw) : null;
+        if (observer) { observer.observe(doc.body); }
     }
 
     // Ensure canvas is positioned correctly
@@ -169,9 +180,9 @@ function transform(): Heatmap[] {
 
 function visible(el: HTMLElement, r: DOMRect, height: number): boolean {
     let doc = state.player.contentDocument;
-    let elements = doc.elementsFromPoint(r.left, r.top);
     let visibility = r.height > height ? true : false;
-    if (visibility === false) {
+    if (visibility === false && r.width > 0 && r.height > 0) {
+        let elements = doc.elementsFromPoint(r.left + (r.width / 2), r.top + (r.height / 2));
         for (let e of elements) {
             // Ignore if top element ends up being the canvas element we added for heatmap visualization
             if (e.tagName === Constant.Canvas || (e.id && e.id.indexOf(Constant.ClarityPrefix) === 0)) { continue; }
