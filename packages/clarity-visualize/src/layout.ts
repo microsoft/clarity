@@ -97,21 +97,7 @@ export function exists(hash: string): boolean {
     if (hash) {
         let doc = state.player.contentDocument;
         let match = doc.querySelector(`[${Constant.Hash}="${hash}"]`);
-        if (match) {
-            let r = "getBoundingClientRect" in match ? match.getBoundingClientRect() : null;
-            if (r && r.width > 0 && r.height > 0) {
-                match.scrollIntoView({behavior: 'auto', block: 'center', inline: 'center'});
-                if (window["ResizeObserver"]) {
-                    let observer: ResizeObserver;
-                    observer = new ResizeObserver(() => {
-                        match.scrollIntoView({behavior: 'auto', block: 'center', inline: 'center'});
-                        observer.unobserve(match);
-                    });
-                    observer.observe(match);
-                }
-                return true;
-            }
-        }
+        return match ? true : false;
     }
     return false;
 }

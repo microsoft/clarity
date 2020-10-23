@@ -263,7 +263,7 @@ function position(parent: NodeValue, child: NodeValue): number {
     // We restrict relative positioning to two cases:
     //   a) For specific whitelist of tags
     //   b) And, for remaining tags, only if they don't have a valid class name
-    if (parent && ((tag === "DIV" || tag === "TR" || tag === "P" || tag === "LI" || tag === "UL") || hasClassName)) {
+    if (parent && (["DIV", "TR", "P", "LI", "UL", "A", "BUTTON"].indexOf(tag) >= 0 || hasClassName)) {
         child.position = 1;
         let idx = parent ? parent.children.indexOf(child.id) : -1;
         while (idx-- > 0) {
