@@ -1,5 +1,5 @@
 import { UploadCallback } from "@clarity-types/core";
-import { Check, Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData } from "@clarity-types/data";
+import { BooleanFlag, Check, Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
@@ -87,6 +87,12 @@ export function stop(): void {
 function upload(final: boolean = false): void {
     timeout = null;
 
+    // Check if we can send playback bytes over the wire or not
+    // For better instrumentation coverage, we send playback bytes from second sequence onwards
+    // And, we only send playback metric when we are able to send the playback bytes back to server
+    let sendPlaybackBytes = config.lean === false && envelope.data.sequence > 0;
+    if (sendPlaybackBytes && playbackBytes > 0) { metric.max(Metric.Playback, BooleanFlag.True); }
+
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
     performance.compute();
@@ -100,17 +106,13 @@ function upload(final: boolean = false): void {
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
     let last = final === true;
     let e = JSON.stringify(envelope.envelope(last));
-    let sequence = envelope.data.sequence;
     let a = `[${analysis.join()}]`;
 
-    // Check if we can send playback bytes over the wire or not
-    // For better instrumentation coverage, we send playback bytes from second sequence onwards
-    let sendPlaybackBytes = config.lean === false && sequence > 1;
     let p = sendPlaybackBytes ? `[${playback.join()}]` : Constant.Empty;
     let encoded: EncodedPayload = {e, a, p};
     let payload = stringify(encoded);
     metric.sum(Metric.TotalBytes, payload.length);
-    send(payload, sequence, last);
+    send(payload, envelope.data.sequence, last);
 
     // Clear out events now that payload has been dispatched
     analysis = [];
