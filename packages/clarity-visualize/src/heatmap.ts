@@ -39,33 +39,35 @@ export function click(activity: Activity): void {
     let canvas = overlay();
     let ctx = canvas.getContext(Constant.Context);
 
-    // To speed up canvas rendering, we draw ring & gradient on an offscreen canvas, so we can use drawImage API
-    // Canvas performance tips: https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
-    // Pre-render similar primitives or repeating objects on an offscreen canvas
-    let ring = getRing();
-    let gradient = getGradient();
+    if (canvas.width > 0 && canvas.height > 0) {
+        // To speed up canvas rendering, we draw ring & gradient on an offscreen canvas, so we can use drawImage API
+        // Canvas performance tips: https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
+        // Pre-render similar primitives or repeating objects on an offscreen canvas
+        let ring = getRing();
+        let gradient = getGradient();
 
-    // Render activity for each (x,y) coordinate in our data
-    for (let entry of heat) {
-        ctx.globalAlpha = entry.a;
-        ctx.drawImage(ring, entry.x - Setting.Radius, entry.y - Setting.Radius);
-    }
-
-    // Add color to the canvas based on alpha value of each pixel
-    let pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < pixels.data.length; i += 4) {
-        // For each pixel, we have 4 entries in data array: (r,g,b,a)
-        // To pick the right color from gradient pixels, we look at the alpha value of the pixel
-        // Alpha value ranges from 0-255
-        let alpha = pixels.data[i+3];
-        if (alpha > 0) {
-            let offset = (alpha - 1) * 4;
-            pixels.data[i] = gradient.data[offset];
-            pixels.data[i + 1] = gradient.data[offset + 1];
-            pixels.data[i + 2] = gradient.data[offset + 2];
+        // Render activity for each (x,y) coordinate in our data
+        for (let entry of heat) {
+            ctx.globalAlpha = entry.a;
+            ctx.drawImage(ring, entry.x - Setting.Radius, entry.y - Setting.Radius);
         }
-    }
-    ctx.putImageData(pixels, 0, 0);
+
+        // Add color to the canvas based on alpha value of each pixel
+        let pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < pixels.data.length; i += 4) {
+            // For each pixel, we have 4 entries in data array: (r,g,b,a)
+            // To pick the right color from gradient pixels, we look at the alpha value of the pixel
+            // Alpha value ranges from 0-255
+            let alpha = pixels.data[i+3];
+            if (alpha > 0) {
+                let offset = (alpha - 1) * 4;
+                pixels.data[i] = gradient.data[offset];
+                pixels.data[i + 1] = gradient.data[offset + 1];
+                pixels.data[i + 2] = gradient.data[offset + 2];
+            }
+        }
+        ctx.putImageData(pixels, 0, 0);
+    };
 }
 
 function overlay(): HTMLCanvasElement {
