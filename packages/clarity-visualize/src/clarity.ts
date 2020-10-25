@@ -10,7 +10,7 @@ export { dom } from "./layout";
 export let state: PlaybackState = null;
 
 export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement, hash: string = null): Visualize {
-    if (decoded && decoded.length > 0) {
+    if (decoded && decoded.length > 0 && player) {
         setup(decoded[0].envelope.version, player);
 
         // Flatten the payload and parse all events out of them, sorted by time

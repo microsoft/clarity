@@ -148,7 +148,7 @@ function transform(): Heatmap[] {
     let output: Heatmap[] = [];
     let points: { [key: string]: number } = {};
     let localMax = 0;
-    let height = state.player.contentDocument.documentElement.clientHeight;
+    let height = state.player && state.player.contentDocument ? state.player.contentDocument.documentElement.clientHeight : 0;
     for (let hash of Object.keys(data)) {
         let el = layout.get(hash) as HTMLElement;
         if (el && typeof el.getBoundingClientRect === "function") {
