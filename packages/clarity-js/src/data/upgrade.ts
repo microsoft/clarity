@@ -1,6 +1,7 @@
 import { Constant, Event, UpgradeData } from "@clarity-types/data";
 import config from "@src/core/config";
 import encode from "@src/data/encode";
+import * as metadata from "@src/data/metadata";
 
 export let data: UpgradeData = null;
 
@@ -18,10 +19,8 @@ export function upgrade(key: string): void {
         config.lean = false;
         data = { key };
 
-        // If tracking is enabled, persist the setting in session storage
-        if (config.track && sessionStorage) {
-            sessionStorage.setItem(Constant.UpgradeKey, `1`);
-        }
+        // Update metadata to track we have upgraded this session
+        metadata.save();
 
         // Callback upgrade handler, if configured
         if (config.upgrade) { config.upgrade(key); }

@@ -159,7 +159,9 @@ function send(payload: string, sequence: number, last: boolean): void {
 
 function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
     if (xhr && xhr.readyState === XMLHttpRequest.DONE && sequence in transit) {
-        if ((xhr.status < 200 || xhr.status > 208) && transit[sequence].attempts <= Setting.RetryLimit) {
+        // Attempt send payload again (as configured in settings) if we do not receive a success (2XX) response code back from the server
+        // The only exception is if we receive an error code 400, which indicates the server has rejected the response for bad payload.
+        if ((xhr.status < 200 || xhr.status > 208) && xhr.status !== 400 && transit[sequence].attempts <= Setting.RetryLimit) {
             send(transit[sequence].data, sequence, last);
         } else {
             track = { sequence, attempts: transit[sequence].attempts, status: xhr.status };

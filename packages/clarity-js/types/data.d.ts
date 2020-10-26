@@ -148,7 +148,6 @@ export const enum Constant {
     Parent = "_parent",
     Top = "_top",
     String = "string",
-    UpgradeKey = "_clup", // Clarity Upgrade
     CookieKey = "_clck", // Clarity Cookie Key
     StorageKey = "_clsk", // Clarity Storage Key
     Separator = "|",
@@ -180,6 +179,14 @@ export interface Metadata {
     userId: string;
     sessionId: string;
     pageNum: number;
+}
+
+export interface Session {
+    id: string;
+    ts: number;
+    count: number;
+    upgrade: BooleanFlag;
+    upload: string;
 }
 
 export interface Envelope extends Metadata {
