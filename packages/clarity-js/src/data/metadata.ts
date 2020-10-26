@@ -62,6 +62,11 @@ export function consent(): void {
   }
 }
 
+export function clear(): void {
+  // Clear any stored information in the session so we can restart fresh the next time
+  if (sessionStorage) { sessionStorage.removeItem(Constant.StorageKey); }
+}
+
 export function save(): void {
   if (config.track && sessionStorage) {
     let ts = Math.round(Date.now());

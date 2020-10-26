@@ -3,6 +3,7 @@ import * as clarity from "@src/clarity";
 import { report } from "@src/core/report";
 import { time } from "@src/core/time";
 import * as envelope from "@src/data/envelope";
+import * as metadata from "@src/data/metadata";
 import encode from "./encode";
 
 export let data: LimitData;
@@ -26,6 +27,7 @@ export function check(bytes: number): void {
 export function trigger(reason: Check): void {
     report(`Limit #${reason}`);
     data.check = reason;
+    metadata.clear();
     clarity.stop();
 }
 

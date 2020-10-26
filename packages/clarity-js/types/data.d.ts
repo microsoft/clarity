@@ -84,7 +84,8 @@ export const enum Check {
     Shutdown = 2,
     Retry = 3,
     Bytes = 4,
-    Collection = 5
+    Collection = 5,
+    Server = 6
 }
 
 export const enum Code {
