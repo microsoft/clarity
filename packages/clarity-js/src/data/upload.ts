@@ -159,14 +159,19 @@ function send(payload: string, sequence: number, last: boolean): void {
 
 function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
     if (xhr && xhr.readyState === XMLHttpRequest.DONE && sequence in transit) {
+        // Attempt send payload again (as configured in settings) if we do not receive a success (2XX) response code back from the server
         if ((xhr.status < 200 || xhr.status > 208) && transit[sequence].attempts <= Setting.RetryLimit) {
-            send(transit[sequence].data, sequence, last);
+            // The only exception is if we receive 400 error code,
+            // which indicates the server has rejected the response for bad payload and we should terminate the session.
+            if (xhr.status === 400) {
+                limit.trigger(Check.Server);
+            } else { send(transit[sequence].data, sequence, last); }
         } else {
             track = { sequence, attempts: transit[sequence].attempts, status: xhr.status };
             // Send back an event only if we were not successful in our first attempt
             if (transit[sequence].attempts > 1) { encode(Event.Upload); }
-            // Handle response if it was a 200 or 500 status response with a valid body
-            if ((xhr.status === 200 || xhr.status === 500) && xhr.responseText) { response(xhr.responseText); }
+            // Handle response if it was a 200 response with a valid body
+            if (xhr.status === 200 && xhr.responseText) { response(xhr.responseText); }
             // If we exhausted our retries the trigger Clarity shutdown for this page
             if (transit[sequence].attempts > Setting.RetryLimit) { limit.trigger(Check.Retry); }
             // Stop tracking this payload now that it's all done
@@ -179,9 +184,11 @@ function response(payload: string): void {
     let key = payload && payload.length > 0 ? payload.split(" ")[0] : Constant.Empty;
     switch (key) {
         case Constant.End:
-            clarity.stop();
+            // Clear out session storage and end the session so we can start fresh the next time
+            limit.trigger(Check.Server);
             break;
         case Constant.Upgrade:
+            // Upgrade current session to send back playback information
             clarity.upgrade(Constant.Auto);
             break;
     }

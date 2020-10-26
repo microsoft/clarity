@@ -1,4 +1,4 @@
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, Metric, Setting } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, Metric, Session, Setting } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -9,21 +9,21 @@ import { set } from "@src/data/variable";
 export let data: Metadata = null;
 
 export function start(): void {
-  const ts = Math.round(Date.now()); // ensuring that the output of Date.now() is an integer
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const title = document && document.title ? document.title : Constant.Empty;
 
   // Populate ids for this page
-  let session = getSession(ts);
+  let s = session();
   data = {
     projectId: config.projectId || hash(location.host),
     userId: user(),
-    sessionId: session[0],
-    pageNum: session[1]
+    sessionId: s.id,
+    pageNum: s.count
   }
 
-  // Check if the session should start off in full mode based on the signal from session storage
-  config.lean = config.track && sessionStorage && sessionStorage.getItem(Constant.UpgradeKey) ? false : config.lean;
+  // Override configuration based on what's in the session storage
+  config.lean = config.track && s.upgrade === BooleanFlag.True ? false : config.lean;
+  config.upload = config.track && typeof config.upload === Constant.String && s.upload ? s.upload : config.upload;
 
   // Log dimensions
   dimension.log(Dimension.UserAgent, ua);
@@ -32,7 +32,7 @@ export function start(): void {
   dimension.log(Dimension.Referrer, document.referrer);
 
   // Metrics
-  metric.max(Metric.ClientTimestamp, ts);
+  metric.max(Metric.ClientTimestamp, s.ts);
   metric.max(Metric.Playback, BooleanFlag.False);
 
   // Read cookies specified in configuration
@@ -62,6 +62,20 @@ export function consent(): void {
   }
 }
 
+export function clear(): void {
+  // Clear any stored information in the session so we can restart fresh the next time
+  if (sessionStorage) { sessionStorage.removeItem(Constant.StorageKey); }
+}
+
+export function save(): void {
+  if (config.track && sessionStorage) {
+    let ts = Math.round(Date.now());
+    let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
+    let upload = typeof config.upload === Constant.String ? config.upload : Constant.Empty;
+    sessionStorage.setItem(Constant.StorageKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Separator));
+  }
+}
+
 function track(): void {
   if (config.track) {
     let expiry = new Date();
@@ -80,20 +94,21 @@ function shortid(): string {
   return id.toString(36);
 }
 
-function getSession(ts: number): [string, number] {
-  let id = shortid();
-  let count = 1;
+function session(): Session {
+  let output: Session = { id: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: BooleanFlag.False, upload: Constant.Empty };
   if (config.track && sessionStorage) {
     let value = sessionStorage.getItem(Constant.StorageKey);
     if (value && value.indexOf(Constant.Separator) >= 0) {
       let parts = value.split(Constant.Separator);
-      if (parts.length === 3 && ts - num(parts[1]) < Setting.SessionTimeout) {
-        id = parts[0];
-        count = num(parts[2]) + 1;
+      if (parts.length === 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
+        output.id = parts[0];
+        output.count = num(parts[2]) + 1;
+        output.upgrade = num(parts[3]);
+        output.upload = parts[4];
       }
     }
   }
-  return [id, count];
+  return output;
 }
 
 function num(string: string, base: number = 10): number {
