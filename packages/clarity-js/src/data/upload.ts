@@ -163,8 +163,9 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
         if ((xhr.status < 200 || xhr.status > 208) && transit[sequence].attempts <= Setting.RetryLimit) {
             // The only exception is if we receive 400 error code,
             // which indicates the server has rejected the response for bad payload and we should terminate the session.
-            if (xhr.status === 400) { limit.trigger(Check.Server); }
-            send(transit[sequence].data, sequence, last);
+            if (xhr.status === 400) {
+                limit.trigger(Check.Server);
+            } else { send(transit[sequence].data, sequence, last); }
         } else {
             track = { sequence, attempts: transit[sequence].attempts, status: xhr.status };
             // Send back an event only if we were not successful in our first attempt
