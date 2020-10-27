@@ -57,7 +57,7 @@ export function box(event: Layout.BoxEvent): void {
 }
 
 function resize(el: HTMLElement, width: number, height: number): void {
-    if (el && width && height) {
+    if (el && el.nodeType === Node.ELEMENT_NODE && width && height) {
         el.style.width = width + Layout.Constant.Pixel;
         el.style.height = height + Layout.Constant.Pixel;
         el.style.boxSizing = Layout.Constant.BorderBox; // Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing

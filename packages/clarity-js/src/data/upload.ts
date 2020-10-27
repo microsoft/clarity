@@ -91,7 +91,7 @@ function upload(final: boolean = false): void {
     // For better instrumentation coverage, we send playback bytes from second sequence onwards
     // And, we only send playback metric when we are able to send the playback bytes back to server
     let sendPlaybackBytes = config.lean === false && envelope.data.sequence > 0;
-    if (sendPlaybackBytes && playbackBytes > 0) { metric.max(Metric.Playback, BooleanFlag.True); }
+    if (sendPlaybackBytes && playback && playback.length > 0) { metric.max(Metric.Playback, BooleanFlag.True); }
 
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
