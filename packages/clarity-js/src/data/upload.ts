@@ -1,5 +1,5 @@
 import { UploadCallback } from "@clarity-types/core";
-import { Check, Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData } from "@clarity-types/data";
+import { BooleanFlag, Check, Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
@@ -87,6 +87,12 @@ export function stop(): void {
 function upload(final: boolean = false): void {
     timeout = null;
 
+    // Check if we can send playback bytes over the wire or not
+    // For better instrumentation coverage, we send playback bytes from second sequence onwards
+    // And, we only send playback metric when we are able to send the playback bytes back to server
+    let sendPlaybackBytes = config.lean === false && envelope.data.sequence > 0;
+    if (sendPlaybackBytes && playback && playback.length > 0) { metric.max(Metric.Playback, BooleanFlag.True); }
+
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
     performance.compute();
@@ -100,17 +106,13 @@ function upload(final: boolean = false): void {
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
     let last = final === true;
     let e = JSON.stringify(envelope.envelope(last));
-    let sequence = envelope.data.sequence;
     let a = `[${analysis.join()}]`;
 
-    // Check if we can send playback bytes over the wire or not
-    // For better instrumentation coverage, we send playback bytes from second sequence onwards
-    let sendPlaybackBytes = config.lean === false && sequence > 1;
     let p = sendPlaybackBytes ? `[${playback.join()}]` : Constant.Empty;
     let encoded: EncodedPayload = {e, a, p};
     let payload = stringify(encoded);
     metric.sum(Metric.TotalBytes, payload.length);
-    send(payload, sequence, last);
+    send(payload, envelope.data.sequence, last);
 
     // Clear out events now that payload has been dispatched
     analysis = [];
@@ -157,14 +159,19 @@ function send(payload: string, sequence: number, last: boolean): void {
 
 function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
     if (xhr && xhr.readyState === XMLHttpRequest.DONE && sequence in transit) {
+        // Attempt send payload again (as configured in settings) if we do not receive a success (2XX) response code back from the server
         if ((xhr.status < 200 || xhr.status > 208) && transit[sequence].attempts <= Setting.RetryLimit) {
-            send(transit[sequence].data, sequence, last);
+            // The only exception is if we receive 400 error code,
+            // which indicates the server has rejected the response for bad payload and we should terminate the session.
+            if (xhr.status === 400) {
+                limit.trigger(Check.Server);
+            } else { send(transit[sequence].data, sequence, last); }
         } else {
             track = { sequence, attempts: transit[sequence].attempts, status: xhr.status };
             // Send back an event only if we were not successful in our first attempt
             if (transit[sequence].attempts > 1) { encode(Event.Upload); }
-            // Handle response if it was a 200 or 500 status response with a valid body
-            if ((xhr.status === 200 || xhr.status === 500) && xhr.responseText) { response(xhr.responseText); }
+            // Handle response if it was a 200 response with a valid body
+            if (xhr.status === 200 && xhr.responseText) { response(xhr.responseText); }
             // If we exhausted our retries the trigger Clarity shutdown for this page
             if (transit[sequence].attempts > Setting.RetryLimit) { limit.trigger(Check.Retry); }
             // Stop tracking this payload now that it's all done
@@ -177,9 +184,11 @@ function response(payload: string): void {
     let key = payload && payload.length > 0 ? payload.split(" ")[0] : Constant.Empty;
     switch (key) {
         case Constant.End:
-            clarity.stop();
+            // Clear out session storage and end the session so we can start fresh the next time
+            limit.trigger(Check.Server);
             break;
         case Constant.Upgrade:
+            // Upgrade current session to send back playback information
             clarity.upgrade(Constant.Auto);
             break;
     }

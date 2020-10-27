@@ -23,6 +23,21 @@ export interface PlaybackState {
     onresize: ResizeHandler;
 }
 
+export type Activity = { [key: string]: ElementData };
+
+export interface ElementData {
+    hash: string;
+    clicks: number[][];
+    selector: string;
+    total: number;
+}
+
+export interface Heatmap {
+    x: number; /* X Coordinate */
+    y: number; /* Y Coordinate */
+    a: number; /* Alpha */
+}
+
 export const enum Asset {
     Pointer = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB0AAAAmCAYAAAA4LpBhAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAASDSURBVHgB7VdPTCNlFH8z0/+FFmRatnFNiDGR4O4mBk08smZvXjjIxRueNME9eHGNxoLxSNwr4WyigYToQRJLjXDzQtDNmnhR4kWWAJm20ymddtrx94bvI9NBWAptsod9ycvM92fe73vv/b73fUP0DIlCfRQ1AMTtjwcHB1+gPgOT67oK6+TkZBjNbxRF+X1gYCCDPpX6IKdGAaTu7++HuG9tbe1ONBr9GR7r+Xy+98DsIRuemJiIjI6OJgH+3e7urruzs+OOjIw8SiaTNwRwz8OtQWPpdHoYoKt///ar2/jxaw84k8k8gt5YWVnRqEfi90BrtVph0Uetx0V67d9fqFAo3G6324XZ2VldLK4noK4AVqvVaoh8YZTAxWLxdiwW20CoM70IdceWicfjSpCxfuBEIrGxsLCQZR7QNcQDwFaRRhRmcXCSL9S3kN8CtlP2Oqz2QoWt4Q4NDanHx8cy3HQBMIe6sLS0pF811B7I5uYmhUKh1nmAQWAOteM4xcXFxczMzEzXHp+u9PDwUBHvymWBmVzr6+t6t9tJhtPzEEYuFaoguebm5nTqJOXFoMxEVCO50tMFXBaYcwwbGwAfRagv5bEKthK2igdUr9epG/EDYw//xKGmzoLz/6BQd3t7m5i9dAUJsJoLSPZp5PIGp6amXHjsVSaEirqVALk8jy/axx2hwAcMTlcRH/Ad5LfA24kEZ4JzudbySSJzyqDnomq37pH14utH/iUrCA5HCeRwHYXc8dzNNs5jfXp6uoD+e/Pz8zzfDYIqq6urihg4NyTaK2/Rw8fNo0/euWvBWI3TwGAiHW2RnjY7LRVjX+7t7d3nSWL8FFSKIj46I0r2ZXr4R/PoQT5f1TTtU3Q5OAbbbAxtV4BwXx07wUI5raJdTaVS5vLysmYYhlyMDJBHJBoeHpbFwQ0CfmuP04P8V1VVVb9AVwXGy/xE6SyHw2FuW9Aa2jYAHVx1HAZh78bGxs44wYkm0zS9PPrC1QE4+8HcPwD8HONPYNzEkAU1UX+raFcYmPswzhu9ISLmShIdHBx0lFfVH2s+SyWR/IBofgYvnmCIPTQjkYiBk8mARwYWU4aW8F5uNpslXHkstBncxjcOeyqJ6vfUO9oQd2avlyeKJj3A9z/8yAOE7uHKUgGoiRQYMFZCdEq2bZfgpYFnmd9xzprlcrnCOdV13cbWaWKezGVnAUBOmVBpkOAlPH/AxuYJu/DoPQDcxfubeB/ncZCDL+IpaDKgiVwul8AzDo1BI3RC1HPLIg+mYPQmvPke+hdY+S68ehuevIHQvYpV5/i2KIxKg5pUUew1AaL6wM4cl4oPFJjxFMJ0H6BbIIgBwAbeLSzABLBVKpVszGvSCf27r5dCNE7h1tYWX1U0ECHUaDT+REhryKENrTFbwdLj+skRxIAeM+ka4rGV2QWv2vCIjVoAryC0Jk6MCk6fGvoY0OkFoF80UDsG8AG8j/BtD78YWRSMNNoJQbSe/1Zw0tmwBB6kE0ZG+wXI4v1ECYAIdbKzf/+povypEui6t/jnwvIf5FVJ1Cj/1+UAAAAASUVORK5CYII=",
     Click = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB0AAAAmCAYAAAA4LpBhAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAVoSURBVHgB7VdNTCRFGP2qe6aBGRhA5mfJ7kZcV0XQTQx68MYabl44yMWbetAY3IMX12gWMCZeSLwSEi/GiAHF1SjqMAhoshuTJbg/GkM0xMQIBMj8D/Nfvq+6enZmEtFdhsSDRT66q6qnXr33varqJvoPFUHHWIw6IK6/2tbWdg8dMzBJKQXHwMCAG9UPhBDXW1tbA2gz6BhKZVAAGTs7Oy5um5+fP9fU1LQExv6xsbHGAzNDHrivr88KhUJegH+0ubkp19fXZVdX1w2v13tCAzdcbhPR3N7e3gnQuY0ry3L7nRcUcCAQuIE4MTs7a1IDi9CgXuQxCNBPNq6uyF+HWuTO5IvVjEP6uSMXlk1qYCOVSnFOgYvRLUtmVmbp9HfvUSQSebS5uXkRwIFGSF2zZFpaWoTtWEHCcgvDclPm+4/p3qvvK2CPx7M4MTERZB/QEYoCxVJxBhHsYvwn0+2WKiyLslc+pfuufSjD4fAjyG+Y03AUVyupsDRkR0eHcXBwYMuNKQi3BaYIt5uYce6Hz8XZ63MMzFKHp6am/HcrtQJZWVkhl8tVIju/KqkmgBxAdQXr3LUv6exPl5XUxWIxMjk5GRgZGbljxpWZ7u3tCX3PPCuALDEYk2Ytij9+RQ9ufFEx18LCgv9Ol5PjXsUQg9hSsXubLA3IwC7JoVgjSjfD9PDm1xVzjY6O+qnWlIeDshOxGzkzVRNgeW2mdl6FfXVkxiQsKv/8LfX9sUScY4yxCPAQpP5XjA0GwFJRTLPZrG5mUFcln6Ytc+Uq0CdcLgAvyf4/lxUw1vA3LDVVpexQedfW1ojdW2m1N4cKM8PllqLKUMI0SRhCsuVKtyLUv7XsuJo3kOA/mUt1Dg4OsqRqZ4JUPJZtIttAaqMAMzQarH8NCzwqSzcjghlrcynGh63jGinwA5VP9efIaBr2vqgBnGeltH+nJonCjPts4HPIb5iXE2nP1IPyXssniZNTBhVq0RhC3p6QTd/oHxLpk4/t356yelQawijrecnek6fKOI/9w8PDYQw1ND4+zs/LelAxNzcndIdRLRwzs5kIYT7wJL17q7D/2tPn0+jIcDunRDMt6/SUmbQT6Htra2vrAj+k+yugFRT9I6qVEGxCZwCY3784dillmubr6CqWSqUyD4a61CDclsVKSGM7TaGe8vl8yenpaTMajTqTqeSUjUSdnZ3O5iCrYUXwDM1ke+ni2NspwzAuoTGBweN8xdYZd7vdXE8jMqjnAFjEq06RQZhdT08P1RdONCWTSaEFdeSyqQfvFzO5XnrupdHfAfgm+rcxeBJdaUQS+28K9QQDcxv6eaHntWLSMdHu7q6zxWorVGnNZ6nQVmVJmSEDovoGWGyjixkmLcuK4mSKglEUk4kjYriPFwqFGF550qgzeA6/KTJTx6jVTNXRBt3ZvSpP1OSlmYNeev7lVxQgYqtcLicAmkQKohgsBnViuVwuBpZRXON8j3M2GY/HE5xTv9+fw9Ip4DknlzXAnFM2VDtMcBrXz7Cw+YFNMHoWAOdx/wTue7kf5uAXcR/CWxee7u5uD64tiGaERbZR/3Zb5E4fBj0FNpcRv8GVz4DVU2DyOKR7CLPu5rdFPagzoOmE3uxNDWJUgYl6UFEFCswWH2S6ANBVGCQKwDzu05hAEsDpWCyWw3MFsu0v6S6LySlcXV3lVxUTRnDl8/lfIGkGOcwhMuxWuPQgax9BDKicSUcoyq3sLrAqgxEPmgZ4AtImcWIkcPpk0MaAxUYAVhcT1m4GeCvuu/htD58YQWwY7ah7tNEa/lnBSeeBHeA2sh3ZdFyAXNRHlAawqNadx/edqrc/wwE66lv8/4XLX3gjac6XP/Y1AAAAAElFTkSuQmCC",
@@ -34,6 +49,10 @@ export const enum Asset {
 }
 
 export const enum Constant {
+    ClarityPrefix = "clarity-",
+    Canvas = "CANVAS",
+    HeatmapCanvas = "clarity-heatmap-canvas",
+    InteractionCanvas = "clarity-interaction-canvas",
     Hover = ":hover",
     CustomHover = "clarity-hover",
     Region = "clarity-region",
@@ -47,10 +66,21 @@ export const enum Constant {
     None = "none",    
     Small = "s",
     Medium = "m",
-    Large = "l"
+    Large = "l",
+    Dom = "dom",
+    Context = "2d",
+    Pixel = "px",    
+    Separator = "X",
+    Absolute = "absolute",
+    Black = "black"
 }
 
 export const enum Setting {
     Medium = 200,
-    Small = 75
+    Small = 75,
+    Radius = 20,
+    AlphaBoost = 0.15,
+    Colors = 256,
+    Interval = 30,
+    ZIndex = 10000000
 }

@@ -6,7 +6,7 @@ import * as mutation from "@src/layout/mutation";
 import * as region from "@src/layout/region";
 
 export function start(): void {
-    doc.reset();
+    doc.start();
     dom.start();
     mutation.start();
     discover.start();
@@ -19,5 +19,5 @@ export function stop(): void {
     mutation.stop();
     box.stop();
     region.reset();
-    doc.reset();
+    doc.end();
 }

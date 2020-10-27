@@ -1,9 +1,8 @@
-import { Asset, Point } from "@clarity-types/visualize";
-import { Data, Interaction, Layout  } from "clarity-decode";
+import { Asset, Constant, Point } from "@clarity-types/visualize";
+import { Data, Interaction, Layout } from "clarity-decode";
 import { state } from "./clarity";
 import { element } from "./layout";
 
-const CLARITY_CANVAS = "clarity-canvas";
 const CLARITY_CLICK = "clarity-click";
 const CLARITY_POINTER = "clarity-pointer";
 const CLARITY_TOUCH = "clarity-touch";
@@ -15,9 +14,9 @@ const CLARITY_CLICK_RING = "clarity-click-ring";
 const CLARITY_TOUCH_RING = "clarity-touch-ring";
 const TITLE = "title";
 const ROUND = "round";
-const PIXEL = "px";
-const TRAIL_START_COLOR = [242,97,12]; // rgb(242,97,12)
-const TRAIL_END_COLOR = [249,220,209]; // rgb(249,220,209)
+
+const TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
+const TRAIL_END_COLOR = [249, 220, 209]; // rgb(249,220,209)
 
 const config = {
     pointerWidth: 29,
@@ -58,8 +57,8 @@ export function scroll(event: Interaction.ScrollEvent): void {
     if (scrollTarget === de || scrollTarget === doc.body) {
         let canvas = overlay();
         if (canvas) {
-            canvas.style.left = data.x + PIXEL;
-            canvas.style.top = data.y + PIXEL;
+            canvas.style.left = data.x + Constant.Pixel;
+            canvas.style.top = data.y + Constant.Pixel;
             canvas.width = de.clientWidth;
             canvas.height = de.clientHeight;
         }
@@ -122,7 +121,7 @@ export function pointer(event: Interaction.PointerEvent): void {
             "@keyframes pulsate-two { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(5, 5); opacity: 0; } }" +
             "@keyframes pulsate-touch { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(2, 2); opacity: 0; } }" +
             "@keyframes disappear { 90% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(1.3, 1.3); opacity: 0; } }" +
-            `#${CLARITY_CANVAS} { position: absolute; left: 0; top: 0; z-index: ${config.zIndex} }` +
+            `#${Constant.InteractionCanvas} { position: absolute; left: 0; top: 0; z-index: ${config.zIndex + 1} }` +
             `#${CLARITY_POINTER} { position: absolute; z-index: ${config.zIndex + 2}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
             `.${CLARITY_CLICK}, .${CLARITY_CLICK_RING}, .${CLARITY_TOUCH}, .${CLARITY_TOUCH_RING} { position: absolute; z-index: ${config.zIndex + 1}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${config.clickWidth}px; height: ${config.clickHeight}px;}` +
             `.${CLARITY_CLICK_RING} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
@@ -135,8 +134,8 @@ export function pointer(event: Interaction.PointerEvent): void {
         p.appendChild(style);
     }
 
-    p.style.left = (data.x - config.pointerOffsetX) + PIXEL;
-    p.style.top = (data.y - config.pointerOffsetY) + PIXEL;
+    p.style.left = (data.x - config.pointerOffsetX) + Constant.Pixel;
+    p.style.top = (data.y - config.pointerOffsetY) + Constant.Pixel;
     let title = "Pointer"
     switch (type) {
         case Data.Event.Click:
@@ -159,14 +158,14 @@ export function pointer(event: Interaction.PointerEvent): void {
         case Data.Event.MouseMove:
             title = "Mouse Move";
             p.className = CLARITY_POINTER_MOVE;
-            addPoint({time: event.time, x: data.x, y: data.y});
+            addPoint({ time: event.time, x: data.x, y: data.y });
             targetId = data.target as number;
             break;
         default:
             p.className = CLARITY_POINTER_MOVE;
             break;
     }
-    p.setAttribute(TITLE, `${title} (${data.x}${PIXEL}, ${data.y}${PIXEL})`);
+    p.setAttribute(TITLE, `${title} (${data.x}${Constant.Pixel}, ${data.y}${Constant.Pixel})`);
 }
 
 function hover(): void {
@@ -193,7 +192,7 @@ function hover(): void {
 }
 
 function addPoint(point: Point): void {
-    let last = points.length > 0 ? points[points.length-1] : null;
+    let last = points.length > 0 ? points[points.length - 1] : null;
     if (last && point.x === last.x && point.y === last.y) {
         last.time = point.time;
     } else { points.push(point); }
@@ -202,9 +201,9 @@ function addPoint(point: Point): void {
 function drawTouch(doc: Document, x: number, y: number, title: string): void {
     let touch = doc.createElement("DIV");
     touch.className = CLARITY_TOUCH;
-    touch.setAttribute(TITLE, `${title} (${x}${PIXEL}, ${y}${PIXEL})`);
-    touch.style.left = (x - config.clickWidth / 2) + PIXEL;
-    touch.style.top = (y - config.clickWidth / 2) + PIXEL
+    touch.setAttribute(TITLE, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
+    touch.style.left = (x - config.clickWidth / 2) + Constant.Pixel;
+    touch.style.top = (y - config.clickWidth / 2) + Constant.Pixel
     touch.style.animation = "disappear 1 1s";
     touch.style.animationFillMode = "forwards";
     doc.body.appendChild(touch);
@@ -212,8 +211,8 @@ function drawTouch(doc: Document, x: number, y: number, title: string): void {
     // First pulsating ring
     let ringOne = touch.cloneNode() as HTMLElement;
     ringOne.className = CLARITY_TOUCH_RING;
-    ringOne.style.left = "-0.5" + PIXEL;
-    ringOne.style.top = "-0.5" + PIXEL;
+    ringOne.style.left = "-0.5" + Constant.Pixel;
+    ringOne.style.top = "-0.5" + Constant.Pixel;
     ringOne.style.animation = "pulsate-touch 1 1s";
     ringOne.style.animationFillMode = "forwards";
     touch.appendChild(ringOne);
@@ -222,16 +221,16 @@ function drawTouch(doc: Document, x: number, y: number, title: string): void {
 function drawClick(doc: Document, x: number, y: number, title: string): void {
     let click = doc.createElement("DIV");
     click.className = CLARITY_CLICK;
-    click.setAttribute(TITLE, `${title} (${x}${PIXEL}, ${y}${PIXEL})`);
-    click.style.left = (x - config.clickWidth / 2) + PIXEL;
-    click.style.top = (y - config.clickHeight / 2) + PIXEL
+    click.setAttribute(TITLE, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
+    click.style.left = (x - config.clickWidth / 2) + Constant.Pixel;
+    click.style.top = (y - config.clickHeight / 2) + Constant.Pixel
     doc.body.appendChild(click);
 
     // First pulsating ring
     let ringOne = click.cloneNode() as HTMLElement;
     ringOne.className = CLARITY_CLICK_RING;
-    ringOne.style.left = "-0.5" + PIXEL;
-    ringOne.style.top = "-0.5" + PIXEL;
+    ringOne.style.left = "-0.5" + Constant.Pixel;
+    ringOne.style.top = "-0.5" + Constant.Pixel;
     ringOne.style.animation = "pulsate-one 1 1s";
     ringOne.style.animationFillMode = "forwards";
     click.appendChild(ringOne);
@@ -250,10 +249,10 @@ function overlay(): HTMLCanvasElement {
     // Create canvas for visualizing interactions
     let doc = state.player.contentDocument;
     let de = doc.documentElement;
-    let canvas = doc.getElementById(CLARITY_CANVAS) as HTMLCanvasElement;
+    let canvas = doc.getElementById(Constant.InteractionCanvas) as HTMLCanvasElement;
     if (canvas === null) {
         canvas = document.createElement("canvas");
-        canvas.id = CLARITY_CANVAS;
+        canvas.id = Constant.InteractionCanvas;
         canvas.width = 0;
         canvas.height = 0;
         doc.body.appendChild(canvas);
@@ -300,8 +299,8 @@ export function trail(now: number): void {
                 let current = path[i];
 
                 // Compute percentage position of these points compared to all points in the path
-                let lastFactor = 1 - ((i-1)/count);
-                let currentFactor = 1 - (i/count);
+                let lastFactor = 1 - ((i - 1) / count);
+                let currentFactor = 1 - (i / count);
 
                 // Generate a color gradient that goes from red -> yellow -> green -> light blue -> blue
                 let gradient = ctx.createLinearGradient(last.x, last.y, current.x, current.y);
@@ -350,14 +349,14 @@ function curve(path: Point[]): Point[] {
     p.unshift(path[0]);
     p.push(path[path.length - 1]);
     // Loop through the points, and generate intermediate points to make a smooth trail
-      for (let i = 1; i < p.length-2; i++) {
+    for (let i = 1; i < p.length - 2; i++) {
         const time = p[i].time;
-        const segments = Math.max(Math.min(Math.round(distance(p[i], p[i-1])), 10), 1);
+        const segments = Math.max(Math.min(Math.round(distance(p[i], p[i - 1])), 10), 1);
         for (let t = 0; t <= segments; t++) {
 
             // Compute tension vectors
-            let t1: Point = {time, x: (p[i+1].x - p[i-1].x) * tension, y: (p[i+1].y - p[i-1].y) * tension};
-            let t2: Point = {time, x: (p[i+2].x - p[i].x) * tension, y: (p[i+2].y - p[i].y) * tension};
+            let t1: Point = { time, x: (p[i + 1].x - p[i - 1].x) * tension, y: (p[i + 1].y - p[i - 1].y) * tension };
+            let t2: Point = { time, x: (p[i + 2].x - p[i].x) * tension, y: (p[i + 2].y - p[i].y) * tension };
             let step = t / segments;
 
             // Compute cardinals
@@ -367,10 +366,10 @@ function curve(path: Point[]): Point[] {
             let c4 = Math.pow(step, 3) - Math.pow(step, 2);
 
             // Compute new point with common control vectors
-            let x = c1 * p[i].x + c2 * p[i+1].x + c3 * t1.x + c4 * t2.x;
-            let y = c1 * p[i].y + c2 * p[i+1].y + c3 * t1.y + c4 * t2.y;
+            let x = c1 * p[i].x + c2 * p[i + 1].x + c3 * t1.x + c4 * t2.x;
+            let y = c1 * p[i].y + c2 * p[i + 1].y + c3 * t1.y + c4 * t2.y;
 
-            output.push({time,x,y});
+            output.push({ time, x, y });
         }
     }
     return output;
@@ -379,5 +378,5 @@ function curve(path: Point[]): Point[] {
 function distance(a: Point, b: Point): number {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
-    return Math.sqrt(dx*dx + dy*dy);
+    return Math.sqrt(dx * dx + dy * dy);
 }

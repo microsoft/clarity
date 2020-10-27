@@ -84,7 +84,8 @@ export const enum Check {
     Shutdown = 2,
     Retry = 3,
     Bytes = 4,
-    Collection = 5
+    Collection = 5,
+    Server = 6
 }
 
 export const enum Code {
@@ -148,9 +149,8 @@ export const enum Constant {
     Parent = "_parent",
     Top = "_top",
     String = "string",
-    UpgradeKey = "_cluc", // Clarity Upgrade Beta
-    CookieKey = "_clcc", // Clarity Cookie Beta
-    StorageKey = "_clsc", // Clarity Storage Beta
+    CookieKey = "_clck", // Clarity Cookie Key
+    StorageKey = "_clsk", // Clarity Storage Key
     Separator = "|",
     End = "END",
     Upgrade = "UPGRADE",
@@ -180,6 +180,14 @@ export interface Metadata {
     userId: string;
     sessionId: string;
     pageNum: number;
+}
+
+export interface Session {
+    id: string;
+    ts: number;
+    count: number;
+    upgrade: BooleanFlag;
+    upload: string;
 }
 
 export interface Envelope extends Metadata {

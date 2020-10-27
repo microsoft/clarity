@@ -43,6 +43,11 @@ export function region(event: Layout.RegionEvent): void {
     }
 }
 
+export function get(hash: string): Element {
+    let doc = state.player.contentDocument;
+    return doc.querySelector(`[${Constant.Hash}="${hash}"]`);
+}
+
 export function box(event: Layout.BoxEvent): void {
     let data = event.data;
     for (let b of data) {
@@ -52,7 +57,7 @@ export function box(event: Layout.BoxEvent): void {
 }
 
 function resize(el: HTMLElement, width: number, height: number): void {
-    if (el && width && height) {
+    if (el && el.nodeType === Node.ELEMENT_NODE && width && height) {
         el.style.width = width + Layout.Constant.Pixel;
         el.style.height = height + Layout.Constant.Pixel;
         el.style.boxSizing = Layout.Constant.BorderBox; // Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing
@@ -86,6 +91,18 @@ export async function dom(event: Layout.DomEvent): Promise<void> {
         // Toggle back the visibility of IFRAME
         state.player.style.visibility = Constant.Visible;
     }
+}
+
+export function exists(hash: string): boolean {
+    if (hash) {
+        let doc = state.player.contentDocument;
+        let match = doc.querySelector(`[${Constant.Hash}="${hash}"]`);
+        if (match) {
+            let rectangle = match.getBoundingClientRect();
+            return rectangle && rectangle.width > 0 && rectangle.height > 0;
+        }
+    }
+    return false;
 }
 
 export function markup(event: Layout.DomEvent): void {
@@ -211,9 +228,6 @@ export function markup(event: Layout.DomEvent): void {
             default:
                 let domElement = element(node.id) as HTMLElement;
                 domElement = domElement ? domElement : createElement(doc, node.tag);
-                if (!node.attributes) { node.attributes = {}; }
-                node.attributes[Constant.Id] = `${node.id}`;
-                node.attributes[Constant.Hash] = `${node.hash}`;
                 setAttributes(domElement as HTMLElement, node);
                 resize(domElement, node.width, node.height);
                 insert(node, parent, domElement, pivot);
@@ -282,7 +296,12 @@ function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node
 }
 
 function setAttributes(node: HTMLElement, data: Layout.DomData): void {
-    let attributes = data.attributes;
+    let attributes = data.attributes || {};
+
+    // Clarity attributes
+    attributes[Constant.Id] = `${data.id}`;
+    attributes[Constant.Hash] = `${data.hash}`;
+
     let tag = node.nodeType === Node.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
     // First remove all its existing attributes
     if (node.attributes) {
