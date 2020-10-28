@@ -9,7 +9,8 @@ let index: number = 1;
 
 // Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input#%3Cinput%3E_types
 const DISALLOWED_TYPES = ["password", "hidden", "email", "tel"];
-const DISALLOWED_NAMES = ["address", "cell", "code", "dob", "email", "mobile", "name", "phone", "secret", "social", "ssn", "tel", "zip"];
+const DISALLOWED_NAMES = ["addr", "cell", "code", "dob", "email", "mob", "name", "phone", "secret", "social", "ssn", "tel", "zip", "pass"];
+const DISALLOWED_MATCH = ["address", "password", "contact"];
 
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
@@ -221,17 +222,29 @@ function getPrivacy(node: Node, data: NodeInfo, parentTag: string, privacy: Priv
     // Do not proceed if attributes are missing for the node
     if (attributes === null || attributes === undefined) { return privacy; }
 
-    // Check for disallowed list of fields (e.g. address, phone, etc.) only if the input node is not already masked
-    if (privacy === Privacy.None && tag === Constant.InputTag) {
-        let field: string = Constant.Empty;
-        // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
-        for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
-        for (let name of DISALLOWED_NAMES) {
-            if (field.indexOf(name) >= 0) {
+    // Look up for sensitive fields
+    if (Constant.Class in attributes && privacy === Privacy.Sensitive) {
+        for (let match of DISALLOWED_MATCH) {
+            if (attributes[Constant.Class].indexOf(match) >= 0) {
                 privacy = Privacy.Text;
-                continue;
+                break;
             }
         }
+    }
+
+    // Check for disallowed list of fields (e.g. address, phone, etc.) only if the input node is not already masked
+    if (tag === Constant.InputTag) {
+        if (privacy === Privacy.None) {
+            let field: string = Constant.Empty;
+            // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
+            for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
+            for (let name of DISALLOWED_NAMES) {
+                if (field.indexOf(name) >= 0) {
+                    privacy = Privacy.Text;
+                    break;
+                }
+            }
+        } else if (privacy === Privacy.Sensitive) { privacy = Privacy.Text; }
     }
 
     // Check for disallowed list of types (e.g. password, email, etc.) and set the masked property appropriately

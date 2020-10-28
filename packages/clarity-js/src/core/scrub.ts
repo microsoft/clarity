@@ -60,12 +60,37 @@ function mangleToken(value: string): string {
 }
 
 function redact(value: string): string {
-    if(/\d/.test(value)) {
-        let length = value.length;
-        let digits = length - value.replace(/\d/g,"").length;
-        return ((digits * 100) / length) > 30 ? mask(value) : value.replace(/\d/g,Data.Constant.Mask);
-    } else if (value.indexOf("@") > 0) {
-        return mask(value);
+    let spaceIndex = -1;
+    let hasDigit = false;
+    let hasEmail = false;
+    let hasWhitespace = false;
+    let array = null;
+    for (let i = 0; i < value.length; i++) {
+        let c = value.charCodeAt(i);
+        hasDigit = hasDigit || (c >= 48 && c <= 57); // Check for digits in the current word
+        hasEmail = hasEmail || c === 64; // Check for @ sign anywhere within the current word
+        hasWhitespace = c === 9 || c === 10 || c === 13 || c === 32; // Whitespace character (32: blank space | 9: \t | 10: \n | 13: \r)
+
+        // Process each word as an individual token to redact any sensitive information
+        if (i === 0 || i === value.length - 1 || hasWhitespace) {
+            // Performance optimization: Lazy load string -> array conversion only when required
+            if (hasDigit || hasEmail) {
+                if (array === null) { array = value.split(Data.Constant.Empty); }
+                mutate(array, spaceIndex, hasWhitespace ? i : i + 1);
+            }
+            // Reset digit and email flags after every word boundary, except the beginning of string
+            if (hasWhitespace) {
+                hasDigit = false;
+                hasEmail = false;
+                spaceIndex = i;
+            }
+        }
     }
-    return value;
+    return array ? array.join(Data.Constant.Empty) : value;
+}
+
+function mutate(array: string[], start: number, end: number): void {
+    for (let i = start + 1; i < end; i++) {
+        array[i] = Data.Constant.Mask;
+    }
 }
