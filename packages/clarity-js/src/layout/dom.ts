@@ -1,5 +1,6 @@
+import { Privacy } from "@clarity-types/core";
 import { Setting } from "@clarity-types/data";
-import { Constant, NodeChange, NodeInfo, NodeValue, Privacy, Source } from "@clarity-types/layout";
+import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
 import selector from "@src/layout/selector";
@@ -64,7 +65,7 @@ export function parse(root: ParentNode): void {
         for (const entry of config.mask) {
             let elements = root.querySelectorAll(entry);
             for (let i = 0; i < elements.length; i++) {
-                privacyMap.set(elements[i], Privacy.MaskTextImage);
+                privacyMap.set(elements[i], Privacy.TextImage);
             }
         }
 
@@ -93,7 +94,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let id = getId(node, true);
     let parentId = parent ? getId(parent) : null;
     let previousId = getPreviousId(node);
-    let privacy = config.content ? Privacy.None : Privacy.MaskText;
+    let privacy = config.content ? Privacy.Sensitive : Privacy.Text;
     let parentValue = null;
     let parentTag = Constant.Empty;
     let regionId = regionMap.has(node) ? getId(node) : null;
@@ -227,17 +228,17 @@ function getPrivacy(node: Node, data: NodeInfo, parentTag: string, privacy: Priv
         for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
         for (let name of DISALLOWED_NAMES) {
             if (field.indexOf(name) >= 0) {
-                privacy = Privacy.MaskText;
+                privacy = Privacy.Text;
                 continue;
             }
         }
     }
 
     // Check for disallowed list of types (e.g. password, email, etc.) and set the masked property appropriately
-    if (Constant.Type in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.Type]) >= 0) { privacy = Privacy.MaskText; }
+    if (Constant.Type in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.Type]) >= 0) { privacy = Privacy.Text; }
 
     // Following two conditions supersede any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
-    if (Constant.MaskData in attributes) { privacy = Privacy.MaskTextImage; }
+    if (Constant.MaskData in attributes) { privacy = Privacy.TextImage; }
     if (Constant.UnmaskData in attributes) { privacy = Privacy.None; }
 
     // If it's a text node belonging to a STYLE or TITLE tag; then reset the privacy setting to ensure we capture the content
@@ -363,7 +364,7 @@ function size(value: NodeValue, parent: NodeValue): void {
     if (isLongText && value.metadata.privacy !== Privacy.None && parent && parent.metadata.size === null) { parent.metadata.size = []; }
 
     // If this element is a image node, and is masked, then track box model for the current element
-    if (data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.MaskTextImage) { value.metadata.size = []; }
+    if (data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { value.metadata.size = []; }
 }
 
 function metadata(tag: string, id: number, parentId: number): void {

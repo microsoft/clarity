@@ -1,3 +1,5 @@
+import { Privacy } from "@clarity-types/core";
+
 /* Enum */
 
 export const enum Source {
@@ -64,13 +66,6 @@ export const enum JsonLD {
     RatingCount = "ratingCount",
     Availability = "availability",
     Name = "name"
-}
-
-export const enum Privacy {
-    None = 0,
-    MaskText = 1,
-    MaskTextImage = 2,
-    Exclude = 3
 }
 
 /* Helper Interfaces */

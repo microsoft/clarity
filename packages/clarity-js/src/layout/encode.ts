@@ -1,7 +1,8 @@
+import { Privacy } from "@clarity-types/core";
 import { Event, Metric, Token } from "@clarity-types/data";
-import { Constant, NodeInfo, Privacy } from "@clarity-types/layout";
+import { Constant, NodeInfo, NodeValue } from "@clarity-types/layout";
 import config from "@src/core/config";
-import mask from "@src/core/mask";
+import scrub from "@src/core/scrub";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import tokenize from "@src/data/token";
@@ -51,6 +52,8 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 let metadata = [];
                 let data: NodeInfo = value.data;
                 let active = value.metadata.active;
+                let privacy = value.metadata.privacy;
+                let mangle = shouldMangle(value);
                 let keys = active ? ["tag", "path", "attributes", "value"] : ["tag"];
                 box.compute(value.id);
                 for (let key of keys) {
@@ -58,7 +61,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                         switch (key) {
                             case "tag":
                                 let size = value.metadata.size;
-                                let factor = data[key] === Constant.TextTag && value.metadata.privacy !== Privacy.None ? -1 : 1;
+                                let factor = mangle ? -1 : 1;
                                 tokens.push(value.id * factor);
                                 if (value.parent && active) { tokens.push(value.parent); }
                                 if (value.previous && active) { tokens.push(value.previous); }
@@ -71,12 +74,12 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                             case "attributes":
                                 for (let attr in data[key]) {
                                     if (data[key][attr] !== undefined) {
-                                        metadata.push(attribute(value.metadata.privacy, attr, data[key][attr]));
+                                        metadata.push(attribute(attr, data[key][attr], privacy));
                                     }
                                 }
                                 break;
                             case "value":
-                                metadata.push(value.metadata.privacy !== Privacy.None ? mask(data[key], true) : data[key]);
+                                metadata.push(scrub(data[key], data.tag, privacy, mangle));
                                 break;
                         }
                     }
@@ -89,21 +92,15 @@ export default async function (type: Event, ts: number = null): Promise<void> {
     }
 }
 
+function shouldMangle(value: NodeValue): boolean {
+    let privacy = value.metadata.privacy;
+    return value.data.tag === Constant.TextTag && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
+}
+
 function str(input: number): string {
     return input.toString(36);
 }
 
-function attribute(privacy: Privacy, key: string, value: string): string {
-    switch (key) {
-        case "src":
-        case "srcset":
-        case "title":
-        case "alt":
-            return `${key}=${privacy === Privacy.MaskTextImage || privacy === Privacy.Exclude ? Constant.Empty : value}`;
-        case "value":
-        case "placeholder":
-            return `${key}=${privacy !== Privacy.None ? mask(value) : value}`;
-        default:
-            return `${key}=${value}`;
-    }
+function attribute(key: string, value: string, privacy: Privacy): string {
+    return `${key}=${scrub(value, key, privacy)}`;
 }
