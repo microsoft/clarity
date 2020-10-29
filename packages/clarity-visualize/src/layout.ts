@@ -259,7 +259,11 @@ function createElement(doc: Document, tag: string): HTMLElement {
     if (tag && tag.indexOf(Layout.Constant.SvgPrefix) === 0) {
         return doc.createElementNS(Layout.Constant.SvgNamespace as string, tag.substr(Layout.Constant.SvgPrefix.length)) as HTMLElement;
     }
-    return doc.createElement(tag);
+    try { return doc.createElement(tag); } catch (ex) {
+        // We log the warning on non-standard markup but continue with the visualization
+        console.warn(`Exception encountered while creating element ${tag}: ${ex}`);
+        return doc.createElement(Constant.UnknownTag);
+    };
 }
 
 function insertAfter(data: Layout.DomData, parent: Node, node: Node, previous: Node): void {
