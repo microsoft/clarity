@@ -51,6 +51,7 @@ export const enum Constant {
     LoadEvent = "load",
     Pixel = "px",
     BorderBox = "border-box",
+    Value = "value"
 }
 
 export const enum JsonLD { 

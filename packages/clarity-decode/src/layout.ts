@@ -108,7 +108,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
         let lastChar = token[token.length - 1];
         if (i === (node.length - 1) && output.tag === "STYLE") {
             value = token;
-        } else if (lastChar === ">" && keyIndex === -1) {
+        } else if (output.tag !== Layout.Constant.TextTag && lastChar === ">" && keyIndex === -1) {
             prefix = token;
         } else if (output.tag !== Layout.Constant.TextTag && firstChar === Layout.Constant.Box && keyIndex === -1) {
             let parts = token.substr(1).split(Layout.Constant.Period);
