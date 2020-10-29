@@ -53,6 +53,7 @@ export const enum Constant {
     Canvas = "CANVAS",
     HeatmapCanvas = "clarity-heatmap-canvas",
     InteractionCanvas = "clarity-interaction-canvas",
+    UnknownTag = "clarity-unknown",
     Hover = ":hover",
     CustomHover = "clarity-hover",
     Region = "clarity-region",

@@ -21,6 +21,14 @@ export const enum Setting {
     LongTask = 30, // 30ms
 }
 
+export const enum Privacy {
+    None = 0,
+    Sensitive = 1,
+    Text = 2,
+    TextImage = 3,
+    Exclude = 4
+}
+
 /* Helper Interfaces */
 
 export interface Module {

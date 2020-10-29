@@ -81,8 +81,8 @@ export default function (node: Node, source: Source): Node {
             break;
         case Node.ELEMENT_NODE:
             let element = (node as HTMLElement);
-            let attributes = getAttributes(element.attributes);
             let tag = element.tagName;
+            let attributes = getAttributes(element);
             parent = node.parentNode ? node.parentNode as HTMLElement : null;
             // If we encounter a node that is part of SVG namespace, prefix the tag with SVG_PREFIX
             if (element.namespaceURI === Constant.SvgNamespace) { tag = Constant.SvgPrefix + tag; }
@@ -170,8 +170,9 @@ function getCssRules(sheet: CSSStyleSheet): string {
     return value;
 }
 
-function getAttributes(attributes: NamedNodeMap): { [key: string]: string } {
+function getAttributes(element: HTMLElement): { [key: string]: string } {
     let output = {};
+    let attributes = element.attributes;
     if (attributes && attributes.length > 0) {
         for (let i = 0; i < attributes.length; i++) {
             let name = attributes[i].name;
@@ -180,6 +181,12 @@ function getAttributes(attributes: NamedNodeMap): { [key: string]: string } {
             }
         }
     }
+
+    // For INPUT tags read the dynamic "value" property if an explicit "value" attribute is not set
+    if (element.tagName === Constant.InputTag && !(Constant.Value in output) && (element as HTMLInputElement).value) {
+        output[Constant.Value] = (element as HTMLInputElement).value;
+    }
+
     return output;
 }
 

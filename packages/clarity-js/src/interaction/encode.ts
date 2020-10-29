@@ -1,6 +1,5 @@
 import { Event, Token } from "@clarity-types/data";
-import { Privacy } from "@clarity-types/layout";
-import mask from "@src/core/mask";
+import scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
@@ -55,7 +54,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.button);
                 tokens.push(entry.data.reaction);
                 tokens.push(entry.data.context);
-                tokens.push(cTarget.privacy !== Privacy.None ? mask(entry.data.text) : entry.data.text);
+                tokens.push(scrub(entry.data.text, "click", cTarget.privacy));
                 tokens.push(entry.data.link);
                 tokens.push(cTarget.hash);
                 if (cTarget.region) { tokens.push(cTarget.region); }

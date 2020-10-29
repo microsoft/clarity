@@ -128,6 +128,7 @@ export const enum Setting {
     BoxPrecision = 100, // Up to 2 decimal points (e.g. 34.56)
     ResizeObserverThreshold = 15, // At least 15 characters before we attach a resize observer for the node
     ScriptErrorLimit = 5, // Do not send the same script error more than 5 times per page
+    WordLength = 5, // Estimated average size of a word
 }
 
 export const enum Constant {
