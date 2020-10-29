@@ -56,7 +56,12 @@ function mask(value: string): string {
 }
 
 function mangleToken(value: string): string {
-    return Array(((Math.floor(value.length / 5) + 1) * 5)).join(Data.Constant.Mask);
+    let length = ((Math.floor(value.length / Data.Setting.WordLength) + 1) * Data.Setting.WordLength);
+    let output: string = Layout.Constant.Empty;
+    for (let i = 0; i < length; i++) {
+        output += i > 0 && i % Data.Setting.WordLength === 0 ? Data.Constant.Space : Data.Constant.Mask;
+    }
+    return output;
 }
 
 function redact(value: string): string {

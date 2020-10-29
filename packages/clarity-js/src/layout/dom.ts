@@ -235,16 +235,18 @@ function getPrivacy(node: Node, data: NodeInfo, parentTag: string, privacy: Priv
     }
 
     // Check for disallowed list of fields (e.g. address, phone, etc.) only if the input node is not already masked
-    if (tag === Constant.InputTag && (privacy === Privacy.None || privacy === Privacy.Sensitive)) {
-        let field: string = Constant.Empty;
-        // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
-        for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
-        for (let name of DISALLOWED_NAMES) {
-            if (field.indexOf(name) >= 0) {
-                privacy = Privacy.Text;
-                break;
+    if (tag === Constant.InputTag) {
+        if (privacy === Privacy.None) {
+            let field: string = Constant.Empty;
+            // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
+            for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
+            for (let name of DISALLOWED_NAMES) {
+                if (field.indexOf(name) >= 0) {
+                    privacy = Privacy.Text;
+                    break;
+                }
             }
-        }
+        } else if (privacy === Privacy.Sensitive) { privacy = Privacy.Text; }
     }
 
     // Check for disallowed list of types (e.g. password, email, etc.) and set the masked property appropriately
