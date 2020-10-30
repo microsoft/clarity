@@ -211,6 +211,7 @@ function parseLinkedData(json: any): void {
                     break;
                 case JsonLD.Offer:
                     if (json[JsonLD.Availability]) { dimension.log(Dimension.ProductAvailability, json[JsonLD.Availability]); }
+                    if (json[JsonLD.Price]) { metric.max(Metric.ProductPrice, num(json[JsonLD.Price])); }
                     break;
                 case JsonLD.Brand:
                     if (json[JsonLD.Name]) { dimension.log(Dimension.ProductBrand, json[JsonLD.Name]); }

@@ -66,6 +66,7 @@ export const enum JsonLD {
     RatingValue = "ratingValue",
     RatingCount = "ratingCount",
     Availability = "availability",
+    Price = "price",
     Name = "name"
 }
 
