@@ -1,4 +1,5 @@
-import { TargetMetadata, Privacy } from "@clarity-types/layout";
+import { Privacy } from "@clarity-types/core";
+import { TargetMetadata } from "@clarity-types/layout";
 import hash from "@src/core/hash";
 import { track } from "@src/layout/region";
 import * as dom from "@src/layout/dom";
@@ -24,7 +25,7 @@ export function link(node: Node): HTMLAnchorElement {
 
 export function metadata(node: Node, trackRegion?: boolean): TargetMetadata {
     // If the node is null, we return a reserved value for id: 0. Valid assignment of id begins from 1+.
-    let output: TargetMetadata = { id: 0, region: null, hash: null, selector: null, privacy: Privacy.MaskText, node };
+    let output: TargetMetadata = { id: 0, region: null, hash: null, selector: null, privacy: Privacy.Text, node };
     if (node) {
         let value = dom.get(node);
         if (value !== null) {

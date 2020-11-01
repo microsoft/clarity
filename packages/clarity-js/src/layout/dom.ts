@@ -1,5 +1,6 @@
+import { Privacy } from "@clarity-types/core";
 import { Setting } from "@clarity-types/data";
-import { Constant, NodeChange, NodeInfo, NodeValue, Privacy, Source } from "@clarity-types/layout";
+import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
 import selector from "@src/layout/selector";
@@ -8,7 +9,8 @@ let index: number = 1;
 
 // Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input#%3Cinput%3E_types
 const DISALLOWED_TYPES = ["password", "hidden", "email", "tel"];
-const DISALLOWED_NAMES = ["address", "cell", "code", "dob", "email", "mobile", "name", "phone", "secret", "social", "ssn", "tel", "zip"];
+const DISALLOWED_NAMES = ["addr", "cell", "code", "dob", "email", "mob", "name", "phone", "secret", "social", "ssn", "tel", "zip", "pass"];
+const DISALLOWED_MATCH = ["address", "password", "contact"];
 
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
@@ -64,7 +66,7 @@ export function parse(root: ParentNode): void {
         for (const entry of config.mask) {
             let elements = root.querySelectorAll(entry);
             for (let i = 0; i < elements.length; i++) {
-                privacyMap.set(elements[i], Privacy.MaskTextImage);
+                privacyMap.set(elements[i], Privacy.TextImage);
             }
         }
 
@@ -93,7 +95,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let id = getId(node, true);
     let parentId = parent ? getId(parent) : null;
     let previousId = getPreviousId(node);
-    let privacy = config.content ? Privacy.None : Privacy.MaskText;
+    let privacy = config.content ? Privacy.Sensitive : Privacy.Text;
     let parentValue = null;
     let parentTag = Constant.Empty;
     let regionId = regionMap.has(node) ? getId(node) : null;
@@ -136,6 +138,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
     let parentId = parent ? getId(parent) : null;
     let previousId = getPreviousId(node);
     let changed = false;
+    let parentChanged = false;
 
     if (id in values) {
         let value = values[id];
@@ -154,7 +157,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
             value.parent = parentId;
             // Move this node to the right location under new parent
             if (parentId !== null && parentId >= 0) {
-                let childIndex = previousId === null ? values[parentId].children.length : values[parentId].children.indexOf(previousId) + 1;
+                let childIndex = previousId === null ? 0 : values[parentId].children.indexOf(previousId) + 1;
                 values[parentId].children.splice(childIndex, 0, id);
                 // Update region after the move
                 value.region = regionMap.has(node) ? getId(node) : values[parentId].region;
@@ -170,6 +173,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
                     values[oldParentId].children.splice(nodeIndex, 1);
                 }
             }
+            parentChanged = true;
         }
 
         // Update data
@@ -183,7 +187,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
         // Update selector
         updateSelector(value);
         metadata(data.tag, id, parentId);
-        track(id, source, changed);
+        track(id, source, changed, parentChanged);
     }
 }
 
@@ -220,24 +224,36 @@ function getPrivacy(node: Node, data: NodeInfo, parentTag: string, privacy: Priv
     // Do not proceed if attributes are missing for the node
     if (attributes === null || attributes === undefined) { return privacy; }
 
-    // Check for disallowed list of fields (e.g. address, phone, etc.) only if the input node is not already masked
-    if (privacy === Privacy.None && tag === Constant.InputTag) {
-        let field: string = Constant.Empty;
-        // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
-        for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
-        for (let name of DISALLOWED_NAMES) {
-            if (field.indexOf(name) >= 0) {
-                privacy = Privacy.MaskText;
-                continue;
+    // Look up for sensitive fields
+    if (Constant.Class in attributes && privacy === Privacy.Sensitive) {
+        for (let match of DISALLOWED_MATCH) {
+            if (attributes[Constant.Class].indexOf(match) >= 0) {
+                privacy = Privacy.Text;
+                break;
             }
         }
     }
 
+    // Check for disallowed list of fields (e.g. address, phone, etc.) only if the input node is not already masked
+    if (tag === Constant.InputTag) {
+        if (privacy === Privacy.None) {
+            let field: string = Constant.Empty;
+            // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
+            for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
+            for (let name of DISALLOWED_NAMES) {
+                if (field.indexOf(name) >= 0) {
+                    privacy = Privacy.Text;
+                    break;
+                }
+            }
+        } else if (privacy === Privacy.Sensitive) { privacy = Privacy.Text; }
+    }
+
     // Check for disallowed list of types (e.g. password, email, etc.) and set the masked property appropriately
-    if (Constant.Type in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.Type]) >= 0) { privacy = Privacy.MaskText; }
+    if (Constant.Type in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.Type]) >= 0) { privacy = Privacy.Text; }
 
     // Following two conditions supersede any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
-    if (Constant.MaskData in attributes) { privacy = Privacy.MaskTextImage; }
+    if (Constant.MaskData in attributes) { privacy = Privacy.TextImage; }
     if (Constant.UnmaskData in attributes) { privacy = Privacy.None; }
 
     // If it's a text node belonging to a STYLE or TITLE tag; then reset the privacy setting to ensure we capture the content
@@ -360,10 +376,11 @@ function size(value: NodeValue, parent: NodeValue): void {
 
     // If this element is a text node, is masked, and longer than configured length, then track box model for the parent element
     let isLongText = tag === Constant.TextTag && data.value && data.value.length > Setting.ResizeObserverThreshold;
-    if (isLongText && value.metadata.privacy !== Privacy.None && parent && parent.metadata.size === null) { parent.metadata.size = []; }
+    let isMasked = value.metadata.privacy === Privacy.Text || value.metadata.privacy === Privacy.TextImage;
+    if (isLongText && isMasked && parent && parent.metadata.size === null) { parent.metadata.size = []; }
 
     // If this element is a image node, and is masked, then track box model for the current element
-    if (data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.MaskTextImage) { value.metadata.size = []; }
+    if (data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { value.metadata.size = []; }
 }
 
 function metadata(tag: string, id: number, parentId: number): void {
@@ -426,12 +443,12 @@ function copy(input: NodeValue[]): NodeValue[] {
     return JSON.parse(JSON.stringify(input));
 }
 
-function track(id: number, source: Source, changed: boolean = true): void {
+function track(id: number, source: Source, changed: boolean = true, parentChanged: boolean = false): void {
     // Keep track of the order in which mutations happened, they may not be sequential
     // Edge case: If an element is added later on, and pre-discovered element is moved as a child.
     // In that case, we need to reorder the pre-discovered element in the update list to keep visualization consistent.
     let uIndex = updateMap.indexOf(id);
-    if (uIndex >= 0 && source === Source.ChildListAdd) {
+    if (uIndex >= 0 && source === Source.ChildListAdd && parentChanged) {
         updateMap.splice(uIndex, 1);
         updateMap.push(id);
     } else if (uIndex === -1 && changed) { updateMap.push(id); }

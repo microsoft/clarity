@@ -6,7 +6,7 @@ let config: Config = {
     cssRules: false,
     lean: true,
     track: true,
-    content: false,
+    content: true,
     mask: [],
     unmask: [],
     regions: {},

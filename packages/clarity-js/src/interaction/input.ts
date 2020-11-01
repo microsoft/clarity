@@ -1,8 +1,7 @@
 import { Event } from "@clarity-types/data";
 import { InputData, InputState, Setting } from "@clarity-types/interaction";
-import { Privacy } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
-import mask from "@src/core/mask";
+import scrub from "@src/core/scrub";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
@@ -35,7 +34,7 @@ function recompute(evt: UIEvent): void {
                 v = input.value;
                 break;
             default:
-                v = value.metadata.privacy !== Privacy.None ? mask(input.value) : input.value;
+                v = scrub(input.value, "input", value.metadata.privacy);
                 break;
         }
 
