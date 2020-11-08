@@ -121,7 +121,7 @@ export const enum Setting {
     ClickText = 25, // Maximum number of characters to send as part of Click event's text field
     PayloadLimit = 128, // Do not allow more than specified payloads per page
     ShutdownLimit = 2 * Time.Hour, // Shutdown instrumentation after specified time
-    RetryLimit = 2, // Maximum number of attempts to upload a payload before giving up
+    RetryLimit = 1, // Maximum number of attempts to upload a payload before giving up
     PlaybackBytesLimit = 10 * 1024 * 1024, // 10MB
     CollectionLimit = 128, // Number of unique entries for dimensions
     ClickPrecision = 32767, // 2^15 - 1

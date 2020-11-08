@@ -1,10 +1,11 @@
 import { Priority } from "@clarity-types/core";
 import { Code, Event, Metric, Severity } from "@clarity-types/data";
-import { Constant, MutationQueue, Source } from "@clarity-types/layout";
+import { Constant, MutationQueue, Setting, Source } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
+import { clearTimeout, setTimeout } from "@src/core/timeout";
 import * as summary from "@src/data/summary";
 import * as log from "@src/diagnostic/log";
 import * as doc from "@src/layout/document";
@@ -18,9 +19,14 @@ let observers: MutationObserver[] = [];
 let mutations: MutationQueue[] = [];
 let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
+let queue: Node[] = [];
+let timeout: number = null;
+
 
 export function start(): void {
     observers = [];
+    queue = [];
+    timeout = null;
 
     if (insertRule === null) { insertRule = CSSStyleSheet.prototype.insertRule; }
     if (deleteRule === null) { deleteRule = CSSStyleSheet.prototype.deleteRule; }
@@ -30,14 +36,19 @@ export function start(): void {
     // using javascript API is that it doesn't trigger DOM mutation and therefore we
     // need to override the insertRule API and listen for changes manually.
     CSSStyleSheet.prototype.insertRule = function(rule: string, index?: number): number {
-      let value = insertRule.call(this, rule, index);
-      generate(this.ownerNode, Constant.CharacterData);
-      return value;
+      try {
+        let value = insertRule.call(this, rule, index);
+        schedule(this.ownerNode);
+        return value;
+      } catch (error) {
+        log.log(Code.CssRules, error, Severity.Info);
+        return null;
+      }
     };
 
     CSSStyleSheet.prototype.deleteRule = function(index?: number): void {
       deleteRule.call(this, index);
-      generate(this.ownerNode, Constant.CharacterData);
+      schedule(this.ownerNode);
     };
 }
 
@@ -79,6 +90,8 @@ export function stop(): void {
   }
 
   mutations = [];
+  queue = [];
+  timeout = null;
 }
 
 function handle(m: MutationRecord[]): void {
@@ -132,6 +145,22 @@ async function process(): Promise<void> {
       await encode(Event.Mutation, record.time);
     }
     task.stop(timer);
+}
+
+function schedule(node: Node): void {
+  // Only schedule manual trigger for this node if it's not already in the queue
+  if (queue.indexOf(node) < 0) { queue.push(node); }
+
+  // Cancel any previous trigger before scheduling a new one.
+  // It's common for a webpage to call multiple synchronous "insertRule" / "deleteRule" calls.
+  // And in those cases we do not wish to monitor changes multiple times for the same node.
+  if (timeout) { clearTimeout(timeout); }
+  timeout = setTimeout(trigger, Setting.LookAhead);
+}
+
+function trigger(): void {
+  for (let node of queue) { generate(node, Constant.CharacterData); }
+  queue = [];
 }
 
 function generate(target: Node, type: MutationRecordType): void {

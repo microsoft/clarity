@@ -70,6 +70,10 @@ export const enum JsonLD {
     Name = "name"
 }
 
+export const enum Setting {
+    LookAhead = 33, // 33ms
+}
+
 /* Helper Interfaces */
 export interface Box {
     x: number; // Left

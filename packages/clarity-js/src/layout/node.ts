@@ -145,8 +145,11 @@ function observe(root: Node): void {
 }
 
 function getStyleValue(style: HTMLStyleElement): string {
-    let value = style.textContent;
-    if (value.length === 0 || config.cssRules) {
+    // Call trim on the text content to ensure we do not process white spaces ( , \n, \r\n, \t, etc.)
+    // Also, check if stylesheet has any data-* attribute, if so process rules instead of looking up text
+    let value = style.textContent ? style.textContent.trim() : Constant.Empty;
+    let dataset = style.dataset ? Object.keys(style.dataset).length : 0;
+    if (value.length === 0 || dataset > 0 || config.cssRules) {
         value = getCssRules(style.sheet as CSSStyleSheet);
     }
     return value;
