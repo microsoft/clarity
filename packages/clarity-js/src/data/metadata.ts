@@ -7,8 +7,10 @@ import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
 
 export let data: Metadata = null;
+export let callback: MetadataCallback = null;
 
 export function start(): void {
+  callback = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const title = document && document.title ? document.title : Constant.Empty;
 
@@ -46,13 +48,11 @@ export function start(): void {
 }
 
 export function stop(): void {
-  /* Intentionally Blank */
+  callback = null;
 }
 
-export function metadata(callback: MetadataCallback): void {
-  if (core.active()) {
-    callback(data, !config.lean);
-  }
+export function metadata(cb: MetadataCallback): void {
+  callback = cb;
 }
 
 export function consent(): void {
@@ -68,10 +68,11 @@ export function clear(): void {
 }
 
 export function save(): void {
+  let ts = Math.round(Date.now());
+  let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  let upload = typeof config.upload === Constant.String ? config.upload : Constant.Empty;
+  if (upgrade && callback) { callback(data, !config.lean); }
   if (config.track && sessionStorage) {
-    let ts = Math.round(Date.now());
-    let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-    let upload = typeof config.upload === Constant.String ? config.upload : Constant.Empty;
     sessionStorage.setItem(Constant.StorageKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Separator));
   }
 }

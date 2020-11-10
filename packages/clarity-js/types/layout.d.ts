@@ -66,7 +66,12 @@ export const enum JsonLD {
     RatingValue = "ratingValue",
     RatingCount = "ratingCount",
     Availability = "availability",
+    Price = "price",
     Name = "name"
+}
+
+export const enum Setting {
+    LookAhead = 33, // 33ms
 }
 
 /* Helper Interfaces */
