@@ -42,7 +42,7 @@ export function start(): void {
         return value;
       } catch (error) {
         log.log(Code.CssRules, error, Severity.Info);
-        raise error;
+        throw error;
       }
     };
 
