@@ -42,7 +42,11 @@ export function start(): void {
         return value;
       } catch (error) {
         log.log(Code.CssRules, error, Severity.Info);
-        return null;
+
+        // The reason we need to throw the error is to stay in line with the `insertRule` specification.
+        // MDN: https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet/insertRule#Restrictions
+        // WC3: https://www.w3.org/TR/DOM-Level-2-Style/css.html - Exceptions listed here. 
+        throw error;
       }
     };
 
