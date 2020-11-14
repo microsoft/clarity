@@ -43,9 +43,15 @@ function setup(): void {
   window.addEventListener("message", function(event: MessageEvent): void {
       if (event.source === window && event.data.styleIndex >= 0) {
           const sheet = document.styleSheets[event.data.styleIndex] as CSSStyleSheet;
-          if (sheet) { sheet.insertRule(event.data.style, event.data.index); } else {
-              console.warn(`Clarity: Style not found at ${event.data.styleIndex}.`);
-          }
+          if (sheet && sheet.cssRules) {
+            // Posting messages across different context is an asynchronous operation
+            // And it's possible that by the time message is received, stylesheets may have been added or removed
+            // invalidating the style index. In that case, as a work around, we ignore the rule index property.
+            // This edge case is restricted to the use of this extension and won't impact production use of the script.
+            if (sheet.cssRules.length > event.data.index) {
+              sheet.insertRule(event.data.style, event.data.index);
+            } else { sheet.insertRule(event.data.style); }
+          } else { console.warn(`Clarity: Style not found at ${event.data.styleIndex}.`); }
       }
   });
 
