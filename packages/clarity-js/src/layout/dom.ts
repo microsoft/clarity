@@ -339,9 +339,9 @@ export function getRegion(regionId: number): string {
 
 export function regions(): NodeValue[] {
     let v = [];
-    for (let id in values) {
-        if (values[id].metadata.active && values[id].metadata.region) {
-            v.push(values[id]);
+    for (let value of values) {
+        if (value && value.metadata && value.metadata.active && value.metadata.region) {
+            v.push(value);
         }
     }
     return v;
