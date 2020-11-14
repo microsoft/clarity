@@ -340,7 +340,7 @@ export function getRegion(regionId: number): string {
 export function regions(): NodeValue[] {
     let v = [];
     for (let value of values) {
-        if (value && value.metadata.active && value.metadata.region) {
+        if (value && value.metadata && value.metadata.active && value.metadata.region) {
             v.push(value);
         }
     }
