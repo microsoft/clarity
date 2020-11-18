@@ -1,0 +1,31 @@
+{
+    "manifest_version": 2,
+    "name": "Clarity Opt Out",
+    "description": "Opt out of Clarity data collection.",
+    "version": "1.0.0",
+    "version_name": "1.0.0",
+    "minimum_chrome_version": "50",
+    "devtools_page": "devtools.html",
+    "icons": {
+      "16": "icon-16.png",
+      "32": "icon-32.png",
+      "48": "icon-48.png",
+      "64": "icon-64.png",
+      "128": "icon-128.png"
+    },
+    "browser_action": {
+      "default_icon": "icon.png",
+      "default_title": "Clarity Opt Out",
+      "default_popup": "popup.html"
+    },
+    "content_scripts": [{
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"]
+    }],
+    "background": {
+      "scripts": ["background.js"],
+      "persistent": false
+    },
+    "permissions": ["http://*/*", "https://*/*", "storage"]
+  }
+  
