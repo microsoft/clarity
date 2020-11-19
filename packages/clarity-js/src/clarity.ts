@@ -10,6 +10,7 @@ import * as interaction from "@src/interaction";
 import * as layout from "@src/layout";
 import * as performance from "@src/performance";
 export { version };
+export { optout } from "@src/core/index"
 export { consent, event, identify, set, upgrade, metadata } from "@src/data";
 
 const modules: Module[] = [diagnostic, layout, interaction, performance];

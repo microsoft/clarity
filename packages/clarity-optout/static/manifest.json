@@ -17,10 +17,12 @@
       "default_icon": "icon.png",
       "default_title": "Clarity Opt Out"
     },
-    "background": {
-      "scripts": ["background.js"],
-      "persistent": false
-    },
-    "permissions": ["http://*/*", "https://*/*", "storage", "cookies"]
+    "content_scripts": [ {
+        "all_frames": true,
+        "js": [ "content.js" ],
+        "matches": [ "http://*/*", "https://*/*", "file://*/*" ],
+        "run_at": "document_start"
+     } ],
+    "permissions": ["http://*/*", "https://*/*"]
   }
   

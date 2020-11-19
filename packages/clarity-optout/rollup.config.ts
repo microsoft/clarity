@@ -4,8 +4,8 @@ import typescript from "rollup-plugin-typescript2";
 
 export default [
   {
-    input: "src/background.ts",
-    output: [{ file: "extension/background.js", format: "iife", exports: "named" }],
+    input: "src/content.ts",
+    output: [{ file: "extension/content.js", format: "iife", exports: "named" }],
     plugins: [
         resolve(),
         typescript({ rollupCommonJSResolveHack: true, clean: true }),

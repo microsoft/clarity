@@ -9,6 +9,7 @@ import * as clarity from "@src/clarity";
 import * as custom from "@src/data/custom";
 
 let status = false;
+let optedOut = !!window["coptout"];
 
 export function start(): void {
     status = true;
@@ -33,6 +34,7 @@ export function active(): boolean {
 export function check(): boolean {
     try {
         return status === false &&
+            optedOut === false &&
             typeof Promise !== "undefined" &&
             window["MutationObserver"] &&
             document["createTreeWalker"] &&
@@ -68,6 +70,11 @@ export function suspend(): void {
         ["document", "touchstart"].forEach(x => event.bind(document, x, restart));
         ["resize", "scroll", "pageshow"].forEach(x => event.bind(window, x, restart));
     }
+}
+
+export function optout(): void {
+    optedOut = true;
+    clarity.stop();
 }
 
 function restart(): void {
