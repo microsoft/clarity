@@ -11,15 +11,5 @@ export default [
         typescript({ rollupCommonJSResolveHack: true, clean: true }),
         copy({ targets: [{ src: "static/*", dest: "extension/" }] })
       ]
-  },
-  {
-    input: "src/content.ts",
-    output: [{ file: "extension/content.js", format: "iife", exports: "named" }],
-    plugins: [resolve(), typescript({ rollupCommonJSResolveHack: true, clean: true })]
-  },
-  {
-    input: "src/popup.ts",
-    output: [{ file: "extension/popup.js", format: "iife", exports: "named" }],
-    plugins: [resolve(), typescript({ rollupCommonJSResolveHack: true, clean: true })]
   }
 ];

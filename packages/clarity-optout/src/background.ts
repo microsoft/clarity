@@ -1,30 +1,23 @@
-let connections: any[] = [];
+chrome.runtime.onStartup.addListener(addCookie);
+chrome.runtime.onInstalled.addListener(addCookie);
 
-chrome.runtime.onConnect.addListener(function(port: chrome.runtime.Port): void {
-
-    let listener = function(message: any): void {
-        // Store a reference to tabId of the devtools page and send a message to activate Clarity
-        if (message.action === "init") {
-          connections[message.tabId] = port;
-          chrome.tabs.sendMessage(message.tabId, {action: "activate"});
-          return;
-        } else if (message.action === "warn") {
-          chrome.tabs.sendMessage(message.tabId, {action: "warn", message: message.message});
-          return;
-        }
+function addCookie(): void {
+    const setDetails: chrome.cookies.SetDetails = {
+        domain: "clarity.ms",
+        expirationDate: Date.now() + (1000 * 60 * 60 * 24 * 30),
+        httpOnly: false,
+        name: "coptout",
+        path: "/",
+        secure: false,
+        value: "1",
+        url: "http://clarity.ms"
     };
 
-    // Listen to messages sent from the devtools page
-    port.onMessage.addListener(listener);
-
-    port.onDisconnect.addListener(function(): void {
-        port.onMessage.removeListener(listener);
-        let tabs = Object.keys(connections);
-        for (let tab of tabs) {
-          if (connections[tab] === port) {
-            delete connections[tab];
-            break;
-          }
+    chrome.cookies.set(setDetails, function(cookie: chrome.cookies.Cookie): void {
+        if (cookie) {
+            console.log("Setting opt-out cookie succeeded:", setDetails);
+        } else {
+            console.warn("Setting opt-out cookie failed:", setDetails);
         }
     });
-});
+}
