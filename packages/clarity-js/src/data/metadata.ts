@@ -64,7 +64,7 @@ export function consent(): void {
 
 export function clear(): void {
   // Clear any stored information in the session so we can restart fresh the next time
-  if (sessionStorage) { sessionStorage.removeItem(Constant.StorageKey); }
+  if (supported(window, Constant.SessionStorage)) { sessionStorage.removeItem(Constant.StorageKey); }
 }
 
 export function save(): void {
@@ -72,13 +72,17 @@ export function save(): void {
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let upload = typeof config.upload === Constant.String ? config.upload : Constant.Empty;
   if (upgrade && callback) { callback(data, !config.lean); }
-  if (config.track && sessionStorage) {
+  if (config.track && supported(window, Constant.SessionStorage)) {
     sessionStorage.setItem(Constant.StorageKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Separator));
   }
 }
 
+function supported(target: Window | Document, api: string): boolean {
+  try { return !!target[api]; } catch { return false; }
+}
+
 function track(): void {
-  if (config.track) {
+  if (config.track && supported(document, Constant.Cookie)) {
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + Setting.Expire);
     let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
@@ -97,7 +101,7 @@ function shortid(): string {
 
 function session(): Session {
   let output: Session = { id: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: BooleanFlag.False, upload: Constant.Empty };
-  if (config.track && sessionStorage) {
+  if (config.track && supported(window, Constant.SessionStorage)) {
     let value = sessionStorage.getItem(Constant.StorageKey);
     if (value && value.indexOf(Constant.Separator) >= 0) {
       let parts = value.split(Constant.Separator);
@@ -122,12 +126,14 @@ function user(): string {
 }
 
 function cookie(key: string): string {
-  let cookies: string[] = document.cookie.split(Constant.Semicolon);
-  if (cookies) {
-    for (let i = 0; i < cookies.length; i++) {
-      let pair: string[] = cookies[i].split(Constant.Equals);
-      if (pair.length > 1 && pair[0] && pair[0].trim() === key) {
-        return pair[1];
+  if (supported(document, Constant.Cookie)) {
+    let cookies: string[] = document.cookie.split(Constant.Semicolon);
+    if (cookies) {
+      for (let i = 0; i < cookies.length; i++) {
+        let pair: string[] = cookies[i].split(Constant.Equals);
+        if (pair.length > 1 && pair[0] && pair[0].trim() === key) {
+          return pair[1];
+        }
       }
     }
   }
