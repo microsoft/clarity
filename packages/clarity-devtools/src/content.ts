@@ -66,9 +66,8 @@ function proxy(): string {
   let closure = (): void => {
     let insertRule = CSSStyleSheet.prototype.insertRule;
     CSSStyleSheet.prototype.insertRule = function(style: string, index: number): number {
-        let value = insertRule.call(this, style, index);
         window.postMessage({ styleIndex: getStyleIndex(this), style, index }, "*");
-        return value;
+        return insertRule.apply(this, arguments);
     };
     function getStyleIndex(sheet: CSSStyleSheet): number {
         for (let i = 0; i < document.styleSheets.length; i++) {

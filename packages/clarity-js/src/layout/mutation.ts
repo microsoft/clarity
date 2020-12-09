@@ -35,24 +35,14 @@ export function start(): void {
     // by injecting CSS using insertRule API vs. appending text node. A side effect of
     // using javascript API is that it doesn't trigger DOM mutation and therefore we
     // need to override the insertRule API and listen for changes manually.
-    CSSStyleSheet.prototype.insertRule = function(rule: string, index?: number): number {
-      try {
-        let value = insertRule.call(this, rule, index);
-        schedule(this.ownerNode);
-        return value;
-      } catch (error) {
-        log.log(Code.CssRules, error, Severity.Info);
-
-        // The reason we need to throw the error is to stay in line with the `insertRule` specification.
-        // MDN: https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet/insertRule#Restrictions
-        // WC3: https://www.w3.org/TR/DOM-Level-2-Style/css.html - Exceptions listed here. 
-        throw error;
-      }
+    CSSStyleSheet.prototype.insertRule = function(): number {
+      schedule(this.ownerNode);
+      return insertRule.apply(this, arguments);
     };
 
-    CSSStyleSheet.prototype.deleteRule = function(index?: number): void {
-      deleteRule.call(this, index);
+    CSSStyleSheet.prototype.deleteRule = function(): void {
       schedule(this.ownerNode);
+      return deleteRule.apply(this, arguments);
     };
 }
 
