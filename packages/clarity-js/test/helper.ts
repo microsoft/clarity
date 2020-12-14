@@ -4,7 +4,7 @@ import * as path from 'path';
 import { Browser, Page, chromium } from 'playwright';
 
 export async function launch(): Promise<Browser> {
-    return chromium.launch({ headless: false, args: ['--no-sandbox'] });
+    return chromium.launch({ headless: true, args: ['--no-sandbox'] });
 }
 
 export async function markup(page: Page, file: string, override: Core.Config = null): Promise<string[]> {
