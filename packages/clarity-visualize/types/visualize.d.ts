@@ -83,5 +83,13 @@ export const enum Setting {
     AlphaBoost = 0.15,
     Colors = 256,
     Interval = 30,
-    ZIndex = 10000000
+    ZIndex = 2147483647, // Max integer value
+    PointerWidth = 29,
+    PointerHeight = 38,
+    PointerOffset = 4,
+    ClickRadius = 22,
+    PixelLife = 3000,
+    TrailWidth = 6,
+    MaxTrailPoints = 75,
+    HoverDepth = 3
 }

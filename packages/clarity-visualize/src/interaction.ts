@@ -1,4 +1,4 @@
-import { Asset, Constant, Point } from "@clarity-types/visualize";
+import { Asset, Constant, Point, Setting } from "@clarity-types/visualize";
 import { Data, Interaction, Layout  } from "clarity-decode";
 import { state } from "./clarity";
 import { element } from "./layout";
@@ -16,20 +16,6 @@ const TITLE = "title";
 const ROUND = "round";
 const TRAIL_START_COLOR = [242,97,12]; // rgb(242,97,12)
 const TRAIL_END_COLOR = [249,220,209]; // rgb(249,220,209)
-
-const config = {
-    pointerWidth: 29,
-    pointerHeight: 38,
-    pointerOffsetX: 4,
-    pointerOffsetY: 4,
-    clickWidth: 22,
-    clickHeight: 22,
-    pixelLife: 3000,
-    trailWidth: 6,
-    maxTrailPoints: 75,
-    zIndex: 10000000,
-    hoverDepth: 3
-}
 
 let hoverId: number = null;
 let targetId: number = null;
@@ -104,14 +90,15 @@ export function pointer(event: Interaction.PointerEvent): void {
     let data = event.data;
     let type = event.event;
     let doc = state.player.contentDocument;
+    let de = doc.documentElement;
     let p = doc.getElementById(CLARITY_POINTER);
-    let pointerWidth = config.pointerWidth;
-    let pointerHeight = config.pointerHeight;
+    let pointerWidth = Setting.PointerWidth;
+    let pointerHeight = Setting.PointerHeight;
 
     if (p === null) {
         p = doc.createElement("DIV");
         p.id = CLARITY_POINTER;
-        doc.body.appendChild(p);
+        de.appendChild(p);
 
         // Add custom styles
         let style = doc.createElement("STYLE");
@@ -120,9 +107,9 @@ export function pointer(event: Interaction.PointerEvent): void {
             "@keyframes pulsate-two { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(5, 5); opacity: 0; } }" +
             "@keyframes pulsate-touch { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(2, 2); opacity: 0; } }" +
             "@keyframes disappear { 90% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(1.3, 1.3); opacity: 0; } }" +
-            `#${Constant.InteractionCanvas} { position: absolute; left: 0; top: 0; z-index: ${config.zIndex + 1} }` +
-            `#${CLARITY_POINTER} { position: absolute; z-index: ${config.zIndex + 2}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
-            `.${CLARITY_CLICK}, .${CLARITY_CLICK_RING}, .${CLARITY_TOUCH}, .${CLARITY_TOUCH_RING} { position: absolute; z-index: ${config.zIndex + 1}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${config.clickWidth}px; height: ${config.clickHeight}px;}` +
+            `#${Constant.InteractionCanvas} { position: absolute; left: 0; top: 0; z-index: ${Setting.ZIndex} }` +
+            `#${CLARITY_POINTER} { position: absolute; z-index: ${Setting.ZIndex}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
+            `.${CLARITY_CLICK}, .${CLARITY_CLICK_RING}, .${CLARITY_TOUCH}, .${CLARITY_TOUCH_RING} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
             `.${CLARITY_CLICK_RING} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
             `.${CLARITY_TOUCH} { background: radial-gradient(rgba(242,97,12,1), transparent); }` +
             `.${CLARITY_TOUCH_RING} { background: transparent; border: 1px solid rgba(242,97,12,0.8); }` +
@@ -133,8 +120,8 @@ export function pointer(event: Interaction.PointerEvent): void {
         p.appendChild(style);
     }
 
-    p.style.left = (data.x - config.pointerOffsetX) + Constant.Pixel;
-    p.style.top = (data.y - config.pointerOffsetY) + Constant.Pixel;
+    p.style.left = (data.x - Setting.PointerOffset) + Constant.Pixel;
+    p.style.top = (data.y - Setting.PointerOffset) + Constant.Pixel;
     let title = "Pointer"
     switch (type) {
         case Data.Event.Click:
@@ -172,7 +159,7 @@ function hover(): void {
         let depth = 0;
         // First, remove any previous hover class assignments
         let hoverNode = hoverId ? element(hoverId) as HTMLElement : null;
-        while (hoverNode && depth < config.hoverDepth) {
+        while (hoverNode && depth < Setting.HoverDepth) {
             if ("removeAttribute" in hoverNode) { hoverNode.removeAttribute(CLARITY_HOVER); }
             hoverNode = hoverNode.parentElement;
             depth++;
@@ -180,7 +167,7 @@ function hover(): void {
         // Then, add hover class on elements that are below the pointer
         depth = 0;
         let targetNode = targetId ? element(targetId) as HTMLElement : null;
-        while (targetNode && depth < config.hoverDepth) {
+        while (targetNode && depth < Setting.HoverDepth) {
             if ("setAttribute" in targetNode) { targetNode.setAttribute(CLARITY_HOVER, Layout.Constant.Empty); }
             targetNode = targetNode.parentElement;
             depth++;
@@ -198,14 +185,15 @@ function addPoint(point: Point): void {
 }
 
 function drawTouch(doc: Document, x: number, y: number, title: string): void {
+    let de = doc.documentElement;
     let touch = doc.createElement("DIV");
     touch.className = CLARITY_TOUCH;
     touch.setAttribute(TITLE, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
-    touch.style.left = (x - config.clickWidth / 2) + Constant.Pixel;
-    touch.style.top = (y - config.clickWidth / 2) + Constant.Pixel
+    touch.style.left = (x - Setting.ClickRadius / 2) + Constant.Pixel;
+    touch.style.top = (y - Setting.ClickRadius / 2) + Constant.Pixel
     touch.style.animation = "disappear 1 1s";
     touch.style.animationFillMode = "forwards";
-    doc.body.appendChild(touch);
+    de.appendChild(touch);
 
     // First pulsating ring
     let ringOne = touch.cloneNode() as HTMLElement;
@@ -218,12 +206,13 @@ function drawTouch(doc: Document, x: number, y: number, title: string): void {
 }
 
 function drawClick(doc: Document, x: number, y: number, title: string): void {
+    let de = doc.documentElement;
     let click = doc.createElement("DIV");
     click.className = CLARITY_CLICK;
     click.setAttribute(TITLE, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
-    click.style.left = (x - config.clickWidth / 2) + Constant.Pixel;
-    click.style.top = (y - config.clickHeight / 2) + Constant.Pixel
-    doc.body.appendChild(click);
+    click.style.left = (x - Setting.ClickRadius / 2) + Constant.Pixel;
+    click.style.top = (y - Setting.ClickRadius / 2) + Constant.Pixel
+    de.appendChild(click);
 
     // First pulsating ring
     let ringOne = click.cloneNode() as HTMLElement;
@@ -254,7 +243,7 @@ function overlay(): HTMLCanvasElement {
         canvas.id = Constant.InteractionCanvas;
         canvas.width = 0;
         canvas.height = 0;
-        doc.body.appendChild(canvas);
+        de.appendChild(canvas);
     }
 
     if (canvas.width !== de.clientWidth || canvas.height !== de.clientHeight) {
@@ -270,11 +259,11 @@ function match(time: number): Point[] {
     for (let i = points.length - 1; i > 0; i--) {
         // Each pixel in the trail has a pixel life of 3s. The only exception to this is if the user scrolled.
         // We reset the trail after every scroll event to avoid drawing weird looking trail.
-        if (i >= scrollPointIndex && time - points[i].time < config.pixelLife) {
+        if (i >= scrollPointIndex && time - points[i].time < Setting.PixelLife) {
             p.push(points[i]);
         } else { break; }
     }
-    return p.slice(0, config.maxTrailPoints);
+    return p.slice(0, Setting.MaxTrailPoints);
 }
 
 export function trail(now: number): void {
@@ -307,7 +296,7 @@ export function trail(now: number): void {
                 gradient.addColorStop(0, color(lastFactor))
 
                 // Line width of the trail shrinks as the position of the point goes farther away.
-                ctx.lineWidth = config.trailWidth * currentFactor;
+                ctx.lineWidth = Setting.TrailWidth * currentFactor;
                 ctx.lineCap = ROUND;
                 ctx.lineJoin = ROUND;
                 ctx.strokeStyle = gradient;
