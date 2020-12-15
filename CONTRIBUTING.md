@@ -20,7 +20,7 @@ On Windows, grab an installer from here: https://git-scm.com/download/win and go
 
 On Mac and Linux, it's pre-installed.
 
-### Node.js
+### Node.js (12+)
 
 On Windows, grab an installer from nodejs.org and go with the default options:
 ```
@@ -70,6 +70,11 @@ To build:
 yarn build
 ```
 
+To test:
+```
+yarn test
+```
+
 On Ubuntu, if you run into errors, it may be because you are missing the libfontconfig package
 ```
 sudo apt-get install libfontconfig
@@ -87,6 +92,31 @@ https://code.visualstudio.com/download
 Edit Clarity:
 ```
 Go to 'File -> Open Folder' and select the 'clarity' folder that you just cloned.
+```
+
+Debug Tests
+
+To debug tests from Visual Studio Code, create "launch.json" in your root project folder:
+```
+{
+  "version": "0.2.0",
+  "configurations": [
+      {
+          "name": "Clarity Tests",
+          "type": "node",
+          "request": "launch",
+          "cwd": "${workspaceFolder}/packages/clarity-js",
+          "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/ts-mocha",
+          "runtimeArgs": [
+              "-p",
+              "test/tsconfig.test.json",
+              "${file}"
+          ],
+          "protocol": "inspector"
+      }
+
+  ]
+}
 ```
 
 ### Text Editor TSLint Plugin

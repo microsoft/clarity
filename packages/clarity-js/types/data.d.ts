@@ -159,7 +159,9 @@ export const enum Constant {
     SessionId = "sessionId",
     PageId = "pageId",
     ResizeObserver = "ResizeObserver",
-    Mask = "•"
+    Mask = "•",
+    SessionStorage = "sessionStorage",
+    Cookie = "cookie"
 }
 
 /* Helper Interfaces */
@@ -235,7 +237,7 @@ export interface VariableData {
     [name: string]: string;
 }
 
-// Eventually custom event can be expanded to contain more properties 
+// Eventually custom event can be expanded to contain more properties
 // For now, restricting to key value pair where both key & value are strings
 // The way it's different from variable is that Custom Event has a notion of time
 // Whereas variables have no timing element and eventually will turn into custom dimensions

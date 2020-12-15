@@ -83,7 +83,7 @@ function overlay(): HTMLCanvasElement {
         canvas.height = 0;
         canvas.style.position = Constant.Absolute;
         canvas.style.zIndex = `${Setting.ZIndex}`;
-        doc.body.appendChild(canvas);
+        de.appendChild(canvas);
         win.addEventListener("scroll", redraw, true);
         win.addEventListener("resize", redraw, true);
         observer = window["ResizeObserver"] ? new ResizeObserver(redraw) : null;

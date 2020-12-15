@@ -1,7 +1,7 @@
 {
   "name": "clarity",
   "private": true,
-  "version": "0.6.0-beta.22",
+  "version": "0.6.0",
   "repository": "https://github.com/microsoft/clarity.git",
   "author": "Sarvesh Nagpal <sarveshn@microsoft.com>",
   "license": "MIT",
@@ -16,7 +16,8 @@
     "build:js": "yarn workspace clarity-js build",
     "build:decode": "yarn workspace clarity-decode build",
     "build:visualize": "yarn workspace clarity-visualize build",
-    "build:devtools": "yarn workspace clarity-devtools build"
+    "build:devtools": "yarn workspace clarity-devtools build",
+    "test": "yarn workspace clarity-js test"
   },
   "devDependencies": {
     "lerna": "^3.20.2"

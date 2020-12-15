@@ -1,4 +1,6 @@
-import { Data } from "clarity-js";
+import { Core, Data } from "clarity-js";
+
+export import Config = Core.Config;
 
 export interface PartialEvent {
     time: number;
