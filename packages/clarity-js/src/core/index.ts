@@ -2,6 +2,7 @@ import { Config } from "@clarity-types/core";
 import { Constant } from "@clarity-types/data";
 import configuration from "@src/core/config";
 import * as event from "@src/core/event";
+import * as history from "@src/core/history";
 import * as report from "@src/core/report";
 import * as task from "@src/core/task";
 import * as time from "@src/core/time";
@@ -16,9 +17,11 @@ export function start(): void {
     task.reset();
     event.reset();
     report.reset();
+    history.start();
 }
 
 export function stop(): void {
+    history.stop();
     report.reset();
     event.reset();
     task.reset();
@@ -71,6 +74,6 @@ export function suspend(): void {
 }
 
 function restart(): void {
-    start();
+    clarity.start();
     custom.event(Constant.Clarity, Constant.Restart);
 }

@@ -82,11 +82,13 @@ export function start(method: Metric): void {
 }
 
 function restart(method: Metric): void {
-    let c = tracker[method].calls;
-    let y = tracker[method].yield;
-    start(method);
-    tracker[method].calls = c + 1;
-    tracker[method].yield = y;
+    if (tracker && tracker[method]) {
+        let c = tracker[method].calls;
+        let y = tracker[method].yield;
+        start(method);
+        tracker[method].calls = c + 1;
+        tracker[method].yield = y;
+    }
 }
 
 export function stop(method: Metric): void {

@@ -41,17 +41,30 @@ function activate(): void {
 
 function setup(): void {
   window.addEventListener("message", function(event: MessageEvent): void {
-      if (event.source === window && event.data.styleIndex >= 0) {
-          const sheet = document.styleSheets[event.data.styleIndex] as CSSStyleSheet;
-          if (sheet && sheet.cssRules) {
-            // Posting messages across different context is an asynchronous operation
-            // And it's possible that by the time message is received, stylesheets may have been added or removed
-            // invalidating the style index. In that case, as a work around, we ignore the rule index property.
-            // This edge case is restricted to the use of this extension and won't impact production use of the script.
-            if (sheet.cssRules.length > event.data.index) {
-              sheet.insertRule(event.data.style, event.data.index);
-            } else { sheet.insertRule(event.data.style); }
-          } else { console.warn(`Clarity: Style not found at ${event.data.styleIndex}.`); }
+      if (event.source === window && event.data.api) {
+          let d = event.data;
+          switch (d.api) {
+            case "insertRule":
+              if (d.styleIndex >= 0) {
+                const sheet = document.styleSheets[d.styleIndex] as CSSStyleSheet;
+                if (sheet && sheet.cssRules) {
+                  // Posting messages across different context is an asynchronous operation
+                  // And it's possible that by the time message is received, stylesheets may have been added or removed
+                  // invalidating the style index. In that case, as a work around, we ignore the rule index property.
+                  // This edge case is restricted to the use of this extension and won't impact production use of the script.
+                  if (sheet.cssRules.length > d.index) {
+                    sheet.insertRule(d.style, d.index);
+                  } else { sheet.insertRule(d.style); }
+                } else { console.warn(`Clarity: Style not found at ${d.styleIndex}.`); }
+              }
+              break;
+            case "pushState":
+              history.pushState(d.state, d.title, d.url);
+              break;
+            case "replaceState":
+              history.replaceState(d.state, d.title, d.url);
+              break;
+          }
       }
   });
 
@@ -64,11 +77,24 @@ function setup(): void {
 
 function proxy(): string {
   let closure = (): void => {
+    let pushState = history.pushState;
+    history.pushState = function(state: any, title: string, url?: string): void {
+        pushState.apply(this, arguments);
+        window.postMessage({ api: "pushState", state: JSON.stringify(state), title, url }, "*");
+    };
+    
+    let replaceState = history.replaceState;
+    history.replaceState = function(state: any, title: string, url?: string): void {
+        replaceState.apply(this, arguments);
+        window.postMessage({ api: "replaceState", state: JSON.stringify(state), title, url }, "*");
+    };
+
     let insertRule = CSSStyleSheet.prototype.insertRule;
     CSSStyleSheet.prototype.insertRule = function(style: string, index: number): number {
-        window.postMessage({ styleIndex: getStyleIndex(this), style, index }, "*");
+        window.postMessage({ api: "insertRule", styleIndex: getStyleIndex(this), style, index }, "*");
         return insertRule.apply(this, arguments);
     };
+
     function getStyleIndex(sheet: CSSStyleSheet): number {
         for (let i = 0; i < document.styleSheets.length; i++) {
             if (document.styleSheets[i] === sheet) {
