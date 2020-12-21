@@ -92,7 +92,8 @@ export const enum Code {
     RunTask = 0,
     CssRules = 1,
     MutationObserver = 2,
-    PerformanceObserver = 3
+    PerformanceObserver = 3,
+    CallStackDepth = 4
 }
 
 export const enum Severity {
@@ -130,6 +131,7 @@ export const enum Setting {
     ScriptErrorLimit = 5, // Do not send the same script error more than 5 times per page
     WordLength = 5, // Estimated average size of a word,
     RestartDelay = 250, // Wait for 250ms before starting to wire up again
+    CallStackDepth = 20 // Maximum call stack depth before bailing out
 }
 
 export const enum Constant {

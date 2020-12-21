@@ -1,32 +1,47 @@
-import { Setting } from "@clarity-types/data"
+import { Code, Setting, Severity } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
+import * as log from "@src/diagnostic/log";
 
 let pushState = null;
 let replaceState = null;
 let url = null;
+let count = 0;
 
 export function start(): void {
     url = location.href;
+    count = 0;
     bind(window, "popstate", compute);
     
     // Add a proxy to history.pushState function
     if (pushState === null) { pushState = history.pushState; }
     history.pushState = function(): void {
-        pushState.apply(this, arguments);
-        compute();
+        if (check()) {
+            pushState.apply(this, arguments);
+            compute();
+        }
     };
 
     // Add a proxy to history.replaceState function
     if (replaceState === null) { replaceState = history.replaceState; }
     history.replaceState = function(): void {
-        replaceState.apply(this, arguments);
-        compute();
+        if (check()) {
+            replaceState.apply(this, arguments);
+            compute();
+        }
     };
 }
 
+function check(): boolean {
+    if (count++ > Setting.CallStackDepth) {
+        log.log(Code.CallStackDepth, null, Severity.Info);
+        return false;
+    }
+    return true;
+}
+
 function compute(): void {
-    if (url !== location.href) {
+    if (url !== location.href && count <= Setting.CallStackDepth) {
         clarity.stop();
         window.setTimeout(clarity.start, Setting.RestartDelay);
     }
@@ -46,4 +61,5 @@ export function stop(): void {
     }
     
     url = null;
+    count = 0;
 }
