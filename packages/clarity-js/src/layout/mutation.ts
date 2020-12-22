@@ -52,9 +52,15 @@ export function observe(node: Node): void {
   // For this reason, we need to wire up mutations every time we see a new shadow dom.
   // Also, wrap it inside a try / catch. In certain browsers (e.g. legacy Edge), observer on shadow dom can throw errors
   try {
-    let observer = window["MutationObserver"] ? new MutationObserver(measure(handle) as MutationCallback) : null;
-    observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
-    observers.push(observer);
+    // In an edge case, it's possible to get stuck into infinite Mutation loop within Angular applications
+    // This appears to be an issue with Zone.js package, see: https://github.com/angular/angular/issues/31712
+    // As a temporary work around, ensuring Clarity can invoke MutationObserver outside of Zone (and use native implementation instead)
+    let api: string = window[Constant.Zone] && Constant.Symbol in window[Constant.Zone] ? window[Constant.Zone][Constant.Symbol](Constant.MutationObserver) : Constant.MutationObserver;
+    let observer =  api in window ? new window[api](measure(handle) as MutationCallback) : null;
+    if (observer) {
+      observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
+      observers.push(observer);
+    }
   } catch (error) { log.log(Code.MutationObserver, error, Severity.Info); }
 }
 

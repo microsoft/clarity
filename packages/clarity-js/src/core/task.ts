@@ -73,8 +73,11 @@ function run(): void {
 }
 
 export function shouldYield(method: Metric): boolean {
-    let elapsed = performance.now() - tracker[method].start;
-    return (elapsed > tracker[method].yield);
+    if (method in tracker) {
+        let elapsed = performance.now() - tracker[method].start;
+        return (elapsed > tracker[method].yield);
+    }
+    return true;
 }
 
 export function start(method: Metric): void {
