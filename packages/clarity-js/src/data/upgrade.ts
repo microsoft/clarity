@@ -1,4 +1,5 @@
 import { Constant, Event, UpgradeData } from "@clarity-types/data";
+import * as core from "@src/core";
 import config from "@src/core/config";
 import encode from "@src/data/encode";
 import * as metadata from "@src/data/metadata";
@@ -15,7 +16,8 @@ export function start(): void {
 // However, if there's a need for full fidelity playback, calling this function will disable lean mode
 // and send all backed up layout events to the server.
 export function upgrade(key: string): void {
-    if (config.lean) {
+    // Upgrade only if Clarity was successfully activated on the page
+    if (core.active() && config.lean) {
         config.lean = false;
         data = { key };
 

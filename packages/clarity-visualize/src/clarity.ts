@@ -101,6 +101,9 @@ export function render(events: Data.DecodedEvent[]): void {
             case Data.Event.TouchMove:
                 interaction.pointer(entry as Interaction.PointerEvent);
                 break;
+            case Data.Event.Visibility:
+                interaction.visibility(entry as Interaction.VisibilityEvent);
+                break;
             case Data.Event.Input:
                 interaction.input(entry as Interaction.InputEvent);
                 break;

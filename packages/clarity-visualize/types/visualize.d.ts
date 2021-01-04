@@ -73,7 +73,10 @@ export const enum Constant {
     Pixel = "px",    
     Separator = "X",
     Absolute = "absolute",
-    Black = "black"
+    Black = "black",
+    Transparent = "transparent",
+    HiddenOpacity = "0.4",
+    VisibleOpacity = "1",
 }
 
 export const enum Setting {
