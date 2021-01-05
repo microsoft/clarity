@@ -60,6 +60,16 @@ export function resize(event: Interaction.ResizeEvent): void {
     }
 }
 
+export function visibility(event: Interaction.VisibilityEvent): void {
+    if (state.player && event.data.visible !== Constant.Visible) {
+        state.player.style.backgroundColor = Constant.Black;
+        state.player.style.opacity = Constant.HiddenOpacity;
+    } else {
+        state.player.style.backgroundColor = Constant.Transparent;
+        state.player.style.opacity = Constant.VisibleOpacity;
+    }
+}
+
 export function input(event: Interaction.InputEvent): void {
     let data = event.data;
     let el = element(data.target as number) as HTMLInputElement;

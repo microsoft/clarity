@@ -1,0 +1,12 @@
+sudo: false
+language: node_js
+node_js:
+  - "14.1"
+install:
+  - yarn
+cache:
+  yarn: true
+
+script:
+  - yarn build
+  - yarn test
