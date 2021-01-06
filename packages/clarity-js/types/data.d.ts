@@ -237,7 +237,7 @@ export interface DimensionData {
 }
 
 export interface VariableData {
-    [name: string]: string | string[];
+    [name: string]: string[];
 }
 
 // Eventually custom event can be expanded to contain more properties
