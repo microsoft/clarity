@@ -16,7 +16,7 @@ function recompute(): void {
     // Therefore, when possible, use documentElement's clientWidth property.
     data = {
         width: de && "clientWidth" in de ? Math.min(de.clientWidth, window.innerWidth) : window.innerWidth,
-        height: de && "clientHeight" in de ? Math.min(de.clientWidth, window.innerHeight) : window.innerHeight,
+        height: de && "clientHeight" in de ? Math.min(de.clientHeight, window.innerHeight) : window.innerHeight,
     };
     encode(Event.Resize);
 }
