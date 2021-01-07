@@ -8,25 +8,28 @@ export function start(): void {
     reset();
 }
 
-export function set(variable: string, value: string): void {
-    log(variable, value);
+export function set(variable: string, value: string | string[]): void {
+    let values = typeof value === Constant.String ? [value as string] : value as string[];
+    log(variable, values);
 }
 
 export function identify(userId: string, sessionId: string = null, pageId: string = null): void {
-    log(Constant.UserId, userId);
-    log(Constant.SessionId, sessionId);
-    log(Constant.PageId, pageId);
+    log(Constant.UserId, [userId]);
+    log(Constant.SessionId, [sessionId]);
+    log(Constant.PageId, [pageId]);
 }
 
-function log(variable: string, value: string): void {
+function log(variable: string, value: string[]): void {
     if (core.active() &&
         variable &&
         value &&
         typeof variable === Constant.String &&
-        typeof value === Constant.String &&
-        variable.length < 255 &&
-        value.length < 255) {
-        data[variable] = value;
+        variable.length < 255) {
+        let validValues = []
+        for (let i = 0; i < value.length; i++) {
+            if (typeof value[i] === Constant.String && value[i].length < 255) { validValues.push(value[i]); }
+        }
+        data[variable] = validValues;
     }
 }
 

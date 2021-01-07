@@ -1,5 +1,5 @@
 import { Data } from "clarity-js";
-import { DataEvent } from "../types/data";
+import { Constant, DataEvent } from "../types/data";
 
 export function decode(tokens: Data.Token[]): DataEvent {
     let time = tokens[0] as number;
@@ -42,7 +42,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 let values = tokens[s++] as number[];
                 summary[key] = [];
                 for (let i = 0; i < values.length - 1; i += 2) {
-                    summary[key].push([values[i], values[i+1]]);
+                    summary[key].push([values[i], values[i + 1]]);
                 }
             }
             return { time, event, data: summary };
@@ -64,7 +64,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
             let v = 2; // Start from 3rd index since first two are used for time & event
             let variables: Data.VariableData = {};
             while (v < tokens.length) {
-                variables[tokens[v++] as string] = tokens[v++] as string;
+                variables[tokens[v++] as string] = typeof tokens[v + 1] == Constant.String ? [tokens[v++] as string] : tokens[v++] as string[];
             }
             return { time, event, data: variables };
     }
