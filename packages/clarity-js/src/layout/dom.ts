@@ -248,7 +248,10 @@ function getPrivacy(node: Node, data: NodeInfo, parentTag: string, privacy: Priv
                     break;
                 }
             }
-        } else if (privacy === Privacy.Sensitive) { privacy = Privacy.Text; }
+        } else if (privacy === Privacy.Sensitive) {
+            // Mask all input fields with an exception of type=submit; since they do not accept user input
+            privacy = attributes && attributes[Constant.Type] === Constant.Submit ? Privacy.None : Privacy.Text;
+        }
     }
 
     // Check for disallowed list of types (e.g. password, email, etc.) and set the masked property appropriately

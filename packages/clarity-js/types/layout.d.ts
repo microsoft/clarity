@@ -28,6 +28,7 @@ export const enum Constant {
     UnmaskData = "data-clarity-unmask",
     RegionData = "data-clarity-region",
     Type = "type",
+    Submit = "submit",
     Name = "name",
     Base = "*B",
     SameOrigin = "*O",

@@ -74,11 +74,15 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
 
 function text(element: Node): string {
     let output = null;
-    if (element && element.textContent) {
-        // Trim any spaces at the beginning or at the end of string
-        // Also, replace multiple occurrence of space characters with a single white space
-        // Finally, send only first few characters as specified by the Setting
-        output = element.textContent.trim().replace(/\s+/g, Constant.Space).substr(0, Setting.ClickText);
+    if (element) {
+        // Grab text using "textContent" for most HTMLElements, however, use "value" for HTMLInputElements.
+        let t = element.textContent || (element as HTMLInputElement).value;
+        if (t) {
+            // Trim any spaces at the beginning or at the end of string
+            // Also, replace multiple occurrence of space characters with a single white space
+            // Finally, send only first few characters as specified by the Setting
+            output = t.trim().replace(/\s+/g, Constant.Space).substr(0, Setting.ClickText);
+        }
     }
     return output;
 }
