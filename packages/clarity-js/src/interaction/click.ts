@@ -1,11 +1,11 @@
 import { BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
 import { BrowsingContext, ClickState } from "@clarity-types/interaction";
+import { Box } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { iframe } from "@src/layout/dom";
 import offset from "@src/layout/offset";
-import { layout } from "@src/layout/region";
 import { link, target } from "@src/layout/target";
 import encode from "./encode";
 
@@ -91,6 +91,29 @@ function reaction(element: Node): BooleanFlag {
         }
     }
     return BooleanFlag.True;
+}
+
+function layout(element: Element): Box {
+    let box: Box = null;
+    let de = document.documentElement;
+    if (typeof element.getBoundingClientRect === "function") {
+        // getBoundingClientRect returns rectangle relative positioning to viewport
+        let rect = element.getBoundingClientRect();
+
+        if (rect && rect.width > 0 && rect.height > 0) {
+            // Add viewport's scroll position to rectangle to get position relative to document origin
+            // Also: using Math.floor() instead of Math.round() because in Edge,
+            // getBoundingClientRect returns partial pixel values (e.g. 162.5px) and Chrome already
+            // floors the value (e.g. 162px). This keeps consistent behavior across browsers.
+            box = {
+                x: Math.floor(rect.left + ("pageXOffset" in window ? window.pageXOffset : de.scrollLeft)),
+                y: Math.floor(rect.top + ("pageYOffset" in window ? window.pageYOffset : de.scrollTop)),
+                w: Math.floor(rect.width),
+                h: Math.floor(rect.height)
+            };
+        }
+    }
+    return box;
 }
 
 function context(a: HTMLAnchorElement): BrowsingContext {

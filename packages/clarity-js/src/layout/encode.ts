@@ -26,12 +26,13 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             queue(tokens);
             break;
         case Event.Region:
-            let bm = region.updates();
-            for (let value of bm) {
+            let r = region.data;
+            for (let value of r) {
                 tokens.push(value.id);
-                tokens.push([value.box.x, value.box.y, value.box.w, value.box.h, value.box.v]);
+                tokens.push(value.visible);
                 tokens.push(value.region);
             }
+            region.reset();
             queue(tokens);
             break;
         case Event.Box:
