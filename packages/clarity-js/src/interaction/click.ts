@@ -75,8 +75,8 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
 function text(element: Node): string {
     let output = null;
     if (element) {
-        // Grab text using "textContent" for most HTMLElements, however, use "value" for HTMLInputElements.
-        let t = element.textContent || (element as HTMLInputElement).value;
+        // Grab text using "textContent" for most HTMLElements, however, use "value" for HTMLInputElements and "alt" for HTMLImageElement.
+        let t = element.textContent || (element as HTMLInputElement).value || (element as HTMLImageElement).alt;
         if (t) {
             // Trim any spaces at the beginning or at the end of string
             // Also, replace multiple occurrence of space characters with a single white space
