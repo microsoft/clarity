@@ -86,9 +86,6 @@ export function render(events: Data.DecodedEvent[]): void {
             case Data.Event.Mutation:
                 layout.markup(entry as Layout.DomEvent);
                 break;
-            case Data.Event.Region:
-                layout.region(entry as Layout.RegionEvent);
-                break;
             case Data.Event.MouseDown:
             case Data.Event.MouseUp:
             case Data.Event.MouseMove:
@@ -120,8 +117,6 @@ export function render(events: Data.DecodedEvent[]): void {
     }
 
     if (events.length > 0) {
-        // Make any changes, if necessary, at the end of every frame
-        layout.update();
         // Update pointer trail at the end of every frame
         interaction.trail(time);
     }
