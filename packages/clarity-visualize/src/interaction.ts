@@ -1,5 +1,5 @@
 import { Asset, Constant, Point, Setting } from "@clarity-types/visualize";
-import { Data, Interaction, Layout  } from "clarity-decode";
+import { Data, Interaction, Layout } from "clarity-decode";
 import { state } from "./clarity";
 import { element } from "./layout";
 
@@ -14,8 +14,8 @@ const CLARITY_CLICK_RING = "clarity-click-ring";
 const CLARITY_TOUCH_RING = "clarity-touch-ring";
 const TITLE = "title";
 const ROUND = "round";
-const TRAIL_START_COLOR = [242,97,12]; // rgb(242,97,12)
-const TRAIL_END_COLOR = [249,220,209]; // rgb(249,220,209)
+const TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
+const TRAIL_END_COLOR = [249, 220, 209]; // rgb(249,220,209)
 
 let hoverId: number = null;
 let targetId: number = null;
@@ -41,7 +41,7 @@ export function scroll(event: Interaction.ScrollEvent): void {
 
     // Position canvas relative to scroll events on the parent page
     if (scrollTarget === de || scrollTarget === doc.body) {
-        if (!scrollable) {window.scrollTo(data.x, data.y);}
+        if (!scrollable) { state.player.contentWindow.scrollTo(data.x, data.y); }
         let canvas = overlay();
         if (canvas) {
             canvas.style.left = data.x + Constant.Pixel;
@@ -156,7 +156,7 @@ export function pointer(event: Interaction.PointerEvent): void {
         case Data.Event.MouseMove:
             title = "Mouse Move";
             p.className = CLARITY_POINTER_MOVE;
-            addPoint({time: event.time, x: data.x, y: data.y});
+            addPoint({ time: event.time, x: data.x, y: data.y });
             targetId = data.target as number;
             break;
         default:
@@ -190,7 +190,7 @@ function hover(): void {
 }
 
 function addPoint(point: Point): void {
-    let last = points.length > 0 ? points[points.length-1] : null;
+    let last = points.length > 0 ? points[points.length - 1] : null;
     if (last && point.x === last.x && point.y === last.y) {
         last.time = point.time;
     } else { points.push(point); }
@@ -299,8 +299,8 @@ export function trail(now: number): void {
                 let current = path[i];
 
                 // Compute percentage position of these points compared to all points in the path
-                let lastFactor = 1 - ((i-1)/count);
-                let currentFactor = 1 - (i/count);
+                let lastFactor = 1 - ((i - 1) / count);
+                let currentFactor = 1 - (i / count);
 
                 // Generate a color gradient that goes from red -> yellow -> green -> light blue -> blue
                 let gradient = ctx.createLinearGradient(last.x, last.y, current.x, current.y);
@@ -349,14 +349,14 @@ function curve(path: Point[]): Point[] {
     p.unshift(path[0]);
     p.push(path[path.length - 1]);
     // Loop through the points, and generate intermediate points to make a smooth trail
-      for (let i = 1; i < p.length-2; i++) {
+    for (let i = 1; i < p.length - 2; i++) {
         const time = p[i].time;
-        const segments = Math.max(Math.min(Math.round(distance(p[i], p[i-1])), 10), 1);
+        const segments = Math.max(Math.min(Math.round(distance(p[i], p[i - 1])), 10), 1);
         for (let t = 0; t <= segments; t++) {
 
             // Compute tension vectors
-            let t1: Point = {time, x: (p[i+1].x - p[i-1].x) * tension, y: (p[i+1].y - p[i-1].y) * tension};
-            let t2: Point = {time, x: (p[i+2].x - p[i].x) * tension, y: (p[i+2].y - p[i].y) * tension};
+            let t1: Point = { time, x: (p[i + 1].x - p[i - 1].x) * tension, y: (p[i + 1].y - p[i - 1].y) * tension };
+            let t2: Point = { time, x: (p[i + 2].x - p[i].x) * tension, y: (p[i + 2].y - p[i].y) * tension };
             let step = t / segments;
 
             // Compute cardinals
@@ -366,10 +366,10 @@ function curve(path: Point[]): Point[] {
             let c4 = Math.pow(step, 3) - Math.pow(step, 2);
 
             // Compute new point with common control vectors
-            let x = c1 * p[i].x + c2 * p[i+1].x + c3 * t1.x + c4 * t2.x;
-            let y = c1 * p[i].y + c2 * p[i+1].y + c3 * t1.y + c4 * t2.y;
+            let x = c1 * p[i].x + c2 * p[i + 1].x + c3 * t1.x + c4 * t2.x;
+            let y = c1 * p[i].y + c2 * p[i + 1].y + c3 * t1.y + c4 * t2.y;
 
-            output.push({time,x,y});
+            output.push({ time, x, y });
         }
     }
     return output;
@@ -378,5 +378,5 @@ function curve(path: Point[]): Point[] {
 function distance(a: Point, b: Point): number {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
-    return Math.sqrt(dx*dx + dy*dy);
+    return Math.sqrt(dx * dx + dy * dy);
 }
