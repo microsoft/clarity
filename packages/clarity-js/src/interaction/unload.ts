@@ -7,8 +7,6 @@ import encode from "./encode";
 export let data: UnloadData;
 
 export function start(): void {
-    bind(window, "beforeunload", recompute);
-    bind(window, "unload", recompute);
     bind(window, "pagehide", recompute);
 }
 
