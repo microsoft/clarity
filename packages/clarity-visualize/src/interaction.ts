@@ -36,10 +36,12 @@ export function scroll(event: Interaction.ScrollEvent): void {
     let doc = state.player.contentDocument;
     let de = doc.documentElement;
     let scrollTarget = element(data.target as number) as HTMLElement || doc.body;
-    if (scrollTarget) { scrollTarget.scrollTo(data.x, data.y); }
+    let scrollable = scrollTarget.scrollHeight > scrollTarget.clientHeight;
+    if (scrollTarget && scrollable) { scrollTarget.scrollTo(data.x, data.y); }
 
     // Position canvas relative to scroll events on the parent page
     if (scrollTarget === de || scrollTarget === doc.body) {
+        if (!scrollable) {window.scrollTo(data.x, data.y);}
         let canvas = overlay();
         if (canvas) {
             canvas.style.left = data.x + Constant.Pixel;
