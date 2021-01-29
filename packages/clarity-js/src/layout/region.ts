@@ -1,108 +1,77 @@
-import { Event, BooleanFlag } from "@clarity-types/data";
-import { Box, RegionData } from "@clarity-types/layout";
+import { BooleanFlag, Event } from "@clarity-types/data";
+import { RegionData } from "@clarity-types/layout";
+import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
-import * as dom from "./dom";
 
-let bm: { [key: number]: RegionData } = {};
-let updateMap: number[] = [];
+export let data: RegionData[] = [];
+let regionMap: WeakMap<Node, string> = null; // Maps region nodes => region name
+let regions: { [key: number]: RegionData } = {};
+let updates: number[] = [];
+let watch = false;
+let observer: IntersectionObserver = null;
 
-export function compute(): void {
-    // Making region compute synchronous for tracking regions 
-    // TODO: For modern browsers use resizeobserver 
-    region();
+export function start(): void {
+    reset();
+    observer = null;
+    regionMap = new WeakMap();
+    regions = {};
+    watch = window["IntersectionObserver"] ? true : false;
+    
 }
 
-async function region(): Promise<void> {
-    let values = dom.regions();
-    let viewport = getViewport();
-
-    for (let value of values) {
-        update(value.id, layout(dom.getNode(value.id) as Element, viewport));
+export function observe(node: Node, name: string): void {
+    if (regionMap.has(node) === false) {
+        regionMap.set(node, name);
+        observer = observer === null && watch ? new IntersectionObserver(handler) : observer;
+        if (observer && node && node.nodeType === Node.ELEMENT_NODE) {
+            observer.observe(node as Element);
+        }
     }
-
-    if (updateMap.length > 0) { await encode(Event.Region); }
 }
 
-export function updates(): RegionData[] {
-    let summary = [];
-    for (let id of updateMap) {
-        summary.push(bm[id]);
-    }
-    updateMap = [];
-    return summary;
-}
-
-function getViewport(): Box {
-    let de = document.documentElement;
-    return {
-        x: "pageXOffset" in window ? window.pageXOffset : de.scrollLeft,
-        y: "pageYOffset" in window ? window.pageYOffset : de.scrollTop,
-        w: de && "clientWidth" in de ? de.clientWidth : window.innerWidth,
-        h: de && "clientHeight" in de ? de.clientHeight : window.innerHeight,
-        v: BooleanFlag.True
-    };
-}
-
-function update(id: number, box: Box): void {
-    let changed = box !== null;
-
-    // Compare the new box coordinates with what we had in memory from before
-    if (id in bm && box !== null && bm[id].box !== null) {
-        let old = bm[id].box;
-        changed = (box.x === old.x && box.y === old.y && box.w === old.w && box.h === old.h && box.v === old.v) ? false : true;
-    }
-
-    if (changed) {
-        if (updateMap.indexOf(id) === -1) { updateMap.push(id); }
-        let value = dom.getValue(id);
-        let r = value ? dom.getRegion(value.region) : null;
-        bm[id] = { id, box, region: r };
-    }
+export function exists(node: Node): boolean {
+    return regionMap.has(node);
 }
 
 export function track(id: number): void {
-    if (updateMap.indexOf(id) === -1) {
-        updateMap.push(id);
+    // Do not send another entry if we are already sending it
+    let node = dom.getNode(id);
+    if (updates.indexOf(id) <= 0 && regionMap.has(node)) {
+        data.push(id in regions ? regions[id] : { id, visible: BooleanFlag.False, region: regionMap.get(node) });
     }
 }
 
-export function layout(element: Element, viewport: Box = null): Box {
-    let box: Box = null;
-    if (typeof element.getBoundingClientRect === "function") {
-        // getBoundingClientRect returns rectangle relative positioning to viewport
-        let rect = element.getBoundingClientRect();
+export function compute(): void {
+    // Schedule encode only when we have at least one valid data entry
+    if (data.length > 0) { encode(Event.Region); }
+}
 
-        if (rect && rect.width > 0 && rect.height > 0) {
-            viewport = viewport || getViewport();
-            let visible =
-                // Top of rectangle is lesser than the bottom of the viewport
-                rect.top <= viewport.h &&
-                // Bottom of rectangle is greater than the top of the viewport
-                rect.top + rect.height >= 0 &&
-                // Left of rectangle is lesser than the right of the viewport
-                rect.left <= viewport.w &&
-                // Right of rectangle is greater than the left of the viewport
-                rect.left + rect.width >= 0 &&
-                // The current page is visible
-                ("visibilityState" in document ? document.visibilityState === "visible" : true);
-
-            // Add viewport's scroll position to rectangle to get position relative to document origin
-            // Also: using Math.floor() instead of Math.round() because in Edge,
-            // getBoundingClientRect returns partial pixel values (e.g. 162.5px) and Chrome already
-            // floors the value (e.g. 162px). This keeps consistent behavior across browsers.
-            box = {
-                x: Math.floor(rect.left + viewport.x),
-                y: Math.floor(rect.top + viewport.y),
-                w: Math.floor(rect.width),
-                h: Math.floor(rect.height),
-                v: visible ? BooleanFlag.True : BooleanFlag.False
-            };
+function handler(entries: IntersectionObserverEntry[]): void {
+    for (let entry of entries) {
+        let target = entry.target;
+        let id = target ? dom.getId(target) : null;
+        if (id && regionMap.has(target)) {
+            let visible = entry.isIntersecting ? BooleanFlag.True : BooleanFlag.False;
+            let d = { id, visible, region: regionMap.get(target) };
+            regions[id] = d;
+            updates.push(id);
+            data.push(d);
         }
     }
-    return box;
+    compute();
 }
 
 export function reset(): void {
-    updateMap = [];
-    bm = {};
+    data = [];
+}
+
+export function stop(): void {
+    reset();
+    regionMap = null;
+    regions = {};
+    if (observer) {
+        observer.disconnect();
+        observer = null;
+    }
+    watch = false;
 }

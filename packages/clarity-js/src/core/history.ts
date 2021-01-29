@@ -1,4 +1,4 @@
-import { Code, Setting, Severity } from "@clarity-types/data";
+import { Code, Constant, Setting, Severity } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
 import * as log from "@src/diagnostic/log";
@@ -9,7 +9,7 @@ let url = null;
 let count = 0;
 
 export function start(): void {
-    url = location.href;
+    url = getCurrentUrl();
     count = 0;
     bind(window, "popstate", compute);
     
@@ -41,10 +41,14 @@ function check(): boolean {
 }
 
 function compute(): void {
-    if (url !== location.href && count <= Setting.CallStackDepth) {
+    if (url !== getCurrentUrl() && count <= Setting.CallStackDepth) {
         clarity.stop();
         window.setTimeout(clarity.start, Setting.RestartDelay);
     }
+}
+
+function getCurrentUrl(): string {
+    return location.href ? location.href.replace(location.hash, Constant.Empty) : location.href;
 }
 
 export function stop(): void {

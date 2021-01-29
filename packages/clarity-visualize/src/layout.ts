@@ -1,46 +1,16 @@
 import { Data, Layout } from "clarity-decode";
 import { Asset, Constant, Setting } from "@clarity-types/visualize";
 import { state } from "./clarity";
-import { lean } from "./data";
 
 const TIMEOUT = 3000;
-let visualizeRegion = true;
 let stylesheets: Promise<void>[] = [];
 let nodes = {};
-let regions = {};
 let events = {};
 
 export function reset(): void {
     nodes = {};
-    regions = {};
     stylesheets = [];
     events = {};
-    visualizeRegion = true;
-}
-
-export function region(event: Layout.RegionEvent): void {
-    if (visualizeRegion) {
-        let data = event.data;
-        let doc = state.player.contentDocument;
-        for (let bm of data) {
-            let rectangle = bm.box;
-            let el = element(bm.id) as HTMLElement;
-            if (rectangle) {
-                let layer = el ? el : doc.createElement("DIV");
-                layer.className = Constant.Region;
-                layer.style.left = rectangle.x + "px";
-                layer.style.top = rectangle.y + "px";
-                layer.style.width = (rectangle.w - 2) + "px";
-                layer.style.height = (rectangle.h - 2) + "px";
-                layer.style.position = "absolute";
-                layer.style.border = rectangle.v ? "1px solid green" : "1px solid red";
-                doc.body.appendChild(layer);
-                layer.innerText = bm.region;
-                nodes[bm.id] = layer;
-            }
-            regions[bm.id] = bm;
-        }
-    }
 }
 
 export function get(hash: string): Element {
@@ -61,18 +31,6 @@ function resize(el: HTMLElement, width: number, height: number): void {
         el.style.width = width + Layout.Constant.Pixel;
         el.style.height = height + Layout.Constant.Pixel;
         el.style.boxSizing = Layout.Constant.BorderBox; // Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing
-    }
-}
-
-export function update(): void {
-    if (lean === false && visualizeRegion) {
-        let doc = state.player.contentDocument;
-        visualizeRegion = lean;
-        let layers = doc.getElementsByClassName(Constant.Region);
-        // Hide all visible regions if lean mode is set to false
-        for (let i = 0; i < layers.length; i++) {
-            (layers[i] as HTMLDivElement).style.display = Constant.None;
-        }
     }
 }
 
@@ -109,7 +67,6 @@ export function markup(event: Layout.DomEvent): void {
     let data = event.data;
     let type = event.event;
     let doc = state.player.contentDocument;
-    visualizeRegion = false; // Do not render regions if we receive valid markup
     for (let node of data) {
         let parent = element(node.parent);
         let pivot = element(node.previous);

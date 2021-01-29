@@ -28,6 +28,7 @@ export const enum Constant {
     UnmaskData = "data-clarity-unmask",
     RegionData = "data-clarity-region",
     Type = "type",
+    Submit = "submit",
     Name = "name",
     Base = "*B",
     SameOrigin = "*O",
@@ -83,7 +84,6 @@ export interface Box {
     y: number; // Top
     w: number; // Width
     h: number; // Height
-    v: number; // Visibility
 }
 
 export interface Attributes {
@@ -111,7 +111,6 @@ export interface NodeValue {
 
 export interface NodeMeta {
     active: boolean;
-    region: boolean;
     privacy: Privacy;
     size: number[];
 }
@@ -136,7 +135,7 @@ export interface DocumentData {
 
 export interface RegionData {
     id: number;
-    box: Box;
+    visible: number;
     region: string;
 }
 

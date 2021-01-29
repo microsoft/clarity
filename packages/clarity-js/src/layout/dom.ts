@@ -3,6 +3,7 @@ import { Setting } from "@clarity-types/data";
 import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
+import * as region from "@src/layout/region";
 import selector from "@src/layout/selector";
 
 let index: number = 1;
@@ -20,7 +21,6 @@ let selectorMap: number[] = [];
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
-let regionMap: WeakMap<Node, string> = null; // Maps region nodes => region name
 let iframeMap: WeakMap<Document, HTMLIFrameElement> = null; // Maps iframe's contentDocument => parent iframe element
 let privacyMap: WeakMap<Node, Privacy> = null; // Maps node => Privacy (enum)
 
@@ -44,7 +44,6 @@ function reset(): void {
     selectorMap = [];
     urlMap = {};
     idMap = new WeakMap();
-    regionMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
     if (Constant.DevHook in window) { window[Constant.DevHook] = { get, getNode, history }; }
@@ -59,7 +58,7 @@ export function parse(root: ParentNode): void {
         // Extract regions
         for (const key of Object.keys(config.regions)) {
             let element = root.querySelector(config.regions[key]);
-            if (element) { regionMap.set(element, key); }
+            if (element) { region.observe(element, key); }
         }
 
         // Extract nodes with explicit masked configuration
@@ -98,7 +97,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let privacy = config.content ? Privacy.Sensitive : Privacy.Text;
     let parentValue = null;
     let parentTag = Constant.Empty;
-    let regionId = regionMap.has(node) ? getId(node) : null;
+    let regionId = region.exists(node) ? id : null;
 
     if (parentId >= 0 && values[parentId]) {
         parentValue = values[parentId];
@@ -112,7 +111,10 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     privacy = getPrivacy(node, data, parentTag, privacy);
 
     // If there's an explicit region attribute set on the element, use it to mark a region on the page
-    if (data.attributes && Constant.RegionData in data.attributes) { regionMap.set(node, data.attributes[Constant.RegionData]); }
+    if (data.attributes && Constant.RegionData in data.attributes) {
+        region.observe(node, data.attributes[Constant.RegionData]);
+        regionId = id;
+    }
 
     nodes[id] = node;
     values[id] = {
@@ -124,7 +126,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         data,
         selector: Constant.Empty,
         region: regionId,
-        metadata: { active: true, region: false, privacy, size: null }
+        metadata: { active: true, privacy, size: null }
     };
 
     updateSelector(values[id]);
@@ -160,7 +162,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
                 let childIndex = previousId === null ? 0 : values[parentId].children.indexOf(previousId) + 1;
                 values[parentId].children.splice(childIndex, 0, id);
                 // Update region after the move
-                value.region = regionMap.has(node) ? getId(node) : values[parentId].region;
+                value.region = region.exists(node) ? id : values[parentId].region;
             } else {
                 // Mark this element as deleted if the parent has been updated to null
                 remove(id, source);
@@ -246,7 +248,10 @@ function getPrivacy(node: Node, data: NodeInfo, parentTag: string, privacy: Priv
                     break;
                 }
             }
-        } else if (privacy === Privacy.Sensitive) { privacy = Privacy.Text; }
+        } else if (privacy === Privacy.Sensitive) {
+            // Mask all input fields with an exception of type=submit; since they do not accept user input
+            privacy = attributes && attributes[Constant.Type] === Constant.Submit ? Privacy.None : Privacy.Text;
+        }
     }
 
     // Check for disallowed list of types (e.g. password, email, etc.) and set the masked property appropriately
@@ -332,21 +337,6 @@ export function has(node: Node): boolean {
     return getId(node) in nodes;
 }
 
-export function getRegion(regionId: number): string {
-    let node = getNode(regionId);
-    return node && regionMap.has(node) ? regionMap.get(node) : null;
-}
-
-export function regions(): NodeValue[] {
-    let v = [];
-    for (let value of values) {
-        if (value && value.metadata && value.metadata.active && value.metadata.region) {
-            v.push(value);
-        }
-    }
-    return v;
-}
-
 export function updates(): NodeValue[] {
     let output = [];
     for (let id of updateMap) {
@@ -412,12 +402,6 @@ function metadata(tag: string, id: number, parentId: number): void {
                 }
                 break;
         }
-
-        // Toggle region boolean flag if this node defines a new region
-        // This setting is not recursive and does not apply to any of the children.
-        // It tells Clarity to monitor bounding rectangle (x,y,width,height) for this region.
-        // E.g. region would be "SearchBox" and what's inside that region (input field, submit button, label, etc.) do not matter.
-        if (regionMap.has(nodes[id])) { value.metadata.region = true; }
     }
 }
 

@@ -6,18 +6,20 @@ import * as mutation from "@src/layout/mutation";
 import * as region from "@src/layout/region";
 
 export function start(): void {
+    // The order below is important 
+    // and is determined by interdependencies of modules
     doc.start();
+    region.start();
     dom.start();
     mutation.start();
     discover.start();
     box.start();
-    region.reset();
 }
 
 export function stop(): void {
+    region.stop();
     dom.stop();
     mutation.stop();
     box.stop();
-    region.reset();
     doc.end();
 }

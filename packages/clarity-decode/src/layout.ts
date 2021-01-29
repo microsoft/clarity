@@ -20,10 +20,11 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
         case Data.Event.Region:
             let regionData: Layout.RegionData[] = [];
             for (let i = 2; i < tokens.length; i += 3) {
-                let box = tokens[i + 1] as number[];
+                // For backward compatibility since 0.6.4, we extract visibility signal from the "box" field if it is present
+                let legacy = Array.isArray(tokens[i+1]) && (tokens[i+1] as number[]).length === 5;
                 let region: Layout.RegionData = {
                     id: tokens[i] as number,
-                    box: {x: box[0], y: box[1], w: box[2], h: box[3], v: box[4]},
+                    visible: legacy ? tokens[i + 1][4] as number : tokens[i + 1] as number,
                     region: tokens[i + 2] as string
                 };
                 regionData.push(region);
