@@ -147,6 +147,7 @@ function send(payload: string, sequence: number, last: boolean): void {
         if (dispatched === false) {
             if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
             let xhr = new XMLHttpRequest();
+            xhr.withCredentials = true;
             xhr.open("POST", url);
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence, last); }; }
             xhr.send(payload);
