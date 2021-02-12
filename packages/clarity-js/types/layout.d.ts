@@ -126,6 +126,11 @@ export interface MutationQueue {
     mutations: MutationRecord[];
 }
 
+export interface RegionQueue {
+    node: Node;
+    data: RegionData;
+}
+
 /* Event Data */
 
 export interface DocumentData {

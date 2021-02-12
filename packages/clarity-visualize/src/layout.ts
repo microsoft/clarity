@@ -258,6 +258,7 @@ function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node
 
 function setAttributes(node: HTMLElement, data: Layout.DomData): void {
     let attributes = data.attributes || {};
+    let sameorigin = false;
 
     // Clarity attributes
     attributes[Constant.Id] = `${data.id}`;
@@ -268,7 +269,11 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
     if (node.attributes) {
         let length = node.attributes.length;
         while (node.attributes && length > 0) {
-            node.removeAttribute(node.attributes[0].name);
+            // Do not remove "clarity-hover" attribute and let it be managed by interaction module
+            // This helps avoid flickers during visualization
+            if (node.attributes[0].name !== Constant.HoverAttribute) {
+                node.removeAttribute(node.attributes[0].name);
+            }
             length--;
         }
     }
@@ -281,7 +286,7 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
                 if (attribute.indexOf("xlink:") === 0) {
                     node.setAttributeNS("http://www.w3.org/1999/xlink", attribute, v);
                 } else if (attribute.indexOf(Layout.Constant.SameOrigin) === 0) {
-                    node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
+                    sameorigin = true;
                 } else if (attribute.indexOf("*") === 0) {
                     // Do nothing if we encounter internal Clarity attributes
                 } else if (tag === "iframe" && (attribute.indexOf("src") === 0 || attribute.indexOf("allow") === 0) || attribute === "sandbox") {
@@ -301,6 +306,10 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
                 console.warn("Exception encountered while adding attributes: " + ex);
             }
         }
+    }
+
+    if (sameorigin === false) {
+        node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
     }
 }
 

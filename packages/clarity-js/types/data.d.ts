@@ -93,7 +93,8 @@ export const enum Code {
     CssRules = 1,
     MutationObserver = 2,
     PerformanceObserver = 3,
-    CallStackDepth = 4
+    CallStackDepth = 4,
+    Selector = 5
 }
 
 export const enum Severity {
