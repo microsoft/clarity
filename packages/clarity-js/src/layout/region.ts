@@ -39,7 +39,8 @@ export function track(id: number): void {
     // Do not send another entry if we are already sending it
     let node = dom.getNode(id);
     if (updates.indexOf(id) <= 0 && regionMap.has(node)) {
-        data.push(id in regions ? regions[id] : { id, visible: BooleanFlag.False, region: regionMap.get(node) });
+        regions[id] = id in regions ? regions[id] : { id, visible: BooleanFlag.False, region: regionMap.get(node) };
+        data.push(regions[id]);
     }
 }
 
@@ -50,9 +51,10 @@ export function compute(): void {
     let q = [];
     for (let r of queue) {
         let id = dom.getId(r.node);
-        if (updates.indexOf(id) <= 0) {
+        if (!(id in regions)) {
             if (id) {
                 r.data.id = id;
+                regions[id] = r.data;
                 data.push(r.data);
             } else { q.push(r); }
         }
