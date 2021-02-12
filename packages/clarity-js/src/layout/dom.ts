@@ -54,11 +54,13 @@ function reset(): void {
 export function parse(root: ParentNode): void {
     // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
     // We ensure that the root note supports querySelector API before executing the code below to identify new regions.
-    if ("querySelector" in root) {
+    if ("querySelectorAll" in root) {
         // Extract regions
         for (const key of Object.keys(config.regions)) {
-            let element = root.querySelector(config.regions[key]);
-            if (element) { region.observe(element, key); }
+            let elements = root.querySelectorAll(config.regions[key]);
+            for (let i = 0; i < elements.length; i++) {
+                region.observe(elements[i], key);
+            }
         }
 
         // Extract nodes with explicit masked configuration

@@ -77,6 +77,17 @@ export const enum Constant {
     Transparent = "transparent",
     HiddenOpacity = "0.4",
     VisibleOpacity = "1",
+    ClickLayer = "clarity-click",
+    PointerLayer = "clarity-pointer",
+    TouchLayer = "clarity-touch",
+    HoverAttribute = "clarity-hover",
+    PointerClickLayer = "clarity-pointer-click",
+    PointerNone = "clarity-pointer-none",
+    PointerMove = "clarity-pointer-move",
+    ClickRing = "clarity-click-ring",
+    TouchRing = "clarity-touch-ring",
+    Title = "title",
+    Round = "round"
 }
 
 export const enum Setting {
@@ -94,5 +105,5 @@ export const enum Setting {
     PixelLife = 3000,
     TrailWidth = 6,
     MaxTrailPoints = 75,
-    HoverDepth = 3
+    HoverDepth = 7
 }

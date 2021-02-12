@@ -3,17 +3,6 @@ import { Data, Interaction, Layout } from "clarity-decode";
 import { state } from "./clarity";
 import { element } from "./layout";
 
-const CLARITY_CLICK = "clarity-click";
-const CLARITY_POINTER = "clarity-pointer";
-const CLARITY_TOUCH = "clarity-touch";
-const CLARITY_HOVER = "clarity-hover";
-const CLARITY_POINTER_CLICK = "clarity-pointer-click";
-const CLARITY_POINTER_NONE = "clarity-pointer-none";
-const CLARITY_POINTER_MOVE = "clarity-pointer-move";
-const CLARITY_CLICK_RING = "clarity-click-ring";
-const CLARITY_TOUCH_RING = "clarity-touch-ring";
-const TITLE = "title";
-const ROUND = "round";
 const TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
 const TRAIL_END_COLOR = [249, 220, 209]; // rgb(249,220,209)
 
@@ -103,13 +92,13 @@ export function pointer(event: Interaction.PointerEvent): void {
     let type = event.event;
     let doc = state.player.contentDocument;
     let de = doc.documentElement;
-    let p = doc.getElementById(CLARITY_POINTER);
+    let p = doc.getElementById(Constant.PointerLayer);
     let pointerWidth = Setting.PointerWidth;
     let pointerHeight = Setting.PointerHeight;
 
     if (p === null) {
         p = doc.createElement("DIV");
-        p.id = CLARITY_POINTER;
+        p.id = Constant.PointerLayer;
         de.appendChild(p);
 
         // Add custom styles
@@ -120,14 +109,14 @@ export function pointer(event: Interaction.PointerEvent): void {
             "@keyframes pulsate-touch { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(2, 2); opacity: 0; } }" +
             "@keyframes disappear { 90% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(1.3, 1.3); opacity: 0; } }" +
             `#${Constant.InteractionCanvas} { position: absolute; left: 0; top: 0; z-index: ${Setting.ZIndex} }` +
-            `#${CLARITY_POINTER} { position: absolute; z-index: ${Setting.ZIndex}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
-            `.${CLARITY_CLICK}, .${CLARITY_CLICK_RING}, .${CLARITY_TOUCH}, .${CLARITY_TOUCH_RING} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
-            `.${CLARITY_CLICK_RING} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
-            `.${CLARITY_TOUCH} { background: radial-gradient(rgba(242,97,12,1), transparent); }` +
-            `.${CLARITY_TOUCH_RING} { background: transparent; border: 1px solid rgba(242,97,12,0.8); }` +
-            `.${CLARITY_POINTER_CLICK} { background-image: url(${Asset.Click}); }` +
-            `.${CLARITY_POINTER_NONE} { background: none; }` +
-            `.${CLARITY_POINTER_MOVE} { background-image: url(${Asset.Pointer}); }`;
+            `#${Constant.PointerLayer} { position: absolute; z-index: ${Setting.ZIndex}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
+            `.${Constant.ClickLayer}, .${Constant.ClickRing}, .${Constant.TouchLayer}, .${Constant.TouchRing} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
+            `.${Constant.ClickRing} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
+            `.${Constant.TouchLayer} { background: radial-gradient(rgba(242,97,12,1), transparent); }` +
+            `.${Constant.TouchRing} { background: transparent; border: 1px solid rgba(242,97,12,0.8); }` +
+            `.${Constant.PointerClickLayer} { background-image: url(${Asset.Click}); }` +
+            `.${Constant.PointerNone} { background: none; }` +
+            `.${Constant.PointerMove} { background-image: url(${Asset.Pointer}); }`;
 
         p.appendChild(style);
     }
@@ -140,30 +129,30 @@ export function pointer(event: Interaction.PointerEvent): void {
         case Data.Event.DoubleClick:
             title = "Click";
             drawClick(doc, data.x, data.y, title);
-            p.className = CLARITY_POINTER_NONE;
+            p.className = Constant.PointerNone;
             break;
         case Data.Event.TouchStart:
         case Data.Event.TouchEnd:
         case Data.Event.TouchCancel:
             title = "Touch";
             drawTouch(doc, data.x, data.y, title);
-            p.className = CLARITY_POINTER_NONE;
+            p.className = Constant.PointerNone;
             break;
         case Data.Event.TouchMove:
             title = "Touch Move";
-            p.className = CLARITY_POINTER_NONE;
+            p.className = Constant.PointerNone;
             break;
         case Data.Event.MouseMove:
             title = "Mouse Move";
-            p.className = CLARITY_POINTER_MOVE;
+            p.className = Constant.PointerMove;
             addPoint({ time: event.time, x: data.x, y: data.y });
             targetId = data.target as number;
             break;
         default:
-            p.className = CLARITY_POINTER_MOVE;
+            p.className = Constant.PointerMove;
             break;
     }
-    p.setAttribute(TITLE, `${title} (${data.x}${Constant.Pixel}, ${data.y}${Constant.Pixel})`);
+    p.setAttribute(Constant.Title, `${title} (${data.x}${Constant.Pixel}, ${data.y}${Constant.Pixel})`);
 }
 
 function hover(): void {
@@ -172,7 +161,7 @@ function hover(): void {
         // First, remove any previous hover class assignments
         let hoverNode = hoverId ? element(hoverId) as HTMLElement : null;
         while (hoverNode && depth < Setting.HoverDepth) {
-            if ("removeAttribute" in hoverNode) { hoverNode.removeAttribute(CLARITY_HOVER); }
+            if ("removeAttribute" in hoverNode) { hoverNode.removeAttribute(Constant.HoverAttribute); }
             hoverNode = hoverNode.parentElement;
             depth++;
         }
@@ -180,7 +169,7 @@ function hover(): void {
         depth = 0;
         let targetNode = targetId ? element(targetId) as HTMLElement : null;
         while (targetNode && depth < Setting.HoverDepth) {
-            if ("setAttribute" in targetNode) { targetNode.setAttribute(CLARITY_HOVER, Layout.Constant.Empty); }
+            if ("setAttribute" in targetNode) { targetNode.setAttribute(Constant.HoverAttribute, Layout.Constant.Empty); }
             targetNode = targetNode.parentElement;
             depth++;
         }
@@ -199,8 +188,8 @@ function addPoint(point: Point): void {
 function drawTouch(doc: Document, x: number, y: number, title: string): void {
     let de = doc.documentElement;
     let touch = doc.createElement("DIV");
-    touch.className = CLARITY_TOUCH;
-    touch.setAttribute(TITLE, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
+    touch.className = Constant.TouchLayer;
+    touch.setAttribute(Constant.Title, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
     touch.style.left = (x - Setting.ClickRadius / 2) + Constant.Pixel;
     touch.style.top = (y - Setting.ClickRadius / 2) + Constant.Pixel
     touch.style.animation = "disappear 1 1s";
@@ -209,7 +198,7 @@ function drawTouch(doc: Document, x: number, y: number, title: string): void {
 
     // First pulsating ring
     let ringOne = touch.cloneNode() as HTMLElement;
-    ringOne.className = CLARITY_TOUCH_RING;
+    ringOne.className = Constant.TouchRing;
     ringOne.style.left = "-0.5" + Constant.Pixel;
     ringOne.style.top = "-0.5" + Constant.Pixel;
     ringOne.style.animation = "pulsate-touch 1 1s";
@@ -220,15 +209,15 @@ function drawTouch(doc: Document, x: number, y: number, title: string): void {
 function drawClick(doc: Document, x: number, y: number, title: string): void {
     let de = doc.documentElement;
     let click = doc.createElement("DIV");
-    click.className = CLARITY_CLICK;
-    click.setAttribute(TITLE, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
+    click.className = Constant.ClickLayer;
+    click.setAttribute(Constant.Title, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
     click.style.left = (x - Setting.ClickRadius / 2) + Constant.Pixel;
     click.style.top = (y - Setting.ClickRadius / 2) + Constant.Pixel
     de.appendChild(click);
 
     // First pulsating ring
     let ringOne = click.cloneNode() as HTMLElement;
-    ringOne.className = CLARITY_CLICK_RING;
+    ringOne.className = Constant.ClickRing;
     ringOne.style.left = "-0.5" + Constant.Pixel;
     ringOne.style.top = "-0.5" + Constant.Pixel;
     ringOne.style.animation = "pulsate-one 1 1s";
@@ -309,8 +298,8 @@ export function trail(now: number): void {
 
                 // Line width of the trail shrinks as the position of the point goes farther away.
                 ctx.lineWidth = Setting.TrailWidth * currentFactor;
-                ctx.lineCap = ROUND;
-                ctx.lineJoin = ROUND;
+                ctx.lineCap = Constant.Round;
+                ctx.lineJoin = Constant.Round;
                 ctx.strokeStyle = gradient;
                 ctx.beginPath();
 
