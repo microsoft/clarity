@@ -1,12 +1,10 @@
 import { Event } from "@clarity-types/data";
 import { ScrollState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
-import measure from "@src/core/measure";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { iframe } from "@src/layout/dom";
-import * as region from "@src/layout/region";
 import { target } from "@src/layout/target";
 import encode from "./encode";
 
@@ -61,7 +59,6 @@ export function reset(): void {
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));
-    measure(region.compute)();
 }
 
 function similar(last: ScrollState, current: ScrollState): boolean {

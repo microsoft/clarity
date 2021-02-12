@@ -1,8 +1,9 @@
 import { Privacy } from "@clarity-types/core";
-import { Setting } from "@clarity-types/data";
+import { Code, Setting, Severity } from "@clarity-types/data";
 import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
+import * as log from "@src/diagnostic/log";
 import * as region from "@src/layout/region";
 import selector from "@src/layout/selector";
 
@@ -52,31 +53,37 @@ function reset(): void {
 // We parse new root nodes for any regions or masked nodes in the beginning (document) and
 // later whenever there are new additions or modifications to DOM (mutations)
 export function parse(root: ParentNode): void {
-    // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
-    // We ensure that the root note supports querySelector API before executing the code below to identify new regions.
-    if ("querySelector" in root) {
-        // Extract regions
-        for (const key of Object.keys(config.regions)) {
-            let element = root.querySelector(config.regions[key]);
-            if (element) { region.observe(element, key); }
-        }
+    // Wrap selectors in a try / catch block.
+    // It's possible for script to receive invalid selectors, e.g. "'#id'" with extra quotes, and cause the code below to fail
+    try {
+        // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
+        // We ensure that the root note supports querySelectorAll API before executing the code below to identify new regions.
+        if ("querySelectorAll" in root) {
+            // Extract regions
+            for (const key of Object.keys(config.regions)) {
+                let elements = root.querySelectorAll(config.regions[key]);
+                for (let i = 0; i < elements.length; i++) {
+                    region.observe(elements[i], key);
+                }
+            }
 
-        // Extract nodes with explicit masked configuration
-        for (const entry of config.mask) {
-            let elements = root.querySelectorAll(entry);
-            for (let i = 0; i < elements.length; i++) {
-                privacyMap.set(elements[i], Privacy.TextImage);
+            // Extract nodes with explicit masked configuration
+            for (const entry of config.mask) {
+                let elements = root.querySelectorAll(entry);
+                for (let i = 0; i < elements.length; i++) {
+                    privacyMap.set(elements[i], Privacy.TextImage);
+                }
+            }
+
+            // Extract nodes with explicit unmasked configuration
+            for (const entry of config.unmask) {
+                let elements = root.querySelectorAll(entry);
+                for (let i = 0; i < elements.length; i++) {
+                    privacyMap.set(elements[i], Privacy.None);
+                }
             }
         }
-
-        // Extract nodes with explicit unmasked configuration
-        for (const entry of config.unmask) {
-            let elements = root.querySelectorAll(entry);
-            for (let i = 0; i < elements.length; i++) {
-                privacyMap.set(elements[i], Privacy.None);
-            }
-        }
-    }
+    } catch (e) { log.log(Code.Selector, e, Severity.Warning); }
 }
 
 export function getId(node: Node, autogen: boolean = false): number {
