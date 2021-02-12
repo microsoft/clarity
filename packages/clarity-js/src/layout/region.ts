@@ -44,14 +44,18 @@ export function track(id: number): void {
 }
 
 export function compute(): void {
-    // Process any regions that couldn't be processed earlier
+    // Process any regions where we couldn't resolve an "id" for at the time of last intersection observer event
+    // This could happen in cases where elements are not yet processed by Clarity's virtual DOM but browser reports a change, regardless.
+    // For those cases we add them to the queue and re-process them below
     let q = [];
     for (let r of queue) {
         let id = dom.getId(r.node);
-        if (id) {
-            r.data.id = id;
-            data.push(r.data);
-        } else { q.push(r); }
+        if (updates.indexOf(id) <= 0) {
+            if (id) {
+                r.data.id = id;
+                data.push(r.data);
+            } else { q.push(r); }
+        }
     }
     queue = q;
 
@@ -64,7 +68,10 @@ function handler(entries: IntersectionObserverEntry[]): void {
         let target = entry.target;
         let rect = entry.boundingClientRect;
 
-        // Only capture regions that are not hidden on the page
+        // Only capture regions that have non-zero area to avoid tracking and sending regions
+        // that cannot ever be seen by the user. In some cases, websites will have a multiple copy of the same region
+        // like search box - one for desktop, and another for mobile. In those cases, CSS media queries determine which one should be visible.
+        // Also, if these regions ever become non-zero area (through AJAX, user action or orientation change) - we will automatically start monitoring them from that point onwards
         if (regionMap.has(target) && rect.width > 0 && rect.height > 0) {
             let id = target ? dom.getId(target) : null;
             let visible = entry.isIntersecting ? BooleanFlag.True : BooleanFlag.False;
@@ -80,7 +87,8 @@ function handler(entries: IntersectionObserverEntry[]): void {
 }
 
 export function reset(): void {
-    data = [];
+    data = [];    
+    updates = [];
 }
 
 export function stop(): void {
