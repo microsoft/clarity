@@ -79,7 +79,7 @@ export const enum Dimension {
     ProductBrand = 6,
     ProductAvailability = 7,
     AuthorName = 8,
-    Language = 9,
+    Language = 9
 }
 
 export const enum Check {
