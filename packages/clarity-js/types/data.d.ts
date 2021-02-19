@@ -63,7 +63,10 @@ export const enum Metric {
     FirstInputDelay = 10,
     RatingValue = 11,
     RatingCount = 12,
-    ProductPrice = 13
+    ProductPrice = 13,
+    ScreenWidth = 14,
+    ScreenHeight = 15,
+    ColorDepth = 16
 }
 
 export const enum Dimension {
@@ -77,12 +80,6 @@ export const enum Dimension {
     ProductAvailability = 7,
     AuthorName = 8,
     Language = 9,
-    ScreenWidth = 10,
-    ScreenHeight = 11,
-    ScreenColorDepth = 12,
-    LoadTime = 13,
-    PageTimings = 14,
-    NavigationAttributes = 15
 }
 
 export const enum Check {
