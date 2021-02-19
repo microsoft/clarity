@@ -32,10 +32,18 @@ export function start(): void {
   dimension.log(Dimension.PageTitle, title);
   dimension.log(Dimension.Url, location.href);
   dimension.log(Dimension.Referrer, document.referrer);
+  if (navigator) {
+    dimension.log(Dimension.Language, (<any>navigator).userLanguage || navigator.language);
+  }
 
   // Metrics
   metric.max(Metric.ClientTimestamp, s.ts);
   metric.max(Metric.Playback, BooleanFlag.False);
+  if (screen) {
+    metric.max(Metric.ScreenWidth, Math.round(screen.width));
+    metric.max(Metric.ScreenHeight, Math.round(screen.height));
+    metric.max(Metric.ColorDepth, Math.round(screen.colorDepth));
+  }
 
   // Read cookies specified in configuration
   for (let key of config.cookies) {
