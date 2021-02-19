@@ -75,7 +75,14 @@ export const enum Dimension {
     SchemaType = 5,
     ProductBrand = 6,
     ProductAvailability = 7,
-    AuthorName = 8
+    AuthorName = 8,
+    Language = 9,
+    ScreenWidth = 10,
+    ScreenHeight = 11,
+    ScreenColorDepth = 12,
+    LoadTime = 13,
+    PageTimings = 14,
+    NavigationAttributes = 15
 }
 
 export const enum Check {

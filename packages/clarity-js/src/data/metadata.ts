@@ -32,6 +32,11 @@ export function start(): void {
   dimension.log(Dimension.PageTitle, title);
   dimension.log(Dimension.Url, location.href);
   dimension.log(Dimension.Referrer, document.referrer);
+  dimension.log(Dimension.Language, (<any>navigator).userLanguage || navigator.language);
+  dimension.log(Dimension.ScreenWidth, `${screen.width || Constant.Empty}`);
+  dimension.log(Dimension.ScreenHeight, `${screen.height || Constant.Empty}`);
+  dimension.log(Dimension.ScreenColorDepth, `${screen && screen.colorDepth || Constant.Empty}`);
+  addPerformanceDimensions();
 
   // Metrics
   metric.max(Metric.ClientTimestamp, s.ts);
@@ -139,3 +144,47 @@ function cookie(key: string): string {
   }
   return null;
 }
+
+function addPerformanceDimensions(): void {
+  if (performance) {
+    var endEventTime = performance.timing.domContentLoadedEventEnd;
+    if (performance.timing.loadEventEnd) {
+      endEventTime = performance.timing.loadEventEnd;
+    }
+
+    //If we arent able to determine the end of the load time don"t send performance metrics
+    if (endEventTime !== undefined && endEventTime !== 0) {
+      var loadTime = (endEventTime - performance.timing.navigationStart);
+      dimension.log(Dimension.LoadTime, `${loadTime}`);
+    }
+
+    if ((performance.timing != null)) {
+      // list of 21 timing attributes to collect
+      var pList = ['navigationStart', 'unloadEventStart', 'unloadEventEnd', 'redirectStart', 'redirectEnd', 'fetchStart',
+        'domainLookupStart', 'domainLookupEnd', 'connectStart', 'connectEnd', 'secureConnectionStart', 'requestStart', 'responseStart',
+        'responseEnd', 'domLoading', 'domInteractive', 'domContentLoadedEventStart', 'domContentLoadedEventEnd', 'domComplete',
+        'loadEventStart', 'loadEventEnd'];
+
+      // start time (for diff calculation)
+      var s = performance.timing[pList[0]];
+
+      var pt = s;
+      for (var i = 1; i < pList.length; i++) {
+        var attr = performance.timing[pList[i]];
+        pt += ',';
+
+        // empty if zero or undefined, otherwise diff between param and start time
+        pt += (attr == null || attr === 0) ? '' : attr - s;
+      }
+
+      // limit total length of performance timing parameter to 150
+      if (pt.length <= 150) {
+        dimension.log(Dimension.PageTimings, `${pt}`);
+      }
+
+      if (performance.navigation != null) {
+        dimension.log(Dimension.NavigationAttributes, performance.navigation.type + ',' + performance.navigation.redirectCount);
+      }
+    }
+  }
+};
