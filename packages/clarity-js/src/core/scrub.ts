@@ -29,6 +29,7 @@ export default function(value: string, hint: string, privacy: Privacy, mangle: b
                         return privacy === Privacy.TextImage ? Data.Constant.Empty : value;
                     case "value":
                     case "input":
+                    case "click":
                         return mangleToken(value);
                     case "placeholder":
                         return mask(value);
