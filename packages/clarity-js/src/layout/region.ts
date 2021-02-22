@@ -32,7 +32,10 @@ export function observe(node: Node, name: string): void {
 }
 
 export function exists(node: Node): boolean {
-    return regionMap.has(node);
+    // Check if regionMap is not null before looking up a node
+    // Since, dom module stops after region module, it's possible that we may set regionMap to be null
+    // and still attempt to call exists on a late coming DOM mutation (or addition), effectively causing a script error
+    return regionMap && regionMap.has(node);
 }
 
 export function track(id: number): void {
