@@ -28,6 +28,7 @@ export default function(value: string, hint: string, privacy: Privacy, mangle: b
                     case "alt":
                         return privacy === Privacy.TextImage ? Data.Constant.Empty : value;
                     case "value":
+                    case "click":
                     case "input":
                         return mangleToken(value);
                     case "placeholder":
