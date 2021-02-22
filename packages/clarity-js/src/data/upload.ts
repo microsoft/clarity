@@ -149,6 +149,7 @@ function send(payload: string, sequence: number, last: boolean): void {
             let xhr = new XMLHttpRequest();
             xhr.open("POST", url);
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence, last); }; }
+            xhr.withCredentials = true;
             xhr.send(payload);
         }
     } else if (config.upload) {
