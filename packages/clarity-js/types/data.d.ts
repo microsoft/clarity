@@ -66,7 +66,8 @@ export const enum Metric {
     ProductPrice = 13,
     ScreenWidth = 14,
     ScreenHeight = 15,
-    ColorDepth = 16
+    ColorDepth = 16,
+    ReviewCount = 17
 }
 
 export const enum Dimension {
@@ -79,7 +80,12 @@ export const enum Dimension {
     ProductBrand = 6,
     ProductAvailability = 7,
     AuthorName = 8,
-    Language = 9
+    Language = 9,
+    ProductName = 10,
+    ProductCategory = 11,
+    ProductSku = 12,
+    Currency = 13,
+    ProductCondition = 14
 }
 
 export const enum Check {
@@ -136,7 +142,9 @@ export const enum Setting {
     ScriptErrorLimit = 5, // Do not send the same script error more than 5 times per page
     WordLength = 5, // Estimated average size of a word,
     RestartDelay = 250, // Wait for 250ms before starting to wire up again
-    CallStackDepth = 20 // Maximum call stack depth before bailing out
+    CallStackDepth = 20, // Maximum call stack depth before bailing out
+    RatingScale = 500, // Scale rating to specified scale
+    BestRatingValue = 5 // Max Rating if bestRating is not specified in JSON+LD
 }
 
 export const enum Constant {

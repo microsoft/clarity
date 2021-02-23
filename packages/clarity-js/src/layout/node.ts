@@ -1,12 +1,11 @@
-import { Constant, JsonLD, Source } from "@clarity-types/layout";
-import { Code, Dimension, Metric, Severity } from "@clarity-types/data";
+import { Constant, Source } from "@clarity-types/layout";
+import { Code, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
 import * as dom from "./dom";
-import * as dimension from "@src/data/dimension";
-import * as metric from "@src/data/metric";
 import * as log from "@src/diagnostic/log";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
+import * as schema from "@src/layout/schema";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror"];
 
@@ -95,9 +94,9 @@ export default function (node: Node, source: Source): Node {
                     dom[call](node, parent, htmlData, source);
                     break;
                 case "SCRIPT":
-                    if (Constant.Type in attributes && attributes[Constant.Type] === JsonLD.ScriptType) {
+                    if (Constant.Type in attributes && attributes[Constant.Type] === Constant.JsonLD) {
                         try {
-                            parseLinkedData(JSON.parse((element as HTMLScriptElement).text));
+                            schema.ld(JSON.parse((element as HTMLScriptElement).text));
                         } catch { /* do nothing */ }
                     }
                     break;
@@ -191,41 +190,4 @@ function getAttributes(element: HTMLElement): { [key: string]: string } {
     }
 
     return output;
-}
-
-function parseLinkedData(json: any): void {
-    for (let key of Object.keys(json)) {
-        let value = json[key];
-        if (key === JsonLD.Type) {
-            value = typeof value === "string" ? value.toLowerCase() : value;
-            switch (value) {
-                case JsonLD.Product:
-                    dimension.log(Dimension.SchemaType, json[key]);
-                    break;
-                case JsonLD.Recipe:
-                    dimension.log(Dimension.SchemaType, json[key]);
-                    break;
-                case JsonLD.Rating:
-                    if (json[JsonLD.RatingValue]) { metric.max(Metric.RatingValue, num(json[JsonLD.RatingValue])); }
-                    if (json[JsonLD.RatingCount]) { metric.max(Metric.RatingCount, num(json[JsonLD.RatingCount])); }
-                    break;
-                case JsonLD.Author:
-                    if (json[JsonLD.Name]) { dimension.log(Dimension.AuthorName, json[JsonLD.Name]); }
-                    break;
-                case JsonLD.Offer:
-                    if (json[JsonLD.Availability]) { dimension.log(Dimension.ProductAvailability, json[JsonLD.Availability]); }
-                    if (json[JsonLD.Price]) { metric.max(Metric.ProductPrice, num(json[JsonLD.Price])); }
-                    break;
-                case JsonLD.Brand:
-                    if (json[JsonLD.Name]) { dimension.log(Dimension.ProductBrand, json[JsonLD.Name]); }
-                    break;
-            }
-        }
-        // Continue parsing nested objects
-        if (value !== null && typeof(value) === Constant.Object) { parseLinkedData(value); }
-    }
-}
-
-function num(input: string): number {
-    return Math.round(parseFloat(input));
 }

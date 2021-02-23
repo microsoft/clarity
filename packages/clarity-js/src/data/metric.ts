@@ -23,17 +23,21 @@ export function count(metric: Metric, increment: number = 1): void {
 }
 
 export function sum(metric: Metric, value: number): void {
-    if (!(metric in data)) { data[metric] = 0; }
-    if (!(metric in updates)) { updates[metric] = 0; }
-    data[metric] += value;
-    updates[metric] += value;
+    if (value !== null) { 
+        if (!(metric in data)) { data[metric] = 0; }
+        if (!(metric in updates)) { updates[metric] = 0; }
+        data[metric] += value;
+        updates[metric] += value;
+    }
 }
 
 export function max(metric: Metric, value: number): void {
-    if (!(metric in data)) { data[metric] = 0; }
-    if (value > data[metric] || data[metric] === 0) {
-        updates[metric] = value;
-        data[metric] = value;
+    if (value !== null) { 
+        if (!(metric in data)) { data[metric] = 0; }
+        if (value > data[metric] || data[metric] === 0) {
+            updates[metric] = value;
+            data[metric] = value;
+        }
     }
 }
 
