@@ -63,7 +63,7 @@ export const enum JsonLD {
     Type = "@type",
     Recipe = "recipe",
     Product = "product",
-    Rating = "aggregaterating",
+    AggregateRating = "aggregaterating",
     Author = "person",
     Offer = "offer",
     Brand = "brand",

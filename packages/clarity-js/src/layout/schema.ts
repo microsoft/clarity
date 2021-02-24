@@ -22,7 +22,7 @@ export function ld(json: any): void {
                     dimension.log(Dimension.ProductSku, json[JsonLD.Sku]);
                     if (json[JsonLD.Brand]) { dimension.log(Dimension.ProductBrand, json[JsonLD.Brand][JsonLD.Name]); }
                     break;
-                case JsonLD.Rating:
+                case JsonLD.AggregateRating:
                     if (json[JsonLD.RatingValue]) {
                         let bestRating = num(json[JsonLD.BestRating], Setting.BestRatingValue);
                         let rating = (parseFloat(json[JsonLD.RatingValue]) * Setting.RatingScale) / bestRating;
@@ -37,7 +37,7 @@ export function ld(json: any): void {
                 case JsonLD.Offer:
                     dimension.log(Dimension.ProductAvailability, json[JsonLD.Availability]);
                     dimension.log(Dimension.ProductCondition, json[JsonLD.ItemCondition]);
-                    dimension.log(Dimension.Currency, json[JsonLD.PriceCurrency]);
+                    dimension.log(Dimension.ProductCurrency, json[JsonLD.PriceCurrency]);
                     dimension.log(Dimension.ProductSku, json[JsonLD.Sku]);
                     metric.max(Metric.ProductPrice, num(json[JsonLD.Price]));
                     break;

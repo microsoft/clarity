@@ -84,7 +84,7 @@ export const enum Dimension {
     ProductName = 10,
     ProductCategory = 11,
     ProductSku = 12,
-    Currency = 13,
+    ProductCurrency = 13,
     ProductCondition = 14
 }
 
@@ -144,7 +144,7 @@ export const enum Setting {
     RestartDelay = 250, // Wait for 250ms before starting to wire up again
     CallStackDepth = 20, // Maximum call stack depth before bailing out
     RatingScale = 500, // Scale rating to specified scale
-    BestRatingValue = 5 // Max Rating if bestRating is not specified in JSON+LD
+    BestRatingValue = 5 // Max rating if bestRating is not specified in JSON+LD
 }
 
 export const enum Constant {
@@ -177,7 +177,13 @@ export const enum Constant {
     ResizeObserver = "ResizeObserver",
     Mask = "•",
     SessionStorage = "sessionStorage",
-    Cookie = "cookie"
+    Cookie = "cookie",
+    Navigation = "navigation",
+    Resource = "resource",
+    LongTask = "longtask",
+    FID = "first-input",
+    CLS = "layout-shift",
+    LCP = "largest-contentful-paint"
 }
 
 /* Helper Interfaces */
