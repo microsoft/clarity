@@ -24,9 +24,9 @@ export function ld(json: any): void {
                     break;
                 case JsonLD.AggregateRating:
                     if (json[JsonLD.RatingValue]) {
-                        let bestRating = num(json[JsonLD.BestRating], Setting.BestRatingValue);
-                        let rating = (parseFloat(json[JsonLD.RatingValue]) * Setting.RatingScale) / bestRating;
-                        metric.max(Metric.RatingValue, rating);
+                        metric.max(Metric.RatingValue, parseFloat(json[JsonLD.RatingValue]) * Setting.RatingScale);
+                        metric.max(Metric.BestRating, num(json[JsonLD.BestRating]));
+                        metric.max(Metric.WorstRating, num(json[JsonLD.WorstRating]));
                     }
                     metric.max(Metric.RatingCount, num(json[JsonLD.RatingCount]));
                     metric.max(Metric.ReviewCount, num(json[JsonLD.ReviewCount]));
@@ -51,6 +51,6 @@ export function ld(json: any): void {
     }
 }
 
-function num(input: string, backup: number = null): number {
-    return input ? Math.round(parseFloat(input)) : backup;
+function num(input: string): number {
+    return input ? Math.round(parseFloat(input)) : null;
 }

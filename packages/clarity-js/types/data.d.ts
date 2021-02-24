@@ -67,7 +67,9 @@ export const enum Metric {
     ScreenWidth = 14,
     ScreenHeight = 15,
     ColorDepth = 16,
-    ReviewCount = 17
+    ReviewCount = 17,
+    BestRating = 18,
+    WorstRating = 19
 }
 
 export const enum Dimension {
@@ -143,8 +145,7 @@ export const enum Setting {
     WordLength = 5, // Estimated average size of a word,
     RestartDelay = 250, // Wait for 250ms before starting to wire up again
     CallStackDepth = 20, // Maximum call stack depth before bailing out
-    RatingScale = 500, // Scale rating to specified scale
-    BestRatingValue = 5 // Max rating if bestRating is not specified in JSON+LD
+    RatingScale = 100, // Scale rating to specified scale
 }
 
 export const enum Constant {
