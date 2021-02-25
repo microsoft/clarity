@@ -66,7 +66,10 @@ export const enum Metric {
     ProductPrice = 13,
     ScreenWidth = 14,
     ScreenHeight = 15,
-    ColorDepth = 16
+    ColorDepth = 16,
+    ReviewCount = 17,
+    BestRating = 18,
+    WorstRating = 19
 }
 
 export const enum Dimension {
@@ -79,7 +82,12 @@ export const enum Dimension {
     ProductBrand = 6,
     ProductAvailability = 7,
     AuthorName = 8,
-    Language = 9
+    Language = 9,
+    ProductName = 10,
+    ProductCategory = 11,
+    ProductSku = 12,
+    ProductCurrency = 13,
+    ProductCondition = 14
 }
 
 export const enum Check {
@@ -136,7 +144,8 @@ export const enum Setting {
     ScriptErrorLimit = 5, // Do not send the same script error more than 5 times per page
     WordLength = 5, // Estimated average size of a word,
     RestartDelay = 250, // Wait for 250ms before starting to wire up again
-    CallStackDepth = 20 // Maximum call stack depth before bailing out
+    CallStackDepth = 20, // Maximum call stack depth before bailing out
+    RatingScale = 100, // Scale rating to specified scale
 }
 
 export const enum Constant {
@@ -169,7 +178,13 @@ export const enum Constant {
     ResizeObserver = "ResizeObserver",
     Mask = "•",
     SessionStorage = "sessionStorage",
-    Cookie = "cookie"
+    Cookie = "cookie",
+    Navigation = "navigation",
+    Resource = "resource",
+    LongTask = "longtask",
+    FID = "first-input",
+    CLS = "layout-shift",
+    LCP = "largest-contentful-paint"
 }
 
 /* Helper Interfaces */

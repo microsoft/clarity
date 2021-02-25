@@ -55,23 +55,32 @@ export const enum Constant {
     Value = "value",
     MutationObserver = "MutationObserver",
     Zone = "Zone",
-    Symbol = "__symbol__"
+    Symbol = "__symbol__",
+    JsonLD = "application/ld+json"
 }
 
 export const enum JsonLD { 
-    ScriptType = "application/ld+json",
     Type = "@type",
     Recipe = "recipe",
     Product = "product",
-    Rating = "aggregaterating",
+    AggregateRating = "aggregaterating",
     Author = "person",
     Offer = "offer",
     Brand = "brand",
     RatingValue = "ratingValue",
+    BestRating = "bestRating",
+    WorstRating = "worstRating",
     RatingCount = "ratingCount",
+    ReviewCount = "reviewCount",
     Availability = "availability",
     Price = "price",
-    Name = "name"
+    PriceCurrency = "priceCurrency",
+    ItemCondition = "itemCondition",
+    Category = "category",
+    Sku = "sku",
+    Name = "name",
+    Article = "article",
+    Posting = "posting"
 }
 
 export const enum Setting {

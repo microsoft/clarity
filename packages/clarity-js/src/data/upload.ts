@@ -13,7 +13,6 @@ import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
-import * as performance from "@src/performance/observer";
 
 let playbackBytes: number = 0;
 let playback: string[];
@@ -95,7 +94,6 @@ function upload(final: boolean = false): void {
 
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
-    performance.compute();
     region.compute();
     timeline.compute();
     data.compute();
