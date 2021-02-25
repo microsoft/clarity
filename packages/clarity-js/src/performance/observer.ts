@@ -30,6 +30,9 @@ function observe(): void {
     // It must only be used only with the "type" option, and cannot be used with entryTypes.
     // This is why we need to individually "observe" each supported type
     types.forEach(x => observer.observe({type: x, buffered: true}));
+    // Initialize CLS with a value of zero. It's possible (and recommended) for sites to not have any cumulative layout shift.
+    // In those cases, we want to still initialize the metric in Clarity
+    metric.sum(Metric.CumulativeLayoutShift, 0);
 }
 
 function handle(entries: PerformanceObserverEntryList): void {
@@ -54,7 +57,7 @@ function process(entries: PerformanceEntryList): void {
                 if (visible) { metric.max(Metric.FirstInputDelay, entry["processingStart"] - entry.startTime); }
                 break;
             case Constant.CLS:
-                // Transform the value in milliseconds to avoid rounding off the metric
+                // Scale the value to avoid sending back floating point number
                 if (visible && !entry["hadRecentInput"]) { metric.sum(Metric.CumulativeLayoutShift, entry["value"] * 1000); }
                 break;
             case Constant.LCP:
