@@ -1,4 +1,6 @@
 import { Data, Layout } from "clarity-decode";
+import { Regions } from "clarity-js/types/core";
+import { RegionData } from "clarity-js/types/layout";
 
 
 export type ResizeHandler  = (width: number, height: number) => void;
@@ -24,6 +26,11 @@ export interface PlaybackState {
 }
 
 export type Activity = { [key: string]: ElementData };
+
+export interface RegionState {
+    visible: Data.BooleanFlag;
+    interaction: Data.BooleanFlag;
+}
 
 export interface ElementData {
     hash: string;

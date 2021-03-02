@@ -1,8 +1,11 @@
 import { Data, Layout } from "clarity-decode";
 import { state } from "./clarity";
+import { RegionState } from "@clarity-types/visualize";
 
 export let lean = false;
 
+let regionMap = {};
+let regions: { [key: string]: RegionState } = {};
 let metrics: {[key: number]: number} = null;
 const METRIC_MAP = {};
 METRIC_MAP[Data.Metric.TotalBytes] = { name: "Total Bytes", unit: "KB" };
@@ -16,12 +19,15 @@ METRIC_MAP[Data.Metric.ThreadBlockedTime] = { name: "Thread Blocked", unit: "ms"
 export function reset(): void {
     metrics = {};
     lean = false;
+    regions = {};
+    regionMap = {};
 }
 
 export function metric(event: Data.MetricEvent): void {
     if (state.metadata === null) { return; }
 
-    let html = [];
+    let metricMarkup = [];
+    let regionMarkup = [];
     // Copy over metrics for future reference
     for (let m in event.data) {
         if (typeof event.data[m] === "number") {
@@ -36,12 +42,36 @@ export function metric(event: Data.MetricEvent): void {
         if (entry in METRIC_MAP) {
             let m = metrics[entry];
             let map = METRIC_MAP[entry];
-            let unit = "unit" in map ? map.unit : Layout.Constant.Empty;
-            html.push(`<li><h2>${value(m, unit)}<span>${key(unit)}</span></h2>${map.name}</li>`);
+            let unit = "unit" in map ? map.unit : Data.Constant.Empty;
+            metricMarkup.push(`<li><h2>${value(m, unit)}<span>${key(unit)}</span></h2>${map.name}</li>`);
         }
     }
 
-    state.metadata.innerHTML = `<ul>${html.join(Layout.Constant.Empty)}</ul>`;
+    // Append region information to metadata
+    for (let name in regions) {
+        let r = regions[name];
+        let classes = [r.visible ? "visible" : Data.Constant.Empty, r.interaction ? "interaction" : Data.Constant.Empty];
+        regionMarkup.push(`<span class="${classes.join(Data.Constant.Space)}">${name}</span>`);
+    }
+
+    state.metadata.innerHTML = `<ul>${metricMarkup.join(Data.Constant.Empty)}</ul><div>${regionMarkup.join(Data.Constant.Empty)}</div>`;
+}
+
+export function region(event: Layout.RegionEvent): void {
+    let data = event.data;
+    for (let r of data) {
+        if (!(r.region in regions)) { regions[r.region] = { visible: Data.BooleanFlag.False, interaction: Data.BooleanFlag.False } }
+        regions[r.region].visible = r.visible;
+        regionMap[r.id] = r.region;
+    }
+}
+
+export function update(regionId: number): void {
+    if (regionId && regionId in regionMap) {
+        let name = regionMap[regionId];
+        if (!(name in regions)) { regions[name] = { visible: Data.BooleanFlag.False, interaction: Data.BooleanFlag.False } }
+        regions[name].interaction = Data.BooleanFlag.True;
+    }
 }
 
 function key(unit: string): string {

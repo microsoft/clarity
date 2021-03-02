@@ -1,6 +1,7 @@
 import { Asset, Constant, Point, Setting } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import { state } from "./clarity";
+import { update } from "./data";
 import { element } from "./layout";
 
 const TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
@@ -40,6 +41,7 @@ export function scroll(event: Interaction.ScrollEvent): void {
         }
         scrollPointIndex = points.length;
     }
+    update(data.region);
 }
 
 export function resize(event: Interaction.ResizeEvent): void {
@@ -75,6 +77,7 @@ export function input(event: Interaction.InputEvent): void {
                 break;
         }
     }
+    update(data.region);
 }
 
 export function selection(event: Interaction.SelectionEvent): void {
@@ -126,6 +129,11 @@ export function pointer(event: Interaction.PointerEvent): void {
     let title = "Pointer"
     switch (type) {
         case Data.Event.Click:
+            title = "Click";
+            drawClick(doc, data.x, data.y, title);
+            p.className = Constant.PointerNone;
+            update((event as Interaction.ClickEvent).data.region);
+            break;
         case Data.Event.DoubleClick:
             title = "Click";
             drawClick(doc, data.x, data.y, title);
