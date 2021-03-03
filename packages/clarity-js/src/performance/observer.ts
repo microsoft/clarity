@@ -12,7 +12,7 @@ const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTa
 
 export function start(): void {
     // Check the browser support performance observer as a pre-requisite for any performance measurement
-    if (window["PerformanceObserver"]) {
+    if (window["PerformanceObserver"] && PerformanceObserver.supportedEntryTypes) {
         // Start monitoring performance data after page has finished loading.
         // If the document.readyState is not yet complete, we intentionally call observe using a setTimeout.
         // This allows us to capture loadEventEnd on navigation timeline.
@@ -23,16 +23,24 @@ export function start(): void {
 }
 
 function observe(): void {
-    if (observer) { observer.disconnect(); }
-    observer = new PerformanceObserver(measure(handle) as PerformanceObserverCallback);
-    // Reference: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceObserver/observe
-    // "buffered" flag indicates whether buffered entries should be queued into the observer's buffer.
-    // It must only be used only with the "type" option, and cannot be used with entryTypes.
-    // This is why we need to individually "observe" each supported type
-    types.forEach(x => observer.observe({type: x, buffered: true}));
-    // Initialize CLS with a value of zero. It's possible (and recommended) for sites to not have any cumulative layout shift.
-    // In those cases, we want to still initialize the metric in Clarity
-    metric.sum(Metric.CumulativeLayoutShift, 0);
+    // Some browsers will throw an error for unsupported entryType, e.g. "layout-shift"
+    // In those cases, we log it as a warning and continue with rest of the Clarity processing
+    try {
+        if (observer) { observer.disconnect(); }
+        observer = new PerformanceObserver(measure(handle) as PerformanceObserverCallback);
+        // Reference: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceObserver/observe
+        // "buffered" flag indicates whether buffered entries should be queued into the observer's buffer.
+        // It must only be used only with the "type" option, and cannot be used with entryTypes.
+        // This is why we need to individually "observe" each supported type
+        for (let x of types) {
+            if (PerformanceObserver.supportedEntryTypes.indexOf(x) >= 0) {
+                // Initialize CLS with a value of zero. It's possible (and recommended) for sites to not have any cumulative layout shift.
+                // In those cases, we want to still initialize the metric in Clarity
+                if (x === Constant.CLS) { metric.sum(Metric.CumulativeLayoutShift, 0); }
+                observer.observe({type: x, buffered: true});
+            }
+        }
+    } catch { log.log(Code.PerformanceObserver, null, Severity.Warning); }
 }
 
 function handle(entries: PerformanceObserverEntryList): void {
