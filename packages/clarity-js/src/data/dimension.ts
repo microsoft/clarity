@@ -18,6 +18,8 @@ export function stop(): void {
 export function log(dimension: Dimension, value: string): void {
     // Check valid value before moving ahead
     if (value) {
+        // Ensure received value is casted into a string if it wasn't a string to begin with
+        value = `${value}`;
         if (!(dimension in data)) { data[dimension] = []; }
         if (data[dimension].indexOf(value) < 0) {
             data[dimension].push(value);
