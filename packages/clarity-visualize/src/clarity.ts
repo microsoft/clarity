@@ -80,6 +80,9 @@ export function render(events: Data.DecodedEvent[]): void {
             case Data.Event.Metric:
                 data.metric(entry as Data.MetricEvent);
                 break;
+            case Data.Event.Region:
+                data.region(entry as Layout.RegionEvent);
+                break;
             case Data.Event.Box:
                 layout.box(entry as Layout.BoxEvent);
                 break;

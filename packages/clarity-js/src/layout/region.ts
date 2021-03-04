@@ -1,4 +1,4 @@
-import { BooleanFlag, Event } from "@clarity-types/data";
+import { BooleanFlag, Event, Setting } from "@clarity-types/data";
 import { RegionData, RegionQueue } from "@clarity-types/layout";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
@@ -24,7 +24,13 @@ export function start(): void {
 export function observe(node: Node, name: string): void {
     if (regionMap.has(node) === false) {
         regionMap.set(node, name);
-        observer = observer === null && watch ? new IntersectionObserver(handler) : observer;
+        observer = observer === null && watch ? new IntersectionObserver(handler, {
+            // Get notified as intersection continues to change
+            // This allows us to process regions that get partially hidden during the lifetime of the page
+            // See: https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API#creating_an_intersection_observer
+            // By default, intersection observers only fire an event when even a single pixel is visible and not thereafter.
+            threshold: [0,0.2,0.4,0.6,0.8,1]
+        }) : observer;
         if (observer && node && node.nodeType === Node.ELEMENT_NODE) {
             observer.observe(node as Element);
         }
@@ -72,20 +78,27 @@ function handler(entries: IntersectionObserverEntry[]): void {
     for (let entry of entries) {
         let target = entry.target;
         let rect = entry.boundingClientRect;
-
+        let overlap = entry.intersectionRect;
+        let viewport = entry.rootBounds;
         // Only capture regions that have non-zero area to avoid tracking and sending regions
         // that cannot ever be seen by the user. In some cases, websites will have a multiple copy of the same region
         // like search box - one for desktop, and another for mobile. In those cases, CSS media queries determine which one should be visible.
         // Also, if these regions ever become non-zero area (through AJAX, user action or orientation change) - we will automatically start monitoring them from that point onwards
-        if (regionMap.has(target) && rect.width > 0 && rect.height > 0) {
+        if (regionMap.has(target) && rect.width > 0 && rect.height > 0 && viewport.width > 0 && viewport.height > 0) {
             let id = target ? dom.getId(target) : null;
-            let visible = entry.isIntersecting ? BooleanFlag.True : BooleanFlag.False;
-            let d = { id, visible, region: regionMap.get(target) };
-            if (id) {
-                regions[id] = d;
-                updates.push(id);
-                data.push(d);
-            } else { queue.push({node: target, data: d}); }
+            let viewportRatio = overlap ? (overlap.width * overlap.height * 1.0) / (viewport.width * viewport.height) : 0;
+            // For regions that have relatively smaller area, we look at intersection ratio and see the overlap relative to element's area
+            // However, for larger regions, area of regions could be bigger than viewport and therefore comparison is relative to visible area
+            let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio ? BooleanFlag.True : BooleanFlag.False;
+            // If the visibility hasn't changed since the last tracked value, ignore this notification
+            if (!(id in regions && regions[id].visible === visible)) {
+                let d = { id, visible, region: regionMap.get(target) };
+                if (id) {
+                    regions[id] = d;
+                    updates.push(id);
+                    data.push(d);
+                } else { queue.push({node: target, data: d}); }
+            }
         }
     }
     if (data.length > 0) { encode(Event.Region); }

@@ -146,6 +146,8 @@ export const enum Setting {
     RestartDelay = 250, // Wait for 250ms before starting to wire up again
     CallStackDepth = 20, // Maximum call stack depth before bailing out
     RatingScale = 100, // Scale rating to specified scale
+    ViewportIntersectionRatio = 0.25, // Ratio of intersection area in comparison to viewport area before it's marked visible
+    IntersectionRatio = 0.8, // Ratio of intersection area in comparison to element's area before it's marked visible
 }
 
 export const enum Constant {
