@@ -69,7 +69,8 @@ export const enum Metric {
     ColorDepth = 16,
     ReviewCount = 17,
     BestRating = 18,
-    WorstRating = 19
+    WorstRating = 19,
+    CartTotal = 20
 }
 
 export const enum Dimension {
@@ -106,7 +107,8 @@ export const enum Code {
     MutationObserver = 2,
     PerformanceObserver = 3,
     CallStackDepth = 4,
-    Selector = 5
+    Selector = 5,
+    Metric = 6
 }
 
 export const enum Severity {

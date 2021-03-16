@@ -80,11 +80,11 @@ function handler(entries: IntersectionObserverEntry[]): void {
         let rect = entry.boundingClientRect;
         let overlap = entry.intersectionRect;
         let viewport = entry.rootBounds;
-        // Only capture regions that have non-zero area to avoid tracking and sending regions
+        // Only capture regions that have non-zero width or height to avoid tracking and sending regions
         // that cannot ever be seen by the user. In some cases, websites will have a multiple copy of the same region
         // like search box - one for desktop, and another for mobile. In those cases, CSS media queries determine which one should be visible.
-        // Also, if these regions ever become non-zero area (through AJAX, user action or orientation change) - we will automatically start monitoring them from that point onwards
-        if (regionMap.has(target) && rect.width > 0 && rect.height > 0 && viewport.width > 0 && viewport.height > 0) {
+        // Also, if these regions ever become non-zero width or height (through AJAX, user action or orientation change) - we will automatically start monitoring them from that point onwards
+        if (regionMap.has(target) && rect.width + rect.height > 0 && viewport.width > 0 && viewport.height > 0) {
             let id = target ? dom.getId(target) : null;
             let viewportRatio = overlap ? (overlap.width * overlap.height * 1.0) / (viewport.width * viewport.height) : 0;
             // For regions that have relatively smaller area, we look at intersection ratio and see the overlap relative to element's area

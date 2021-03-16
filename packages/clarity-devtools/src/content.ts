@@ -1,5 +1,5 @@
 import { clarity, Layout } from "clarity-js";
-import { regions } from "./regions";
+import classification from "./classification";
 
 chrome.runtime.onMessage.addListener(function(message: any): void {
   if (message.action === "activate") {
@@ -22,10 +22,12 @@ function activate(): void {
       clarity: { showText: true, leanMode: false }
     }, (items: any) => {
       setup();
+      let config = classification();
       clarity.start({
         delay: 500,
         lean: items.clarity.leanMode,
-        regions,
+        regions: config.regions,
+        metrics: config.metrics,
         content: items.clarity.showText,
         upload,
         projectId: "devtools"

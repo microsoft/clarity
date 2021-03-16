@@ -3,6 +3,7 @@ import { Code, Setting, Severity } from "@clarity-types/data";
 import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
+import * as metric from "@src/data/metric";
 import * as log from "@src/diagnostic/log";
 import * as region from "@src/layout/region";
 import selector from "@src/layout/selector";
@@ -80,6 +81,14 @@ export function parse(root: ParentNode): void {
                 let elements = root.querySelectorAll(entry);
                 for (let i = 0; i < elements.length; i++) {
                     privacyMap.set(elements[i], Privacy.None);
+                }
+            }
+
+            // Extract metrics
+            for (const key of Object.keys(config.metrics)) {
+                let elements = root.querySelectorAll(key);
+                for (let i = 0; i < elements.length; i++) {
+                    metric.extract(config.metrics[key], elements[i] as HTMLElement);
                 }
             }
         }
