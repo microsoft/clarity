@@ -61,12 +61,12 @@ export function parse(root: ParentNode): void {
         // We ensure that the root note supports querySelectorAll API before executing the code below to identify new regions.
         if ("querySelectorAll" in root) {
             Object.keys(config.regions).forEach(x => root.querySelectorAll(config.regions[x]).forEach(e => region.observe(e, x))); // Regions
-            config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
-            config.unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
             Object.keys(config.metrics).forEach(x => root.querySelectorAll(x).forEach(e => {
                 privacyMap.set(e, Privacy.None); // Unmask any element already being tracked as a metric
                 metric.extract(config.metrics[x], e);
             })); // Metrics
+            config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
+            config.unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
         }
     } catch (e) { log.log(Code.Selector, e, Severity.Warning); }
 }
