@@ -3,6 +3,7 @@ import { Code, Setting, Severity } from "@clarity-types/data";
 import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
+import * as metric from "@src/data/metric";
 import * as log from "@src/diagnostic/log";
 import * as region from "@src/layout/region";
 import selector from "@src/layout/selector";
@@ -59,29 +60,13 @@ export function parse(root: ParentNode): void {
         // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
         // We ensure that the root note supports querySelectorAll API before executing the code below to identify new regions.
         if ("querySelectorAll" in root) {
-            // Extract regions
-            for (const key of Object.keys(config.regions)) {
-                let elements = root.querySelectorAll(config.regions[key]);
-                for (let i = 0; i < elements.length; i++) {
-                    region.observe(elements[i], key);
-                }
-            }
-
-            // Extract nodes with explicit masked configuration
-            for (const entry of config.mask) {
-                let elements = root.querySelectorAll(entry);
-                for (let i = 0; i < elements.length; i++) {
-                    privacyMap.set(elements[i], Privacy.TextImage);
-                }
-            }
-
-            // Extract nodes with explicit unmasked configuration
-            for (const entry of config.unmask) {
-                let elements = root.querySelectorAll(entry);
-                for (let i = 0; i < elements.length; i++) {
-                    privacyMap.set(elements[i], Privacy.None);
-                }
-            }
+            Object.keys(config.regions).forEach(x => root.querySelectorAll(config.regions[x]).forEach(e => region.observe(e, x))); // Regions
+            config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
+            config.unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
+            Object.keys(config.metrics).forEach(x => root.querySelectorAll(x).forEach(e => {
+                privacyMap.set(e, Privacy.None); // Unmask any element already being tracked as a metric
+                metric.extract(config.metrics[x], e);
+            })); // Metrics
         }
     } catch (e) { log.log(Code.Selector, e, Severity.Warning); }
 }
