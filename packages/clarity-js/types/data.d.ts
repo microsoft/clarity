@@ -70,7 +70,11 @@ export const enum Metric {
     ReviewCount = 17,
     BestRating = 18,
     WorstRating = 19,
-    CartTotal = 20
+    CartPrice = 20,
+    CartShipping = 21,
+    CartDiscount = 22,
+    CartTax = 23,
+    CartTotal = 24
 }
 
 export const enum Dimension {
@@ -163,6 +167,8 @@ export const enum Constant {
     Empty = "",
     Space = " ",
     Expires = "expires=",
+    Comma = ",",
+    Dot = ".",
     Semicolon = ";",
     Equals = "=",
     Path = ";path=/",

@@ -112,15 +112,14 @@ async function process(): Promise<void> {
       let record = mutations.shift();
       for (let mutation of record.mutations) {
         let target = mutation.target;
+        if (target && target.ownerDocument) { dom.parse(target.ownerDocument); }
         switch (mutation.type) {
           case Constant.Attributes:
               if (task.shouldYield(timer)) { await task.suspend(timer); }
-              dom.parse(target as HTMLElement);
               processNode(target, Source.Attributes);
               break;
           case Constant.CharacterData:
               if (task.shouldYield(timer)) { await task.suspend(timer); }
-              dom.parse(target as HTMLElement);
               processNode(target, Source.CharacterData);
               break;
           case Constant.ChildList:
@@ -128,7 +127,6 @@ async function process(): Promise<void> {
             let addedLength = mutation.addedNodes ? mutation.addedNodes.length : 0;
             for (let j = 0; j < addedLength; j++) {
               let addedNode = mutation.addedNodes[j];
-              dom.parse(addedNode as HTMLElement);
               traverse(addedNode, timer, Source.ChildListAdd);
             }
             // Process removes
