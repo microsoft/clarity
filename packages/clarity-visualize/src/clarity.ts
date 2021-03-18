@@ -8,14 +8,15 @@ import * as layout from "./layout";
 export { dom } from "./layout";
 
 export let state: PlaybackState = null;
+let renderTime = 0;
 
-export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement, hash: string = null): Visualize {
+export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement, hash: string = null, time : number): Visualize {
     if (decoded && decoded.length > 0 && player) {
         setup(decoded[0].envelope.version, player);
 
         // Flatten the payload and parse all events out of them, sorted by time
         let merged = merge(decoded);
-
+    
         // Render initial markup before rendering rest of the events
         layout.dom(merged.dom);
 
@@ -24,12 +25,23 @@ export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement, 
             let entry = merged.events.shift();
             switch (entry.event) {
                 case Data.Event.Mutation:
-                    layout.markup(entry as Layout.DomEvent);
+                    let domEvent = entry as Layout.DomEvent;
+                    renderTime = domEvent.time;
+                    if (time && renderTime > time) {
+                        break;
+                    }
+
+                    layout.markup(domEvent);
                     break;
             }
         }
     }
+
     return this;
+}
+
+export function time(): number {
+    return renderTime;
 }
 
 export function clickmap(activity: Activity): void {
@@ -63,6 +75,7 @@ export function reset(): void {
     layout.reset();
     heatmap.reset();
     state = null;
+    renderTime = 0;
 }
 
 export function setup(version: string, player: HTMLIFrameElement, onresize: ResizeHandler = null, metadata: HTMLElement = null): Visualize {

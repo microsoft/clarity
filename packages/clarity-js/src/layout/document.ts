@@ -16,7 +16,15 @@ export function start(): void {
 export function compute(): void {
     let body = document.body;
     let d = document.documentElement;
-    let width = body ? body.clientWidth : null;
+    let bodyClientWidth = body ? body.clientWidth : null;
+    let bodyScrollWidth = body ? body.scrollWidth : null;
+    let bodyOffsetWidth = body ? body.offsetWidth : null;
+    let documentClientWidth = d ? d.clientWidth : null;
+    let documentScrollWidth = d ? d.scrollWidth : null;
+    let documentOffsetWidth = d ? d.offsetWidth : null;
+    let width = Math.max(bodyClientWidth, bodyScrollWidth, bodyOffsetWidth,
+        documentClientWidth, documentScrollWidth, documentOffsetWidth);
+
     let bodyClientHeight = body ? body.clientHeight : null;
     let bodyScrollHeight = body ? body.scrollHeight : null;
     let bodyOffsetHeight = body ? body.offsetHeight : null;
