@@ -51,6 +51,11 @@ export interface Regions {
     [key: string]: string;
 }
 
+export interface Metrics {
+    /* In the following key-value pair, key is the given CSS Selector and value is Metric enum */
+    [key: string]: number;
+}
+
 export interface RequestIdleCallbackOptions {
     timeout: number;
 }
@@ -95,6 +100,7 @@ export interface Config {
     mask?: string[];
     unmask?: string[];
     regions?: Regions;
+    metrics?: Metrics;
     cookies?: string[];
     report?: string;
     upload?: string | UploadCallback;

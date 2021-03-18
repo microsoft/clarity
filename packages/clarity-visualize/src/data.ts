@@ -14,6 +14,7 @@ METRIC_MAP[Data.Metric.LayoutCost] = { name: "Layout Cost", unit: "ms" };
 METRIC_MAP[Data.Metric.LargestPaint] = { name: "LCP", unit: "s" };
 METRIC_MAP[Data.Metric.CumulativeLayoutShift] = { name: "CLS", unit: "cls" };
 METRIC_MAP[Data.Metric.LongTaskCount] = { name: "Long Tasks" };
+METRIC_MAP[Data.Metric.CartTotal] = { name: "Cart Total", unit: "price" };
 METRIC_MAP[Data.Metric.ThreadBlockedTime] = { name: "Thread Blocked", unit: "ms" };
 
 export function reset(): void {
@@ -33,7 +34,9 @@ export function metric(event: Data.MetricEvent): void {
         if (typeof event.data[m] === "number") {
             if (!(m in metrics)) { metrics[m] = 0; }
             let key = parseInt(m, 10);
-            metrics[m] += event.data[m];
+            if (m in METRIC_MAP && METRIC_MAP[m].unit === "price") { 
+                metrics[m] = event.data[m];
+            } else { metrics[m] += event.data[m]; }
             lean = key === Data.Metric.Playback && event.data[m] === 0 ? true : lean;
         }
     }
@@ -76,7 +79,9 @@ export function update(regionId: number): void {
 
 function key(unit: string): string {
     switch (unit) {
-        case "cls": return Data.Constant.Empty;
+        case "price": 
+        case "cls":
+            return Data.Constant.Empty;
         default: return unit;
     }
 }
@@ -86,6 +91,7 @@ function value(num: number, unit: string): number {
         case "KB": return Math.round(num / 1024);
         case "s": return Math.round(num / 10) / 100;
         case "cls": return num / 1000;
+        case "price": return num / 100;
         default: return num;
     }
 }
