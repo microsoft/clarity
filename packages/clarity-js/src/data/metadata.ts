@@ -19,19 +19,29 @@ export function start(): void {
   data = {
     projectId: config.projectId || hash(location.host),
     userId: user(),
-    sessionId: s.id,
+    sessionId: s.session,
     pageNum: s.count
+  }
+
+  // For backward compatibility; remove in future iterations (v0.6.11)
+  if (config.upload && typeof config.upload === Constant.String && (config.upload as string).indexOf(Constant.HTTPS) === 0) {
+    let url = config.upload as string;
+    config.server = url.substr(0, url.indexOf("/", Constant.HTTPS.length));
+    config.upload = config.server.length > 0 && config.server.length < url.length ? url.substr(config.server.length + 1) : url;
   }
 
   // Override configuration based on what's in the session storage
   config.lean = config.track && s.upgrade === BooleanFlag.True ? false : config.lean;
   config.upload = config.track && typeof config.upload === Constant.String && s.upload ? s.upload : config.upload;
 
+
   // Log dimensions
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);
   dimension.log(Dimension.Url, location.href);
   dimension.log(Dimension.Referrer, document.referrer);
+  dimension.log(Dimension.TabId, tab());
+  dimension.log(Dimension.PageLanguage, document.documentElement.lang);
   if (navigator) {
     dimension.log(Dimension.Language, (<any>navigator).userLanguage || navigator.language);
   }
@@ -47,7 +57,7 @@ export function start(): void {
 
   // Read cookies specified in configuration
   for (let key of config.cookies) {
-    let value = cookie(key);
+    let value = getCookie(key);
     if (value) { set(key, value); }
   }
 
@@ -71,8 +81,18 @@ export function consent(): void {
 }
 
 export function clear(): void {
-  // Clear any stored information in the session so we can restart fresh the next time
-  if (supported(window, Constant.SessionStorage)) { sessionStorage.removeItem(Constant.StorageKey); }
+  // Clear any stored information in the session cookie so we can restart fresh the next time
+  setCookie(Constant.SessionKey, Constant.Empty, 0);
+}
+
+function tab(): string {
+  let id = shortid();
+  if (supported(window, Constant.SessionStorage)) {
+    let value = sessionStorage.getItem(Constant.TabKey);
+    id = value && value.indexOf(Constant.Separator) < 0 ? value : id;
+    sessionStorage.setItem(Constant.TabKey, id);
+  }
+  return id;
 }
 
 export function save(): void {
@@ -80,8 +100,8 @@ export function save(): void {
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let upload = typeof config.upload === Constant.String ? config.upload : Constant.Empty;
   if (upgrade && callback) { callback(data, !config.lean); }
-  if (config.track && supported(window, Constant.SessionStorage)) {
-    sessionStorage.setItem(Constant.StorageKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Separator));
+  if (config.track && supported(document, Constant.Cookie)) {
+    setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Separator), Setting.SessionExpire);
   }
 }
 
@@ -90,13 +110,7 @@ function supported(target: Window | Document, api: string): boolean {
 }
 
 function track(): void {
-  if (config.track && supported(document, Constant.Cookie)) {
-    let expiry = new Date();
-    expiry.setDate(expiry.getDate() + Setting.Expire);
-    let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
-    let value = `${data.userId}${Constant.Semicolon}${expires}${Constant.Path}`;
-    document.cookie = Constant.CookieKey + Constant.Equals + value;
-  }
+  setCookie(Constant.CookieKey, data.userId, Setting.Expire);
 }
 
 function shortid(): string {
@@ -108,17 +122,16 @@ function shortid(): string {
 }
 
 function session(): Session {
-  let output: Session = { id: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: BooleanFlag.False, upload: Constant.Empty };
-  if (config.track && supported(window, Constant.SessionStorage)) {
-    let value = sessionStorage.getItem(Constant.StorageKey);
-    if (value && value.indexOf(Constant.Separator) >= 0) {
-      let parts = value.split(Constant.Separator);
-      if (parts.length === 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
-        output.id = parts[0];
-        output.count = num(parts[2]) + 1;
-        output.upgrade = num(parts[3]);
-        output.upload = parts[4];
-      }
+  let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: BooleanFlag.False, upload: Constant.Empty };
+  let value = getCookie(Constant.SessionKey);
+  if (value) {
+    let parts = value.split(Constant.Separator);
+    if (parts.length === 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
+      output.session = parts[0];
+      output.ts = num(parts[1]);
+      output.count = num(parts[2]) + 1;
+      output.upgrade = num(parts[3]);
+      output.upload = parts[4];
     }
   }
   return output;
@@ -129,11 +142,12 @@ function num(string: string, base: number = 10): number {
 }
 
 function user(): string {
-  let id = cookie(Constant.CookieKey);
-  return id && id.length > 0 ? id : shortid();
+  let id = getCookie(Constant.CookieKey);
+  // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
+  return id && id.length > 0 ? id.split(Constant.Separator)[0] : shortid(); 
 }
 
-function cookie(key: string): string {
+function getCookie(key: string): string {
   if (supported(document, Constant.Cookie)) {
     let cookies: string[] = document.cookie.split(Constant.Semicolon);
     if (cookies) {
@@ -146,4 +160,13 @@ function cookie(key: string): string {
     }
   }
   return null;
+}
+
+function setCookie(key: string, value: string, time: number): void {
+  if (config.track && supported(document, Constant.Cookie)) {
+    let expiry = new Date();
+    expiry.setDate(expiry.getDate() + time);
+    let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
+    document.cookie = `${key}=${value}${Constant.Semicolon}${expires}${Constant.Path}`;
+  }
 }
