@@ -91,7 +91,7 @@ function tab(): string {
   let id = shortid();
   if (config.track && supported(window, Constant.SessionStorage)) {
     let value = sessionStorage.getItem(Constant.TabKey);
-    id = value && value.indexOf(Constant.Pipe) < 0 ? value : id;
+    id = value ? value : id;
     sessionStorage.setItem(Constant.TabKey, id);
   }
   return id;
@@ -129,8 +129,8 @@ function shortid(): string {
 
 function session(): Session {
   let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: BooleanFlag.False, upload: Constant.Empty };
-  let legacy = supported(window, Constant.SessionStorage) ? sessionStorage.getItem(Constant.SessionKey) : null;
-  let value = getCookie(Constant.SessionKey) || legacy;
+  let legacy = supported(window, Constant.SessionStorage) ? sessionStorage.getItem(Constant.SessionKey) : null; // For backward compatibility
+  let value = legacy || getCookie(Constant.SessionKey);
   if (value) {
     let parts = value.split(Constant.Pipe);
     if (parts.length === 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
