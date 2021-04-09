@@ -183,7 +183,7 @@ export const enum Constant {
     CookieKey = "_clck", // Clarity Cookie Key
     SessionKey = "_clsk", // Clarity Session Key
     TabKey = "_cltk", // Clarity Tab Key
-    Separator = "|",
+    Pipe = "|",
     End = "END",
     Upgrade = "UPGRADE",
     UserId = "userId",

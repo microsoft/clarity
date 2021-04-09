@@ -26,8 +26,10 @@ export function start(): void {
   // For backward compatibility; remove in future iterations (v0.6.11)
   if (config.upload && typeof config.upload === Constant.String && (config.upload as string).indexOf(Constant.HTTPS) === 0) {
     let url = config.upload as string;
-    config.server = url.substr(0, url.indexOf("/", Constant.HTTPS.length));
-    config.upload = config.server.length > 0 && config.server.length < url.length ? url.substr(config.server.length + 1) : url;
+    // Until 0.6.10, upload was expected to be complete URL. With 0.6.11, we send separate "server" config with hostname and path within "upload"
+    // The code below checks if the "upload" value is complete URL, and if so, break it into "server" and "upload".
+    config.server = url.substr(0, url.indexOf("/", Constant.HTTPS.length)); // Look for first "/" starting after initial "https://" string
+    config.upload = config.server.length > 0 && config.server.length < url.length ? url.substr(config.server.length + 1) : url; // Grab path of the url and update "upload" configuration
   }
 
   // Override configuration based on what's in the session storage
@@ -81,15 +83,15 @@ export function consent(): void {
 }
 
 export function clear(): void {
-  // Clear any stored information in the session cookie so we can restart fresh the next time
+  // Clear any stored information in the cookie that tracks session information so we can restart fresh the next time
   setCookie(Constant.SessionKey, Constant.Empty, 0);
 }
 
 function tab(): string {
   let id = shortid();
-  if (supported(window, Constant.SessionStorage)) {
+  if (config.track && supported(window, Constant.SessionStorage)) {
     let value = sessionStorage.getItem(Constant.TabKey);
-    id = value && value.indexOf(Constant.Separator) < 0 ? value : id;
+    id = value && value.indexOf(Constant.Pipe) < 0 ? value : id;
     sessionStorage.setItem(Constant.TabKey, id);
   }
   return id;
@@ -100,8 +102,12 @@ export function save(): void {
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let upload = typeof config.upload === Constant.String ? config.upload : Constant.Empty;
   if (upgrade && callback) { callback(data, !config.lean); }
-  if (config.track && supported(document, Constant.Cookie)) {
-    setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Separator), Setting.SessionExpire);
+  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
+
+  // For backward compatibility - starting from v0.6.11. Can be removed in future versions.
+  // This will ensure that older versions can still interpret and continue with sessions created with new version
+  if (config.track && supported(window, Constant.SessionStorage)) {
+    sessionStorage.setItem(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe));
   }
 }
 
@@ -123,9 +129,10 @@ function shortid(): string {
 
 function session(): Session {
   let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: BooleanFlag.False, upload: Constant.Empty };
-  let value = getCookie(Constant.SessionKey);
+  let legacy = supported(window, Constant.SessionStorage) ? sessionStorage.getItem(Constant.SessionKey) : null;
+  let value = getCookie(Constant.SessionKey) || legacy;
   if (value) {
-    let parts = value.split(Constant.Separator);
+    let parts = value.split(Constant.Pipe);
     if (parts.length === 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
       output.session = parts[0];
       output.ts = num(parts[1]);
@@ -144,7 +151,7 @@ function num(string: string, base: number = 10): number {
 function user(): string {
   let id = getCookie(Constant.CookieKey);
   // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
-  return id && id.length > 0 ? id.split(Constant.Separator)[0] : shortid(); 
+  return id && id.length > 0 ? id.split(Constant.Pipe)[0] : shortid(); 
 }
 
 function getCookie(key: string): string {

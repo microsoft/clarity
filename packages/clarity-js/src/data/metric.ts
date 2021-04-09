@@ -5,9 +5,9 @@ import encode from "./encode";
 export let data: MetricData = null;
 export let updates: MetricData = null;
 let metricMap: WeakMap<Node, string> = null; // Maps metric nodes => innerText
-const numberRegex = /[^0-9\.,]/g;
-const digitsRegex = /[^0-9\.]/g;
 const formatRegex = /1/g;
+const digitsRegex = /[^0-9\.]/g;
+const digitsWithCommaRegex = /[^0-9\.,]/g;
 
 export function start(): void {
     data = {};
@@ -72,7 +72,7 @@ function parseNumber(text: string): number {
     // Reference: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat
     let lang = document.documentElement.lang;
     if (Intl && Intl.NumberFormat && lang) {
-        text = text.replace(numberRegex, Constant.Empty);
+        text = text.replace(digitsWithCommaRegex, Constant.Empty);
         // Infer current group and decimal separator from current locale
         let group = Intl.NumberFormat(lang).format(11111).replace(formatRegex, Constant.Empty);
         let decimal = Intl.NumberFormat(lang).format(1.1).replace(formatRegex, Constant.Empty);
