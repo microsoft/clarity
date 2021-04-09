@@ -130,8 +130,10 @@ function shortid(): string {
 
 function session(): Session {
   let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: BooleanFlag.False, upload: Constant.Empty };
+  // In subsequent versions we will start reading cookies: getCookie(Constant.SessionKey)
+  // For backward compatibility, we will continue reading from session storage in this version
   let legacy = supported(window, Constant.SessionStorage) ? sessionStorage.getItem(Constant.SessionKey) : null; // For backward compatibility
-  let value = getCookie(Constant.SessionKey) || legacy;
+  let value = legacy;
   if (value) {
     let parts = value.split(Constant.Pipe);
     if (parts.length === 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
