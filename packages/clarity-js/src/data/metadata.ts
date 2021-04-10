@@ -138,7 +138,6 @@ function session(): Session {
     let parts = value.split(Constant.Pipe);
     if (parts.length === 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
       output.session = parts[0];
-      output.ts = num(parts[1]);
       output.count = num(parts[2]) + 1;
       output.upgrade = num(parts[3]);
       output.upload = parts[4];
