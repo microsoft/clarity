@@ -92,7 +92,9 @@ export const enum Dimension {
     ProductCategory = 11,
     ProductSku = 12,
     ProductCurrency = 13,
-    ProductCondition = 14
+    ProductCondition = 14,
+    TabId = 15,
+    PageLanguage = 16
 }
 
 export const enum Check {
@@ -134,7 +136,8 @@ export const enum BooleanFlag {
 
 export const enum Setting {
     Expire = 365, // 1 Year
-    SessionTimeout = 30 * Time.Minute, // 10 minutes
+    SessionExpire = 1, // 1 Day
+    SessionTimeout = 30 * Time.Minute, // 30 minutes
     PingInterval = 1 * Time.Minute, // 1 Minute
     PingTimeout = 5 * Time.Minute, // 5 Minutes
     SummaryInterval = 100, // Same events within 100ms will be collapsed into single summary
@@ -178,8 +181,9 @@ export const enum Constant {
     Top = "_top",
     String = "string",
     CookieKey = "_clck", // Clarity Cookie Key
-    StorageKey = "_clsk", // Clarity Storage Key
-    Separator = "|",
+    SessionKey = "_clsk", // Clarity Session Key
+    TabKey = "_cltk", // Clarity Tab Key
+    Pipe = "|",
     End = "END",
     Upgrade = "UPGRADE",
     UserId = "userId",
@@ -194,7 +198,8 @@ export const enum Constant {
     LongTask = "longtask",
     FID = "first-input",
     CLS = "layout-shift",
-    LCP = "largest-contentful-paint"
+    LCP = "largest-contentful-paint",
+    HTTPS = "https://"
 }
 
 /* Helper Interfaces */
@@ -219,7 +224,7 @@ export interface Metadata {
 }
 
 export interface Session {
-    id: string;
+    session: string;
     ts: number;
     count: number;
     upgrade: BooleanFlag;

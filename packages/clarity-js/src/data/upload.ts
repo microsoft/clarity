@@ -126,8 +126,8 @@ function stringify(encoded: EncodedPayload): string {
 
 function send(payload: string, sequence: number, last: boolean): void {
     // Upload data if a valid URL is defined in the config
-    if (typeof config.upload === Constant.String) {
-        const url = config.upload as string;
+    if (typeof config.upload === Constant.String && config.server) {
+        const url = `${config.server}/${config.upload}`;
         let dispatched = false;
 
         // If it's the last payload, attempt to upload using sendBeacon first.

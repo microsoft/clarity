@@ -12,6 +12,7 @@ let config: Config = {
     regions: {},
     metrics: {},
     cookies: [],
+    server: null,
     report: null,
     upload: null,
     upgrade: null
