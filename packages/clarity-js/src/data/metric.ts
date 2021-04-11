@@ -51,7 +51,8 @@ export function sum(metric: Metric, value: number): void {
 }
 
 export function max(metric: Metric, value: number): void {
-    if (value !== null) { 
+    // Ensure that we do not process null or NaN values
+    if (value !== null && isNaN(value) === false) { 
         if (!(metric in data)) { data[metric] = 0; }
         if (value > data[metric] || data[metric] === 0) {
             updates[metric] = value;
