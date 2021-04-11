@@ -103,13 +103,6 @@ export function save(): void {
   let upload = typeof config.upload === Constant.String ? config.upload : Constant.Empty;
   if (upgrade && callback) { callback(data, !config.lean); }
   setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
-
-  // For backward compatibility - starting from v0.6.11. Can be removed in future versions.
-  // This will ensure that older versions can still interpret and continue with sessions created with new version
-  if (config.track && supported(window, Constant.SessionStorage)) {
-    upload = typeof config.upload === Constant.String && config.server ? `${config.server}/${config.upload}` : upload;
-    sessionStorage.setItem(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe));
-  }
 }
 
 function supported(target: Window | Document, api: string): boolean {
@@ -130,10 +123,7 @@ function shortid(): string {
 
 function session(): Session {
   let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: BooleanFlag.False, upload: Constant.Empty };
-  // In subsequent versions we will start reading cookies: getCookie(Constant.SessionKey)
-  // For backward compatibility, we will continue reading from session storage in this version
-  let legacy = supported(window, Constant.SessionStorage) ? sessionStorage.getItem(Constant.SessionKey) : null; // For backward compatibility
-  let value = legacy;
+  let value = getCookie(Constant.SessionKey);
   if (value) {
     let parts = value.split(Constant.Pipe);
     if (parts.length === 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
@@ -141,13 +131,6 @@ function session(): Session {
       output.count = num(parts[2]) + 1;
       output.upgrade = num(parts[3]);
       output.upload = parts[4];
-
-      // For backward compatibility; remove in future iterations (v0.6.11)
-      if (output.upload && output.upload.indexOf(Constant.HTTPS) === 0) {
-        let url = output.upload;
-        let server = url.substr(0, url.indexOf("/", Constant.HTTPS.length));
-        output.upload = server.length > 0 && server.length < url.length ? url.substr(server.length + 1) : url;
-      }
     }
   }
   return output;

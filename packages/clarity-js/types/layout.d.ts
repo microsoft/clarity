@@ -56,7 +56,9 @@ export const enum Constant {
     MutationObserver = "MutationObserver",
     Zone = "Zone",
     Symbol = "__symbol__",
-    JsonLD = "application/ld+json"
+    JsonLD = "application/ld+json",
+    String = "string",
+    Number = "number"
 }
 
 export const enum JsonLD { 

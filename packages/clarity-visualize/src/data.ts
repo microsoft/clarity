@@ -15,6 +15,7 @@ METRIC_MAP[Data.Metric.LargestPaint] = { name: "LCP", unit: "s" };
 METRIC_MAP[Data.Metric.CumulativeLayoutShift] = { name: "CLS", unit: "cls" };
 METRIC_MAP[Data.Metric.LongTaskCount] = { name: "Long Tasks" };
 METRIC_MAP[Data.Metric.CartTotal] = { name: "Cart Total", unit: "price" };
+METRIC_MAP[Data.Metric.ProductPrice] = { name: "Product Price", unit: "price" };
 METRIC_MAP[Data.Metric.ThreadBlockedTime] = { name: "Thread Blocked", unit: "ms" };
 
 export function reset(): void {
