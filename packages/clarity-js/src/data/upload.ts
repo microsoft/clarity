@@ -163,14 +163,18 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
         if ((xhr.status < 200 || xhr.status > 208) && transitData.attempts <= Setting.RetryLimit) {
             // We re-attempt in all cases except two: 
             //     0: Indicates the browser has not put the request on the wire and therefore we need to attempt sendBeacon API before giving up
-            //   400: Indicates the server has rejected the response for bad payload and therefore we terminate the session
-            switch (xhr.status) {
+            //   4XX: Indicates the server has rejected the response for bad payload and therefore we terminate the session
+            if (xhr.status === 0) {
                 // The observed behavior is that Safari will terminate pending XHR requests with status code 0
                 // if the user navigates away from the page. In these cases, we fallback to the else clause and lose the data
                 // By explicitly handing status code 0 we attempt to try a different transport (sendBeacon vs. XHR) before giving up.
-                case 0: send(transitData.data, sequence, true); break;
-                case 400: limit.trigger(Check.Server); break;
-                default: send(transitData.data, sequence, last); break;
+                send(transitData.data, sequence, true);
+            } else if (xhr.status >= 400 && xhr.status < 500) {
+                // Anytime we receive a 4XX response from the server, we bail out instead of trying again
+                limit.trigger(Check.Server);
+            } else {
+                // In all other cases, re-attempt sending the same data
+                send(transitData.data, sequence, last);
             }
         } else {
             track = { sequence, attempts: transitData.attempts, status: xhr.status };

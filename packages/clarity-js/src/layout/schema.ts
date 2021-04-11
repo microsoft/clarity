@@ -41,7 +41,7 @@ export function ld(json: any): void {
                     dimension.log(Dimension.ProductCondition, json[JsonLD.ItemCondition]);
                     dimension.log(Dimension.ProductCurrency, json[JsonLD.PriceCurrency]);
                     dimension.log(Dimension.ProductSku, json[JsonLD.Sku]);
-                    metric.max(Metric.ProductPrice, num(json[JsonLD.Price], Setting.PriceScale));
+                    metric.max(Metric.ProductPrice, num(json[JsonLD.Price]));
                     break;
                 case JsonLD.Brand:
                     dimension.log(Dimension.ProductBrand, json[JsonLD.Name]);
