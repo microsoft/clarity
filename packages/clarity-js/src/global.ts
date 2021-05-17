@@ -6,7 +6,7 @@ import * as clarity from "@src/clarity";
 (function(): void {
     if (typeof window !== "undefined") {
         const w = window as any;
-        if (!w.clarity.q) { console.log("Error CL001: Multiple Clarity tags detected."); }
+        if (w.clarity && !w.clarity.q) { console.warn("Error CL001: Multiple Clarity tags detected."); }
         const queue = w.clarity ? (w.clarity.q || []) : [];
         w.clarity = function(method: string, ...args: any[]): void { return clarity[method](...args); }
         while (queue.length > 0) { w.clarity(...queue.shift()); }
