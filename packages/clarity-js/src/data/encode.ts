@@ -1,4 +1,4 @@
-import { Event, Token, Metric, BooleanFlag } from "@clarity-types/data";
+import { Event, Token } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
 import * as custom from "@src/data/custom";
@@ -42,7 +42,6 @@ export default function(event: Event): void {
             queue(tokens, false);
             break;
         case Event.Upgrade:
-            metric.max(Metric.Playback, BooleanFlag.True);
             tokens.push(upgrade.data.key);
             queue(tokens);
             break;
