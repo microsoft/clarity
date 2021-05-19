@@ -29,7 +29,7 @@ export default async function (type: Event): Promise<void> {
         case Event.TouchCancel:
             for (let i = 0; i < pointer.state.length; i++) {
                 let entry = pointer.state[i];
-                let pTarget = metadata(entry.data.target as Node);
+                let pTarget = metadata(entry.data.target as Node, entry.event);
                 if (pTarget.id > 0) {
                     tokens = [entry.time, entry.event];
                     tokens.push(pTarget.id);
@@ -44,7 +44,7 @@ export default async function (type: Event): Promise<void> {
         case Event.Click:
             for (let i = 0; i < click.state.length; i++) {
                 let entry = click.state[i];
-                let cTarget = metadata(entry.data.target as Node, true);
+                let cTarget = metadata(entry.data.target as Node, entry.event);
                 tokens = [entry.time, entry.event];
                 tokens.push(cTarget.id);
                 tokens.push(entry.data.x);
@@ -57,7 +57,6 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(scrub(entry.data.text, "click", cTarget.privacy));
                 tokens.push(entry.data.link);
                 tokens.push(cTarget.hash);
-                if (cTarget.region) { tokens.push(cTarget.region); }
                 queue(tokens);
                 timeline.track(entry.time, entry.event, cTarget.hash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
@@ -80,11 +79,10 @@ export default async function (type: Event): Promise<void> {
         case Event.Input:
             for (let i = 0; i < input.state.length; i++) {
                 let entry = input.state[i];
-                let iTarget = metadata(entry.data.target as Node, true);
+                let iTarget = metadata(entry.data.target as Node, entry.event);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
                 tokens.push(entry.data.value);
-                if (iTarget.region) { tokens.push(iTarget.region); }
                 queue(tokens);
             }
             input.reset();
@@ -92,8 +90,8 @@ export default async function (type: Event): Promise<void> {
         case Event.Selection:
             let s = selection.data;
             if (s) {
-                let startTarget = metadata(s.start as Node);
-                let endTarget = metadata(s.end as Node);
+                let startTarget = metadata(s.start as Node, type);
+                let endTarget = metadata(s.end as Node, type);
                 tokens.push(startTarget.id);
                 tokens.push(s.startOffset);
                 tokens.push(endTarget.id);
@@ -105,13 +103,12 @@ export default async function (type: Event): Promise<void> {
         case Event.Scroll:
             for (let i = 0; i < scroll.state.length; i++) {
                 let entry = scroll.state[i];
-                let sTarget = metadata(entry.data.target as Node, true);
+                let sTarget = metadata(entry.data.target as Node, entry.event);
                 if (sTarget.id > 0) {
                     tokens = [entry.time, entry.event];
                     tokens.push(sTarget.id);
                     tokens.push(entry.data.x);
                     tokens.push(entry.data.y);
-                    if (sTarget.region) { tokens.push(sTarget.region); }
                     queue(tokens);
                     baseline.track(entry.event, entry.data.x, entry.data.y);
                 }

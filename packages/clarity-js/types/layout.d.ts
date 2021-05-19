@@ -1,4 +1,5 @@
 import { Privacy } from "@clarity-types/core";
+import { BooleanFlag } from "@clarity-types/data";
 
 /* Enum */
 
@@ -8,6 +9,13 @@ export const enum Source {
     ChildListRemove,
     Attributes,
     CharacterData
+}
+
+export const enum RegionState {
+    Rendered = 0,
+    Visible = 1,
+    Clicked = 2,
+    Input = 3
 }
 
 export const enum Constant {
@@ -151,8 +159,8 @@ export interface DocumentData {
 
 export interface RegionData {
     id: number;
-    visible: number;
-    region: string;
+    name: string;
+    state: RegionState;
 }
 
 export interface BoxData {
@@ -163,7 +171,6 @@ export interface BoxData {
 
 export interface TargetMetadata {
     id: number;
-    region: number;
     hash: string;
     privacy: Privacy;
     selector: string;
