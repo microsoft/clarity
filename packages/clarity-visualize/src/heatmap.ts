@@ -1,4 +1,4 @@
-import { Activity, Constant, Heatmap, Setting } from "@clarity-types/visualize";
+import { Activity, Constant, Heatmap, Setting, ScrollMapInfo } from "@clarity-types/visualize";
 import { Data } from "clarity-decode";
 import { state } from "./clarity";
 import * as layout from "./layout";
@@ -6,6 +6,7 @@ import * as layout from "./layout";
 const COLORS = ["blue", "cyan", "lime", "yellow", "red"];
 
 let data: Activity = null;
+let scrollData: ScrollMapInfo[] = null;
 let max: number = null;
 let offscreenRing: HTMLCanvasElement = null;
 let gradientPixels: ImageData = null;
@@ -14,6 +15,7 @@ let observer: ResizeObserver = null;
 
 export function reset(): void {
     data = null;
+    scrollData = null;
     max = null;
     offscreenRing = null;
     gradientPixels = null;
@@ -31,6 +33,74 @@ export function reset(): void {
         win.removeEventListener("scroll", redraw, true);
         win.removeEventListener("resize", redraw, true);
     }
+}
+
+export function clear() : void {
+    let doc = state.player.contentDocument;
+    let win = state.player.contentWindow;
+    let canvas = doc.getElementById(Constant.HeatmapCanvas) as HTMLCanvasElement;
+    let de = doc.documentElement;
+    if (canvas) {
+        canvas.width = de.clientWidth;
+        canvas.height = de.clientHeight;
+        canvas.style.left = win.pageXOffset + Constant.Pixel;
+        canvas.style.top = win.pageYOffset + Constant.Pixel;
+        canvas.getContext(Constant.Context).clearRect(0, 0, canvas.width, canvas.height);
+    }
+    reset();
+}
+
+export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
+    scrollData = scrollData || activity;
+    let canvas = overlay();
+    let context = canvas.getContext(Constant.Context);
+
+    if (canvas.width > 0 && canvas.height > 0) {
+        if (scrollData) {
+            const grd = context.createLinearGradient(0, 0, 0, canvas.height);
+            for (const currentCombination of scrollData) {
+                const huePercentView = 1 - (currentCombination.cumulativeSum / scrollData[0].cumulativeSum);
+                const percentView = currentCombination.scrollReachY / 100;
+                const hue = huePercentView * Setting.MaxHue;
+                grd.addColorStop(percentView, `hsla(${hue}, 100%, 50%, 0.6)`);
+            }
+
+            // Fill with gradient
+            context.fillStyle = grd;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            addInfoMarkers(context, scrollData, canvas.width, canvas.height, avgFold);
+        }
+    };
+}
+
+function addInfoMarkers(context: CanvasRenderingContext2D, scrollMapInfo: ScrollMapInfo[], width: number, height: number, avgFold: number): void {
+    addMarker(context, width, Constant.AverageFold, avgFold, Setting.MarkerMediumWidth);
+    const markers = [75, 50, 25];
+    for (const marker of markers) {
+        const closest = scrollMapInfo.reduce((prev: ScrollMapInfo, curr: ScrollMapInfo): ScrollMapInfo => {
+            return ((Math.abs(curr.percUsers - marker)) < (Math.abs(prev.percUsers - marker)) ? curr : prev);
+        });
+        if (closest.percUsers >= marker - Setting.MarkerRange || closest.percUsers <= marker + Setting.MarkerRange) {
+            const markerLine = (closest.scrollReachY / 100) * height;
+            addMarker(context, width, `${marker}%`, markerLine, Setting.MarkerSmallWidth);
+        }
+    }
+}
+
+function addMarker(context: CanvasRenderingContext2D, heatmapWidth: number, label: string, markerY: number, markerWidth: number): void 
+{
+    context.beginPath();
+    context.moveTo(0, markerY);
+    context.lineTo(heatmapWidth, markerY);
+    context.setLineDash([2, 2]);
+    context.lineWidth = Setting.MarkerLineHeight;
+    context.strokeStyle = Setting.MarkerColor;
+    context.stroke();
+    context.fillStyle = Setting.CanvasTextColor;
+    context.fillRect(0, (markerY - Setting.MarkerHeight / 2), markerWidth, Setting.MarkerHeight);
+    context.fillStyle = Setting.MarkerColor;
+    context.font = Setting.CanvasTextFont;
+    context.fillText(label, Setting.MarkerPadding, markerY + Setting.MarkerPadding);
 }
 
 export function click(activity: Activity): void {
