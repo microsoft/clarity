@@ -62,6 +62,7 @@ export const enum Constant {
     Hash = "data-clarity-hash",
     Hide = "data-clarity-hide",
     Unavailable = "data-clarity-unavailable",
+    Suspend = "data-clarity-suspend",
     Hidden = "hidden",
     Visible = "visible",
     None = "none",    
