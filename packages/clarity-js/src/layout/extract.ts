@@ -1,0 +1,64 @@
+import { Extract, Metric, Region, RegionFilter } from "@clarity-types/core";
+import { Constant } from "@clarity-types/data";
+import * as metric from "@src/data/metric";
+import * as region from "@src/layout/region";
+
+const formatRegex = /1/g;
+const digitsRegex = /[^0-9\.]/g;
+const digitsWithCommaRegex = /[^0-9\.,]/g;
+
+export function regions(root: ParentNode, value: Region[]): void {
+    for (let v of value) {
+        let valid = true;
+        let filter = v.length === 4 ? v[2] : null;
+        switch (filter) {
+            case RegionFilter.Url: valid = !!top.location.href.match(new RegExp(v[3])); break;
+            case RegionFilter.Javascript: valid = !!evaluate(v[3]); break;
+        }
+        if (valid) { root.querySelectorAll(v[1]).forEach(e => region.observe(e, v[0].toString())); }
+    }
+}
+
+export function metrics(root: ParentNode, value: Metric[]): void {
+    for (let v of value) {
+        let source = v.length >= 3 ? v[1] : null;
+        let scale = v.length === 4 ? v[3] : 1;
+        switch (source) {
+            case Extract.Text:  root.querySelectorAll(v[2]).forEach(e => { metric.max(v[0], num((e as HTMLElement).innerText, scale)); }); break;
+            case Extract.Attribute: root.querySelectorAll(`[${v[2]}]`).forEach(e => { metric.max(v[0], num(e.getAttribute(v[2]), scale, false)); }); break;
+            case Extract.Javascript: metric.max(v[0], evaluate(v[2], Constant.Number) as number); break;
+        }
+    }
+}
+
+function evaluate(variable: string, type: string = null, base: Object = window): any {
+    let parts = variable.split(Constant.Dot);
+    let first = parts.shift();
+    if (base && base[first]) {
+        if (parts.length > 0) { return evaluate(parts.join(Constant.Dot), type, base[first]); } 
+        let output = type === null || type === typeof base[first] ? base[first] : null;
+        return output;
+    }
+    return null;
+}
+
+function num(text: string, scale: number, localize: boolean = true): number {
+    try {
+        // Reference: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat
+        let lang = document.documentElement.lang;
+        if (Intl && Intl.NumberFormat && lang && localize) {
+            text = text.replace(digitsWithCommaRegex, Constant.Empty);
+            // Infer current group and decimal separator from current locale
+            let group = Intl.NumberFormat(lang).format(11111).replace(formatRegex, Constant.Empty);
+            let decimal = Intl.NumberFormat(lang).format(1.1).replace(formatRegex, Constant.Empty);
+            
+            // Prase number using inferred group and decimal separators
+            return Math.round(parseFloat(text
+                .replace(new RegExp('\\' + group, 'g'), Constant.Empty)
+                .replace(new RegExp('\\' + decimal), Constant.Dot)
+            ) * scale);
+        }
+        // Fallback to en locale
+        return Math.round(parseFloat(text.replace(digitsRegex, Constant.Empty)) * scale);
+    } catch { return 0; }
+}

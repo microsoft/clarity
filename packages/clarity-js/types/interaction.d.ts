@@ -61,7 +61,6 @@ export interface TimelineData {
 export interface InputData {
     target: Target;
     value: string;
-    region?: number;
 }
 
 export interface PointerData {
@@ -82,7 +81,6 @@ export interface ClickData {
     text: string;
     link: string;
     hash: string;
-    region?: number;
 }
 
 export interface ResizeData {
@@ -94,7 +92,6 @@ export interface ScrollData {
     target: Target;
     x: number;
     y: number;
-    region?: number;
 }
 
 export interface SelectionData {

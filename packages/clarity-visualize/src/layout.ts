@@ -120,6 +120,12 @@ export function markup(event: Layout.DomEvent): void {
                 textElement.nodeValue = node.value;
                 insert(node, parent, textElement, pivot);
                 break;
+            case Layout.Constant.SuspendMutationTag:
+                let suspendedElement = element(node.id);
+                if (suspendedElement && suspendedElement.nodeType === Node.ELEMENT_NODE) {
+                    (suspendedElement as HTMLElement).setAttribute(Constant.Suspend, Layout.Constant.Empty);
+                }
+                break;
             case "HTML":
                 let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
                 if (htmlDoc !== null) {
@@ -308,7 +314,7 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
         }
     }
 
-    if (sameorigin === false) {
+    if (sameorigin === false && tag === "iframe") {
         node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
     }
 }
@@ -319,5 +325,6 @@ function getCustomStyle(): string {
         `img[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
         `img[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
         `img[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
-        `iframe[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }`;
+        `iframe[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
+        `*[${Constant.Suspend}] { filter: grayscale(100%); }`;
 }

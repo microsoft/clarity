@@ -1,4 +1,5 @@
 import { Privacy } from "@clarity-types/core";
+import { BooleanFlag } from "@clarity-types/data";
 
 /* Enum */
 
@@ -8,6 +9,13 @@ export const enum Source {
     ChildListRemove,
     Attributes,
     CharacterData
+}
+
+export const enum RegionState {
+    Rendered = 0,
+    Visible = 1,
+    Clicked = 2,
+    Input = 3
 }
 
 export const enum Constant {
@@ -46,9 +54,11 @@ export const enum Constant {
     ShadowDomTag = "*S",
     PolyfillShadowDomTag = "*P",
     TextTag = "*T",
+    SuspendMutationTag = "*M",
     ChildList = "childList",
     Attributes = "attributes",
     CharacterData = "characterData",
+    Suspend = "suspend",
     LoadEvent = "load",
     Pixel = "px",
     BorderBox = "border-box",
@@ -58,7 +68,8 @@ export const enum Constant {
     Symbol = "__symbol__",
     JsonLD = "application/ld+json",
     String = "string",
-    Number = "number"
+    Number = "number",
+    Disable = "disable",
 }
 
 export const enum JsonLD { 
@@ -87,6 +98,8 @@ export const enum JsonLD {
 
 export const enum Setting {
     LookAhead = 33, // 33ms
+    MutationSuspendThreshold = 10, // Stop listening for mutations after hitting a threshold
+    MutationActivePeriod = 3000 // Let mutations continue as normal during active periods of user interactions
 }
 
 /* Helper Interfaces */
@@ -137,6 +150,10 @@ export interface MutationQueue {
     mutations: MutationRecord[];
 }
 
+export interface MutationHistory {
+    [key: string]: [/* Count */ number, /* Remove Nodes Buffer */ NodeList?];
+}
+
 export interface RegionQueue {
     node: Node;
     data: RegionData;
@@ -151,8 +168,8 @@ export interface DocumentData {
 
 export interface RegionData {
     id: number;
-    visible: number;
-    region: string;
+    name: string;
+    state: RegionState;
 }
 
 export interface BoxData {
@@ -163,7 +180,6 @@ export interface BoxData {
 
 export interface TargetMetadata {
     id: number;
-    region: number;
     hash: string;
     privacy: Privacy;
     selector: string;

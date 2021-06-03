@@ -97,6 +97,12 @@ export const enum Dimension {
     PageLanguage = 16
 }
 
+export const enum Region {
+    Header,
+    Footer,
+    Navigation
+}
+
 export const enum Check {
     None = 0,
     Payload = 1,
@@ -180,6 +186,7 @@ export const enum Constant {
     Parent = "_parent",
     Top = "_top",
     String = "string",
+    Number = "number",
     CookieKey = "_clck", // Clarity Cookie Key
     SessionKey = "_clsk", // Clarity Session Key
     TabKey = "_cltk", // Clarity Tab Key

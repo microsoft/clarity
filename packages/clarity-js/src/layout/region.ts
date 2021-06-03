@@ -1,5 +1,5 @@
 import { BooleanFlag, Event, Setting } from "@clarity-types/data";
-import { RegionData, RegionQueue } from "@clarity-types/layout";
+import { RegionData, RegionQueue, RegionState } from "@clarity-types/layout";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
 
@@ -44,13 +44,19 @@ export function exists(node: Node): boolean {
     return regionMap && regionMap.has(node);
 }
 
-export function track(id: number): void {
-    // Do not send another entry if we are already sending it
+export function track(id: number, event: Event): void {
     let node = dom.getNode(id);
-    if (updates.indexOf(id) <= 0 && regionMap.has(node)) {
-        regions[id] = id in regions ? regions[id] : { id, visible: BooleanFlag.False, region: regionMap.get(node) };
-        data.push(regions[id]);
-    }
+    let d = id in regions ? regions[id] : { id, name: regionMap.get(node), state: RegionState.Rendered };
+    let state = event === Event.Click && (d.state !== RegionState.Clicked && d.state !== RegionState.Input) ? RegionState.Clicked : d.state;
+    state = event === Event.Input && (d.state !== RegionState.Input) ? RegionState.Input : d.state;
+    if (state !== d.state) {
+        d.state = state;
+        regions[id] = d;
+        if (updates.indexOf(id) <= 0) { 
+            data.push(regions[id]);
+            updates.push(id);
+        }
+    } else { queue.push({node: node, data: d}); }
 }
 
 export function compute(): void {
@@ -91,14 +97,16 @@ function handler(entries: IntersectionObserverEntry[]): void {
             // However, for larger regions, area of regions could be bigger than viewport and therefore comparison is relative to visible area
             let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio ? BooleanFlag.True : BooleanFlag.False;
             // If the visibility hasn't changed since the last tracked value, ignore this notification
-            if (!(id in regions && regions[id].visible === visible)) {
-                let d = { id, visible, region: regionMap.get(target) };
+            if (!(id in regions && visible && regions[id].state === RegionState.Visible)) {
+                let d = { id, name: regionMap.get(target), state: RegionState.Visible };
                 if (id) {
                     regions[id] = d;
                     updates.push(id);
                     data.push(d);
                 } else { queue.push({node: target, data: d}); }
             }
+            // Stop observing this element now that we have already received visibility signal
+            if (visible && observer) { observer.unobserve(target); }
         }
     }
     if (data.length > 0) { encode(Event.Region); }

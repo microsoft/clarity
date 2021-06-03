@@ -1,6 +1,4 @@
 import { Data, Layout } from "clarity-decode";
-import { Regions } from "clarity-js/types/core";
-import { RegionData } from "clarity-js/types/layout";
 
 
 export type ResizeHandler  = (width: number, height: number) => void;
@@ -75,6 +73,7 @@ export const enum Constant {
     Hash = "data-clarity-hash",
     Hide = "data-clarity-hide",
     Unavailable = "data-clarity-unavailable",
+    Suspend = "data-clarity-suspend",
     Hidden = "hidden",
     Visible = "visible",
     None = "none",    

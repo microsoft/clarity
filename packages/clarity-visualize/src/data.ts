@@ -1,11 +1,10 @@
 import { Data, Layout } from "clarity-decode";
 import { state } from "./clarity";
-import { RegionState } from "@clarity-types/visualize";
 
 export let lean = false;
 
 let regionMap = {};
-let regions: { [key: string]: RegionState } = {};
+let regions: { [key: string]: Layout.RegionState } = {};
 let metrics: {[key: number]: number} = null;
 const METRIC_MAP = {};
 METRIC_MAP[Data.Metric.TotalBytes] = { name: "Total Bytes", unit: "KB" };
@@ -54,8 +53,8 @@ export function metric(event: Data.MetricEvent): void {
     // Append region information to metadata
     for (let name in regions) {
         let r = regions[name];
-        let classes = [r.visible ? "visible" : Data.Constant.Empty, r.interaction ? "interaction" : Data.Constant.Empty];
-        regionMarkup.push(`<span class="${classes.join(Data.Constant.Space)}">${name}</span>`);
+        let className = r === Layout.RegionState.Visible ? "visible" : (r === Layout.RegionState.Clicked ? "clicked" : Data.Constant.Empty);
+        regionMarkup.push(`<span class="${className}">${name}</span>`);
     }
 
     state.metadata.innerHTML = `<ul>${metricMarkup.join(Data.Constant.Empty)}</ul><div>${regionMarkup.join(Data.Constant.Empty)}</div>`;
@@ -64,17 +63,9 @@ export function metric(event: Data.MetricEvent): void {
 export function region(event: Layout.RegionEvent): void {
     let data = event.data;
     for (let r of data) {
-        if (!(r.region in regions)) { regions[r.region] = { visible: Data.BooleanFlag.False, interaction: Data.BooleanFlag.False } }
-        regions[r.region].visible = r.visible;
-        regionMap[r.id] = r.region;
-    }
-}
-
-export function update(regionId: number): void {
-    if (regionId && regionId in regionMap) {
-        let name = regionMap[regionId];
-        if (!(name in regions)) { regions[name] = { visible: Data.BooleanFlag.False, interaction: Data.BooleanFlag.False } }
-        regions[name].interaction = Data.BooleanFlag.True;
+        if (!(r.name in regions)) { regions[r.name] = Layout.RegionState.Rendered; }
+        regions[r.name] = r.state;
+        regionMap[r.id] = r.name;
     }
 }
 

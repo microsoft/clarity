@@ -32,8 +32,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 context: tokens[9] as number,
                 text: tokens[10] as string,
                 link: tokens[11] as string,
-                hash: tokens[12] as string,
-                region: tokens.length > 13 ? tokens[13] as number : null
+                hash: tokens[12] as string
             };
             return { time, event, data: clickData };
         case Data.Event.Resize:
@@ -42,8 +41,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
         case Data.Event.Input:
             let inputData: Interaction.InputData = {
                 target: tokens[2] as number,
-                value: tokens[3] as string,
-                region: tokens.length > 4 ? tokens[4] as number : null
+                value: tokens[3] as string
             };
             return { time, event, data: inputData };
         case Data.Event.Selection:
@@ -58,8 +56,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let scrollData: Interaction.ScrollData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
-                y: tokens[4] as number,
-                region: tokens.length > 5 ? tokens[5] as number : null
+                y: tokens[4] as number
             };
             return { time, event, data: scrollData };
         case Data.Event.Timeline:
