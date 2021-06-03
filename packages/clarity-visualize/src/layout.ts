@@ -1,5 +1,5 @@
 import { Data, Layout } from "clarity-decode";
-import { Asset, Constant, Setting } from "@clarity-types/visualize";
+import { Asset, Constant, NodeType, Setting } from "@clarity-types/visualize";
 import { state } from "./clarity";
 
 const TIMEOUT = 3000;
@@ -27,7 +27,7 @@ export function box(event: Layout.BoxEvent): void {
 }
 
 function resize(el: HTMLElement, width: number, height: number): void {
-    if (el && el.nodeType === Node.ELEMENT_NODE && width && height) {
+    if (el && el.nodeType === NodeType.ELEMENT_NODE && width && height) {
         el.style.width = width + Layout.Constant.Pixel;
         el.style.height = height + Layout.Constant.Pixel;
         el.style.boxSizing = Layout.Constant.BorderBox; // Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing
@@ -241,7 +241,7 @@ function insertAfter(data: Layout.DomData, parent: Node, node: Node, previous: N
 function firstChild(node: Node): ChildNode {
     let child = node.firstChild;
     // BASE tag should always be the first child to ensure resources with relative URLs are loaded correctly
-    if (child && child.nodeType === Node.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BaseTag) {
+    if (child && child.nodeType === NodeType.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BaseTag) {
         return child.nextSibling;
     }
     return child;
@@ -270,7 +270,7 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
     attributes[Constant.Id] = `${data.id}`;
     attributes[Constant.Hash] = `${data.hash}`;
 
-    let tag = node.nodeType === Node.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
+    let tag = node.nodeType === NodeType.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
     // First remove all its existing attributes
     if (node.attributes) {
         let length = node.attributes.length;

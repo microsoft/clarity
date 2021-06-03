@@ -31,10 +31,6 @@ export interface ScrollMapInfo {
     percUsers: number;
 }
 
-export interface RegionState {
-    visible: Data.BooleanFlag;
-    interaction: Data.BooleanFlag;
-}
 
 export interface ElementData {
     hash: string;
@@ -47,6 +43,15 @@ export interface Heatmap {
     x: number; /* X Coordinate */
     y: number; /* Y Coordinate */
     a: number; /* Alpha */
+}
+
+export const enum NodeType {
+    ELEMENT_NODE = 1,
+    ATTRIBUTE_NODE = 2,
+    TEXT_NODE = 3,
+    COMMENT_NODE = 8,
+    DOCUMENT_NODE = 9,
+    DOCUMENT_TYPE_NODE = 10
 }
 
 export const enum Asset {
