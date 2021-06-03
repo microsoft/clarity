@@ -1,5 +1,5 @@
 import { Visualize } from "@clarity-types/index";
-import { Activity, Constant, MergedPayload, PlaybackState, ResizeHandler } from "@clarity-types/visualize";
+import { Activity, Constant, MergedPayload, PlaybackState, ResizeHandler, ScrollMapInfo } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import * as data from "./data";
 import * as heatmap from "./heatmap";
@@ -47,6 +47,16 @@ export function time(): number {
 export function clickmap(activity: Activity): void {
     if (state === null) { throw new Error(`Initialize heatmap by calling "html" or "setup" prior to making this call.`); }
     heatmap.click(activity);
+}
+
+export function clearmap(): void {
+    if (state === null) { throw new Error(`Initialize heatmap by calling "html" or "setup" prior to making this call.`); }
+    heatmap.clear();
+}
+
+export function scrollmap(scrollData: ScrollMapInfo[], avgFold: number): void {
+    if (state === null) { throw new Error(`Initialize heatmap by calling "html" or "setup" prior to making this call.`); }
+    heatmap.scroll(scrollData, avgFold);
 }
 
 export function merge(decoded: Data.DecodedPayload[]): MergedPayload {

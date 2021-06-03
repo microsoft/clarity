@@ -25,6 +25,17 @@ export interface PlaybackState {
 
 export type Activity = { [key: string]: ElementData };
 
+export interface ScrollMapInfo {
+    scrollReachY: number;
+    cumulativeSum: number;
+    percUsers: number;
+}
+
+export interface RegionState {
+    visible: Data.BooleanFlag;
+    interaction: Data.BooleanFlag;
+}
+
 export interface ElementData {
     hash: string;
     clicks: number[][];
@@ -88,7 +99,8 @@ export const enum Constant {
     ClickRing = "clarity-click-ring",
     TouchRing = "clarity-touch-ring",
     Title = "title",
-    Round = "round"
+    Round = "round",
+    AverageFold = "Average Fold"
 }
 
 export const enum Setting {
@@ -106,5 +118,15 @@ export const enum Setting {
     PixelLife = 3000,
     TrailWidth = 6,
     MaxTrailPoints = 75,
-    HoverDepth = 7
+    HoverDepth = 7,
+    MaxHue = 240,
+    MarkerLineHeight = 1,
+    MarkerHeight = 32,
+    MarkerMediumWidth = 84,
+    MarkerRange = 2,
+    MarkerSmallWidth = 35,
+    MarkerPadding = 5,
+    MarkerColor = "white",
+    CanvasTextColor = "#323130",
+    CanvasTextFont = "500 12px Segoe UI"
 }
