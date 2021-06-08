@@ -199,8 +199,15 @@ export const enum Constant {
     FID = "first-input",
     CLS = "layout-shift",
     LCP = "largest-contentful-paint",
-    HTTPS = "https://",
-    Number = "number"
+    HTTPS = "https://"
+}
+
+export const enum XMLReadyState {
+    Unsent = 0,
+    Opened = 1,
+    Headers_Recieved = 2,
+    Loading = 3,
+    Done = 4
 }
 
 /* Helper Interfaces */
