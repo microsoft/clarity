@@ -200,7 +200,7 @@ export const enum Constant {
     CLS = "layout-shift",
     LCP = "largest-contentful-paint",
     HTTPS = "https://",
-    Number = "number",
+    Number = "number"
 }
 
 /* Helper Interfaces */
