@@ -199,7 +199,8 @@ export const enum Constant {
     FID = "first-input",
     CLS = "layout-shift",
     LCP = "largest-contentful-paint",
-    HTTPS = "https://"
+    HTTPS = "https://",
+    Number = "number",
 }
 
 /* Helper Interfaces */

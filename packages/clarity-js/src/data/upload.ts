@@ -158,7 +158,8 @@ function send(payload: string, sequence: number, beacon: boolean): void {
 
 function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
     var transitData = transit[sequence];
-    if (xhr && xhr.readyState === XMLHttpRequest.DONE && transitData) {
+    let xhrReadyStateComplete = typeof(XMLHttpRequest.DONE) === Constant.Number ? XMLHttpRequest.DONE : 4
+    if (xhr && xhr.readyState === xhrReadyStateComplete && transitData) {
         // Attempt send payload again (as configured in settings) if we do not receive a success (2XX) response code back from the server
         if ((xhr.status < 200 || xhr.status > 208) && transitData.attempts <= Setting.RetryLimit) {
             // We re-attempt in all cases except two: 
