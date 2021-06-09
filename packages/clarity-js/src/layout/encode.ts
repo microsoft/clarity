@@ -29,8 +29,8 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             let r = region.data;
             for (let value of r) {
                 tokens.push(value.id);
-                tokens.push(value.name);
                 tokens.push(value.state);
+                tokens.push(value.name);
             }
             region.reset();
             queue(tokens);

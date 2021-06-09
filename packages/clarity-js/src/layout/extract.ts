@@ -31,6 +31,9 @@ export function metrics(root: ParentNode, value: Metric[]): void {
     }
 }
 
+// The function below takes in a variable name in following format: "a.b.c" and safely evaluates its value in javascript context
+// For instance, for a.b.c, it will first check window["a"]. If it exists, it will recursively look at: window["a"]["b"] and finally,
+// return the value for window["a"]["b"]["c"].
 function evaluate(variable: string, type: string = null, base: Object = window): any {
     let parts = variable.split(Constant.Dot);
     let first = parts.shift();

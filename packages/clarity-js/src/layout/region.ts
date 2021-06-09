@@ -1,5 +1,5 @@
 import { BooleanFlag, Event, Setting } from "@clarity-types/data";
-import { RegionData, RegionQueue, RegionState } from "@clarity-types/layout";
+import { Interaction, RegionData, RegionQueue } from "@clarity-types/layout";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
 
@@ -46,9 +46,9 @@ export function exists(node: Node): boolean {
 
 export function track(id: number, event: Event): void {
     let node = dom.getNode(id);
-    let d = id in regions ? regions[id] : { id, name: regionMap.get(node), state: RegionState.Rendered };
-    let state = event === Event.Click && (d.state !== RegionState.Clicked && d.state !== RegionState.Input) ? RegionState.Clicked : d.state;
-    state = event === Event.Input && (d.state !== RegionState.Input) ? RegionState.Input : d.state;
+    let d = id in regions ? regions[id] : { id, state: Interaction.Rendered, name: regionMap.get(node) };
+    let state = event === Event.Click && d.state !== Interaction.Input ? Interaction.Clicked : d.state;
+    state = event === Event.Input && d.state !== Interaction.Input ? Interaction.Input : d.state;
     if (state !== d.state) {
         d.state = state;
         regions[id] = d;
@@ -97,8 +97,8 @@ function handler(entries: IntersectionObserverEntry[]): void {
             // However, for larger regions, area of regions could be bigger than viewport and therefore comparison is relative to visible area
             let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio ? BooleanFlag.True : BooleanFlag.False;
             // If the visibility hasn't changed since the last tracked value, ignore this notification
-            if (!(id in regions && visible && regions[id].state === RegionState.Visible)) {
-                let d = { id, name: regionMap.get(target), state: RegionState.Visible };
+            if (!(id in regions && visible && regions[id].state === Interaction.Visible)) {
+                let d = { id, name: regionMap.get(target), state: Interaction.Visible };
                 if (id) {
                     regions[id] = d;
                     updates.push(id);

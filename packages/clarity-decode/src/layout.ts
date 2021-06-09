@@ -1,5 +1,5 @@
 import { helper, Data, Layout } from "clarity-js";
-import { Constant, DomData, LayoutEvent } from "../types/layout";
+import { DomData, LayoutEvent } from "../types/layout";
 
 const AverageWordLength = 6;
 const Space = " ";
@@ -20,12 +20,10 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
         case Data.Event.Region:
             let regionData: Layout.RegionData[] = [];
             for (let i = 2; i < tokens.length; i += 3) {
-                // For backward compatibility since 0.6.12, map visibility to state
-                let legacy = typeof tokens[i + 1] === Constant.Number;
                 let region: Layout.RegionData = {
                     id: tokens[i] as number,
-                    name: legacy ? tokens[i + 2] as string : tokens[i + 1] as string,
-                    state: legacy ? tokens[i + 1] as number : tokens[i + 2] as number
+                    state: tokens[i + 1] as number,
+                    name: tokens[i + 2] as string
                 };
                 regionData.push(region);
             }

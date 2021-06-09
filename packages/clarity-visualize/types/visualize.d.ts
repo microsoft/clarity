@@ -105,7 +105,9 @@ export const enum Constant {
     TouchRing = "clarity-touch-ring",
     Title = "title",
     Round = "round",
-    AverageFold = "Average Fold"
+    AverageFold = "Average Fold",
+    Empty = "",
+    Undefined = "undefined"
 }
 
 export const enum Setting {

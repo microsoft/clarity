@@ -160,7 +160,7 @@ function track(m: MutationRecord, timer: Metric): string {
     let key = [value.selector, m.attributeName, m.addedNodes ? m.addedNodes.length : 0, m.removedNodes ? m.removedNodes.length : 0].join();
     // Initialize an entry if it doesn't already exist
     history[key] = key in history ? history[key] : [0];
-    // Lookup any pending nodes queued up for removal, and process them now if we had suspended a mutation before
+    // Lookup any pending nodes queued up for removal, and process them now if we suspended a mutation before
     if (inactive === false && history[key][0] >= Setting.MutationSuspendThreshold) { processNodeList(history[key][1], Source.ChildListRemove, timer); }
     // Update the counter
     history[key][0] = inactive ? history[key][0] + 1 : 1;

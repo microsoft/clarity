@@ -103,7 +103,7 @@ export function pointer(event: Interaction.PointerEvent): void {
 
         // Add custom styles
         let style = doc.createElement("STYLE");
-        style.innerText =
+        style.textContent =
             "@keyframes pulsate-one { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(3, 3); opacity: 0; } }" +
             "@keyframes pulsate-two { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(5, 5); opacity: 0; } }" +
             "@keyframes pulsate-touch { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(2, 2); opacity: 0; } }" +
@@ -234,8 +234,10 @@ function drawClick(doc: Document, x: number, y: number, title: string): void {
     click.appendChild(ringTwo);
 
     // Play sound
-    if (clickAudio === null) { clickAudio = new Audio(Asset.Sound); }
-    clickAudio.play();
+    if (typeof Audio !== Constant.Undefined) {
+        if (clickAudio === null) { clickAudio = new Audio(Asset.Sound); }
+        clickAudio.play();
+    }
 }
 
 function overlay(): HTMLCanvasElement {
@@ -244,7 +246,7 @@ function overlay(): HTMLCanvasElement {
     let de = doc.documentElement;
     let canvas = doc.getElementById(Constant.InteractionCanvas) as HTMLCanvasElement;
     if (canvas === null) {
-        canvas = document.createElement("canvas");
+        canvas = doc.createElement("canvas");
         canvas.id = Constant.InteractionCanvas;
         canvas.width = 0;
         canvas.height = 0;

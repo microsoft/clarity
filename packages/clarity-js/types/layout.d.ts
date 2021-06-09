@@ -11,7 +11,7 @@ export const enum Source {
     CharacterData
 }
 
-export const enum RegionState {
+export const enum Interaction {
     Rendered = 0,
     Visible = 1,
     Clicked = 2,
@@ -168,8 +168,8 @@ export interface DocumentData {
 
 export interface RegionData {
     id: number;
-    name: string;
-    state: RegionState;
+    state: Interaction;
+    name: string;    
 }
 
 export interface BoxData {
