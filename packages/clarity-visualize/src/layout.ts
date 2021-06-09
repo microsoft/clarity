@@ -308,7 +308,7 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
         }
     }
 
-    if (sameorigin === false) {
+    if (sameorigin === false && typeof node.setAttribute == Constant.Function) {
         node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
     }
 }
