@@ -107,7 +107,8 @@ export const enum Constant {
     Round = "round",
     AverageFold = "Average Fold",
     Empty = "",
-    Undefined = "undefined"
+    Undefined = "undefined",
+    Function = "function"
 }
 
 export const enum Setting {
