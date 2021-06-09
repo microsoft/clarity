@@ -202,6 +202,14 @@ export const enum Constant {
     HTTPS = "https://"
 }
 
+export const enum XMLReadyState {
+    Unsent = 0,
+    Opened = 1,
+    Headers_Recieved = 2,
+    Loading = 3,
+    Done = 4
+}
+
 /* Helper Interfaces */
 
 export interface Payload {

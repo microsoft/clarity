@@ -94,7 +94,8 @@ export const enum Constant {
     ClickRing = "clarity-click-ring",
     TouchRing = "clarity-touch-ring",
     Title = "title",
-    Round = "round"
+    Round = "round",
+    Function = "function"
 }
 
 export const enum Setting {
