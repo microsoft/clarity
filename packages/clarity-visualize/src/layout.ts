@@ -320,7 +320,7 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
         }
     }
 
-    if (sameorigin === false && tag === "iframe") {
+    if (sameorigin === false && tag === "iframe" && typeof node.setAttribute == Constant.Function) {
         node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
     }
 }

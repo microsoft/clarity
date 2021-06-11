@@ -1,5 +1,5 @@
 import { UploadCallback } from "@clarity-types/core";
-import { BooleanFlag, Check, Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData } from "@clarity-types/data";
+import { BooleanFlag, Check, Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData, XMLReadyState } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
@@ -158,7 +158,7 @@ function send(payload: string, sequence: number, beacon: boolean): void {
 
 function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
     var transitData = transit[sequence];
-    if (xhr && xhr.readyState === XMLHttpRequest.DONE && transitData) {
+    if (xhr && xhr.readyState === XMLReadyState.Done && transitData) {
         // Attempt send payload again (as configured in settings) if we do not receive a success (2XX) response code back from the server
         if ((xhr.status < 200 || xhr.status > 208) && transitData.attempts <= Setting.RetryLimit) {
             // We re-attempt in all cases except two: 
