@@ -18,7 +18,7 @@ export interface Point {
 
 export interface PlaybackState {
     version: string;
-    player: HTMLIFrameElement;
+    window: Window;
     metadata: HTMLElement;
     onresize: ResizeHandler;
 }

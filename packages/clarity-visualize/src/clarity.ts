@@ -10,9 +10,9 @@ export { dom } from "./layout";
 export let state: PlaybackState = null;
 let renderTime = 0;
 
-export function html(decoded: Data.DecodedPayload[], player: HTMLIFrameElement, hash: string = null, time : number): Visualize {
-    if (decoded && decoded.length > 0 && player) {
-        setup(decoded[0].envelope.version, player);
+export function html(decoded: Data.DecodedPayload[], target: Window, hash: string = null, time : number): Visualize {
+    if (decoded && decoded.length > 0 && target) {
+        setup(decoded[0].envelope.version, target);
 
         // Flatten the payload and parse all events out of them, sorted by time
         let merged = merge(decoded);
@@ -88,9 +88,9 @@ export function reset(): void {
     renderTime = 0;
 }
 
-export function setup(version: string, player: HTMLIFrameElement, onresize: ResizeHandler = null, metadata: HTMLElement = null): Visualize {
+export function setup(version: string, target: Window, onresize: ResizeHandler = null, metadata: HTMLElement = null): Visualize {
     reset();
-    state = { version, player, onresize, metadata };
+    state = { version, window: target, onresize, metadata };
     return this;
 }
 

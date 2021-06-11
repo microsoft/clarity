@@ -14,7 +14,7 @@ export function reset(): void {
 }
 
 export function get(hash: string): Element {
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     return doc.querySelector(`[${Constant.Hash}="${hash}"]`);
 }
 
@@ -40,20 +40,24 @@ export function element(nodeId: number): Node {
 
 export async function dom(event: Layout.DomEvent): Promise<void> {
     if (event) {
-        // When setting up player for the first time, start off with hidden IFRAME
-        state.player.style.visibility = Constant.Hidden;
-        // Render all DOM events to reconstruct the page
-        markup(event);
-        // Wait on all stylesheets to finish loading
-        await Promise.all(stylesheets);
-        // Toggle back the visibility of IFRAME
-        state.player.style.visibility = Constant.Visible;
+        // When setting up rendering for the first time, start off with hidden target window
+        // This ensures we do not show flickers to the end user
+        let doc = state.window.document;
+        if (doc && doc.documentElement) {
+            doc.documentElement.style.visibility = Constant.Hidden;
+            // Render all DOM events to reconstruct the page
+            markup(event);
+            // Wait on all stylesheets to finish loading
+            await Promise.all(stylesheets);
+            // Toggle back the visibility of target window
+            doc.documentElement.style.visibility = Constant.Visible;
+        }
     }
 }
 
 export function exists(hash: string): boolean {
     if (hash) {
-        let doc = state.player.contentDocument;
+        let doc = state.window.document;
         let match = doc.querySelector(`[${Constant.Hash}="${hash}"]`);
         if (match) {
             let rectangle = match.getBoundingClientRect();
@@ -66,7 +70,7 @@ export function exists(hash: string): boolean {
 export function markup(event: Layout.DomEvent): void {
     let data = event.data;
     let type = event.event;
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     for (let node of data) {
         let parent = element(node.parent);
         let pivot = element(node.previous);
@@ -129,7 +133,7 @@ export function markup(event: Layout.DomEvent): void {
             case "HTML":
                 let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
                 if (htmlDoc !== null) {
-                    let docElement = element(node.id);
+                    let docElement = element(node.id) as HTMLElement;
                     if (docElement === null) {
                         let newDoc = htmlDoc.implementation.createHTMLDocument(Layout.Constant.Empty);
                         docElement = newDoc.documentElement;
@@ -138,7 +142,9 @@ export function markup(event: Layout.DomEvent): void {
                         if (htmlDoc.head) { htmlDoc.head.parentNode.removeChild(htmlDoc.head); }
                         if (htmlDoc.body) { htmlDoc.body.parentNode.removeChild(htmlDoc.body); }
                     }
-                    setAttributes(htmlDoc.documentElement as HTMLElement, node);
+                    setAttributes(htmlDoc.documentElement, node);
+                    // If we are still processing discover events, keep the markup hidden until we are done
+                    if (type === Data.Event.Discover) { htmlDoc.documentElement.style.visibility = Constant.Hidden; }
                     nodes[node.id] = htmlDoc.documentElement;
                 }
                 break;

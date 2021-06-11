@@ -28,16 +28,16 @@ export function reset(): void {
     }
 
     // Remove scroll and resize event listeners
-    if (state && state.player && state.player.contentWindow) {
-        let win = state.player.contentWindow;
+    if (state && state.window) {
+        let win = state.window;
         win.removeEventListener("scroll", redraw, true);
         win.removeEventListener("resize", redraw, true);
     }
 }
 
 export function clear() : void {
-    let doc = state.player.contentDocument;
-    let win = state.player.contentWindow;
+    let doc = state.window.document;
+    let win = state.window;
     let canvas = doc.getElementById(Constant.HeatmapCanvas) as HTMLCanvasElement;
     let de = doc.documentElement;
     if (canvas) {
@@ -142,8 +142,8 @@ export function click(activity: Activity): void {
 
 function overlay(): HTMLCanvasElement {
     // Create canvas for visualizing heatmap
-    let doc = state.player.contentDocument;
-    let win = state.player.contentWindow;
+    let doc = state.window.document;
+    let win = state.window;
     let de = doc.documentElement;
     let canvas = doc.getElementById(Constant.HeatmapCanvas) as HTMLCanvasElement;
     if (canvas === null) {
@@ -172,7 +172,7 @@ function overlay(): HTMLCanvasElement {
 
 function getRing(): HTMLCanvasElement {
     if (offscreenRing === null) {
-        let doc = state.player.contentDocument;
+        let doc = state.window.document;
         offscreenRing = doc.createElement(Constant.Canvas) as HTMLCanvasElement;
         offscreenRing.width = Setting.Radius * 2;
         offscreenRing.height = Setting.Radius * 2;
@@ -190,7 +190,7 @@ function getRing(): HTMLCanvasElement {
 
 function getGradient(): ImageData {
     if (gradientPixels === null) {
-        let doc = state.player.contentDocument;
+        let doc = state.window.document;
         let offscreenGradient = doc.createElement(Constant.Canvas) as HTMLCanvasElement;
         offscreenGradient.width = 1;
         offscreenGradient.height = Setting.Colors;
@@ -218,7 +218,7 @@ function transform(): Heatmap[] {
     let output: Heatmap[] = [];
     let points: { [key: string]: number } = {};
     let localMax = 0;
-    let height = state.player && state.player.contentDocument ? state.player.contentDocument.documentElement.clientHeight : 0;
+    let height = state.window && state.window.document ? state.window.document.documentElement.clientHeight : 0;
     for (let hash of Object.keys(data)) {
         let el = layout.get(hash) as HTMLElement;
         if (el && typeof el.getBoundingClientRect === "function") {
@@ -251,7 +251,7 @@ function transform(): Heatmap[] {
 }
 
 function visible(el: HTMLElement, r: DOMRect, height: number): boolean {
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     let visibility = r.height > height ? true : false;
     if (visibility === false && r.width > 0 && r.height > 0) {
         let elements = doc.elementsFromPoint(r.left + (r.width / 2), r.top + (r.height / 2));

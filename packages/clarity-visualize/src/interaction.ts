@@ -22,7 +22,7 @@ export function reset(): void {
 
 export function scroll(event: Interaction.ScrollEvent): void {
     let data = event.data;
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     let de = doc.documentElement;
     let scrollTarget = element(data.target as number) as HTMLElement || doc.body;
     let scrollable = scrollTarget.scrollHeight > scrollTarget.clientHeight;
@@ -30,7 +30,7 @@ export function scroll(event: Interaction.ScrollEvent): void {
 
     // Position canvas relative to scroll events on the parent page
     if (scrollTarget === de || scrollTarget === doc.body) {
-        if (!scrollable) { state.player.contentWindow.scrollTo(data.x, data.y); }
+        if (!scrollable) { state.window.scrollTo(data.x, data.y); }
         let canvas = overlay();
         if (canvas) {
             canvas.style.left = data.x + Constant.Pixel;
@@ -52,12 +52,13 @@ export function resize(event: Interaction.ResizeEvent): void {
 }
 
 export function visibility(event: Interaction.VisibilityEvent): void {
-    if (state.player && event.data.visible !== Constant.Visible) {
-        state.player.style.backgroundColor = Constant.Black;
-        state.player.style.opacity = Constant.HiddenOpacity;
+    let doc = state.window.document;
+    if (doc && doc.documentElement && event.data.visible !== Constant.Visible) {
+        doc.documentElement.style.backgroundColor = Constant.Black;
+        doc.documentElement.style.opacity = Constant.HiddenOpacity;
     } else {
-        state.player.style.backgroundColor = Constant.Transparent;
-        state.player.style.opacity = Constant.VisibleOpacity;
+        doc.documentElement.style.backgroundColor = Constant.Transparent;
+        doc.documentElement.style.opacity = Constant.VisibleOpacity;
     }
 }
 
@@ -79,7 +80,7 @@ export function input(event: Interaction.InputEvent): void {
 
 export function selection(event: Interaction.SelectionEvent): void {
     let data = event.data;
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     let s = doc.getSelection();
     // Wrapping selection code inside a try / catch to avoid throwing errors when dealing with elements inside the shadow DOM.
     try { s.setBaseAndExtent(element(data.start as number), data.startOffset, element(data.end as number), data.endOffset); } catch (ex) {
@@ -90,7 +91,7 @@ export function selection(event: Interaction.SelectionEvent): void {
 export function pointer(event: Interaction.PointerEvent): void {
     let data = event.data;
     let type = event.event;
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     let de = doc.documentElement;
     let p = doc.getElementById(Constant.PointerLayer);
     let pointerWidth = Setting.PointerWidth;
@@ -242,7 +243,7 @@ function drawClick(doc: Document, x: number, y: number, title: string): void {
 
 function overlay(): HTMLCanvasElement {
     // Create canvas for visualizing interactions
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     let de = doc.documentElement;
     let canvas = doc.getElementById(Constant.InteractionCanvas) as HTMLCanvasElement;
     if (canvas === null) {
