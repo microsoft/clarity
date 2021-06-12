@@ -1,4 +1,4 @@
-import { Activity, MergedPayload, ResizeHandler, ScrollMapInfo } from "./visualize";
+import { Activity, MergedPayload, Options, ResizeHandler, ScrollMapInfo } from "./visualize";
 import { Data, Diagnostic, Interaction, Layout } from "clarity-decode"
 
 export interface Visualize {
@@ -9,8 +9,7 @@ export interface Visualize {
     scrollmap: (data?: ScrollMapInfo[], averageFold?: number) => void;
     merge: (decoded: Data.DecodedPayload[]) => MergedPayload;
     render: (events: Data.DecodedEvent[]) =>  void;
-    reset: () => void;
-    setup: (version: string, target: Window, onresize?: ResizeHandler, metadata?: HTMLElement) => Visualize;
+    setup: (target: Window, options: Options) => Visualize;
     time: () => number;
 }
 

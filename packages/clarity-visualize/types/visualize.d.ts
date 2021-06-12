@@ -16,11 +16,17 @@ export interface Point {
     y: number;
 }
 
-export interface PlaybackState {
+export interface Options {
     version: string;
+    dom?: Layout.DomEvent;
+    onresize?: ResizeHandler;
+    metadata?: HTMLElement;
+    canvas?: boolean;
+}
+
+export interface PlaybackState {
     window: Window;
-    metadata: HTMLElement;
-    onresize: ResizeHandler;
+    options: Options;
 }
 
 export type Activity = { [key: string]: ElementData };

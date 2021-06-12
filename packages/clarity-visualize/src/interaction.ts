@@ -46,8 +46,8 @@ export function resize(event: Interaction.ResizeEvent): void {
     let data = event.data;
     let width = data.width;
     let height = data.height;
-    if (state.onresize) {
-        state.onresize(width, height);
+    if (state.options.onresize) {
+        state.options.onresize(width, height);
     }
 }
 
@@ -276,7 +276,7 @@ function match(time: number): Point[] {
 
 export function trail(now: number): void {
     const canvas = overlay();
-    if (canvas) {
+    if (state.options.canvas && canvas) {
         const ctx = canvas.getContext('2d');
         const path = curve(match(now));
         // Update hovered elements

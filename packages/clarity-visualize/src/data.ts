@@ -25,39 +25,39 @@ export function reset(): void {
 }
 
 export function metric(event: Data.MetricEvent): void {
-    if (state.metadata === null) { return; }
-
-    let metricMarkup = [];
-    let regionMarkup = [];
-    // Copy over metrics for future reference
-    for (let m in event.data) {
-        if (typeof event.data[m] === "number") {
-            if (!(m in metrics)) { metrics[m] = 0; }
-            let key = parseInt(m, 10);
-            if (m in METRIC_MAP && (METRIC_MAP[m].unit === "html-price" || METRIC_MAP[m].unit === "ld-price")) { 
-                metrics[m] = event.data[m];
-            } else { metrics[m] += event.data[m]; }
-            lean = key === Data.Metric.Playback && event.data[m] === 0 ? true : lean;
+    if (state.options.metadata) { 
+        let metricMarkup = [];
+        let regionMarkup = [];
+        // Copy over metrics for future reference
+        for (let m in event.data) {
+            if (typeof event.data[m] === "number") {
+                if (!(m in metrics)) { metrics[m] = 0; }
+                let key = parseInt(m, 10);
+                if (m in METRIC_MAP && (METRIC_MAP[m].unit === "html-price" || METRIC_MAP[m].unit === "ld-price")) { 
+                    metrics[m] = event.data[m];
+                } else { metrics[m] += event.data[m]; }
+                lean = key === Data.Metric.Playback && event.data[m] === 0 ? true : lean;
+            }
         }
-    }
 
-    for (let entry in metrics) {
-        if (entry in METRIC_MAP) {
-            let m = metrics[entry];
-            let map = METRIC_MAP[entry];
-            let unit = "unit" in map ? map.unit : Data.Constant.Empty;
-            metricMarkup.push(`<li><h2>${value(m, unit)}<span>${key(unit)}</span></h2>${map.name}</li>`);
+        for (let entry in metrics) {
+            if (entry in METRIC_MAP) {
+                let m = metrics[entry];
+                let map = METRIC_MAP[entry];
+                let unit = "unit" in map ? map.unit : Data.Constant.Empty;
+                metricMarkup.push(`<li><h2>${value(m, unit)}<span>${key(unit)}</span></h2>${map.name}</li>`);
+            }
         }
-    }
 
-    // Append region information to metadata
-    for (let name in regions) {
-        let r = regions[name];
-        let className = r === Layout.Interaction.Visible ? "visible" : (r === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty);
-        regionMarkup.push(`<span class="${className}">${name}</span>`);
-    }
+        // Append region information to metadata
+        for (let name in regions) {
+            let r = regions[name];
+            let className = r === Layout.Interaction.Visible ? "visible" : (r === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty);
+            regionMarkup.push(`<span class="${className}">${name}</span>`);
+        }
 
-    state.metadata.innerHTML = `<ul>${metricMarkup.join(Data.Constant.Empty)}</ul><div>${regionMarkup.join(Data.Constant.Empty)}</div>`;
+        state.options.metadata.innerHTML = `<ul>${metricMarkup.join(Data.Constant.Empty)}</ul><div>${regionMarkup.join(Data.Constant.Empty)}</div>`;
+    }
 }
 
 export function region(event: Layout.RegionEvent): void {
