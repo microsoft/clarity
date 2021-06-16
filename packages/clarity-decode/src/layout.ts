@@ -19,6 +19,9 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             return { time, event, data: documentData };
         case Data.Event.Region:
             let regionData: Layout.RegionData[] = [];
+            // From 0.6.15 we send each reach update in an individual event. This allows us to include time with it.
+            // To keep it backward compatible (<= 0.6.14), we look for multiple regions in the same event. This works both with newer and older payloads.
+            // In future, we can update the logic to look deterministically for only 3 fields and remove the for loop.
             for (let i = 2; i < tokens.length; i += 3) {
                 let region: Layout.RegionData = {
                     id: tokens[i] as number,

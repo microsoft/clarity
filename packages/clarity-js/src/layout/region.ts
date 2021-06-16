@@ -1,12 +1,12 @@
 import { BooleanFlag, Event, Setting } from "@clarity-types/data";
-import { Interaction, RegionData, RegionQueue } from "@clarity-types/layout";
+import { InteractionState, RegionData, RegionState, RegionQueue } from "@clarity-types/layout";
+import { time } from "@src/core/time";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
 
-export let data: RegionData[] = [];
+export let state: RegionState[] = [];
 let regionMap: WeakMap<Node, string> = null; // Maps region nodes => region name
 let regions: { [key: number]: RegionData } = {};
-let updates: number[] = [];
 let queue: RegionQueue[] = [];
 let watch = false;
 let observer: IntersectionObserver = null;
@@ -46,16 +46,13 @@ export function exists(node: Node): boolean {
 
 export function track(id: number, event: Event): void {
     let node = dom.getNode(id);
-    let d = id in regions ? regions[id] : { id, state: Interaction.Rendered, name: regionMap.get(node) };
-    let state = event === Event.Click && d.state !== Interaction.Input ? Interaction.Clicked : d.state;
-    state = event === Event.Input && d.state !== Interaction.Input ? Interaction.Input : d.state;
-    if (state !== d.state) {
-        d.state = state;
+    let d = id in regions ? regions[id] : { id, state: InteractionState.Rendered, name: regionMap.get(node) };
+    let interactionState = event === Event.Click && d.state !== InteractionState.Input ? InteractionState.Clicked : d.state;
+    interactionState = event === Event.Input && d.state !== InteractionState.Input ? InteractionState.Input : d.state;
+    if (interactionState !== d.state) {
+        d.state = interactionState;
         regions[id] = d;
-        if (updates.indexOf(id) <= 0) { 
-            data.push(regions[id]);
-            updates.push(id);
-        }
+        state.push(clone(d));
     } else { queue.push({node: node, data: d}); }
 }
 
@@ -70,14 +67,14 @@ export function compute(): void {
             if (id) {
                 r.data.id = id;
                 regions[id] = r.data;
-                data.push(r.data);
+                state.push(clone(r.data));
             } else { q.push(r); }
         }
     }
     queue = q;
 
     // Schedule encode only when we have at least one valid data entry
-    if (data.length > 0) { encode(Event.Region); }
+    if (state.length > 0) { encode(Event.Region); }
 }
 
 function handler(entries: IntersectionObserverEntry[]): void {
@@ -97,24 +94,26 @@ function handler(entries: IntersectionObserverEntry[]): void {
             // However, for larger regions, area of regions could be bigger than viewport and therefore comparison is relative to visible area
             let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio ? BooleanFlag.True : BooleanFlag.False;
             // If the visibility hasn't changed since the last tracked value, ignore this notification
-            if (!(id in regions && visible && regions[id].state === Interaction.Visible)) {
-                let d = { id, name: regionMap.get(target), state: Interaction.Visible };
+            if (!(id in regions && visible && regions[id].state === InteractionState.Visible)) {
+                let d = { id, name: regionMap.get(target), state: InteractionState.Visible };
                 if (id) {
                     regions[id] = d;
-                    updates.push(id);
-                    data.push(d);
+                    state.push(clone(d));
                 } else { queue.push({node: target, data: d}); }
             }
             // Stop observing this element now that we have already received visibility signal
             if (visible && observer) { observer.unobserve(target); }
         }
     }
-    if (data.length > 0) { encode(Event.Region); }
+    if (state.length > 0) { encode(Event.Region); }
+}
+
+function clone(r: RegionData): RegionState {
+    return { time: time(), data: { id: r.id, state: r.state, name: r.name }};
 }
 
 export function reset(): void {
-    data = [];    
-    updates = [];
+    state = [];   
 }
 
 export function stop(): void {

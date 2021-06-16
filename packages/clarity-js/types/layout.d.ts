@@ -11,7 +11,7 @@ export const enum Source {
     CharacterData
 }
 
-export const enum Interaction {
+export const enum InteractionState {
     Rendered = 0,
     Visible = 1,
     Clicked = 2,
@@ -159,6 +159,11 @@ export interface RegionQueue {
     data: RegionData;
 }
 
+export interface RegionState {
+    time: number;
+    data: RegionData;
+}
+
 /* Event Data */
 
 export interface DocumentData {
@@ -168,7 +173,7 @@ export interface DocumentData {
 
 export interface RegionData {
     id: number;
-    state: Interaction;
+    state: InteractionState;
     name: string;    
 }
 

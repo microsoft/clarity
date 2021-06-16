@@ -26,14 +26,14 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             queue(tokens);
             break;
         case Event.Region:
-            let r = region.data;
-            for (let value of r) {
-                tokens.push(value.id);
-                tokens.push(value.state);
-                tokens.push(value.name);
+            for (let r of region.state) {
+                tokens = [r.time, Event.Region];
+                tokens.push(r.data.id);
+                tokens.push(r.data.state);
+                tokens.push(r.data.name);
+                queue(tokens);
             }
             region.reset();
-            queue(tokens);
             break;
         case Event.Box:
             let b = box.data;

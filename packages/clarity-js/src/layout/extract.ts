@@ -55,7 +55,7 @@ function num(text: string, scale: number, localize: boolean = true): number {
             let group = Intl.NumberFormat(lang).format(11111).replace(formatRegex, Constant.Empty);
             let decimal = Intl.NumberFormat(lang).format(1.1).replace(formatRegex, Constant.Empty);
             
-            // Prase number using inferred group and decimal separators
+            // Parse number using inferred group and decimal separators
             return Math.round(parseFloat(text
                 .replace(new RegExp('\\' + group, 'g'), Constant.Empty)
                 .replace(new RegExp('\\' + decimal), Constant.Dot)
