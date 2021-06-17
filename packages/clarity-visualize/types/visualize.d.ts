@@ -25,7 +25,7 @@ export interface PlaybackState {
     onresize: ResizeHandler;
 }
 
-export type Activity = { [key: string]: ElementData };
+export type Activity = ElementData[];
 
 export interface RegionState {
     visible: Data.BooleanFlag;
@@ -34,9 +34,12 @@ export interface RegionState {
 
 export interface ElementData {
     hash: string;
-    clicks: number[][];
     selector: string;
-    total: number;
+    totalclicks: number;
+    x: number[];
+    y: number[];
+    clicks: number[];
+    points: number;
 }
 
 export interface Heatmap {

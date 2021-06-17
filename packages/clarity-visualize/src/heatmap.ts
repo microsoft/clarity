@@ -149,18 +149,18 @@ function transform(): Heatmap[] {
     let points: { [key: string]: number } = {};
     let localMax = 0;
     let height = state.player && state.player.contentDocument ? state.player.contentDocument.documentElement.clientHeight : 0;
-    for (let hash of Object.keys(data)) {
-        let el = layout.get(hash) as HTMLElement;
+    for (let element of data) {
+        let el = layout.get(element.hash) as HTMLElement;
         if (el && typeof el.getBoundingClientRect === "function") {
             let r = el.getBoundingClientRect();
             let v = visible(el, r, height);
             // Process clicks for only visible elements
             if (max === null || v) {
-                for (let c of data[hash].clicks) {
-                    let x = Math.round(r.left + (c[0] / Data.Setting.ClickPrecision) * r.width);
-                    let y = Math.round(r.top + (c[1] / Data.Setting.ClickPrecision) * r.height);
+                for(let i = 0; i < element.points; i++) {
+                    let x = Math.round(r.left + (element.x[i] / Data.Setting.ClickPrecision) * r.width);
+                    let y = Math.round(r.top + (element.y[i] / Data.Setting.ClickPrecision) * r.height);
                     let k = `${x}${Constant.Separator}${y}${Constant.Separator}${v ? 1 : 0}`;
-                    points[k] = k in points ? points[k] + c[2] : c[2];
+                    points[k] = k in points ? points[k] + element.clicks[i] : element.clicks[i];
                     localMax = Math.max(points[k], localMax);
                 }
             }
