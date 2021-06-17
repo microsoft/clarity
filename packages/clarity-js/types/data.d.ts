@@ -94,7 +94,8 @@ export const enum Dimension {
     ProductCurrency = 13,
     ProductCondition = 14,
     TabId = 15,
-    PageLanguage = 16
+    PageLanguage = 16,
+    DocumentDirection = 17
 }
 
 export const enum Check {
