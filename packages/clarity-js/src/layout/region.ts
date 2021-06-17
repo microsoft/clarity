@@ -1,4 +1,4 @@
-import { BooleanFlag, Event, Setting } from "@clarity-types/data";
+import { Event, Setting } from "@clarity-types/data";
 import { InteractionState, RegionData, RegionState, RegionQueue } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import * as dom from "@src/layout/dom";
@@ -46,14 +46,16 @@ export function exists(node: Node): boolean {
 
 export function track(id: number, event: Event): void {
     let node = dom.getNode(id);
-    let d = id in regions ? regions[id] : { id, state: InteractionState.Rendered, name: regionMap.get(node) };
-    let interactionState = event === Event.Click && d.state !== InteractionState.Input ? InteractionState.Clicked : d.state;
-    interactionState = event === Event.Input && d.state !== InteractionState.Input ? InteractionState.Input : d.state;
-    if (interactionState !== d.state) {
-        d.state = interactionState;
-        regions[id] = d;
-        state.push(clone(d));
-    } else { queue.push({node: node, data: d}); }
+    let data = id in regions ? regions[id] : { id, state: InteractionState.Rendered, name: regionMap.get(node) };
+    
+    // Determine the interaction state based on incoming event
+    let interactionState = InteractionState.Rendered;
+    switch (event) {
+        case Event.Click: interactionState = InteractionState.Clicked; break;
+        case Event.Input: interactionState = InteractionState.Input; break;
+    }
+    // Process updates to this region, if applicable
+    process(node, data, interactionState);
 }
 
 export function compute(): void {
@@ -89,23 +91,35 @@ function handler(entries: IntersectionObserverEntry[]): void {
         // Also, if these regions ever become non-zero width or height (through AJAX, user action or orientation change) - we will automatically start monitoring them from that point onwards
         if (regionMap.has(target) && rect.width + rect.height > 0 && viewport.width > 0 && viewport.height > 0) {
             let id = target ? dom.getId(target) : null;
-            let viewportRatio = overlap ? (overlap.width * overlap.height * 1.0) / (viewport.width * viewport.height) : 0;
+            let data = id in regions ? regions[id] : { id, name: regionMap.get(target), state: InteractionState.Rendered };
+            
             // For regions that have relatively smaller area, we look at intersection ratio and see the overlap relative to element's area
             // However, for larger regions, area of regions could be bigger than viewport and therefore comparison is relative to visible area
-            let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio ? BooleanFlag.True : BooleanFlag.False;
-            // If the visibility hasn't changed since the last tracked value, ignore this notification
-            if (!(id in regions && visible && regions[id].state === InteractionState.Visible)) {
-                let d = { id, name: regionMap.get(target), state: InteractionState.Visible };
-                if (id) {
-                    regions[id] = d;
-                    state.push(clone(d));
-                } else { queue.push({node: target, data: d}); }
-            }
+            let viewportRatio = overlap ? (overlap.width * overlap.height * 1.0) / (viewport.width * viewport.height) : 0;
+            let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio;
+
+            // Process updates to this region, if applicable
+            process(target, data, visible ? InteractionState.Visible : InteractionState.Rendered);
+
             // Stop observing this element now that we have already received visibility signal
-            if (visible && observer) { observer.unobserve(target); }
+            if (data.state >= InteractionState.Visible && observer) { observer.unobserve(target); }
         }
     }
     if (state.length > 0) { encode(Event.Region); }
+}
+
+function process(n: Node, d: RegionData, s: InteractionState): void {
+    // Check if received a state that supersedes existing state
+    let updated = s > d.state;
+    d.state = updated ? s : d.state;
+    // If the corresponding node is already discovered, update the internal state
+    // Otherwise, track it in a queue to reprocess later.
+    if (d.id) {
+        if ((d.id in regions && updated) || !(d.id in regions)) {
+            regions[d.id] = d;
+            state.push(clone(d));
+        }
+    } else { queue.push({node: n, data: d}); }
 }
 
 function clone(r: RegionData): RegionState {

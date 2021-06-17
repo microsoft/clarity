@@ -6,29 +6,36 @@ import * as region from "@src/layout/region";
 const formatRegex = /1/g;
 const digitsRegex = /[^0-9\.]/g;
 const digitsWithCommaRegex = /[^0-9\.,]/g;
+const regexCache: {[key: string]: RegExp} = {};
 
 export function regions(root: ParentNode, value: Region[]): void {
     for (let v of value) {
+        const [regionId, selector, filter, match] = v;
         let valid = true;
-        let filter = v.length === 4 ? v[2] : null;
         switch (filter) {
-            case RegionFilter.Url: valid = !!top.location.href.match(new RegExp(v[3])); break;
-            case RegionFilter.Javascript: valid = !!evaluate(v[3]); break;
+            case RegionFilter.Url: valid = match && !!top.location.href.match(regex(match)); break;
+            case RegionFilter.Javascript: valid = match && !!evaluate(match); break;
         }
-        if (valid) { root.querySelectorAll(v[1]).forEach(e => region.observe(e, v[0].toString())); }
+        if (valid) { root.querySelectorAll(selector).forEach(e => region.observe(e, regionId.toString())); }
     }
 }
 
 export function metrics(root: ParentNode, value: Metric[]): void {
     for (let v of value) {
-        let source = v.length >= 3 ? v[1] : null;
-        let scale = v.length === 4 ? v[3] : 1;
-        switch (source) {
-            case Extract.Text:  root.querySelectorAll(v[2]).forEach(e => { metric.max(v[0], num((e as HTMLElement).innerText, scale)); }); break;
-            case Extract.Attribute: root.querySelectorAll(`[${v[2]}]`).forEach(e => { metric.max(v[0], num(e.getAttribute(v[2]), scale, false)); }); break;
-            case Extract.Javascript: metric.max(v[0], evaluate(v[2], Constant.Number) as number); break;
+        const [metricId, source, match, scale] = v;
+        if (match) {
+            switch (source) {
+                case Extract.Text:  root.querySelectorAll(match).forEach(e => { metric.max(metricId, num((e as HTMLElement).innerText, scale)); }); break;
+                case Extract.Attribute: root.querySelectorAll(`[${match}]`).forEach(e => { metric.max(metricId, num(e.getAttribute(match), scale, false)); }); break;
+                case Extract.Javascript: metric.max(metricId, evaluate(match, Constant.Number) as number); break;
+            }
         }
     }
+}
+
+function regex(match: string): RegExp {
+    regexCache[match] = match in regexCache ? regexCache[match] : new RegExp(match);
+    return regexCache[match];
 }
 
 // The function below takes in a variable name in following format: "a.b.c" and safely evaluates its value in javascript context
@@ -47,6 +54,7 @@ function evaluate(variable: string, type: string = null, base: Object = window):
 
 function num(text: string, scale: number, localize: boolean = true): number {
     try {
+        scale = scale || 1; 
         // Reference: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat
         let lang = document.documentElement.lang;
         if (Intl && Intl.NumberFormat && lang && localize) {
@@ -63,5 +71,5 @@ function num(text: string, scale: number, localize: boolean = true): number {
         }
         // Fallback to en locale
         return Math.round(parseFloat(text.replace(digitsRegex, Constant.Empty)) * scale);
-    } catch { return 0; }
+    } catch { return null; }
 }

@@ -1,10 +1,10 @@
-import { Metadata, Payload, Token } from "./data";
+import * as Data from "./data";
 
 type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
 type UploadCallback = (data: string) => void;
-type Region = [number, string, number?, string?];
-type Metric = [number, number, string, number?];
+type Region = [number /* RegionId */, keyof HTMLElementTagNameMap /* Query Selector */, RegionFilter? /* Region Filter */, string? /* Filter Text */];
+type Metric = [Data.Metric /* MetricId */, Extract /* Extract Filter */, string /* Match Value */, number? /* Scale Factor */];
 
 /* Enum */
 

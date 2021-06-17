@@ -154,22 +154,24 @@ function track(m: MutationRecord, timer: Metric): string {
   let value = m.target ? dom.get(m.target.parentNode) : null;
   if (value) {
     let inactive = time() > activePeriod;
-    // We use selector, instead of id, to determine the key because in some cases
+    // We use selector, instead of id, to determine the key (signature for the mutation) because in some cases
     // repeated mutations can cause elements to be destroyed and then recreated as new DOM nodes
     // In those cases, IDs will change however the selector (which is relative to DOM xPath) remains the same
     let key = [value.selector, m.attributeName, m.addedNodes ? m.addedNodes.length : 0, m.removedNodes ? m.removedNodes.length : 0].join();
     // Initialize an entry if it doesn't already exist
     history[key] = key in history ? history[key] : [0];
+    let h = history[key];
     // Lookup any pending nodes queued up for removal, and process them now if we suspended a mutation before
-    if (inactive === false && history[key][0] >= Setting.MutationSuspendThreshold) { processNodeList(history[key][1], Source.ChildListRemove, timer); }
+    if (inactive === false && h[0] >= Setting.MutationSuspendThreshold) { processNodeList(h[1], Source.ChildListRemove, timer); }
     // Update the counter
-    history[key][0] = inactive ? history[key][0] + 1 : 1;
+    h[0] = inactive ? h[0] + 1 : 1;
     // Return updated mutation type based on if we have already hit the threshold or not
-    if (history[key][0] === Setting.MutationSuspendThreshold) {
+    if (h[0] === Setting.MutationSuspendThreshold) {
       // Store a reference to removedNodes so we can process them later
-      history[key][1] = m.removedNodes;
+      // when we resume mutations again on user interactions
+      h[1] = m.removedNodes;
       return Constant.Suspend;
-    } else if (history[key][0] > Setting.MutationSuspendThreshold) { return Constant.Empty; }
+    } else if (h[0] > Setting.MutationSuspendThreshold) { return Constant.Empty; }
   }
   return m.type;
 }

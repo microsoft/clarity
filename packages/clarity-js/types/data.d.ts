@@ -97,12 +97,6 @@ export const enum Dimension {
     PageLanguage = 16
 }
 
-export const enum Region {
-    Header,
-    Footer,
-    Navigation
-}
-
 export const enum Check {
     None = 0,
     Payload = 1,

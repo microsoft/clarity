@@ -13,9 +13,9 @@ export const enum Source {
 
 export const enum InteractionState {
     Rendered = 0,
-    Visible = 1,
-    Clicked = 2,
-    Input = 3
+    Visible = 10,
+    Clicked = 20,
+    Input = 30
 }
 
 export const enum Constant {
@@ -98,8 +98,8 @@ export const enum JsonLD {
 
 export const enum Setting {
     LookAhead = 33, // 33ms
-    MutationSuspendThreshold = 10, // Stop listening for mutations after hitting a threshold
-    MutationActivePeriod = 3000 // Let mutations continue as normal during active periods of user interactions
+    MutationSuspendThreshold = 10, // Stop listening for mutations after hitting a threshold count
+    MutationActivePeriod = 3000 // Unit: milliseconds. Let mutations continue as normal during active periods of user interactions
 }
 
 /* Helper Interfaces */
