@@ -29,7 +29,7 @@ export interface PlaybackState {
     options: Options;
 }
 
-export type Activity = { [key: string]: ElementData };
+export type Activity = ElementData[];
 
 export interface ScrollMapInfo {
     scrollReachY: number;
@@ -40,9 +40,12 @@ export interface ScrollMapInfo {
 
 export interface ElementData {
     hash: string;
-    clicks: number[][];
     selector: string;
-    total: number;
+    totalclicks: number;
+    x: number[];
+    y: number[];
+    clicks: number[];
+    points: number;
 }
 
 export interface Heatmap {
