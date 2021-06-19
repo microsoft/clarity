@@ -278,7 +278,7 @@ export function trail(now: number): void {
     const canvas = overlay();
     if (state.options.canvas && canvas) {
         const ctx = canvas.getContext('2d');
-        const path = curve(match(now));
+        const path = state.options.keyframes ? curve(points.reverse()) : curve(match(now));
         // Update hovered elements
         hover();
         // We need at least two points to create a line
@@ -320,6 +320,8 @@ export function trail(now: number): void {
                 last = current;
             }
         }
+        // If we are only rendering key frames, clear points array after each key frame
+        if (state.options.keyframes) { points = []; }
     }
 }
 

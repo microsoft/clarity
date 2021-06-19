@@ -80,6 +80,7 @@ export function setup(target: Window, options: Options): Visualize {
     reset();
     // Infer options
     options.canvas = "canvas" in options ? options.canvas : true;
+    options.keyframes = "keyframes" in options ? options.keyframes : false;
 
     // Set visualization state
     state = { window: target, options };

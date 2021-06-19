@@ -22,6 +22,7 @@ export interface Options {
     onresize?: ResizeHandler;
     metadata?: HTMLElement;
     canvas?: boolean;
+    keyframes?: boolean;
 }
 
 export interface PlaybackState {
