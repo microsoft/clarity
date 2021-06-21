@@ -13,7 +13,7 @@ export default [
     ],
     plugins: [
       resolve(),
-      typescript(),
+      typescript({clean: true}),
       commonjs({ include: ["node_modules/**"] })
     ],
     onwarn(message, warn) {
@@ -27,7 +27,7 @@ export default [
     output: [ { file: pkg.unpkg, format: "iife", exports: "named" } ],
     plugins: [
       resolve(),
-      typescript(),
+      typescript({clean: true}),
       terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ],

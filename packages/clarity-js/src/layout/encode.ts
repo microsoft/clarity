@@ -26,14 +26,14 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             queue(tokens);
             break;
         case Event.Region:
-            let r = region.data;
-            for (let value of r) {
-                tokens.push(value.id);
-                tokens.push(value.visible);
-                tokens.push(value.region);
+            for (let r of region.state) {
+                tokens = [r.time, Event.Region];
+                tokens.push(r.data.id);
+                tokens.push(r.data.state);
+                tokens.push(r.data.name);
+                queue(tokens);
             }
             region.reset();
-            queue(tokens);
             break;
         case Event.Box:
             let b = box.data;
@@ -48,47 +48,50 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.Discover:
         case Event.Mutation:
             let values = dom.updates();
-            for (let value of values) {
-                if (task.shouldYield(timer)) { await task.suspend(timer); }
-                let metadata = [];
-                let data: NodeInfo = value.data;
-                let active = value.metadata.active;
-                let privacy = value.metadata.privacy;
-                let mangle = shouldMangle(value);
-                let keys = active ? ["tag", "path", "attributes", "value"] : ["tag"];
-                box.compute(value.id);
-                for (let key of keys) {
-                    if (data[key]) {
-                        switch (key) {
-                            case "tag":
-                                let size = value.metadata.size;
-                                let factor = mangle ? -1 : 1;
-                                tokens.push(value.id * factor);
-                                if (value.parent && active) { tokens.push(value.parent); }
-                                if (value.previous && active) { tokens.push(value.previous); }
-                                metadata.push(value.position ? `${data[key]}~${value.position}` : data[key]);
-                                if (size && size.length === 2) { metadata.push(`${Constant.Box}${str(size[0])}.${str(size[1])}`); }
-                                break;
-                            case "path":
-                                metadata.push(`${value.data.path}>`);
-                                break;
-                            case "attributes":
-                                for (let attr in data[key]) {
-                                    if (data[key][attr] !== undefined) {
-                                        metadata.push(attribute(attr, data[key][attr], privacy));
+            // Only encode and queue DOM updates if we have valid updates to report back
+            if (values.length > 0) {
+                for (let value of values) {
+                    if (task.shouldYield(timer)) { await task.suspend(timer); }
+                    let metadata = [];
+                    let data: NodeInfo = value.data;
+                    let active = value.metadata.active;
+                    let privacy = value.metadata.privacy;
+                    let mangle = shouldMangle(value);
+                    let keys = active ? ["tag", "path", "attributes", "value"] : ["tag"];
+                    box.compute(value.id);
+                    for (let key of keys) {
+                        if (data[key]) {
+                            switch (key) {
+                                case "tag":
+                                    let size = value.metadata.size;
+                                    let factor = mangle ? -1 : 1;
+                                    tokens.push(value.id * factor);
+                                    if (value.parent && active) { tokens.push(value.parent); }
+                                    if (value.previous && active) { tokens.push(value.previous); }
+                                    metadata.push(value.position ? `${data[key]}~${value.position}` : data[key]);
+                                    if (size && size.length === 2) { metadata.push(`${Constant.Box}${str(size[0])}.${str(size[1])}`); }
+                                    break;
+                                case "path":
+                                    metadata.push(`${value.data.path}>`);
+                                    break;
+                                case "attributes":
+                                    for (let attr in data[key]) {
+                                        if (data[key][attr] !== undefined) {
+                                            metadata.push(attribute(attr, data[key][attr], privacy));
+                                        }
                                     }
-                                }
-                                break;
-                            case "value":
-                                metadata.push(scrub(data[key], data.tag, privacy, mangle));
-                                break;
+                                    break;
+                                case "value":
+                                    metadata.push(scrub(data[key], data.tag, privacy, mangle));
+                                    break;
+                            }
                         }
                     }
+                    tokens = tokenize(tokens, metadata);
                 }
-                tokens = tokenize(tokens, metadata);
+                if (type === Event.Mutation) { baseline.activity(eventTime); }
+                queue(tokens, !config.lean);
             }
-            if (type === Event.Mutation) { baseline.activity(eventTime); }
-            queue(tokens, !config.lean);
             break;
     }
 }

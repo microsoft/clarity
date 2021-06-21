@@ -1,4 +1,4 @@
-import { Activity, Constant, Heatmap, Setting } from "@clarity-types/visualize";
+import { Activity, Constant, Heatmap, Setting, ScrollMapInfo } from "@clarity-types/visualize";
 import { Data } from "clarity-decode";
 import { state } from "./clarity";
 import * as layout from "./layout";
@@ -6,6 +6,7 @@ import * as layout from "./layout";
 const COLORS = ["blue", "cyan", "lime", "yellow", "red"];
 
 let data: Activity = null;
+let scrollData: ScrollMapInfo[] = null;
 let max: number = null;
 let offscreenRing: HTMLCanvasElement = null;
 let gradientPixels: ImageData = null;
@@ -14,6 +15,7 @@ let observer: ResizeObserver = null;
 
 export function reset(): void {
     data = null;
+    scrollData = null;
     max = null;
     offscreenRing = null;
     gradientPixels = null;
@@ -26,11 +28,79 @@ export function reset(): void {
     }
 
     // Remove scroll and resize event listeners
-    if (state && state.player && state.player.contentWindow) {
-        let win = state.player.contentWindow;
+    if (state && state.window) {
+        let win = state.window;
         win.removeEventListener("scroll", redraw, true);
         win.removeEventListener("resize", redraw, true);
     }
+}
+
+export function clear() : void {
+    let doc = state.window.document;
+    let win = state.window;
+    let canvas = doc.getElementById(Constant.HeatmapCanvas) as HTMLCanvasElement;
+    let de = doc.documentElement;
+    if (canvas) {
+        canvas.width = de.clientWidth;
+        canvas.height = de.clientHeight;
+        canvas.style.left = win.pageXOffset + Constant.Pixel;
+        canvas.style.top = win.pageYOffset + Constant.Pixel;
+        canvas.getContext(Constant.Context).clearRect(0, 0, canvas.width, canvas.height);
+    }
+    reset();
+}
+
+export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
+    scrollData = scrollData || activity;
+    let canvas = overlay();
+    let context = canvas.getContext(Constant.Context);
+
+    if (canvas.width > 0 && canvas.height > 0) {
+        if (scrollData) {
+            const grd = context.createLinearGradient(0, 0, 0, canvas.height);
+            for (const currentCombination of scrollData) {
+                const huePercentView = 1 - (currentCombination.cumulativeSum / scrollData[0].cumulativeSum);
+                const percentView = currentCombination.scrollReachY / 100;
+                const hue = huePercentView * Setting.MaxHue;
+                grd.addColorStop(percentView, `hsla(${hue}, 100%, 50%, 0.6)`);
+            }
+
+            // Fill with gradient
+            context.fillStyle = grd;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            addInfoMarkers(context, scrollData, canvas.width, canvas.height, avgFold);
+        }
+    };
+}
+
+function addInfoMarkers(context: CanvasRenderingContext2D, scrollMapInfo: ScrollMapInfo[], width: number, height: number, avgFold: number): void {
+    addMarker(context, width, Constant.AverageFold, avgFold, Setting.MarkerMediumWidth);
+    const markers = [75, 50, 25];
+    for (const marker of markers) {
+        const closest = scrollMapInfo.reduce((prev: ScrollMapInfo, curr: ScrollMapInfo): ScrollMapInfo => {
+            return ((Math.abs(curr.percUsers - marker)) < (Math.abs(prev.percUsers - marker)) ? curr : prev);
+        });
+        if (closest.percUsers >= marker - Setting.MarkerRange || closest.percUsers <= marker + Setting.MarkerRange) {
+            const markerLine = (closest.scrollReachY / 100) * height;
+            addMarker(context, width, `${marker}%`, markerLine, Setting.MarkerSmallWidth);
+        }
+    }
+}
+
+function addMarker(context: CanvasRenderingContext2D, heatmapWidth: number, label: string, markerY: number, markerWidth: number): void 
+{
+    context.beginPath();
+    context.moveTo(0, markerY);
+    context.lineTo(heatmapWidth, markerY);
+    context.setLineDash([2, 2]);
+    context.lineWidth = Setting.MarkerLineHeight;
+    context.strokeStyle = Setting.MarkerColor;
+    context.stroke();
+    context.fillStyle = Setting.CanvasTextColor;
+    context.fillRect(0, (markerY - Setting.MarkerHeight / 2), markerWidth, Setting.MarkerHeight);
+    context.fillStyle = Setting.MarkerColor;
+    context.font = Setting.CanvasTextFont;
+    context.fillText(label, Setting.MarkerPadding, markerY + Setting.MarkerPadding);
 }
 
 export function click(activity: Activity): void {
@@ -72,8 +142,8 @@ export function click(activity: Activity): void {
 
 function overlay(): HTMLCanvasElement {
     // Create canvas for visualizing heatmap
-    let doc = state.player.contentDocument;
-    let win = state.player.contentWindow;
+    let doc = state.window.document;
+    let win = state.window;
     let de = doc.documentElement;
     let canvas = doc.getElementById(Constant.HeatmapCanvas) as HTMLCanvasElement;
     if (canvas === null) {
@@ -102,7 +172,7 @@ function overlay(): HTMLCanvasElement {
 
 function getRing(): HTMLCanvasElement {
     if (offscreenRing === null) {
-        let doc = state.player.contentDocument;
+        let doc = state.window.document;
         offscreenRing = doc.createElement(Constant.Canvas) as HTMLCanvasElement;
         offscreenRing.width = Setting.Radius * 2;
         offscreenRing.height = Setting.Radius * 2;
@@ -120,7 +190,7 @@ function getRing(): HTMLCanvasElement {
 
 function getGradient(): ImageData {
     if (gradientPixels === null) {
-        let doc = state.player.contentDocument;
+        let doc = state.window.document;
         let offscreenGradient = doc.createElement(Constant.Canvas) as HTMLCanvasElement;
         offscreenGradient.width = 1;
         offscreenGradient.height = Setting.Colors;
@@ -148,19 +218,19 @@ function transform(): Heatmap[] {
     let output: Heatmap[] = [];
     let points: { [key: string]: number } = {};
     let localMax = 0;
-    let height = state.player && state.player.contentDocument ? state.player.contentDocument.documentElement.clientHeight : 0;
-    for (let hash of Object.keys(data)) {
-        let el = layout.get(hash) as HTMLElement;
+    let height = state.window && state.window.document ? state.window.document.documentElement.clientHeight : 0;
+    for (let element of data) {
+        let el = layout.get(element.hash) as HTMLElement;
         if (el && typeof el.getBoundingClientRect === "function") {
             let r = el.getBoundingClientRect();
             let v = visible(el, r, height);
             // Process clicks for only visible elements
             if (max === null || v) {
-                for (let c of data[hash].clicks) {
-                    let x = Math.round(r.left + (c[0] / Data.Setting.ClickPrecision) * r.width);
-                    let y = Math.round(r.top + (c[1] / Data.Setting.ClickPrecision) * r.height);
+                for(let i = 0; i < element.points; i++) {
+                    let x = Math.round(r.left + (element.x[i] / Data.Setting.ClickPrecision) * r.width);
+                    let y = Math.round(r.top + (element.y[i] / Data.Setting.ClickPrecision) * r.height);
                     let k = `${x}${Constant.Separator}${y}${Constant.Separator}${v ? 1 : 0}`;
-                    points[k] = k in points ? points[k] + c[2] : c[2];
+                    points[k] = k in points ? points[k] + element.clicks[i] : element.clicks[i];
                     localMax = Math.max(points[k], localMax);
                 }
             }
@@ -181,7 +251,7 @@ function transform(): Heatmap[] {
 }
 
 function visible(el: HTMLElement, r: DOMRect, height: number): boolean {
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     let visibility = r.height > height ? true : false;
     if (visibility === false && r.width > 0 && r.height > 0) {
         let elements = doc.elementsFromPoint(r.left + (r.width / 2), r.top + (r.height / 2));

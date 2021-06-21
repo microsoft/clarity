@@ -1,5 +1,5 @@
 import { Data, Layout } from "clarity-decode";
-import { Asset, Constant, Setting } from "@clarity-types/visualize";
+import { Asset, Constant, NodeType, Setting } from "@clarity-types/visualize";
 import { state } from "./clarity";
 
 const TIMEOUT = 3000;
@@ -14,7 +14,7 @@ export function reset(): void {
 }
 
 export function get(hash: string): Element {
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     return doc.querySelector(`[${Constant.Hash}="${hash}"]`);
 }
 
@@ -27,7 +27,7 @@ export function box(event: Layout.BoxEvent): void {
 }
 
 function resize(el: HTMLElement, width: number, height: number): void {
-    if (el && el.nodeType === Node.ELEMENT_NODE && width && height) {
+    if (el && el.nodeType === NodeType.ELEMENT_NODE && width && height) {
         el.style.width = width + Layout.Constant.Pixel;
         el.style.height = height + Layout.Constant.Pixel;
         el.style.boxSizing = Layout.Constant.BorderBox; // Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing
@@ -40,20 +40,24 @@ export function element(nodeId: number): Node {
 
 export async function dom(event: Layout.DomEvent): Promise<void> {
     if (event) {
-        // When setting up player for the first time, start off with hidden IFRAME
-        state.player.style.visibility = Constant.Hidden;
-        // Render all DOM events to reconstruct the page
-        markup(event);
-        // Wait on all stylesheets to finish loading
-        await Promise.all(stylesheets);
-        // Toggle back the visibility of IFRAME
-        state.player.style.visibility = Constant.Visible;
+        // When setting up rendering for the first time, start off with hidden target window
+        // This ensures we do not show flickers to the end user
+        let doc = state.window.document;
+        if (doc && doc.documentElement) {
+            doc.documentElement.style.visibility = Constant.Hidden;
+            // Render all DOM events to reconstruct the page
+            markup(event);
+            // Wait on all stylesheets to finish loading
+            await Promise.all(stylesheets);
+            // Toggle back the visibility of target window
+            doc.documentElement.style.visibility = Constant.Visible;
+        }
     }
 }
 
 export function exists(hash: string): boolean {
     if (hash) {
-        let doc = state.player.contentDocument;
+        let doc = state.window.document;
         let match = doc.querySelector(`[${Constant.Hash}="${hash}"]`);
         if (match) {
             let rectangle = match.getBoundingClientRect();
@@ -66,7 +70,7 @@ export function exists(hash: string): boolean {
 export function markup(event: Layout.DomEvent): void {
     let data = event.data;
     let type = event.event;
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     for (let node of data) {
         let parent = element(node.parent);
         let pivot = element(node.previous);
@@ -120,10 +124,16 @@ export function markup(event: Layout.DomEvent): void {
                 textElement.nodeValue = node.value;
                 insert(node, parent, textElement, pivot);
                 break;
+            case Layout.Constant.SuspendMutationTag:
+                let suspendedElement = element(node.id);
+                if (suspendedElement && suspendedElement.nodeType === Node.ELEMENT_NODE) {
+                    (suspendedElement as HTMLElement).setAttribute(Constant.Suspend, Layout.Constant.Empty);
+                }
+                break;
             case "HTML":
                 let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
                 if (htmlDoc !== null) {
-                    let docElement = element(node.id);
+                    let docElement = element(node.id) as HTMLElement;
                     if (docElement === null) {
                         let newDoc = htmlDoc.implementation.createHTMLDocument(Layout.Constant.Empty);
                         docElement = newDoc.documentElement;
@@ -132,7 +142,9 @@ export function markup(event: Layout.DomEvent): void {
                         if (htmlDoc.head) { htmlDoc.head.parentNode.removeChild(htmlDoc.head); }
                         if (htmlDoc.body) { htmlDoc.body.parentNode.removeChild(htmlDoc.body); }
                     }
-                    setAttributes(htmlDoc.documentElement as HTMLElement, node);
+                    setAttributes(htmlDoc.documentElement, node);
+                    // If we are still processing discover events, keep the markup hidden until we are done
+                    if (type === Data.Event.Discover) { htmlDoc.documentElement.style.visibility = Constant.Hidden; }
                     nodes[node.id] = htmlDoc.documentElement;
                 }
                 break;
@@ -235,7 +247,7 @@ function insertAfter(data: Layout.DomData, parent: Node, node: Node, previous: N
 function firstChild(node: Node): ChildNode {
     let child = node.firstChild;
     // BASE tag should always be the first child to ensure resources with relative URLs are loaded correctly
-    if (child && child.nodeType === Node.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BaseTag) {
+    if (child && child.nodeType === NodeType.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BaseTag) {
         return child.nextSibling;
     }
     return child;
@@ -264,7 +276,7 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
     attributes[Constant.Id] = `${data.id}`;
     attributes[Constant.Hash] = `${data.hash}`;
 
-    let tag = node.nodeType === Node.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
+    let tag = node.nodeType === NodeType.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
     // First remove all its existing attributes
     if (node.attributes) {
         let length = node.attributes.length;
@@ -319,5 +331,6 @@ function getCustomStyle(): string {
         `img[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
         `img[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
         `img[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
-        `iframe[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }`;
+        `iframe[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
+        `*[${Constant.Suspend}] { filter: grayscale(100%); }`;
 }

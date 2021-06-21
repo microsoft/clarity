@@ -106,7 +106,7 @@ function reset(envelope: Data.Envelope): void {
     iframe.style.display = "block";
     (download.firstChild as HTMLElement).onclick = function(): void { save(true); };
     (download.lastChild as HTMLElement).onclick = function(): void { save(false); };
-    visualize.setup(envelope.version, iframe, resize, metadata);
+    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata });
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {

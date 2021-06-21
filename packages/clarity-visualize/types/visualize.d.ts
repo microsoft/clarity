@@ -1,6 +1,4 @@
 import { Data, Layout } from "clarity-decode";
-import { Regions } from "clarity-js/types/core";
-import { RegionData } from "clarity-js/types/layout";
 
 
 export type ResizeHandler  = (width: number, height: number) => void;
@@ -18,31 +16,52 @@ export interface Point {
     y: number;
 }
 
-export interface PlaybackState {
+export interface Options {
     version: string;
-    player: HTMLIFrameElement;
-    metadata: HTMLElement;
-    onresize: ResizeHandler;
+    dom?: Layout.DomEvent;
+    onresize?: ResizeHandler;
+    metadata?: HTMLElement;
+    canvas?: boolean;
+    keyframes?: boolean;
 }
 
-export type Activity = { [key: string]: ElementData };
-
-export interface RegionState {
-    visible: Data.BooleanFlag;
-    interaction: Data.BooleanFlag;
+export interface PlaybackState {
+    window: Window;
+    options: Options;
 }
+
+export type Activity = ElementData[];
+
+export interface ScrollMapInfo {
+    scrollReachY: number;
+    cumulativeSum: number;
+    percUsers: number;
+}
+
 
 export interface ElementData {
     hash: string;
-    clicks: number[][];
     selector: string;
-    total: number;
+    totalclicks: number;
+    x: number[];
+    y: number[];
+    clicks: number[];
+    points: number;
 }
 
 export interface Heatmap {
     x: number; /* X Coordinate */
     y: number; /* Y Coordinate */
     a: number; /* Alpha */
+}
+
+export const enum NodeType {
+    ELEMENT_NODE = 1,
+    ATTRIBUTE_NODE = 2,
+    TEXT_NODE = 3,
+    COMMENT_NODE = 8,
+    DOCUMENT_NODE = 9,
+    DOCUMENT_TYPE_NODE = 10
 }
 
 export const enum Asset {
@@ -69,6 +88,7 @@ export const enum Constant {
     Hash = "data-clarity-hash",
     Hide = "data-clarity-hide",
     Unavailable = "data-clarity-unavailable",
+    Suspend = "data-clarity-suspend",
     Hidden = "hidden",
     Visible = "visible",
     None = "none",    
@@ -95,6 +115,9 @@ export const enum Constant {
     TouchRing = "clarity-touch-ring",
     Title = "title",
     Round = "round",
+    AverageFold = "Average Fold",
+    Empty = "",
+    Undefined = "undefined",
     Function = "function"
 }
 
@@ -113,5 +136,15 @@ export const enum Setting {
     PixelLife = 3000,
     TrailWidth = 6,
     MaxTrailPoints = 75,
-    HoverDepth = 7
+    HoverDepth = 7,
+    MaxHue = 240,
+    MarkerLineHeight = 1,
+    MarkerHeight = 32,
+    MarkerMediumWidth = 84,
+    MarkerRange = 2,
+    MarkerSmallWidth = 35,
+    MarkerPadding = 5,
+    MarkerColor = "white",
+    CanvasTextColor = "#323130",
+    CanvasTextFont = "500 12px Segoe UI"
 }

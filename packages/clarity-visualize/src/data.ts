@@ -1,11 +1,10 @@
 import { Data, Layout } from "clarity-decode";
 import { state } from "./clarity";
-import { RegionState } from "@clarity-types/visualize";
 
 export let lean = false;
 
 let regionMap = {};
-let regions: { [key: string]: RegionState } = {};
+let regions: { [key: string]: Layout.Interaction } = {};
 let metrics: {[key: number]: number} = null;
 const METRIC_MAP = {};
 METRIC_MAP[Data.Metric.TotalBytes] = { name: "Total Bytes", unit: "KB" };
@@ -26,55 +25,47 @@ export function reset(): void {
 }
 
 export function metric(event: Data.MetricEvent): void {
-    if (state.metadata === null) { return; }
-
-    let metricMarkup = [];
-    let regionMarkup = [];
-    // Copy over metrics for future reference
-    for (let m in event.data) {
-        if (typeof event.data[m] === "number") {
-            if (!(m in metrics)) { metrics[m] = 0; }
-            let key = parseInt(m, 10);
-            if (m in METRIC_MAP && (METRIC_MAP[m].unit === "html-price" || METRIC_MAP[m].unit === "ld-price")) { 
-                metrics[m] = event.data[m];
-            } else { metrics[m] += event.data[m]; }
-            lean = key === Data.Metric.Playback && event.data[m] === 0 ? true : lean;
+    if (state.options.metadata) { 
+        let metricMarkup = [];
+        let regionMarkup = [];
+        // Copy over metrics for future reference
+        for (let m in event.data) {
+            if (typeof event.data[m] === "number") {
+                if (!(m in metrics)) { metrics[m] = 0; }
+                let key = parseInt(m, 10);
+                if (m in METRIC_MAP && (METRIC_MAP[m].unit === "html-price" || METRIC_MAP[m].unit === "ld-price")) { 
+                    metrics[m] = event.data[m];
+                } else { metrics[m] += event.data[m]; }
+                lean = key === Data.Metric.Playback && event.data[m] === 0 ? true : lean;
+            }
         }
-    }
 
-    for (let entry in metrics) {
-        if (entry in METRIC_MAP) {
-            let m = metrics[entry];
-            let map = METRIC_MAP[entry];
-            let unit = "unit" in map ? map.unit : Data.Constant.Empty;
-            metricMarkup.push(`<li><h2>${value(m, unit)}<span>${key(unit)}</span></h2>${map.name}</li>`);
+        for (let entry in metrics) {
+            if (entry in METRIC_MAP) {
+                let m = metrics[entry];
+                let map = METRIC_MAP[entry];
+                let unit = "unit" in map ? map.unit : Data.Constant.Empty;
+                metricMarkup.push(`<li><h2>${value(m, unit)}<span>${key(unit)}</span></h2>${map.name}</li>`);
+            }
         }
-    }
 
-    // Append region information to metadata
-    for (let name in regions) {
-        let r = regions[name];
-        let classes = [r.visible ? "visible" : Data.Constant.Empty, r.interaction ? "interaction" : Data.Constant.Empty];
-        regionMarkup.push(`<span class="${classes.join(Data.Constant.Space)}">${name}</span>`);
-    }
+        // Append region information to metadata
+        for (let name in regions) {
+            let r = regions[name];
+            let className = r === Layout.Interaction.Visible ? "visible" : (r === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty);
+            regionMarkup.push(`<span class="${className}">${name}</span>`);
+        }
 
-    state.metadata.innerHTML = `<ul>${metricMarkup.join(Data.Constant.Empty)}</ul><div>${regionMarkup.join(Data.Constant.Empty)}</div>`;
+        state.options.metadata.innerHTML = `<ul>${metricMarkup.join(Data.Constant.Empty)}</ul><div>${regionMarkup.join(Data.Constant.Empty)}</div>`;
+    }
 }
 
 export function region(event: Layout.RegionEvent): void {
     let data = event.data;
     for (let r of data) {
-        if (!(r.region in regions)) { regions[r.region] = { visible: Data.BooleanFlag.False, interaction: Data.BooleanFlag.False } }
-        regions[r.region].visible = r.visible;
-        regionMap[r.id] = r.region;
-    }
-}
-
-export function update(regionId: number): void {
-    if (regionId && regionId in regionMap) {
-        let name = regionMap[regionId];
-        if (!(name in regions)) { regions[name] = { visible: Data.BooleanFlag.False, interaction: Data.BooleanFlag.False } }
-        regions[name].interaction = Data.BooleanFlag.True;
+        if (!(r.name in regions)) { regions[r.name] = Layout.Interaction.Rendered; }
+        regions[r.name] = r.state;
+        regionMap[r.id] = r.name;
     }
 }
 

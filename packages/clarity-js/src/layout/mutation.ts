@@ -1,6 +1,6 @@
 import { Priority } from "@clarity-types/core";
 import { Code, Event, Metric, Severity } from "@clarity-types/data";
-import { Constant, MutationQueue, Setting, Source } from "@clarity-types/layout";
+import { Constant, MutationHistory, MutationQueue, Setting, Source } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
@@ -21,12 +21,16 @@ let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
 let queue: Node[] = [];
 let timeout: number = null;
+let activePeriod = null;
+let history: MutationHistory = {};
 
 
 export function start(): void {
     observers = [];
     queue = [];
     timeout = null;
+    activePeriod = 0;
+    history = {};
 
     if (insertRule === null) { insertRule = CSSStyleSheet.prototype.insertRule; }
     if (deleteRule === null) { deleteRule = CSSStyleSheet.prototype.deleteRule; }
@@ -89,9 +93,15 @@ export function stop(): void {
     deleteRule = null;
   }
 
+  history = {};
   mutations = [];
   queue = [];
+  activePeriod = 0;
   timeout = null;
+}
+
+export function active(): void {
+  activePeriod = time() + Setting.MutationActivePeriod;
 }
 
 function handle(m: MutationRecord[]): void {
@@ -112,8 +122,9 @@ async function process(): Promise<void> {
       let record = mutations.shift();
       for (let mutation of record.mutations) {
         let target = mutation.target;
-        if (target && target.ownerDocument) { dom.parse(target.ownerDocument); }
-        switch (mutation.type) {
+        let type = track(mutation, timer);
+        if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
+        switch (type) {
           case Constant.Attributes:
               if (task.shouldYield(timer)) { await task.suspend(timer); }
               processNode(target, Source.Attributes);
@@ -123,18 +134,12 @@ async function process(): Promise<void> {
               processNode(target, Source.CharacterData);
               break;
           case Constant.ChildList:
-            // Process additions
-            let addedLength = mutation.addedNodes ? mutation.addedNodes.length : 0;
-            for (let j = 0; j < addedLength; j++) {
-              let addedNode = mutation.addedNodes[j];
-              traverse(addedNode, timer, Source.ChildListAdd);
-            }
-            // Process removes
-            let removedLength = mutation.removedNodes ? mutation.removedNodes.length : 0;
-            for (let j = 0; j < removedLength; j++) {
-              if (task.shouldYield(timer)) { await task.suspend(timer); }
-              processNode(mutation.removedNodes[j], Source.ChildListRemove);
-            }
+            processNodeList(mutation.addedNodes, Source.ChildListAdd, timer);
+            processNodeList(mutation.removedNodes, Source.ChildListRemove, timer);
+            break;
+          case Constant.Suspend:
+            let value = dom.get(target);
+            if (value) { value.data.tag = Constant.SuspendMutationTag; }
             break;
           default:
             break;
@@ -143,6 +148,44 @@ async function process(): Promise<void> {
       await encode(Event.Mutation, record.time);
     }
     task.stop(timer);
+}
+
+function track(m: MutationRecord, timer: Metric): string {
+  let value = m.target ? dom.get(m.target.parentNode) : null;
+  if (value) {
+    let inactive = time() > activePeriod;
+    // We use selector, instead of id, to determine the key (signature for the mutation) because in some cases
+    // repeated mutations can cause elements to be destroyed and then recreated as new DOM nodes
+    // In those cases, IDs will change however the selector (which is relative to DOM xPath) remains the same
+    let key = [value.selector, m.attributeName, m.addedNodes ? m.addedNodes.length : 0, m.removedNodes ? m.removedNodes.length : 0].join();
+    // Initialize an entry if it doesn't already exist
+    history[key] = key in history ? history[key] : [0];
+    let h = history[key];
+    // Lookup any pending nodes queued up for removal, and process them now if we suspended a mutation before
+    if (inactive === false && h[0] >= Setting.MutationSuspendThreshold) { processNodeList(h[1], Source.ChildListRemove, timer); }
+    // Update the counter
+    h[0] = inactive ? h[0] + 1 : 1;
+    // Return updated mutation type based on if we have already hit the threshold or not
+    if (h[0] === Setting.MutationSuspendThreshold) {
+      // Store a reference to removedNodes so we can process them later
+      // when we resume mutations again on user interactions
+      h[1] = m.removedNodes;
+      return Constant.Suspend;
+    } else if (h[0] > Setting.MutationSuspendThreshold) { return Constant.Empty; }
+  }
+  return m.type;
+}
+
+async function processNodeList(list: NodeList, source: Source, timer: Metric): Promise<void> {
+  let length = list ? list.length : 0;
+  for (let i = 0; i < length; i++) {
+    if (source === Source.ChildListAdd) {
+      traverse(list[i], timer, source);
+    } else {
+      if (task.shouldYield(timer)) { await task.suspend(timer); }
+      processNode(list[i], source);
+    }
+  }
 }
 
 function schedule(node: Node): void {

@@ -19,13 +19,14 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             return { time, event, data: documentData };
         case Data.Event.Region:
             let regionData: Layout.RegionData[] = [];
+            // From 0.6.15 we send each reach update in an individual event. This allows us to include time with it.
+            // To keep it backward compatible (<= 0.6.14), we look for multiple regions in the same event. This works both with newer and older payloads.
+            // In future, we can update the logic to look deterministically for only 3 fields and remove the for loop.
             for (let i = 2; i < tokens.length; i += 3) {
-                // For backward compatibility since 0.6.4, we extract visibility signal from the "box" field if it is present
-                let legacy = Array.isArray(tokens[i+1]) && (tokens[i+1] as number[]).length === 5;
                 let region: Layout.RegionData = {
                     id: tokens[i] as number,
-                    visible: legacy ? tokens[i + 1][4] as number : tokens[i + 1] as number,
-                    region: tokens[i + 2] as string
+                    state: tokens[i + 1] as number,
+                    name: tokens[i + 2] as string
                 };
                 regionData.push(region);
             }

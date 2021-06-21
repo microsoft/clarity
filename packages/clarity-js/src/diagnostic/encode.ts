@@ -20,7 +20,7 @@ export default async function (type: Event): Promise<void> {
             break;
         case Event.ImageError:
             if (image.data) {
-                let imageTarget = metadata(image.data.target as Node);
+                let imageTarget = metadata(image.data.target as Node, type);
                 tokens.push(image.data.source);
                 tokens.push(imageTarget.id);
                 queue(tokens);

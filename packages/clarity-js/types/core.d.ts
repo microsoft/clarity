@@ -1,8 +1,10 @@
-import { Metadata, Payload, Token } from "./data";
+import * as Data from "./data";
 
 type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
 type UploadCallback = (data: string) => void;
+type Region = [number /* RegionId */, keyof HTMLElementTagNameMap /* Query Selector */, RegionFilter? /* Region Filter */, string? /* Filter Text */];
+type Metric = [Data.Metric /* MetricId */, Extract /* Extract Filter */, string /* Match Value */, number? /* Scale Factor */];
 
 /* Enum */
 
@@ -19,6 +21,17 @@ export const enum Time {
 
 export const enum Setting {
     LongTask = 30, // 30ms
+}
+
+export const enum RegionFilter {
+    Url = 0,
+    Javascript = 1
+}
+
+export const enum Extract {
+    Text = 0,
+    Javascript = 1,
+    Attribute = 2
 }
 
 export const enum Privacy {
@@ -44,16 +57,6 @@ export interface TaskInfo {
     start: number;
     calls: number;
     yield: number;
-}
-
-export interface Regions {
-    /* In the following key-value pair, key is the given name and value is CSS selector */
-    [key: string]: string;
-}
-
-export interface Metrics {
-    /* In the following key-value pair, key is the given CSS Selector and value is Metric enum */
-    [key: string]: number;
 }
 
 export interface RequestIdleCallbackOptions {
@@ -99,8 +102,8 @@ export interface Config {
     content?: boolean;
     mask?: string[];
     unmask?: string[];
-    regions?: Regions;
-    metrics?: Metrics;
+    regions?: Region[];
+    metrics?: Metric[];
     cookies?: string[];
     server?: string;
     report?: string;

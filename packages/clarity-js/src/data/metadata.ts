@@ -44,6 +44,8 @@ export function start(): void {
   dimension.log(Dimension.Referrer, document.referrer);
   dimension.log(Dimension.TabId, tab());
   dimension.log(Dimension.PageLanguage, document.documentElement.lang);
+  dimension.log(Dimension.DocumentDirection, document.dir);
+
   if (navigator) {
     dimension.log(Dimension.Language, (<any>navigator).userLanguage || navigator.language);
   }

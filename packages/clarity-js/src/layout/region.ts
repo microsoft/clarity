@@ -1,12 +1,12 @@
-import { BooleanFlag, Event, Setting } from "@clarity-types/data";
-import { RegionData, RegionQueue } from "@clarity-types/layout";
+import { Event, Setting } from "@clarity-types/data";
+import { InteractionState, RegionData, RegionState, RegionQueue } from "@clarity-types/layout";
+import { time } from "@src/core/time";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
 
-export let data: RegionData[] = [];
+export let state: RegionState[] = [];
 let regionMap: WeakMap<Node, string> = null; // Maps region nodes => region name
 let regions: { [key: number]: RegionData } = {};
-let updates: number[] = [];
 let queue: RegionQueue[] = [];
 let watch = false;
 let observer: IntersectionObserver = null;
@@ -44,13 +44,18 @@ export function exists(node: Node): boolean {
     return regionMap && regionMap.has(node);
 }
 
-export function track(id: number): void {
-    // Do not send another entry if we are already sending it
+export function track(id: number, event: Event): void {
     let node = dom.getNode(id);
-    if (updates.indexOf(id) <= 0 && regionMap.has(node)) {
-        regions[id] = id in regions ? regions[id] : { id, visible: BooleanFlag.False, region: regionMap.get(node) };
-        data.push(regions[id]);
+    let data = id in regions ? regions[id] : { id, state: InteractionState.Rendered, name: regionMap.get(node) };
+    
+    // Determine the interaction state based on incoming event
+    let interactionState = InteractionState.Rendered;
+    switch (event) {
+        case Event.Click: interactionState = InteractionState.Clicked; break;
+        case Event.Input: interactionState = InteractionState.Input; break;
     }
+    // Process updates to this region, if applicable
+    process(node, data, interactionState);
 }
 
 export function compute(): void {
@@ -64,14 +69,14 @@ export function compute(): void {
             if (id) {
                 r.data.id = id;
                 regions[id] = r.data;
-                data.push(r.data);
+                state.push(clone(r.data));
             } else { q.push(r); }
         }
     }
     queue = q;
 
     // Schedule encode only when we have at least one valid data entry
-    if (data.length > 0) { encode(Event.Region); }
+    if (state.length > 0) { encode(Event.Region); }
 }
 
 function handler(entries: IntersectionObserverEntry[]): void {
@@ -86,27 +91,43 @@ function handler(entries: IntersectionObserverEntry[]): void {
         // Also, if these regions ever become non-zero width or height (through AJAX, user action or orientation change) - we will automatically start monitoring them from that point onwards
         if (regionMap.has(target) && rect.width + rect.height > 0 && viewport.width > 0 && viewport.height > 0) {
             let id = target ? dom.getId(target) : null;
-            let viewportRatio = overlap ? (overlap.width * overlap.height * 1.0) / (viewport.width * viewport.height) : 0;
+            let data = id in regions ? regions[id] : { id, name: regionMap.get(target), state: InteractionState.Rendered };
+            
             // For regions that have relatively smaller area, we look at intersection ratio and see the overlap relative to element's area
             // However, for larger regions, area of regions could be bigger than viewport and therefore comparison is relative to visible area
-            let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio ? BooleanFlag.True : BooleanFlag.False;
-            // If the visibility hasn't changed since the last tracked value, ignore this notification
-            if (!(id in regions && regions[id].visible === visible)) {
-                let d = { id, visible, region: regionMap.get(target) };
-                if (id) {
-                    regions[id] = d;
-                    updates.push(id);
-                    data.push(d);
-                } else { queue.push({node: target, data: d}); }
-            }
+            let viewportRatio = overlap ? (overlap.width * overlap.height * 1.0) / (viewport.width * viewport.height) : 0;
+            let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio;
+
+            // Process updates to this region, if applicable
+            process(target, data, visible ? InteractionState.Visible : InteractionState.Rendered);
+
+            // Stop observing this element now that we have already received visibility signal
+            if (data.state >= InteractionState.Visible && observer) { observer.unobserve(target); }
         }
     }
-    if (data.length > 0) { encode(Event.Region); }
+    if (state.length > 0) { encode(Event.Region); }
+}
+
+function process(n: Node, d: RegionData, s: InteractionState): void {
+    // Check if received a state that supersedes existing state
+    let updated = s > d.state;
+    d.state = updated ? s : d.state;
+    // If the corresponding node is already discovered, update the internal state
+    // Otherwise, track it in a queue to reprocess later.
+    if (d.id) {
+        if ((d.id in regions && updated) || !(d.id in regions)) {
+            regions[d.id] = d;
+            state.push(clone(d));
+        }
+    } else { queue.push({node: n, data: d}); }
+}
+
+function clone(r: RegionData): RegionState {
+    return { time: time(), data: { id: r.id, state: r.state, name: r.name }};
 }
 
 export function reset(): void {
-    data = [];    
-    updates = [];
+    state = [];   
 }
 
 export function stop(): void {

@@ -1,7 +1,6 @@
 import { Asset, Constant, Point, Setting } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import { state } from "./clarity";
-import { update } from "./data";
 import { element } from "./layout";
 
 const TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
@@ -23,7 +22,7 @@ export function reset(): void {
 
 export function scroll(event: Interaction.ScrollEvent): void {
     let data = event.data;
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     let de = doc.documentElement;
     let scrollTarget = element(data.target as number) as HTMLElement || doc.body;
     let scrollable = scrollTarget.scrollHeight > scrollTarget.clientHeight;
@@ -31,7 +30,7 @@ export function scroll(event: Interaction.ScrollEvent): void {
 
     // Position canvas relative to scroll events on the parent page
     if (scrollTarget === de || scrollTarget === doc.body) {
-        if (!scrollable) { state.player.contentWindow.scrollTo(data.x, data.y); }
+        if (!scrollable) { state.window.scrollTo(data.x, data.y); }
         let canvas = overlay();
         if (canvas) {
             canvas.style.left = data.x + Constant.Pixel;
@@ -41,25 +40,25 @@ export function scroll(event: Interaction.ScrollEvent): void {
         }
         scrollPointIndex = points.length;
     }
-    update(data.region);
 }
 
 export function resize(event: Interaction.ResizeEvent): void {
     let data = event.data;
     let width = data.width;
     let height = data.height;
-    if (state.onresize) {
-        state.onresize(width, height);
+    if (state.options.onresize) {
+        state.options.onresize(width, height);
     }
 }
 
 export function visibility(event: Interaction.VisibilityEvent): void {
-    if (state.player && event.data.visible !== Constant.Visible) {
-        state.player.style.backgroundColor = Constant.Black;
-        state.player.style.opacity = Constant.HiddenOpacity;
+    let doc = state.window.document;
+    if (doc && doc.documentElement && event.data.visible !== Constant.Visible) {
+        doc.documentElement.style.backgroundColor = Constant.Black;
+        doc.documentElement.style.opacity = Constant.HiddenOpacity;
     } else {
-        state.player.style.backgroundColor = Constant.Transparent;
-        state.player.style.opacity = Constant.VisibleOpacity;
+        doc.documentElement.style.backgroundColor = Constant.Transparent;
+        doc.documentElement.style.opacity = Constant.VisibleOpacity;
     }
 }
 
@@ -77,12 +76,11 @@ export function input(event: Interaction.InputEvent): void {
                 break;
         }
     }
-    update(data.region);
 }
 
 export function selection(event: Interaction.SelectionEvent): void {
     let data = event.data;
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     let s = doc.getSelection();
     // Wrapping selection code inside a try / catch to avoid throwing errors when dealing with elements inside the shadow DOM.
     try { s.setBaseAndExtent(element(data.start as number), data.startOffset, element(data.end as number), data.endOffset); } catch (ex) {
@@ -93,7 +91,7 @@ export function selection(event: Interaction.SelectionEvent): void {
 export function pointer(event: Interaction.PointerEvent): void {
     let data = event.data;
     let type = event.event;
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     let de = doc.documentElement;
     let p = doc.getElementById(Constant.PointerLayer);
     let pointerWidth = Setting.PointerWidth;
@@ -106,7 +104,7 @@ export function pointer(event: Interaction.PointerEvent): void {
 
         // Add custom styles
         let style = doc.createElement("STYLE");
-        style.innerText =
+        style.textContent =
             "@keyframes pulsate-one { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(3, 3); opacity: 0; } }" +
             "@keyframes pulsate-two { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(5, 5); opacity: 0; } }" +
             "@keyframes pulsate-touch { 0% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(2, 2); opacity: 0; } }" +
@@ -132,7 +130,6 @@ export function pointer(event: Interaction.PointerEvent): void {
             title = "Click";
             drawClick(doc, data.x, data.y, title);
             p.className = Constant.PointerNone;
-            update((event as Interaction.ClickEvent).data.region);
             break;
         case Data.Event.DoubleClick:
             title = "Click";
@@ -238,17 +235,19 @@ function drawClick(doc: Document, x: number, y: number, title: string): void {
     click.appendChild(ringTwo);
 
     // Play sound
-    if (clickAudio === null) { clickAudio = new Audio(Asset.Sound); }
-    clickAudio.play();
+    if (typeof Audio !== Constant.Undefined) {
+        if (clickAudio === null) { clickAudio = new Audio(Asset.Sound); }
+        clickAudio.play();
+    }
 }
 
 function overlay(): HTMLCanvasElement {
     // Create canvas for visualizing interactions
-    let doc = state.player.contentDocument;
+    let doc = state.window.document;
     let de = doc.documentElement;
     let canvas = doc.getElementById(Constant.InteractionCanvas) as HTMLCanvasElement;
     if (canvas === null) {
-        canvas = document.createElement("canvas");
+        canvas = doc.createElement("canvas");
         canvas.id = Constant.InteractionCanvas;
         canvas.width = 0;
         canvas.height = 0;
@@ -277,9 +276,9 @@ function match(time: number): Point[] {
 
 export function trail(now: number): void {
     const canvas = overlay();
-    if (canvas) {
+    if (state.options.canvas && canvas) {
         const ctx = canvas.getContext('2d');
-        const path = curve(match(now));
+        const path = state.options.keyframes ? curve(points.reverse()) : curve(match(now));
         // Update hovered elements
         hover();
         // We need at least two points to create a line
@@ -321,6 +320,8 @@ export function trail(now: number): void {
                 last = current;
             }
         }
+        // If we are only rendering key frames, clear points array after each key frame
+        if (state.options.keyframes) { points = []; }
     }
 }
 
