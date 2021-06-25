@@ -203,8 +203,8 @@ export const enum Constant {
     LCP = "largest-contentful-paint",
     HTTPS = "https://",
     CompressionStream = "CompressionStream",
-    ContentEncoding = "Content-Encoding",
-    Gzip = "gzip"
+    Accept = "Accept",
+    ClarityGzip = "application/x-clarity-gzip"
 }
 
 export const enum XMLReadyState {

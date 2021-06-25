@@ -158,8 +158,8 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence, beacon); }; }
             xhr.withCredentials = true;
             if (zipped) {
-                // If we do have valid compressed array, send it with appropriate HTTP headers
-                xhr.setRequestHeader(Constant.ContentEncoding, Constant.Gzip);
+                // If we do have valid compressed array, send it with appropriate HTTP headers so server can decode it appropriately
+                xhr.setRequestHeader(Constant.Accept, Constant.ClarityGzip);
                 xhr.send(zipped);
             } else {
                 // In all other cases, continue sending string back to the server
