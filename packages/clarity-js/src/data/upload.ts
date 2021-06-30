@@ -5,6 +5,7 @@ import config from "@src/core/config";
 import measure from "@src/core/measure";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
+import compress from "@src/data/compress";
 import encode from "@src/data/encode";
 import * as envelope from "@src/data/envelope";
 import * as data from "@src/data/index";
@@ -83,7 +84,7 @@ export function stop(): void {
     active = false;
 }
 
-function upload(final: boolean = false): void {
+async function upload(final: boolean = false): Promise<void> {
     timeout = null;
 
     // Check if we can send playback bytes over the wire or not
@@ -108,9 +109,14 @@ function upload(final: boolean = false): void {
 
     let p = sendPlaybackBytes ? `[${playback.join()}]` : Constant.Empty;
     let encoded: EncodedPayload = {e, a, p};
+    
+    // Get the payload ready for sending over the wire
+    // We also attempt to compress the payload if it is not the last payload and the browser supports it
+    // In all other cases, we continue to send back string value
     let payload = stringify(encoded);
-    metric.sum(Metric.TotalBytes, payload.length);
-    send(payload, envelope.data.sequence, last);
+    let zipped = last ? null : await compress(payload) 
+    metric.sum(Metric.TotalBytes, zipped ? zipped.length : payload.length);
+    send(payload, zipped, envelope.data.sequence, last);
 
     // Clear out events now that payload has been dispatched
     analysis = [];
@@ -124,7 +130,7 @@ function stringify(encoded: EncodedPayload): string {
     return encoded.p.length > 0 ? `{"e":${encoded.e},"a":${encoded.a},"p":${encoded.p}}` : `{"e":${encoded.e},"a":${encoded.a}}`;
 }
 
-function send(payload: string, sequence: number, beacon: boolean): void {
+function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boolean): void {
     // Upload data if a valid URL is defined in the config
     if (typeof config.upload === Constant.String && config.server) {
         const url = `${config.server}/${config.upload}`;
@@ -133,6 +139,7 @@ function send(payload: string, sequence: number, beacon: boolean): void {
         // If it's the last payload, attempt to upload using sendBeacon first.
         // The advantage to using sendBeacon is that browser can decide to upload asynchronously, improving chances of success
         // However, we don't want to rely on it for every payload, since we have no ability to retry if the upload failed.
+        // Also, in case of sendBeacon, we do not have a way to alter HTTP headers and therefore can't send compressed payload
         if (beacon && "sendBeacon" in navigator) {
             dispatched = navigator.sendBeacon(url, payload);
         }
@@ -143,12 +150,21 @@ function send(payload: string, sequence: number, beacon: boolean): void {
         //   b) It's the last payload, however, we failed to queue sendBeacon call and need to now fall back to XHR.
         //      E.g. if data is over 64KB, several user agents (like Chrome) will reject to queue the sendBeacon call.
         if (dispatched === false) {
+            // While tracking payload for retry, we only track string value of the payload to err on the safe side
+            // Not all browsers support compression API and the support for it in supported browsers is still experimental
             if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
             let xhr = new XMLHttpRequest();
             xhr.open("POST", url);
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence, beacon); }; }
             xhr.withCredentials = true;
-            xhr.send(payload);
+            if (zipped) {
+                // If we do have valid compressed array, send it with appropriate HTTP headers so server can decode it appropriately
+                xhr.setRequestHeader(Constant.Accept, Constant.ClarityGzip);
+                xhr.send(zipped);
+            } else {
+                // In all other cases, continue sending string back to the server
+                xhr.send(payload);
+            }
         }
     } else if (config.upload) {
         const callback = config.upload as UploadCallback;
@@ -168,13 +184,15 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
                 // The observed behavior is that Safari will terminate pending XHR requests with status code 0
                 // if the user navigates away from the page. In these cases, we fallback to the else clause and lose the data
                 // By explicitly handing status code 0 we attempt to try a different transport (sendBeacon vs. XHR) before giving up.
-                send(transitData.data, sequence, true);
+                send(transitData.data, null, sequence, true);
             } else if (xhr.status >= 400 && xhr.status < 500) {
                 // Anytime we receive a 4XX response from the server, we bail out instead of trying again
                 limit.trigger(Check.Server);
             } else {
                 // In all other cases, re-attempt sending the same data
-                send(transitData.data, sequence, last);
+                // For retry we always fallback to string payload, even though we may have attempted
+                // sending zipped payload earlier
+                send(transitData.data, null, sequence, last);
             }
         } else {
             track = { sequence, attempts: transitData.attempts, status: xhr.status };
