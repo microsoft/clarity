@@ -147,7 +147,7 @@ function overlay(): HTMLCanvasElement {
     let de = doc.documentElement;
     let canvas = doc.getElementById(Constant.HeatmapCanvas) as HTMLCanvasElement;
     if (canvas === null) {
-        canvas = document.createElement(Constant.Canvas) as HTMLCanvasElement;
+        canvas = doc.createElement(Constant.Canvas) as HTMLCanvasElement;
         canvas.id = Constant.HeatmapCanvas;
         canvas.width = 0;
         canvas.height = 0;
@@ -156,7 +156,7 @@ function overlay(): HTMLCanvasElement {
         de.appendChild(canvas);
         win.addEventListener("scroll", redraw, true);
         win.addEventListener("resize", redraw, true);
-        observer = window["ResizeObserver"] ? new ResizeObserver(redraw) : null;
+        observer = state.window["ResizeObserver"] ? new ResizeObserver(redraw) : null;
         if (observer) { observer.observe(doc.body); }
     }
 
