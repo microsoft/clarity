@@ -33,7 +33,7 @@ export function start(): void {
   }
 
   // Override configuration based on what's in the session storage
-  config.lean = config.track && s.upgrade === BooleanFlag.True ? false : config.lean;
+  config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
   config.upload = config.track && typeof config.upload === Constant.String && s.upload ? s.upload : config.upload;
 
 
@@ -124,7 +124,7 @@ function shortid(): string {
 }
 
 function session(): Session {
-  let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: BooleanFlag.False, upload: Constant.Empty };
+  let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: null, upload: Constant.Empty };
   let value = getCookie(Constant.SessionKey);
   if (value) {
     let parts = value.split(Constant.Pipe);
