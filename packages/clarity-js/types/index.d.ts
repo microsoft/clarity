@@ -7,7 +7,7 @@ import * as Performance from "./performance";
 
 interface Clarity {
   start: (config?: Core.Config) => void;
-  end: () => void;
+  stop: () => void;
   pause: () => void;
   resume: () => void;
   upgrade: (key: string) => void;
