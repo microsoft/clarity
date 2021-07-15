@@ -37,6 +37,7 @@ export function start(): void {
 export function queue(tokens: Token[], transmit: boolean = true): void {
     if (active) {
         let now = time();
+        let gap = delay();
         let type = tokens.length > 1 ? tokens[1] : null;
         let event = JSON.stringify(tokens);
 
@@ -55,7 +56,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         // Following two checks are precautionary and act as a fail safe mechanism to get out of unexpected situations.
         // Check 1: If for any reason the upload hasn't happened after waiting for 2x the config.delay time,
         // reset the timer. This allows Clarity to attempt an upload again.
-        if (now - queuedTime > (config.delay * 2)) {
+        if (now - queuedTime > (gap * 2)) {
             clearTimeout(timeout);
             timeout = null;
         }
@@ -65,7 +66,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         // We enrich the data going out with the existing upload. In these cases, call to upload comes with 'transmit' set to false.
         if (transmit && timeout === null) {
             if (type !== Event.Ping) { ping.reset(); }
-            timeout = setTimeout(upload, config.delay);
+            timeout = setTimeout(upload, gap);
             queuedTime = now;
             limit.check(playbackBytes);
         }
@@ -90,8 +91,9 @@ async function upload(final: boolean = false): Promise<void> {
     // Check if we can send playback bytes over the wire or not
     // For better instrumentation coverage, we send playback bytes from second sequence onwards
     // And, we only send playback metric when we are able to send the playback bytes back to server
-    let sendPlaybackBytes = config.lean === false && envelope.data.sequence > 0;
-    if (sendPlaybackBytes && playback && playback.length > 0) { metric.max(Metric.Playback, BooleanFlag.True); }
+    let playbackBytes = playback ? playback.length : 0;
+    let sendPlaybackBytes = config.lean === false && (playbackBytes < Setting.MaxFirstPayloadBytes || envelope.data.sequence > 0);
+    if (sendPlaybackBytes && playbackBytes > 0) { metric.max(Metric.Playback, BooleanFlag.True); }
 
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
@@ -207,6 +209,12 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
             delete transit[sequence];
         }
     }
+}
+
+function delay(): number {
+    // Progressively increase delay as we continue to send more payloads from the client to the server
+    // If we are not uploading data to a server, and instead invoking UploadCallback, in that case keep returning configured value 
+    return config.server ? Math.max(Math.min(envelope.data.sequence * config.delay, Setting.MaxUploadDelay), Setting.MinUploadDelay) : config.delay;
 }
 
 function response(payload: string): void {
