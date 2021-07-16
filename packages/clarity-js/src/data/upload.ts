@@ -22,6 +22,7 @@ let timeout: number = null;
 let transit: Transit;
 let active: boolean;
 let queuedTime: number = 0;
+let upgraded: boolean;
 export let track: UploadData;
 
 export function start(): void {
@@ -39,13 +40,19 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         let now = time();
         let type = tokens.length > 1 ? tokens[1] : null;
         let event = JSON.stringify(tokens);
-
+        let forceSend = false;
         switch (type) {
             case Event.Box:
             case Event.Discover:
             case Event.Mutation:
                 playbackBytes += event.length;
                 playback.push(event);
+                break;
+            case Event.Upgrade:
+                if (!upgraded) {
+                    upgraded = true;
+                    forceSend = true;
+                }
                 break;
             default:
                 analysis.push(event);
@@ -65,7 +72,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         // We enrich the data going out with the existing upload. In these cases, call to upload comes with 'transmit' set to false.
         if (transmit && timeout === null) {
             if (type !== Event.Ping) { ping.reset(); }
-            timeout = setTimeout(upload, config.delay);
+            timeout = forceSend ? setTimeout(upload, 1) : setTimeout(upload, config.delay);
             queuedTime = now;
             limit.check(playbackBytes);
         }
