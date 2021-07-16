@@ -161,7 +161,7 @@ export const enum Setting {
     MaxFirstPayloadBytes = 1 * 1024 * 1024, // 1MB: Cap the very first payload to a maximum of 1MB
     UploadFactor = 3, // Slow down sequence by specified factor
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
-    MaxUploadDelay = 30000 // Do flush out payload once every 30s
+    MaxUploadDelay = 30 * Time.Second // Do flush out payload once every 30s
 }
 
 export const enum Constant {

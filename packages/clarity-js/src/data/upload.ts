@@ -15,6 +15,7 @@ import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
 
+let discoverBytes: number = 0;
 let playbackBytes: number = 0;
 let playback: string[];
 let analysis: string[];
@@ -26,6 +27,7 @@ export let track: UploadData;
 
 export function start(): void {
     active = true;
+    discoverBytes = 0;
     playbackBytes = 0;
     queuedTime = 0;
     playback = [];
@@ -37,13 +39,13 @@ export function start(): void {
 export function queue(tokens: Token[], transmit: boolean = true): void {
     if (active) {
         let now = time();
-        let gap = delay();
         let type = tokens.length > 1 ? tokens[1] : null;
         let event = JSON.stringify(tokens);
-
+        
         switch (type) {
-            case Event.Box:
             case Event.Discover:
+                discoverBytes += event.length;
+            case Event.Box:
             case Event.Mutation:
                 playbackBytes += event.length;
                 playback.push(event);
@@ -56,6 +58,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         // Following two checks are precautionary and act as a fail safe mechanism to get out of unexpected situations.
         // Check 1: If for any reason the upload hasn't happened after waiting for 2x the config.delay time,
         // reset the timer. This allows Clarity to attempt an upload again.
+        let gap = delay();
         if (now - queuedTime > (gap * 2)) {
             clearTimeout(timeout);
             timeout = null;
@@ -76,6 +79,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
 export function stop(): void {
     clearTimeout(timeout);
     upload(true);
+    discoverBytes = 0;
     playbackBytes = 0;
     queuedTime = 0;
     playback = [];
@@ -91,9 +95,8 @@ async function upload(final: boolean = false): Promise<void> {
     // Check if we can send playback bytes over the wire or not
     // For better instrumentation coverage, we send playback bytes from second sequence onwards
     // And, we only send playback metric when we are able to send the playback bytes back to server
-    let playbackBytes = playback ? playback.length : 0;
-    let sendPlaybackBytes = config.lean === false && (playbackBytes < Setting.MaxFirstPayloadBytes || envelope.data.sequence > 0);
-    if (sendPlaybackBytes && playbackBytes > 0) { metric.max(Metric.Playback, BooleanFlag.True); }
+    let sendPlaybackBytes = config.lean === false && playbackBytes > 0 && (playbackBytes < Setting.MaxFirstPayloadBytes || envelope.data.sequence > 0);
+    if (sendPlaybackBytes) { metric.max(Metric.Playback, BooleanFlag.True); }
 
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
@@ -125,6 +128,7 @@ async function upload(final: boolean = false): Promise<void> {
     if (sendPlaybackBytes) {
         playback = [];
         playbackBytes = 0;
+        discoverBytes = 0;
     }
 }
 
@@ -214,7 +218,8 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
 function delay(): number {
     // Progressively increase delay as we continue to send more payloads from the client to the server
     // If we are not uploading data to a server, and instead invoking UploadCallback, in that case keep returning configured value 
-    return config.server ? Math.max(Math.min(envelope.data.sequence * config.delay, Setting.MaxUploadDelay), Setting.MinUploadDelay) : config.delay;
+    let gap = config.lean === false && discoverBytes > 0 ? Setting.MinUploadDelay : envelope.data.sequence * config.delay;
+    return config.server ? Math.max(Math.min(gap, Setting.MaxUploadDelay), Setting.MinUploadDelay) : config.delay;
 }
 
 function response(payload: string): void {
