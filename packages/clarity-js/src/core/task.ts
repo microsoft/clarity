@@ -1,6 +1,7 @@
-import { AsyncTask, Priority, RequestIdleCallbackDeadline, RequestIdleCallbackOptions } from "@clarity-types/core";
+import { AsyncTask, Priority, RequestIdleCallbackDeadline, RequestIdleCallbackOptions, Task, Timer } from "@clarity-types/core";
 import { Setting, TaskFunction, TaskResolve, Tasks } from "@clarity-types/core";
 import { Code, Metric, Severity } from "@clarity-types/data";
+import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as log from "@src/diagnostic/log";
 
@@ -45,7 +46,10 @@ export async function schedule(task: TaskFunction, priority: Priority = Priority
 
     let promise = new Promise<void>((resolve: TaskResolve): void => {
         let insert = priority === Priority.High ? "unshift" : "push";
-        queuedTasks[insert]({ task, resolve });
+        // Queue this task for asynchronous execution later
+        // We also store a unique page identifier (id) along with the task to ensure
+        // ensure that we do not accidentally execute this task in context of a different page
+        queuedTasks[insert]({ task, resolve, id: metadata.id() });
     });
 
     // If there is no active task running, and Clarity is not in pause state,
@@ -60,11 +64,16 @@ function run(): void {
     if (entry) {
         activeTask = entry;
         entry.task().then((): void => {
+            // Bail out if the context in which this task was operating is different from the current page
+            // An example scenario where task could span across pages is Single Page Applications (SPA)
+            // A task that started on page #1, but completes on page #2
+            if (entry.id !== metadata.id()) { return; }
             entry.resolve();
             activeTask = null; // Reset active task back to null now that the promise is resolved
             run();
         }).catch((error: Error): void => {
             // If one of the scheduled tasks failed, log, recover and continue processing rest of the tasks
+            if (entry.id !== metadata.id()) { return; }
             log.log(Code.RunTask, error, Severity.Warning);
             activeTask = null;
             run();
@@ -72,49 +81,61 @@ function run(): void {
     }
 }
 
-export function shouldYield(method: Metric): boolean {
-    if (method in tracker) {
-        let elapsed = performance.now() - tracker[method].start;
-        return (elapsed > tracker[method].yield);
+export function state(timer: Timer): Task {
+    let id = key(timer);
+    if (id in tracker) {
+        let elapsed = performance.now() - tracker[id].start;
+        return (elapsed > tracker[id].yield) ? Task.Wait : Task.Run;
     }
-    return true;
+    // If this task is no longer being tracked, send stop message to the caller
+    return Task.Stop;
 }
 
-export function start(method: Metric): void {
-    tracker[method] = { start: performance.now(), calls: 0, yield: Setting.LongTask };
+export function start(timer: Timer): void {
+    tracker[key(timer)] = { start: performance.now(), calls: 0, yield: Setting.LongTask };
 }
 
-function restart(method: Metric): void {
-    if (tracker && tracker[method]) {
-        let c = tracker[method].calls;
-        let y = tracker[method].yield;
-        start(method);
-        tracker[method].calls = c + 1;
-        tracker[method].yield = y;
+function restart(timer: Timer): void {
+    let id = key(timer);
+    if (tracker && tracker[id]) {
+        let c = tracker[id].calls;
+        let y = tracker[id].yield;
+        start(timer);
+        tracker[id].calls = c + 1;
+        tracker[id].yield = y;
     }
 }
 
-export function stop(method: Metric): void {
+export function stop(timer: Timer): void {
     let end = performance.now();
-    let duration = end - tracker[method].start;
-    metric.sum(method, duration);
+    let id = key(timer);
+    let duration = end - tracker[id].start;
+    metric.sum(timer.cost, duration);
     metric.count(Metric.InvokeCount);
 
     // For the first execution, which is synchronous, time is automatically counted towards TotalDuration.
     // However, for subsequent asynchronous runs, we need to manually update TotalDuration metric.
-    if (tracker[method].calls > 0) { metric.sum(Metric.TotalCost, duration); }
+    if (tracker[id].calls > 0) { metric.sum(Metric.TotalCost, duration); }
 }
 
-export async function suspend(method: Metric): Promise<void> {
+export async function suspend(timer: Timer): Promise<Task> {
     // Suspend and yield the thread only if the task is still being tracked
     // It's possible that Clarity is wrapping up instrumentation on a page and we are still in the middle of an async task.
     // In that case, we do not wish to continue yielding thread.
     // Instead, we will turn async task into a sync task and maximize our chances of getting some data back.
-    if (method in tracker) {
-        stop(method);
-        tracker[method].yield = (await wait()).timeRemaining();
-        restart(method);
+    let id = key(timer);
+    if (id in tracker) {
+        stop(timer);
+        tracker[id].yield = (await wait()).timeRemaining();
+        restart(timer);
     }
+    // After we are done with suspending task, ensure that we are still operating in the right context
+    // If the task is still being tracked, continue running the task, otherwise ask caller to stop execution
+    return id in tracker ? Task.Run : Task.Stop;
+}
+
+function key(timer: Timer): string {
+    return `${timer.id}.${timer.cost}`;
 }
 
 async function wait(): Promise<RequestIdleCallbackDeadline> {

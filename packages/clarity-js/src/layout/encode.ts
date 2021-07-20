@@ -1,5 +1,5 @@
-import { Privacy } from "@clarity-types/core";
-import { Event, Metric, Token } from "@clarity-types/data";
+import { Privacy, Task, Timer } from "@clarity-types/core";
+import { Event, Token } from "@clarity-types/data";
 import { Constant, NodeInfo, NodeValue } from "@clarity-types/layout";
 import config from "@src/core/config";
 import scrub from "@src/core/scrub";
@@ -13,10 +13,9 @@ import * as doc from "./document";
 import * as dom from "./dom";
 import * as region from "./region";
 
-export default async function (type: Event, ts: number = null): Promise<void> {
+export default async function (type: Event, timer: Timer = null, ts: number = null): Promise<void> {
     let eventTime = ts || time()
     let tokens: Token[] = [eventTime, type];
-    let timer = Metric.LayoutCost;
     switch (type) {
         case Event.Document:
             let d = doc.data;
@@ -47,11 +46,15 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             break;
         case Event.Discover:
         case Event.Mutation:
+            // Check if we are operating within the context of the current page
+            if (task.state(timer) === Task.Stop) { break; }
             let values = dom.updates();
             // Only encode and queue DOM updates if we have valid updates to report back
             if (values.length > 0) {
                 for (let value of values) {
-                    if (task.shouldYield(timer)) { await task.suspend(timer); }
+                    let state = task.state(timer);
+                    if (state === Task.Wait) { state = await task.suspend(timer); }
+                    if (state === Task.Stop) { break; }
                     let metadata = [];
                     let data: NodeInfo = value.data;
                     let active = value.metadata.active;

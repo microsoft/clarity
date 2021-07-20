@@ -77,6 +77,10 @@ export function metadata(cb: MetadataCallback): void {
   callback = cb;
 }
 
+export function id(): string {
+  return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
+}
+
 export function consent(): void {
   if (core.active()) {
     config.track = true;

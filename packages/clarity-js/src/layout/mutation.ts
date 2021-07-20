@@ -1,4 +1,4 @@
-import { Priority } from "@clarity-types/core";
+import { Priority, Task, Timer } from "@clarity-types/core";
 import { Code, Event, Metric, Severity } from "@clarity-types/data";
 import { Constant, MutationHistory, MutationQueue, Setting, Source } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
@@ -6,6 +6,7 @@ import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
+import { id } from "@src/data/metadata";
 import * as summary from "@src/data/summary";
 import * as log from "@src/diagnostic/log";
 import * as doc from "@src/layout/document";
@@ -116,41 +117,42 @@ function handle(m: MutationRecord[]): void {
 }
 
 async function process(): Promise<void> {
-    let timer = Metric.LayoutCost;
-    task.start(timer);
-    while (mutations.length > 0) {
-      let record = mutations.shift();
-      for (let mutation of record.mutations) {
-        let target = mutation.target;
-        let type = track(mutation, timer);
-        if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
-        switch (type) {
-          case Constant.Attributes:
-              if (task.shouldYield(timer)) { await task.suspend(timer); }
-              processNode(target, Source.Attributes);
-              break;
-          case Constant.CharacterData:
-              if (task.shouldYield(timer)) { await task.suspend(timer); }
-              processNode(target, Source.CharacterData);
-              break;
-          case Constant.ChildList:
-            processNodeList(mutation.addedNodes, Source.ChildListAdd, timer);
-            processNodeList(mutation.removedNodes, Source.ChildListRemove, timer);
+  let timer: Timer = { id: id(), cost: Metric.LayoutCost };
+  task.start(timer);
+  while (mutations.length > 0) {
+    let record = mutations.shift();
+    for (let mutation of record.mutations) {
+      let state = task.state(timer);
+      if (state === Task.Wait) { state = await task.suspend(timer); }
+      if (state === Task.Stop) { break; }      
+      let target = mutation.target;
+      let type = track(mutation, timer);
+      if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
+      switch (type) {
+        case Constant.Attributes:
+            processNode(target, Source.Attributes);
             break;
-          case Constant.Suspend:
-            let value = dom.get(target);
-            if (value) { value.data.tag = Constant.SuspendMutationTag; }
+        case Constant.CharacterData:
+            processNode(target, Source.CharacterData);
             break;
-          default:
-            break;
-        }
+        case Constant.ChildList:
+          processNodeList(mutation.addedNodes, Source.ChildListAdd, timer);
+          processNodeList(mutation.removedNodes, Source.ChildListRemove, timer);
+          break;
+        case Constant.Suspend:
+          let value = dom.get(target);
+          if (value) { value.data.tag = Constant.SuspendMutationTag; }
+          break;
+        default:
+          break;
       }
-      await encode(Event.Mutation, record.time);
     }
-    task.stop(timer);
+    await encode(Event.Mutation, timer, record.time);
+  }
+  task.stop(timer);
 }
 
-function track(m: MutationRecord, timer: Metric): string {
+function track(m: MutationRecord, timer: Timer): string {
   let value = m.target ? dom.get(m.target.parentNode) : null;
   // Check if the parent is already discovered and that the parent is not the document root
   if (value && value.selector !== Constant.HTML) {
@@ -185,13 +187,15 @@ function names(nodes: NodeList): string {
   return output.join();
 }
 
-async function processNodeList(list: NodeList, source: Source, timer: Metric): Promise<void> {
+async function processNodeList(list: NodeList, source: Source, timer: Timer): Promise<void> {
   let length = list ? list.length : 0;
   for (let i = 0; i < length; i++) {
     if (source === Source.ChildListAdd) {
       traverse(list[i], timer, source);
     } else {
-      if (task.shouldYield(timer)) { await task.suspend(timer); }
+      let state = task.state(timer);
+      if (state === Task.Wait) { state = await task.suspend(timer); }
+      if (state === Task.Stop) { break; }
       processNode(list[i], source);
     }
   }

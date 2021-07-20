@@ -19,6 +19,13 @@ export const enum Time {
     Hour = 60 * 60 * 1000
 }
 
+
+export const enum Task {
+    Wait = 0,
+    Run = 1,
+    Stop = 2
+}
+
 export const enum Setting {
     LongTask = 30, // 30ms
 }
@@ -59,6 +66,11 @@ export interface TaskInfo {
     yield: number;
 }
 
+export interface Timer {
+    id: string;
+    cost: Data.Metric;
+}
+
 export interface RequestIdleCallbackOptions {
     timeout: number;
 }
@@ -71,6 +83,7 @@ export interface RequestIdleCallbackDeadline {
 export interface AsyncTask {
     task: TaskFunction;
     resolve: TaskResolve;
+    id: string;
 }
 
 export interface OffsetDistance {
