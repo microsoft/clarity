@@ -152,12 +152,15 @@ async function process(): Promise<void> {
 
 function track(m: MutationRecord, timer: Metric): string {
   let value = m.target ? dom.get(m.target.parentNode) : null;
-  if (value) {
+  // Check if the parent is already discovered and that the parent is not the document root
+  if (value && value.selector !== Constant.HTML) {
     let inactive = time() > activePeriod;
+    let target = dom.get(m.target);
+    let element = target ? target.selector : m.target.nodeName;
     // We use selector, instead of id, to determine the key (signature for the mutation) because in some cases
     // repeated mutations can cause elements to be destroyed and then recreated as new DOM nodes
     // In those cases, IDs will change however the selector (which is relative to DOM xPath) remains the same
-    let key = [value.selector, m.attributeName, m.addedNodes ? m.addedNodes.length : 0, m.removedNodes ? m.removedNodes.length : 0].join();
+    let key = [value.selector, element, m.attributeName, names(m.addedNodes), names(m.removedNodes)].join();
     // Initialize an entry if it doesn't already exist
     history[key] = key in history ? history[key] : [0];
     let h = history[key];
@@ -174,6 +177,12 @@ function track(m: MutationRecord, timer: Metric): string {
     } else if (h[0] > Setting.MutationSuspendThreshold) { return Constant.Empty; }
   }
   return m.type;
+}
+
+function names(nodes: NodeList): string {
+  let output: string[] = [];
+  for (let i = 0; nodes && i < nodes.length; i++) { output.push(nodes[i].nodeName); }
+  return output.join();
 }
 
 async function processNodeList(list: NodeList, source: Source, timer: Metric): Promise<void> {

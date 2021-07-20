@@ -13,12 +13,13 @@ export default [
     ],
     plugins: [
       resolve(),
-      typescript({clean: true}),
+      typescript({ rollupCommonJSResolveHack: true, clean: true }),
       commonjs({ include: ["node_modules/**"] })
     ],
     onwarn(message, warn) {
       if (message.code === 'NON_EXISTENT_EXPORT') { return; }
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      if (message.code === 'SOURCEMAP_ERROR') { return; }
       warn(message);
     }
   },
@@ -27,13 +28,14 @@ export default [
     output: [ { file: pkg.unpkg, format: "iife", exports: "named" } ],
     plugins: [
       resolve(),
-      typescript({clean: true}),
+      typescript({ rollupCommonJSResolveHack: true, clean: true }),
       terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ],
     onwarn(message, warn) {
       if (message.code === 'NON_EXISTENT_EXPORT') { return; }
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      if (message.code === 'SOURCEMAP_ERROR') { return; }
       warn(message);
     }
   }

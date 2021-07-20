@@ -20,7 +20,7 @@ On Windows, grab an installer from here: https://git-scm.com/download/win and go
 
 On Mac and Linux, it's pre-installed.
 
-### Node.js (12+)
+### Node.js (14+)
 
 On Windows, grab an installer from nodejs.org and go with the default options:
 ```
