@@ -20,6 +20,10 @@
     "test": "yarn workspace clarity-js test"
   },
   "devDependencies": {
-    "lerna": "^4.0.0"
+    "lerna": "^4.0.0",
+    "trim-newlines": "^4.0.2"
+  },
+  "resolutions": {
+    "trim-newlines": "^4.0.2"
   }
 }
