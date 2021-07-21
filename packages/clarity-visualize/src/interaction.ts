@@ -25,7 +25,7 @@ export function scroll(event: Interaction.ScrollEvent): void {
     let doc = state.window.document;
     let de = doc.documentElement;
     let scrollTarget = element(data.target as number) as HTMLElement || doc.body;
-    let scrollable = scrollTarget.scrollHeight > scrollTarget.clientHeight;
+    let scrollable = scrollTarget.scrollHeight > scrollTarget.clientHeight || scrollTarget.scrollWidth > scrollTarget.clientWidth;
     if (scrollTarget && scrollable) { scrollTarget.scrollTo(data.x, data.y); }
 
     // Position canvas relative to scroll events on the parent page

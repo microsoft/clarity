@@ -1,4 +1,4 @@
-import { Priority } from "@clarity-types/core";
+import { Priority, Task, Timer } from "@clarity-types/core";
 import { Code, Event, Metric, Severity } from "@clarity-types/data";
 import { Constant, MutationHistory, MutationQueue, Setting, Source } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
@@ -6,6 +6,7 @@ import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
+import { id } from "@src/data/metadata";
 import * as summary from "@src/data/summary";
 import * as log from "@src/diagnostic/log";
 import * as doc from "@src/layout/document";
@@ -116,48 +117,52 @@ function handle(m: MutationRecord[]): void {
 }
 
 async function process(): Promise<void> {
-    let timer = Metric.LayoutCost;
-    task.start(timer);
-    while (mutations.length > 0) {
-      let record = mutations.shift();
-      for (let mutation of record.mutations) {
-        let target = mutation.target;
-        let type = track(mutation, timer);
-        if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
-        switch (type) {
-          case Constant.Attributes:
-              if (task.shouldYield(timer)) { await task.suspend(timer); }
-              processNode(target, Source.Attributes);
-              break;
-          case Constant.CharacterData:
-              if (task.shouldYield(timer)) { await task.suspend(timer); }
-              processNode(target, Source.CharacterData);
-              break;
-          case Constant.ChildList:
-            processNodeList(mutation.addedNodes, Source.ChildListAdd, timer);
-            processNodeList(mutation.removedNodes, Source.ChildListRemove, timer);
+  let timer: Timer = { id: id(), cost: Metric.LayoutCost };
+  task.start(timer);
+  while (mutations.length > 0) {
+    let record = mutations.shift();
+    for (let mutation of record.mutations) {
+      let state = task.state(timer);
+      if (state === Task.Wait) { state = await task.suspend(timer); }
+      if (state === Task.Stop) { break; }      
+      let target = mutation.target;
+      let type = track(mutation, timer);
+      if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
+      switch (type) {
+        case Constant.Attributes:
+            processNode(target, Source.Attributes);
             break;
-          case Constant.Suspend:
-            let value = dom.get(target);
-            if (value) { value.data.tag = Constant.SuspendMutationTag; }
+        case Constant.CharacterData:
+            processNode(target, Source.CharacterData);
             break;
-          default:
-            break;
-        }
+        case Constant.ChildList:
+          processNodeList(mutation.addedNodes, Source.ChildListAdd, timer);
+          processNodeList(mutation.removedNodes, Source.ChildListRemove, timer);
+          break;
+        case Constant.Suspend:
+          let value = dom.get(target);
+          if (value) { value.data.tag = Constant.SuspendMutationTag; }
+          break;
+        default:
+          break;
       }
-      await encode(Event.Mutation, record.time);
     }
-    task.stop(timer);
+    await encode(Event.Mutation, timer, record.time);
+  }
+  task.stop(timer);
 }
 
-function track(m: MutationRecord, timer: Metric): string {
+function track(m: MutationRecord, timer: Timer): string {
   let value = m.target ? dom.get(m.target.parentNode) : null;
-  if (value) {
+  // Check if the parent is already discovered and that the parent is not the document root
+  if (value && value.selector !== Constant.HTML) {
     let inactive = time() > activePeriod;
+    let target = dom.get(m.target);
+    let element = target ? target.selector : m.target.nodeName;
     // We use selector, instead of id, to determine the key (signature for the mutation) because in some cases
     // repeated mutations can cause elements to be destroyed and then recreated as new DOM nodes
     // In those cases, IDs will change however the selector (which is relative to DOM xPath) remains the same
-    let key = [value.selector, m.attributeName, m.addedNodes ? m.addedNodes.length : 0, m.removedNodes ? m.removedNodes.length : 0].join();
+    let key = [value.selector, element, m.attributeName, names(m.addedNodes), names(m.removedNodes)].join();
     // Initialize an entry if it doesn't already exist
     history[key] = key in history ? history[key] : [0];
     let h = history[key];
@@ -176,13 +181,21 @@ function track(m: MutationRecord, timer: Metric): string {
   return m.type;
 }
 
-async function processNodeList(list: NodeList, source: Source, timer: Metric): Promise<void> {
+function names(nodes: NodeList): string {
+  let output: string[] = [];
+  for (let i = 0; nodes && i < nodes.length; i++) { output.push(nodes[i].nodeName); }
+  return output.join();
+}
+
+async function processNodeList(list: NodeList, source: Source, timer: Timer): Promise<void> {
   let length = list ? list.length : 0;
   for (let i = 0; i < length; i++) {
     if (source === Source.ChildListAdd) {
       traverse(list[i], timer, source);
     } else {
-      if (task.shouldYield(timer)) { await task.suspend(timer); }
+      let state = task.state(timer);
+      if (state === Task.Wait) { state = await task.suspend(timer); }
+      if (state === Task.Stop) { break; }
       processNode(list[i], source);
     }
   }

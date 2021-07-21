@@ -158,6 +158,10 @@ export const enum Setting {
     RatingScale = 100, // Scale rating to specified scale
     ViewportIntersectionRatio = 0.25, // Ratio of intersection area in comparison to viewport area before it's marked visible
     IntersectionRatio = 0.8, // Ratio of intersection area in comparison to element's area before it's marked visible
+    MaxFirstPayloadBytes = 1 * 1024 * 1024, // 1MB: Cap the very first payload to a maximum of 1MB
+    UploadFactor = 3, // Slow down sequence by specified factor
+    MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
+    MaxUploadDelay = 30 * Time.Second // Do flush out payload once every 30s
 }
 
 export const enum Constant {

@@ -11,7 +11,7 @@ export default function(tag: string, prefix: string, attributes: Attributes, pos
         case Constant.DocumentTag:
             return Constant.Empty;
         case "HTML":
-            return "HTML";
+            return Constant.HTML;
         default:
             if (prefix === null) { return Constant.Empty; }
             tag = tag.indexOf(Constant.SvgPrefix) === 0 ? tag.substr(Constant.SvgPrefix.length) : tag;

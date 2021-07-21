@@ -1,9 +1,10 @@
-import { Priority } from "@clarity-types/core";
+import { Priority, Timer } from "@clarity-types/core";
 import { Event, Metric } from "@clarity-types/data";
 import { Source } from "@clarity-types/layout";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
+import { id } from "@src/data/metadata";
 import * as doc from "@src/layout/document";
 import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
@@ -18,9 +19,9 @@ export function start(): void {
 
 async function discover(): Promise<void> {
     let ts = time();
-    let timer = Metric.LayoutCost;
+    let timer: Timer = { id: id(), cost: Metric.LayoutCost };
     task.start(timer);
     await traverse(document, timer, Source.Discover);
-    await encode(Event.Discover, ts);
+    await encode(Event.Discover, timer, ts);
     task.stop(timer);
 }

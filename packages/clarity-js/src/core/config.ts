@@ -2,9 +2,9 @@ import { Config, Time } from "@clarity-types/core";
 
 let config: Config = {
     projectId: null,
-    delay: 3 * Time.Second,
+    delay: 1 * Time.Second,
     cssRules: false,
-    lean: true,
+    lean: false,
     track: true,
     content: true,
     mask: [],

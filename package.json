@@ -1,7 +1,7 @@
 {
   "name": "clarity",
   "private": true,
-  "version": "0.6.16",
+  "version": "0.6.17",
   "repository": "https://github.com/microsoft/clarity.git",
   "author": "Sarvesh Nagpal <sarveshn@microsoft.com>",
   "license": "MIT",
@@ -20,6 +20,10 @@
     "test": "yarn workspace clarity-js test"
   },
   "devDependencies": {
-    "lerna": "^4.0.0"
+    "lerna": "^4.0.0",
+    "trim-newlines": "^4.0.2"
+  },
+  "resolutions": {
+    "trim-newlines": "^4.0.2"
   }
 }
