@@ -138,7 +138,7 @@ export const enum BooleanFlag {
 export const enum Setting {
     Expire = 365, // 1 Year
     SessionExpire = 1, // 1 Day
-    CookieVersion = 1, // Increment this version every time there's a schema change
+    CookieVersion = 1, // Increment this version every time there's a cookie schema change
     SessionTimeout = 30 * Time.Minute, // 30 minutes
     PingInterval = 1 * Time.Minute, // 1 Minute
     PingTimeout = 5 * Time.Minute, // 5 Minutes
