@@ -8,9 +8,11 @@ import { set } from "@src/data/variable";
 
 export let data: Metadata = null;
 export let callback: MetadataCallback = null;
+let rootDomain = null;
 
 export function start(): void {
   callback = null;
+  rootDomain = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const title = document && document.title ? document.title : Constant.Empty;
 
@@ -71,6 +73,7 @@ export function start(): void {
 
 export function stop(): void {
   callback = null;
+  rootDomain = null;
 }
 
 export function metadata(cb: MetadataCallback): void {
@@ -116,7 +119,7 @@ function supported(target: Window | Document, api: string): boolean {
 }
 
 function track(): void {
-  setCookie(Constant.CookieKey, data.userId, Setting.Expire);
+  setCookie(Constant.CookieKey, `${data.userId}${Constant.Pipe}${Setting.CookieVersion}`, Setting.Expire);
 }
 
 function shortid(): string {
@@ -147,9 +150,28 @@ function num(string: string, base: number = 10): number {
 }
 
 function user(): string {
-  let id = getCookie(Constant.CookieKey);
-  // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
-  return id && id.length > 0 ? id.split(Constant.Pipe)[0] : shortid(); 
+  let cookie = getCookie(Constant.CookieKey);
+  if(cookie && cookie.length > 0) {
+    // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
+    let parts = cookie.split(Constant.Pipe);
+    // For backward compatibility introduced in v0.6.18; following code can be removed with future iterations
+    // Count number of times Clarity's user cookie crumb appears in document.cookie (could be on different sub-domains e.g. www.domain.com and .domain.com)
+    let count = 0;
+    for (let c of document.cookie.split(Constant.Semicolon)) { count += c.split(Constant.Equals)[0].trim() === Constant.CookieKey ? 1 : 0; }
+    // Check if we either got version-less cookie value or saw multiple copies of the user cookie crumbs
+    // In both these cases, we go ahead and delete the existing cookie set on current domain
+    if (parts.length === 1 || count > 1) {
+      let deleted = `${Constant.Semicolon}${Constant.Expires}${(new Date(0)).toUTCString()}${Constant.Path}`;
+      // First, delete current user cookie which might be set on current sub-domain vs. root domain
+      document.cookie = `${Constant.CookieKey}=${deleted}`;
+      // Second, same thing for current session cookie so it can be re-written later with the root domain
+      document.cookie = `${Constant.SessionKey}=${deleted}`;
+    }
+    // End code for backward compatibility
+    // Return the existing userId, so it can eventually be written with version info later
+    return parts[0];
+  }
+  return shortid();
 }
 
 function getCookie(key: string): string {
@@ -172,6 +194,30 @@ function setCookie(key: string, value: string, time: number): void {
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + time);
     let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
-    document.cookie = `${key}=${value}${Constant.Semicolon}${expires}${Constant.Path}`;
+    let cookie = `${key}=${value}${Constant.Semicolon}${expires}${Constant.Path}`;
+    try {
+      // Attempt to get the root domain only once and fall back to writing cookie on the current domain.
+      if (rootDomain === null) {
+        let hostname = location.hostname ? location.hostname.split(Constant.Dot) : [];
+        // Walk backwards on a domain and attempt to set a cookie, until successful
+        for (let i = hostname.length - 1; i >= 0; i--) {
+          rootDomain = `.${hostname[i]}${rootDomain ? rootDomain : Constant.Empty}`;
+          // We do not wish to attempt writing a cookie on the absolute last part of the domain, e.g. .com or .net.
+          // So we start attempting after second-last part, e.g. .domain.com (PASS) or .co.uk (FAIL)
+          if (i < hostname.length - 1) { 
+            // Write the cookie on the current computed top level domain
+            document.cookie = `${cookie}${Constant.Semicolon}${Constant.Domain}${rootDomain}`;
+            // Once written, check if the cookie was set successfully
+            // If yes, no more action is required and we can return from the function since rootDomain cookie is already set
+            // If no, then continue with the for loop
+            if (getCookie(key)) { return; }
+          }
+        }
+        // Finally, if we were not successful and gone through all the options, play it safe and reset rootDomain to be empty
+        // This forces our code to fall back to always writing cookie to the current domain
+        rootDomain = Constant.Empty;
+      }
+    } catch { rootDomain = Constant.Empty; }
+    document.cookie = rootDomain ? `${cookie}${Constant.Semicolon}${Constant.Domain}${rootDomain}` : cookie;
   }
 }

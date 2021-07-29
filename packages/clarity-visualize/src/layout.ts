@@ -301,9 +301,9 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
                     sameorigin = true;
                 } else if (attribute.indexOf("*") === 0) {
                     // Do nothing if we encounter internal Clarity attributes
-                } else if (tag === "iframe" && (attribute.indexOf("src") === 0 || attribute.indexOf("allow") === 0) || attribute === "sandbox") {
+                } else if (tag === Constant.IFrameTag && (attribute.indexOf("src") === 0 || attribute.indexOf("allow") === 0) || attribute === "sandbox") {
                     node.setAttribute(`data-clarity-${attribute}`, v);
-                } else if (tag === "img" && attribute.indexOf("src") === 0 && (v === null || v.length === 0)) {
+                } else if (tag === Constant.ImageTag && attribute.indexOf("src") === 0 && (v === null || v.length === 0)) {
                     node.setAttribute(attribute, Asset.Transparent);
                     let size = Constant.Large;
                     if (data.width) {
@@ -320,17 +320,20 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
         }
     }
 
-    if (sameorigin === false && tag === "iframe" && typeof node.setAttribute == Constant.Function) {
+    if (sameorigin === false && tag === Constant.IFrameTag && typeof node.setAttribute == Constant.Function) {
         node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
     }
+
+    // Add an empty ALT tag on all IMG elements
+    if (tag === Constant.ImageTag && !node.hasAttribute(Constant.AltAttribute)) { node.setAttribute(Constant.AltAttribute, Constant.Empty); }
 }
 
 function getCustomStyle(): string {
     // tslint:disable-next-line: max-line-length
-    return `img[${Constant.Hide}] { background-color: #CCC; background-image: url(${Asset.Hide}); background-repeat:no-repeat; background-position: center; }` +
-        `img[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
-        `img[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
-        `img[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
-        `iframe[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
+    return `${Constant.ImageTag}[${Constant.Hide}] { background-color: #CCC; background-image: url(${Asset.Hide}); background-repeat:no-repeat; background-position: center; }` +
+        `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
+        `${Constant.ImageTag}[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
+        `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
+        `${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
         `*[${Constant.Suspend}] { filter: grayscale(100%); }`;
 }
