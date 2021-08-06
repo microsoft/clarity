@@ -248,6 +248,7 @@ export interface Session {
     count: number;
     upgrade: BooleanFlag;
     upload: string;
+    server: string;
 }
 
 export interface Envelope extends Metadata {

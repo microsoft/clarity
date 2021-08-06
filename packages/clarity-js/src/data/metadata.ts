@@ -25,11 +25,9 @@ export function start(): void {
     pageNum: s.count
   }
 
-  // For backward compatibility; remove in future iterations (v0.6.11)
+  // The code below checks if the "upload" value is complete URL, and if so, break it into "server" and "upload"
   if (config.upload && typeof config.upload === Constant.String && (config.upload as string).indexOf(Constant.HTTPS) === 0) {
     let url = config.upload as string;
-    // Until 0.6.10, upload was expected to be complete URL. With 0.6.11, we send separate "server" config with hostname and path within "upload"
-    // The code below checks if the "upload" value is complete URL, and if so, break it into "server" and "upload".
     config.server = url.substr(0, url.indexOf("/", Constant.HTTPS.length)); // Look for first "/" starting after initial "https://" string
     config.upload = config.server.length > 0 && config.server.length < url.length ? url.substr(config.server.length + 1) : url; // Grab path of the url and update "upload" configuration
   }
@@ -37,6 +35,7 @@ export function start(): void {
   // Override configuration based on what's in the session storage
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
   config.upload = config.track && typeof config.upload === Constant.String && s.upload ? s.upload : config.upload;
+  config.server = config.track && s.server ? Constant.HTTPS + s.server : config.server;
 
 
   // Log dimensions
@@ -110,8 +109,9 @@ export function save(): void {
   let ts = Math.round(Date.now());
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let upload = typeof config.upload === Constant.String ? config.upload : Constant.Empty;
+  let server = config.server ? config.server.replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
   if (upgrade && callback) { callback(data, !config.lean); }
-  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
+  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload, server].join(Constant.Pipe), Setting.SessionExpire);
 }
 
 function supported(target: Window | Document, api: string): boolean {
@@ -131,15 +131,17 @@ function shortid(): string {
 }
 
 function session(): Session {
-  let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: null, upload: Constant.Empty };
+  let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: null, upload: Constant.Empty, server: Constant.Empty };
   let value = getCookie(Constant.SessionKey);
   if (value) {
     let parts = value.split(Constant.Pipe);
-    if (parts.length === 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
+    // Making it backward & forward compatible by using greater than comparison
+    if (parts.length >= 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
       output.session = parts[0];
       output.count = num(parts[2]) + 1;
       output.upgrade = num(parts[3]);
       output.upload = parts[4];
+      output.server = parts.length >= 6 ? parts[5] : Constant.Empty;
     }
   }
   return output;
