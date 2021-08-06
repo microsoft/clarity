@@ -25,10 +25,17 @@ export function start(): void {
     pageNum: s.count
   }
 
+  // The code below checks if the "upload" value is complete URL, and if so, break it into "server" and "upload"
+  if (config.upload && typeof config.upload === Constant.String && (config.upload as string).indexOf(Constant.HTTPS) === 0) {
+    let url = config.upload as string;
+    config.server = url.substr(0, url.indexOf("/", Constant.HTTPS.length)); // Look for first "/" starting after initial "https://" string
+    config.upload = config.server.length > 0 && config.server.length < url.length ? url.substr(config.server.length + 1) : url; // Grab path of the url and update "upload" configuration
+  }
+
   // Override configuration based on what's in the session storage
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
   config.upload = config.track && typeof config.upload === Constant.String && s.upload ? s.upload : config.upload;
-  config.server = config.track && s.server ? s.server : config.server;
+  config.server = config.track && s.server ? Constant.HTTPS + s.server : config.server;
 
 
   // Log dimensions
@@ -102,8 +109,9 @@ export function save(): void {
   let ts = Math.round(Date.now());
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let upload = typeof config.upload === Constant.String ? config.upload : Constant.Empty;
+  let server = config.server ? config.server.replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
   if (upgrade && callback) { callback(data, !config.lean); }
-  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload, config.server].join(Constant.Pipe), Setting.SessionExpire);
+  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload, server].join(Constant.Pipe), Setting.SessionExpire);
 }
 
 function supported(target: Window | Document, api: string): boolean {
