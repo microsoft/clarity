@@ -10,6 +10,7 @@ import encode from "@src/data/encode";
 import * as envelope from "@src/data/envelope";
 import * as data from "@src/data/index";
 import * as limit from "@src/data/limit";
+import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
@@ -136,10 +137,10 @@ function stringify(encoded: EncodedPayload): string {
     return encoded.p.length > 0 ? `{"e":${encoded.e},"a":${encoded.a},"p":${encoded.p}}` : `{"e":${encoded.e},"a":${encoded.a}}`;
 }
 
-function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boolean): void {
+function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boolean = false): void {
     // Upload data if a valid URL is defined in the config
-    if (typeof config.upload === Constant.String && config.server) {
-        const url = `${config.server}/${config.upload}`;
+    if (typeof config.upload === Constant.String) {
+        const url = config.upload as string;
         let dispatched = false;
 
         // If it's the last payload, attempt to upload using sendBeacon first.
@@ -148,6 +149,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
         // Also, in case of sendBeacon, we do not have a way to alter HTTP headers and therefore can't send compressed payload
         if (beacon && "sendBeacon" in navigator) {
             dispatched = navigator.sendBeacon(url, payload);
+            if (dispatched) { done(sequence); }
         }
 
         // Before initiating XHR upload, we check if the data has already been uploaded using sendBeacon
@@ -161,7 +163,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
             let xhr = new XMLHttpRequest();
             xhr.open("POST", url);
-            if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence, beacon); }; }
+            if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence); }; }
             xhr.withCredentials = true;
             if (zipped) {
                 // If we do have valid compressed array, send it with appropriate HTTP headers so server can decode it appropriately
@@ -175,30 +177,30 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
     } else if (config.upload) {
         const callback = config.upload as UploadCallback;
         callback(payload);
+        done(sequence);
     }
 }
 
-function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
+function check(xhr: XMLHttpRequest, sequence: number): void {
     var transitData = transit[sequence];
     if (xhr && xhr.readyState === XMLReadyState.Done && transitData) {
         // Attempt send payload again (as configured in settings) if we do not receive a success (2XX) response code back from the server
         if ((xhr.status < 200 || xhr.status > 208) && transitData.attempts <= Setting.RetryLimit) {
-            // We re-attempt in all cases except two: 
-            //     0: Indicates the browser has not put the request on the wire and therefore we need to attempt sendBeacon API before giving up
-            //   4XX: Indicates the server has rejected the response for bad payload and therefore we terminate the session
-            if (xhr.status === 0) {
-                // The observed behavior is that Safari will terminate pending XHR requests with status code 0
-                // if the user navigates away from the page. In these cases, we fallback to the else clause and lose the data
-                // By explicitly handing status code 0 we attempt to try a different transport (sendBeacon vs. XHR) before giving up.
-                send(transitData.data, null, sequence, true);
-            } else if (xhr.status >= 400 && xhr.status < 500) {
-                // Anytime we receive a 4XX response from the server, we bail out instead of trying again
+            // We re-attempt in all cases except when server explicitly rejects our request with 4XX error 
+            if (xhr.status >= 400 && xhr.status < 500) {
+                // In case of a 4XX response from the server, we bail out instead of trying again
                 limit.trigger(Check.Server);
             } else {
+                // Browser will send status = 0 when it refuses to put network request over the wire
+                // This could happen for several reasons, couple of known ones are:
+                //    1: Browsers block upload because of content security policy violation
+                //    2: Safari will terminate pending XHR requests with status code 0 if the user navigates away from the page
+                // In any case, we switch the upload URL to fallback configuration (if available) before re-trying one more time
+                if (xhr.status === 0) { config.upload = config.fallback ? config.fallback : config.upload; }
                 // In all other cases, re-attempt sending the same data
                 // For retry we always fallback to string payload, even though we may have attempted
                 // sending zipped payload earlier
-                send(transitData.data, null, sequence, last);
+                send(transitData.data, null, sequence);
             }
         } else {
             track = { sequence, attempts: transitData.attempts, status: xhr.status };
@@ -206,20 +208,31 @@ function check(xhr: XMLHttpRequest, sequence: number, last: boolean): void {
             if (transitData.attempts > 1) { encode(Event.Upload); }
             // Handle response if it was a 200 response with a valid body
             if (xhr.status === 200 && xhr.responseText) { response(xhr.responseText); }
-            // If we exhausted our retries then trigger Clarity shutdown for this page.
-            // The only exception is if browser decided to not even put the request on the network (status code: 0)
-            if (transitData.attempts > Setting.RetryLimit && xhr.status !== 0) { limit.trigger(Check.Retry); }
+            // If we exhausted our retries then trigger Clarity's shutdown for this page since the data will be incomplete
+            if (xhr.status === 0) { 
+                // And, right before we terminate the session, we will attempt one last time to see if we can use
+                // different transport option (sendBeacon vs. XHR) to get this data to the server for analysis purposes
+                send(transitData.data, null, sequence, true);
+                limit.trigger(Check.Retry);
+            }
+            // Signal that this request completed successfully
+            if (xhr.status >= 200 && xhr.status <= 208) { done(sequence); }
             // Stop tracking this payload now that it's all done
             delete transit[sequence];
         }
     }
 }
 
+function done(sequence: number): void {
+    // If we everything went successfully, and it is the first sequence, save this session for future reference
+    if (sequence === 1) { metadata.save(); }
+}
+
 function delay(): number {
     // Progressively increase delay as we continue to send more payloads from the client to the server
     // If we are not uploading data to a server, and instead invoking UploadCallback, in that case keep returning configured value 
     let gap = config.lean === false && discoverBytes > 0 ? Setting.MinUploadDelay : envelope.data.sequence * config.delay;
-    return config.server ? Math.max(Math.min(gap, Setting.MaxUploadDelay), Setting.MinUploadDelay) : config.delay;
+    return typeof config.upload === Constant.String ? Math.max(Math.min(gap, Setting.MaxUploadDelay), Setting.MinUploadDelay) : config.delay;
 }
 
 function response(payload: string): void {

@@ -1,7 +1,7 @@
 import { Code, Constant, Setting, Severity } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
-import * as log from "@src/diagnostic/log";
+import * as internal from "@src/diagnostic/internal";
 
 let pushState = null;
 let replaceState = null;
@@ -34,7 +34,7 @@ export function start(): void {
 
 function check(): boolean {
     if (count++ > Setting.CallStackDepth) {
-        log.log(Code.CallStackDepth, null, Severity.Info);
+        internal.log(Code.CallStackDepth, Severity.Info);
         return false;
     }
     return true;

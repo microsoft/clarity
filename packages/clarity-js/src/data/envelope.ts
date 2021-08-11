@@ -26,8 +26,6 @@ export function stop(): void {
 }
 
 export function envelope(last: boolean): Token[] {
-  // Update the session storage once we are ready to send our first payload back to the server
-  if (data.sequence === 0) { metadata.save(); }
   data.start = data.start + data.duration;
   data.duration = time() - data.start;
   data.sequence++;

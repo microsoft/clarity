@@ -118,8 +118,8 @@ export interface Config {
     regions?: Region[];
     metrics?: Metric[];
     cookies?: string[];
-    server?: string;
     report?: string;
     upload?: string | UploadCallback;
+    fallback?: string;
     upgrade?: (key: string) => void;
 }

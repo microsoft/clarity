@@ -115,7 +115,8 @@ export const enum Code {
     PerformanceObserver = 3,
     CallStackDepth = 4,
     Selector = 5,
-    Metric = 6
+    Metric = 6,
+    CSP = 7
 }
 
 export const enum Severity {
@@ -248,7 +249,6 @@ export interface Session {
     count: number;
     upgrade: BooleanFlag;
     upload: string;
-    server: string;
 }
 
 export interface Envelope extends Metadata {

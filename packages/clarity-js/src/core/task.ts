@@ -3,7 +3,7 @@ import { Setting, TaskFunction, TaskResolve, Tasks } from "@clarity-types/core";
 import { Code, Metric, Severity } from "@clarity-types/data";
 import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
-import * as log from "@src/diagnostic/log";
+import * as internal from "@src/diagnostic/internal";
 
 // Track the start time to be able to compute duration at the end of the task
 const idleTimeout = 5000;
@@ -74,7 +74,7 @@ function run(): void {
         }).catch((error: Error): void => {
             // If one of the scheduled tasks failed, log, recover and continue processing rest of the tasks
             if (entry.id !== metadata.id()) { return; }
-            log.log(Code.RunTask, error, Severity.Warning);
+            if (error) { internal.log(Code.RunTask, Severity.Warning, error.name, error.message, error.stack); }
             activeTask = null;
             run();
         });

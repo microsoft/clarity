@@ -2,7 +2,7 @@ import { Event, Token } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import { queue } from "@src/data/upload";
 import * as image from "@src/diagnostic/image";
-import * as log from "@src/diagnostic/log";
+import * as internal from "@src/diagnostic/internal";
 import * as script from "@src/diagnostic/script";
 import { metadata } from "@src/layout/target";
 
@@ -27,12 +27,12 @@ export default async function (type: Event): Promise<void> {
             }
             break;
         case Event.Log:
-            if (log.data) {
-                tokens.push(log.data.code);
-                tokens.push(log.data.name);
-                tokens.push(log.data.message);
-                tokens.push(log.data.stack);
-                tokens.push(log.data.severity);
+            if (internal.data) {
+                tokens.push(internal.data.code);
+                tokens.push(internal.data.name);
+                tokens.push(internal.data.message);
+                tokens.push(internal.data.stack);
+                tokens.push(internal.data.severity);
                 queue(tokens, false);
             }
             break;

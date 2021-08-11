@@ -12,9 +12,9 @@ let config: Config = {
     regions: [],
     metrics: [],
     cookies: [],
-    server: null,
     report: null,
     upload: null,
+    fallback: null,
     upgrade: null
 };
 
