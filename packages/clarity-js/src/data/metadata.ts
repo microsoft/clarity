@@ -102,11 +102,11 @@ export function save(): void {
   let host: string = Constant.Empty;
   let path: string = Constant.Empty;
 
-  // The code below checks if the "upload" value is a string, and if so, break it into "server" and "upload" before writing to session storage
+  // The code below checks if the "upload" value is a string, and if so, break it into "host" and "path" before writing to session cookie
   // This is for forward compatibility - to be removed in future versions (v0.6.21)
   if (upload) {
     host = upload.substr(0, upload.indexOf("/", Constant.HTTPS.length)); // Look for first "/" starting after initial "https://" string
-    path = host.length > 0 && host.length < upload.length ? upload.substr(host.length + 1) : upload; // Grab path of the url and update "upload" configuration
+    path = host.length > 0 && host.length < upload.length ? upload.substr(host.length + 1) : upload; // Grab path of the url and update host value
     host = host.replace(Constant.HTTPS, Constant.Empty);
   }
   if (upgrade && callback) { callback(data, !config.lean); }
