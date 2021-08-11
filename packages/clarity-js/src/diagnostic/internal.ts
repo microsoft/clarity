@@ -31,7 +31,7 @@ function csp(e: SecurityPolicyViolationEvent): void {
     let parts = upload ? upload.substr(0, upload.indexOf("/", Constant.HTTPS.length)).split(Constant.Dot) : []; // Look for first "/" starting after initial "https://" string
     let domain = parts.length >= 2 ? parts.splice(-2).join(Constant.Dot) : null;
     if (domain && e.blockedURI && e.blockedURI.indexOf(domain) >= 0) {
-        log(Code.CSP, Severity.Warning, e.blockedURI, `${e["disposition"]}`);
+        log(Code.ContentSecurityPolicy, Severity.Warning, e.blockedURI, `${e["disposition"]}`);
     }
 }
 

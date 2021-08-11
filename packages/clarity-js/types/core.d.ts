@@ -99,11 +99,12 @@ export interface BrowserEvent {
 }
 
 export interface Report {
-    m: string; // Message
+    c: Data.Check; // Reporting code
     p: string; // Project Id
     u: string; // User Id
     s: string; // Session Id
     n: number; // Page Number
+    m?: string; // Message, optional
 }
 
 export interface Config {

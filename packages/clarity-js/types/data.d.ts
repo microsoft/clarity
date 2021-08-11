@@ -116,7 +116,7 @@ export const enum Code {
     CallStackDepth = 4,
     Selector = 5,
     Metric = 6,
-    CSP = 7
+    ContentSecurityPolicy = 7
 }
 
 export const enum Severity {
