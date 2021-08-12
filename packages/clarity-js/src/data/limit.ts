@@ -25,7 +25,7 @@ export function check(bytes: number): void {
 }
 
 export function trigger(reason: Check): void {
-    report(`Limit #${reason}`);
+    report(reason);
     data.check = reason;
     metadata.clear();
     clarity.stop();

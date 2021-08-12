@@ -4,7 +4,7 @@ import measure from "@src/core/measure";
 import { setTimeout } from "@src/core/timeout";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
-import * as log from "@src/diagnostic/log";
+import * as internal from "@src/diagnostic/internal";
 import * as navigation from "@src/performance/navigation";
 
 let observer: PerformanceObserver;
@@ -19,7 +19,7 @@ export function start(): void {
         if (document.readyState !== "complete") {
             bind(window, "load", setTimeout.bind(this, observe, 0));
         } else { observe(); }
-    } else { log.log(Code.PerformanceObserver, null, Severity.Info); }
+    } else { internal.log(Code.PerformanceObserver, Severity.Info); }
 }
 
 function observe(): void {
@@ -40,7 +40,7 @@ function observe(): void {
                 observer.observe({type: x, buffered: true});
             }
         }
-    } catch { log.log(Code.PerformanceObserver, null, Severity.Warning); }
+    } catch { internal.log(Code.PerformanceObserver, Severity.Warning); }
 }
 
 function handle(entries: PerformanceObserverEntryList): void {

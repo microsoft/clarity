@@ -1,14 +1,14 @@
 import * as image from "./image";
-import * as log from "./log";
+import * as internal from "./internal";
 import * as script from "./script";
 
 export function start(): void {
     script.start();
     image.start();
-    log.reset();
+    internal.start();
 }
 
 export function stop(): void {
     image.stop();
-    log.reset();
+    internal.stop();
 }

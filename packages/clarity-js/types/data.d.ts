@@ -115,7 +115,8 @@ export const enum Code {
     PerformanceObserver = 3,
     CallStackDepth = 4,
     Selector = 5,
-    Metric = 6
+    Metric = 6,
+    ContentSecurityPolicy = 7
 }
 
 export const enum Severity {
@@ -140,6 +141,7 @@ export const enum Setting {
     SessionExpire = 1, // 1 Day
     CookieVersion = 1, // Increment this version every time there's a cookie schema change
     SessionTimeout = 30 * Time.Minute, // 30 minutes
+    CookieInterval = 1, // 1 Day
     PingInterval = 1 * Time.Minute, // 1 Minute
     PingTimeout = 5 * Time.Minute, // 5 Minutes
     SummaryInterval = 100, // Same events within 100ms will be collapsed into single summary
@@ -248,7 +250,11 @@ export interface Session {
     count: number;
     upgrade: BooleanFlag;
     upload: string;
-    server: string;
+}
+
+export interface User {
+    id: string;
+    expiry: number;
 }
 
 export interface Envelope extends Metadata {

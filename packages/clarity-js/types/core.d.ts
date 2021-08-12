@@ -16,7 +16,8 @@ export const enum Priority {
 export const enum Time {
     Second = 1000,
     Minute = 60 * 1000,
-    Hour = 60 * 60 * 1000
+    Hour = 60 * 60 * 1000,
+    Day = 24 * 60 * 60 * 1000
 }
 
 
@@ -99,11 +100,12 @@ export interface BrowserEvent {
 }
 
 export interface Report {
-    m: string; // Message
+    c: Data.Check; // Reporting code
     p: string; // Project Id
     u: string; // User Id
     s: string; // Session Id
     n: number; // Page Number
+    m?: string; // Message, optional
 }
 
 export interface Config {
@@ -118,8 +120,8 @@ export interface Config {
     regions?: Region[];
     metrics?: Metric[];
     cookies?: string[];
-    server?: string;
     report?: string;
     upload?: string | UploadCallback;
+    fallback?: string;
     upgrade?: (key: string) => void;
 }

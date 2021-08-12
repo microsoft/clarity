@@ -8,7 +8,7 @@ import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { id } from "@src/data/metadata";
 import * as summary from "@src/data/summary";
-import * as log from "@src/diagnostic/log";
+import * as internal from "@src/diagnostic/internal";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
@@ -66,7 +66,7 @@ export function observe(node: Node): void {
       observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
       observers.push(observer);
     }
-  } catch (error) { log.log(Code.MutationObserver, error, Severity.Info); }
+  } catch (e) { internal.log(Code.MutationObserver, Severity.Info, e ? e.name : null); }
 }
 
 export function monitor(frame: HTMLIFrameElement): void {

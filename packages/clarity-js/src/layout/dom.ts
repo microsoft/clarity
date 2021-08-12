@@ -3,7 +3,7 @@ import { Code, Setting, Severity } from "@clarity-types/data";
 import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
-import * as log from "@src/diagnostic/log";
+import * as internal from "@src/diagnostic/internal";
 import * as extract from "@src/layout/extract";
 import * as region from "@src/layout/region";
 import selector from "@src/layout/selector";
@@ -65,7 +65,7 @@ export function parse(root: ParentNode): void {
             config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
             config.unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
         }
-    } catch (e) { log.log(Code.Selector, e, Severity.Warning); }
+    } catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
 }
 
 export function getId(node: Node, autogen: boolean = false): number {

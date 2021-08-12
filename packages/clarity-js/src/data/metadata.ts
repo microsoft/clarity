@@ -1,4 +1,5 @@
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, Metric, Session, Setting } from "@clarity-types/data";
+import { Time } from "@clarity-types/core";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, Metric, Session, User, Setting } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -18,26 +19,17 @@ export function start(): void {
 
   // Populate ids for this page
   let s = session();
+  let u = user();
   data = {
     projectId: config.projectId || hash(location.host),
-    userId: user(),
+    userId: u.id,
     sessionId: s.session,
     pageNum: s.count
-  }
-
-  // The code below checks if the "upload" value is complete URL, and if so, break it into "server" and "upload"
-  if (config.upload && typeof config.upload === Constant.String && (config.upload as string).indexOf(Constant.HTTPS) === 0) {
-    let url = config.upload as string;
-    config.server = url.substr(0, url.indexOf("/", Constant.HTTPS.length)); // Look for first "/" starting after initial "https://" string
-    config.upload = config.server.length > 0 && config.server.length < url.length ? url.substr(config.server.length + 1) : url; // Grab path of the url and update "upload" configuration
   }
 
   // Override configuration based on what's in the session storage
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
   config.upload = config.track && typeof config.upload === Constant.String && s.upload ? s.upload : config.upload;
-  config.server = config.track && s.server ? Constant.HTTPS + s.server : config.server;
-
-
   // Log dimensions
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);
@@ -67,7 +59,7 @@ export function start(): void {
   }
 
   // Track ids using a cookie if configuration allows it
-  track();
+  track(u.expiry);
 }
 
 export function stop(): void {
@@ -86,7 +78,7 @@ export function id(): string {
 export function consent(): void {
   if (core.active()) {
     config.track = true;
-    track();
+    track((user()).expiry);
   }
 }
 
@@ -108,18 +100,33 @@ function tab(): string {
 export function save(): void {
   let ts = Math.round(Date.now());
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-  let upload = typeof config.upload === Constant.String ? config.upload : Constant.Empty;
-  let server = config.server ? config.server.replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
+  let upload = config.upload && typeof config.upload === Constant.String ? config.upload as string : Constant.Empty;
+  let host: string = Constant.Empty;
+  let path: string = Constant.Empty;
+
+  // The code below checks if the "upload" value is a string, and if so, break it into "host" and "path" before writing to session cookie
+  // This is for forward compatibility - to be removed in future versions (v0.6.21)
+  if (upload) {
+    host = upload.substr(0, upload.indexOf("/", Constant.HTTPS.length)); // Look for first "/" starting after initial "https://" string
+    path = host.length > 0 && host.length < upload.length ? upload.substr(host.length + 1) : upload; // Grab path of the url and update host value
+    host = host.replace(Constant.HTTPS, Constant.Empty);
+  }
   if (upgrade && callback) { callback(data, !config.lean); }
-  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload, server].join(Constant.Pipe), Setting.SessionExpire);
+  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, path, host].join(Constant.Pipe), Setting.SessionExpire);
 }
 
 function supported(target: Window | Document, api: string): boolean {
   try { return !!target[api]; } catch { return false; }
 }
 
-function track(): void {
-  setCookie(Constant.CookieKey, `${data.userId}${Constant.Pipe}${Setting.CookieVersion}`, Setting.Expire);
+function track(expiry: number): void {
+  // Convert time precision into days to reduce number of bytes we have to write in a cookie
+  // E.g. Math.ceil(1628735962643 / (24*60*60*1000)) => 18852 (days) => ejo in base36 (13 bytes => 3 bytes)
+  let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day))/Time.Day);
+  // To avoid cookie churn, write user id cookie only once every day
+  if (expiry === null || Math.abs(end - expiry) >= Setting.CookieInterval) {
+    setCookie(Constant.CookieKey, [data.userId, Setting.CookieVersion, end.toString(36)].join(Constant.Pipe), Setting.Expire);
+  }
 }
 
 function shortid(): string {
@@ -131,17 +138,17 @@ function shortid(): string {
 }
 
 function session(): Session {
-  let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: null, upload: Constant.Empty, server: Constant.Empty };
+  let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: null, upload: Constant.Empty };
   let value = getCookie(Constant.SessionKey);
   if (value) {
     let parts = value.split(Constant.Pipe);
-    // Making it backward & forward compatible by using greater than comparison
+    // Making it backward & forward compatible by using greater than comparison (v0.6.21)
+    // In future version, we can reduce the parts length to be 5 where the last part contains the full upload URL
     if (parts.length >= 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
       output.session = parts[0];
       output.count = num(parts[2]) + 1;
       output.upgrade = num(parts[3]);
-      output.upload = parts[4];
-      output.server = parts.length >= 6 ? parts[5] : Constant.Empty;
+      output.upload = parts.length >= 6 ? `${Constant.HTTPS}${parts[5]}/${parts[4]}` : `${Constant.HTTPS}${parts[4]}`;
     }
   }
   return output;
@@ -151,7 +158,8 @@ function num(string: string, base: number = 10): number {
   return parseInt(string, base);
 }
 
-function user(): string {
+function user(): User {
+  let output: User = { id: shortid(), expiry: null };
   let cookie = getCookie(Constant.CookieKey);
   if(cookie && cookie.length > 0) {
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
@@ -171,9 +179,11 @@ function user(): string {
     }
     // End code for backward compatibility
     // Return the existing userId, so it can eventually be written with version info later
-    return parts[0];
+    output.id = parts[0];
+    // Read version information and timestamp from cookie, if available
+    if (parts.length > 2) { output.expiry = num(parts[2], 36); }
   }
-  return shortid();
+  return output;
 }
 
 function getCookie(key: string): string {
@@ -209,10 +219,11 @@ function setCookie(key: string, value: string, time: number): void {
           if (i < hostname.length - 1) { 
             // Write the cookie on the current computed top level domain
             document.cookie = `${cookie}${Constant.Semicolon}${Constant.Domain}${rootDomain}`;
-            // Once written, check if the cookie was set successfully
-            // If yes, no more action is required and we can return from the function since rootDomain cookie is already set
-            // If no, then continue with the for loop
-            if (getCookie(key)) { return; }
+            // Once written, check if the cookie exists and its value matches exactly with what we intended to set
+            // Checking for exact value match helps us eliminate a corner case where the cookie may already be present with a different value
+            // If the check is successful, no more action is required and we can return from the function since rootDomain cookie is already set
+            // If the check fails, continue with the for loop until we can successfully set and verify the cookie
+            if (getCookie(key) === value) { return; }
           }
         }
         // Finally, if we were not successful and gone through all the options, play it safe and reset rootDomain to be empty
