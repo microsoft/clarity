@@ -101,18 +101,8 @@ export function save(): void {
   let ts = Math.round(Date.now());
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let upload = config.upload && typeof config.upload === Constant.String ? config.upload as string : Constant.Empty;
-  let host: string = Constant.Empty;
-  let path: string = Constant.Empty;
-
-  // The code below checks if the "upload" value is a string, and if so, break it into "host" and "path" before writing to session cookie
-  // This is for forward compatibility - to be removed in future versions (v0.6.21)
-  if (upload) {
-    host = upload.substr(0, upload.indexOf("/", Constant.HTTPS.length)); // Look for first "/" starting after initial "https://" string
-    path = host.length > 0 && host.length < upload.length ? upload.substr(host.length + 1) : upload; // Grab path of the url and update host value
-    host = host.replace(Constant.HTTPS, Constant.Empty);
-  }
   if (upgrade && callback) { callback(data, !config.lean); }
-  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, path, host].join(Constant.Pipe), Setting.SessionExpire);
+  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
 }
 
 function supported(target: Window | Document, api: string): boolean {
@@ -162,6 +152,11 @@ function user(): User {
   let output: User = { id: shortid(), expiry: null };
   let cookie = getCookie(Constant.CookieKey);
   if(cookie && cookie.length > 0) {
+    // Presence of a valid first-party user cookie implies one of two things below:
+    //   - The project has tracking enabled
+    //   - We received prior consent for this user to enable tracking 
+    // In both cases we can assume tracking is enabled so we can attribute different page views to the same session.
+    config.track = true;
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
     let parts = cookie.split(Constant.Pipe);
     // For backward compatibility introduced in v0.6.18; following code can be removed with future iterations

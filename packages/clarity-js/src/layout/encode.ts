@@ -55,7 +55,6 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                     let state = task.state(timer);
                     if (state === Task.Wait) { state = await task.suspend(timer); }
                     if (state === Task.Stop) { break; }
-                    let metadata = [];
                     let data: NodeInfo = value.data;
                     let active = value.metadata.active;
                     let privacy = value.metadata.privacy;
@@ -71,29 +70,28 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                     tokens.push(value.id * factor);
                                     if (value.parent && active) { tokens.push(value.parent); }
                                     if (value.previous && active) { tokens.push(value.previous); }
-                                    metadata.push(value.position ? `${data[key]}~${value.position}` : data[key]);
-                                    if (size && size.length === 2) { metadata.push(`${Constant.Box}${str(size[0])}.${str(size[1])}`); }
+                                    tokens.push(value.position ? `${data[key]}~${value.position}` : data[key]);
+                                    if (size && size.length === 2) { tokens.push(`${Constant.Box}${str(size[0])}.${str(size[1])}`); }
                                     break;
                                 case "path":
-                                    metadata.push(`${value.data.path}>`);
+                                    tokens.push(`${value.data.path}>`);
                                     break;
                                 case "attributes":
                                     for (let attr in data[key]) {
                                         if (data[key][attr] !== undefined) {
-                                            metadata.push(attribute(attr, data[key][attr], privacy));
+                                            tokens.push(attribute(attr, data[key][attr], privacy));
                                         }
                                     }
                                     break;
                                 case "value":
-                                    metadata.push(scrub(data[key], data.tag, privacy, mangle));
+                                    tokens.push(scrub(data[key], data.tag, privacy, mangle));
                                     break;
                             }
                         }
                     }
-                    tokens = tokenize(tokens, metadata);
                 }
                 if (type === Event.Mutation) { baseline.activity(eventTime); }
-                queue(tokens, !config.lean);
+                queue(tokenize(tokens), !config.lean);
             }
             break;
     }
