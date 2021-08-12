@@ -181,7 +181,7 @@ function user(): User {
     // Return the existing userId, so it can eventually be written with version info later
     output.id = parts[0];
     // Read version information and timestamp from cookie, if available
-    if (parts.length >= 2) { output.expiry = num(parts[2], 36); }
+    if (parts.length > 2) { output.expiry = num(parts[2], 36); }
   }
   return output;
 }
