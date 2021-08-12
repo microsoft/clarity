@@ -121,8 +121,8 @@ function supported(target: Window | Document, api: string): boolean {
 
 function track(expiry: number): void {
   // Convert time precision into days to reduce number of bytes we have to write in a cookie
-  // E.g. 1628735962643 / (24*60*60*1000) => 18851 (days) => ejn in base36 (13 bytes => 3 bytes)
-  let end = Math.floor((Date.now() + (Setting.Expire * Time.Day))/Time.Day);
+  // E.g. Math.ceil(1628735962643 / (24*60*60*1000)) => 18852 (days) => ejo in base36 (13 bytes => 3 bytes)
+  let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day))/Time.Day);
   // To avoid cookie churn, write user id cookie only once every day
   if (expiry === null || Math.abs(end - expiry) >= Setting.CookieInterval) {
     setCookie(Constant.CookieKey, [data.userId, Setting.CookieVersion, end.toString(36)].join(Constant.Pipe), Setting.Expire);
@@ -162,11 +162,6 @@ function user(): User {
   let output: User = { id: shortid(), expiry: null };
   let cookie = getCookie(Constant.CookieKey);
   if(cookie && cookie.length > 0) {
-    // Presence of a valid first-party user cookie implies one of two things below:
-    //   - The project has tracking enabled
-    //   - We received prior consent for this user to enable tracking 
-    // In both cases we can assume tracking is enabled so we can attribute different page views to the same session.
-    config.track = true;
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
     let parts = cookie.split(Constant.Pipe);
     // For backward compatibility introduced in v0.6.18; following code can be removed with future iterations
@@ -224,9 +219,10 @@ function setCookie(key: string, value: string, time: number): void {
           if (i < hostname.length - 1) { 
             // Write the cookie on the current computed top level domain
             document.cookie = `${cookie}${Constant.Semicolon}${Constant.Domain}${rootDomain}`;
-            // Once written, check if the cookie was set successfully and the value matches exactly with what we set
-            // If yes, no more action is required and we can return from the function since rootDomain cookie is already set
-            // If no, then continue with the for loop
+            // Once written, check if the cookie exists and its value matches exactly with what we intended to set
+            // Checking for exact value match helps us eliminate a corner case where the cookie may already be present with a different value
+            // If the check is successful, no more action is required and we can return from the function since rootDomain cookie is already set
+            // If the check fails, continue with the for loop until we can successfully set and verify the cookie
             if (getCookie(key) === value) { return; }
           }
         }
