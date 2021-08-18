@@ -30,8 +30,9 @@ function csp(e: SecurityPolicyViolationEvent): void {
     let upload = config.upload as string;
     let parts = upload ? upload.substr(0, upload.indexOf("/", Constant.HTTPS.length)).split(Constant.Dot) : []; // Look for first "/" starting after initial "https://" string
     let domain = parts.length >= 2 ? parts.splice(-2).join(Constant.Dot) : null;
-    if (domain && e.blockedURI && e.blockedURI.indexOf(domain) >= 0) {
-        log(Code.ContentSecurityPolicy, Severity.Warning, e.blockedURI, `${e["disposition"]}`);
+    // Capture content security policy violation only if disposition value is not explicitly set to "report"
+    if (domain && e.blockedURI && e.blockedURI.indexOf(domain) >= 0 && e["disposition"] !== Constant.Report) {
+        log(Code.ContentSecurityPolicy, Severity.Warning, e.blockedURI);
     }
 }
 

@@ -59,7 +59,7 @@ export function start(): void {
   }
 
   // Track ids using a cookie if configuration allows it
-  track(u.expiry);
+  track(u);
 }
 
 export function stop(): void {
@@ -78,7 +78,7 @@ export function id(): string {
 export function consent(): void {
   if (core.active()) {
     config.track = true;
-    track((user()).expiry);
+    track(user(), BooleanFlag.True);
   }
 }
 
@@ -100,32 +100,24 @@ function tab(): string {
 export function save(): void {
   let ts = Math.round(Date.now());
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-  let upload = config.upload && typeof config.upload === Constant.String ? config.upload as string : Constant.Empty;
-  let host: string = Constant.Empty;
-  let path: string = Constant.Empty;
-
-  // The code below checks if the "upload" value is a string, and if so, break it into "host" and "path" before writing to session cookie
-  // This is for forward compatibility - to be removed in future versions (v0.6.21)
-  if (upload) {
-    host = upload.substr(0, upload.indexOf("/", Constant.HTTPS.length)); // Look for first "/" starting after initial "https://" string
-    path = host.length > 0 && host.length < upload.length ? upload.substr(host.length + 1) : upload; // Grab path of the url and update host value
-    host = host.replace(Constant.HTTPS, Constant.Empty);
-  }
+  let upload = config.upload && typeof config.upload === Constant.String ? (config.upload as string).replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
   if (upgrade && callback) { callback(data, !config.lean); }
-  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, path, host].join(Constant.Pipe), Setting.SessionExpire);
+  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
 }
 
 function supported(target: Window | Document, api: string): boolean {
   try { return !!target[api]; } catch { return false; }
 }
 
-function track(expiry: number): void {
+function track(u: User, consent: BooleanFlag = null): void {
+  // If consent is not explicitly specified, infer it from the user object
+  consent = consent === null ? u.consent : consent;
   // Convert time precision into days to reduce number of bytes we have to write in a cookie
   // E.g. Math.ceil(1628735962643 / (24*60*60*1000)) => 18852 (days) => ejo in base36 (13 bytes => 3 bytes)
   let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day))/Time.Day);
   // To avoid cookie churn, write user id cookie only once every day
-  if (expiry === null || Math.abs(end - expiry) >= Setting.CookieInterval) {
-    setCookie(Constant.CookieKey, [data.userId, Setting.CookieVersion, end.toString(36)].join(Constant.Pipe), Setting.Expire);
+  if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent) {
+    setCookie(Constant.CookieKey, [data.userId, Setting.CookieVersion, end.toString(36), consent].join(Constant.Pipe), Setting.Expire);
   }
 }
 
@@ -159,7 +151,7 @@ function num(string: string, base: number = 10): number {
 }
 
 function user(): User {
-  let output: User = { id: shortid(), expiry: null };
+  let output: User = { id: shortid(), expiry: null, consent: BooleanFlag.False };
   let cookie = getCookie(Constant.CookieKey);
   if(cookie && cookie.length > 0) {
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
@@ -178,10 +170,14 @@ function user(): User {
       document.cookie = `${Constant.SessionKey}=${deleted}`;
     }
     // End code for backward compatibility
-    // Return the existing userId, so it can eventually be written with version info later
-    output.id = parts[0];
     // Read version information and timestamp from cookie, if available
     if (parts.length > 2) { output.expiry = num(parts[2], 36); }
+    // Check if we have explicit consent to track this user
+    if (parts.length > 3 && num(parts[3]) === 1) { output.consent = BooleanFlag.True; }
+    // Set track configuration to true for this user if we have explicit consent, regardless of project setting
+    config.track = config.track || output.consent === BooleanFlag.True;
+    // Get user id from cookie only if we tracking is enabled, otherwise fallback to a random id
+    output.id = config.track ? parts[0] : output.id;
   }
   return output;
 }

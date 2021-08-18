@@ -175,6 +175,7 @@ export const enum Constant {
     Suspend = "suspend",
     Pause = "pause",
     Resume = "resume",
+    Report = "report",
     Empty = "",
     Space = " ",
     Expires = "expires=",
@@ -255,6 +256,7 @@ export interface Session {
 export interface User {
     id: string;
     expiry: number;
+    consent: BooleanFlag;
 }
 
 export interface Envelope extends Metadata {
