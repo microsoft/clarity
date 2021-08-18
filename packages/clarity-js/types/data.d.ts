@@ -175,6 +175,7 @@ export const enum Constant {
     Suspend = "suspend",
     Pause = "pause",
     Resume = "resume",
+    Report = "report",
     Empty = "",
     Space = " ",
     Expires = "expires=",
