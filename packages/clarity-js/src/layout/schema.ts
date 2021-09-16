@@ -17,6 +17,8 @@ export function ld(json: any): void {
                 case JsonLD.Article:
                 case JsonLD.Recipe:
                     dimension.log(Dimension.SchemaType, json[key]);
+                    dimension.log(Dimension.AuthorName,  json[JsonLD.Creator]);
+                    dimension.log(Dimension.Headline,  json[JsonLD.Headline]);
                     break;
                 case JsonLD.Product:
                     dimension.log(Dimension.SchemaType, json[key]);

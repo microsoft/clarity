@@ -6,16 +6,30 @@ const TIMEOUT = 3000;
 let stylesheets: Promise<void>[] = [];
 let nodes = {};
 let events = {};
+let documentFragments = [];
 
 export function reset(): void {
     nodes = {};
     stylesheets = [];
     events = {};
+    documentFragments = [];
 }
 
-export function get(hash: string): Element {
+export function get(hash) {
     let doc = state.window.document;
-    return doc.querySelector(`[${Constant.Hash}="${hash}"]`);
+    let element = doc.querySelector(`[${Constant.Hash}="${hash}"]`);
+    if (!element && documentFragments.length > 0) {
+        for(var i = 0; i < documentFragments.length; i++) {
+            let documentFragment = documentFragments[i];
+            if (documentFragment) {
+                element = documentFragment.querySelector(`[${Constant.Hash}="${hash}"]`);
+                if (element) {
+                    break;
+                }
+            }
+        }
+    }
+    return element;
 }
 
 export function box(event: Layout.BoxEvent): void {
@@ -57,8 +71,7 @@ export async function dom(event: Layout.DomEvent): Promise<void> {
 
 export function exists(hash: string): boolean {
     if (hash) {
-        let doc = state.window.document;
-        let match = doc.querySelector(`[${Constant.Hash}="${hash}"]`);
+        let match = get(hash);
         if (match) {
             let rectangle = match.getBoundingClientRect();
             return rectangle && rectangle.width > 0 && rectangle.height > 0;
@@ -116,6 +129,7 @@ export function markup(event: Layout.DomEvent): void {
                         shadowRoot.appendChild(shadowStyle);
                     }
                     nodes[node.id] = shadowRoot;
+                    documentFragments.push(shadowRoot);
                 }
                 break;
             case Layout.Constant.TextTag:
