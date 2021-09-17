@@ -5,7 +5,7 @@ import * as data from "./data";
 import * as heatmap from "./heatmap";
 import * as interaction from "./interaction";
 import * as layout from "./layout";
-export { dom } from "./layout";
+export { dom, get } from "./layout";
 
 export let state: PlaybackState = null;
 let renderTime = 0;
