@@ -198,7 +198,7 @@ function getCookie(key: string): string {
 }
 
 function setCookie(key: string, value: string, time: number): void {
-  if (config.track && supported(document, Constant.Cookie)) {
+  if (config.track && ((navigator && navigator.cookieEnabled) ||  supported(document, Constant.Cookie))) {
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + time);
     let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
