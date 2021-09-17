@@ -149,5 +149,6 @@ export const enum Setting {
     MarkerPadding = 5,
     MarkerColor = "white",
     CanvasTextColor = "#323130",
-    CanvasTextFont = "500 12px Segoe UI"
+    CanvasTextFont = "500 12px Segoe UI",
+    ScrollCanvasMaxHeight = 40000
 }

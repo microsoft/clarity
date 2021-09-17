@@ -6,16 +6,18 @@ const TIMEOUT = 3000;
 let stylesheets: Promise<void>[] = [];
 let nodes = {};
 let events = {};
+let hashMap = {};
 
 export function reset(): void {
     nodes = {};
     stylesheets = [];
     events = {};
+    hashMap = {};
 }
 
-export function get(hash: string): Element {
-    let doc = state.window.document;
-    return doc.querySelector(`[${Constant.Hash}="${hash}"]`);
+export function get(hash) {
+    var element = hash in hashMap ? (hashMap[hash].isConnected ? hashMap[hash] : null) : null;
+    return element;
 }
 
 export function box(event: Layout.BoxEvent): void {
@@ -24,6 +26,13 @@ export function box(event: Layout.BoxEvent): void {
         let el = element(b.id) as HTMLElement;
         resize(el, b.width, b.height);
     }
+}
+
+function addToHashMap(hash, node)
+{
+    // In case of selector collision, prefer the first inserted node
+    let element = get(hash)
+    hashMap[hash] = element ? element : node;
 }
 
 function resize(el: HTMLElement, width: number, height: number): void {
@@ -57,8 +66,7 @@ export async function dom(event: Layout.DomEvent): Promise<void> {
 
 export function exists(hash: string): boolean {
     if (hash) {
-        let doc = state.window.document;
-        let match = doc.querySelector(`[${Constant.Hash}="${hash}"]`);
+        let match = get(hash);
         if (match) {
             let rectangle = match.getBoundingClientRect();
             return rectangle && rectangle.width > 0 && rectangle.height > 0;
@@ -98,6 +106,7 @@ export function markup(event: Layout.DomEvent): void {
                 // In case of polyfill, map shadow dom to it's parent for rendering purposes
                 // All its children should be inserted as regular children to the parent node.
                 nodes[node.id] = parent;
+                addToHashMap(node.hash, parent);
                 break;
             case Layout.Constant.ShadowDomTag:
                 if (parent) {
@@ -116,6 +125,7 @@ export function markup(event: Layout.DomEvent): void {
                         shadowRoot.appendChild(shadowStyle);
                     }
                     nodes[node.id] = shadowRoot;
+                    addToHashMap(node.hash, shadowRoot);
                 }
                 break;
             case Layout.Constant.TextTag:
@@ -146,6 +156,7 @@ export function markup(event: Layout.DomEvent): void {
                     // If we are still processing discover events, keep the markup hidden until we are done
                     if (type === Data.Event.Discover) { htmlDoc.documentElement.style.visibility = Constant.Hidden; }
                     nodes[node.id] = htmlDoc.documentElement;
+                    addToHashMap(node.hash, htmlDoc.documentElement);
                 }
                 break;
             case "HEAD":
@@ -266,6 +277,7 @@ function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node
         node.parentElement.removeChild(node);
     }
     nodes[data.id] = node;
+    addToHashMap(data.hash, node);
 }
 
 function setAttributes(node: HTMLElement, data: Layout.DomData): void {

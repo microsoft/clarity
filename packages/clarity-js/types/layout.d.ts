@@ -70,7 +70,12 @@ export const enum Constant {
     String = "string",
     Number = "number",
     Disable = "disable",
-    HTML = "HTML"
+    HTML = "HTML",
+    Property = "property",
+    Content = "content",
+    Generator = "generator",
+    ogType = "og:type",
+    ogTitle = "og:title"
 }
 
 export const enum JsonLD { 
@@ -94,7 +99,9 @@ export const enum JsonLD {
     Sku = "sku",
     Name = "name",
     Article = "article",
-    Posting = "posting"
+    Posting = "posting",
+    Headline = "headline",
+    Creator = "creator"
 }
 
 export const enum Setting {

@@ -54,15 +54,22 @@ export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
     scrollData = scrollData || activity;
     let canvas = overlay();
     let context = canvas.getContext(Constant.Context);
-
+    let doc = state.window.document;
+    var body = doc.body;
+    var de = doc.documentElement;
+    var height = Math.max( body.scrollHeight, body.offsetHeight, 
+        de.clientHeight, de.scrollHeight, de.offsetHeight );
+    canvas.height = Math.min(height, Setting.ScrollCanvasMaxHeight);
     if (canvas.width > 0 && canvas.height > 0) {
         if (scrollData) {
             const grd = context.createLinearGradient(0, 0, 0, canvas.height);
             for (const currentCombination of scrollData) {
                 const huePercentView = 1 - (currentCombination.cumulativeSum / scrollData[0].cumulativeSum);
-                const percentView = currentCombination.scrollReachY / 100;
+                const percentView = (currentCombination.scrollReachY / 100) * (height / canvas.height);
                 const hue = huePercentView * Setting.MaxHue;
-                grd.addColorStop(percentView, `hsla(${hue}, 100%, 50%, 0.6)`);
+                if (percentView < 1) {
+                    grd.addColorStop(percentView, `hsla(${hue}, 100%, 50%, 0.6)`);
+                }
             }
 
             // Fill with gradient
@@ -251,15 +258,21 @@ function transform(): Heatmap[] {
 }
 
 function visible(el: HTMLElement, r: DOMRect, height: number): boolean {
-    let doc = state.window.document;
+    let doc: Document | ShadowRoot = state.window.document;
     let visibility = r.height > height ? true : false;
     if (visibility === false && r.width > 0 && r.height > 0) {
-        let elements = doc.elementsFromPoint(r.left + (r.width / 2), r.top + (r.height / 2));
-        for (let e of elements) {
-            // Ignore if top element ends up being the canvas element we added for heatmap visualization
-            if (e.tagName === Constant.Canvas || (e.id && e.id.indexOf(Constant.ClarityPrefix) === 0)) { continue; }
-            visibility = e === el;
-            break;
+        while (!visibility && doc)
+        {
+            let shadowElement = null;
+            let elements = doc.elementsFromPoint(r.left + (r.width / 2), r.top + (r.height / 2));
+            for (let e of elements) {
+                // Ignore if top element ends up being the canvas element we added for heatmap visualization
+                if (e.tagName === Constant.Canvas || (e.id && e.id.indexOf(Constant.ClarityPrefix) === 0)) { continue; }
+                visibility = e === el;
+                shadowElement = e.shadowRoot && e.shadowRoot != doc ? e.shadowRoot : null;
+                break;
+            }
+            doc = shadowElement;
         }
     }
     return visibility && r.bottom >= 0 && r.top <= height;

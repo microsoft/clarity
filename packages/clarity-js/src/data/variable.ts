@@ -25,7 +25,7 @@ function log(variable: string, value: string[]): void {
         value &&
         typeof variable === Constant.String &&
         variable.length < 255) {
-        let validValues = []
+        let validValues = variable in data ? data[variable] : [];
         for (let i = 0; i < value.length; i++) {
             if (typeof value[i] === Constant.String && value[i].length < 255) { validValues.push(value[i]); }
         }
