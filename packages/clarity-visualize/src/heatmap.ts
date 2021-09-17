@@ -59,7 +59,7 @@ export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
     var de = doc.documentElement;
     var height = Math.max( body.scrollHeight, body.offsetHeight, 
         de.clientHeight, de.scrollHeight, de.offsetHeight );
-    canvas.height = Math.min(height, Setting.CanvasMaxHeight);
+    canvas.height = Math.min(height, Setting.ScrollCanvasMaxHeight);
     if (canvas.width > 0 && canvas.height > 0) {
         if (scrollData) {
             const grd = context.createLinearGradient(0, 0, 0, canvas.height);

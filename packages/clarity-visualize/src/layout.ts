@@ -28,6 +28,13 @@ export function box(event: Layout.BoxEvent): void {
     }
 }
 
+function addToHashMap(hash, node)
+{
+    // In case of selector collision, prefer the first inserted node
+    let element = get(hash)
+    hashMap[hash] = element ? element : node;
+}
+
 function resize(el: HTMLElement, width: number, height: number): void {
     if (el && el.nodeType === NodeType.ELEMENT_NODE && width && height) {
         el.style.width = width + Layout.Constant.Pixel;
@@ -99,7 +106,7 @@ export function markup(event: Layout.DomEvent): void {
                 // In case of polyfill, map shadow dom to it's parent for rendering purposes
                 // All its children should be inserted as regular children to the parent node.
                 nodes[node.id] = parent;
-                hashMap[node.hash] = parent;
+                addToHashMap(node.hash, parent);
                 break;
             case Layout.Constant.ShadowDomTag:
                 if (parent) {
@@ -118,7 +125,7 @@ export function markup(event: Layout.DomEvent): void {
                         shadowRoot.appendChild(shadowStyle);
                     }
                     nodes[node.id] = shadowRoot;
-                    hashMap[node.hash] = shadowRoot;
+                    addToHashMap(node.hash, shadowRoot);
                 }
                 break;
             case Layout.Constant.TextTag:
@@ -149,7 +156,7 @@ export function markup(event: Layout.DomEvent): void {
                     // If we are still processing discover events, keep the markup hidden until we are done
                     if (type === Data.Event.Discover) { htmlDoc.documentElement.style.visibility = Constant.Hidden; }
                     nodes[node.id] = htmlDoc.documentElement;
-                    hashMap[node.hash] = htmlDoc.documentElement;
+                    addToHashMap(node.hash, htmlDoc.documentElement);
                 }
                 break;
             case "HEAD":
@@ -270,7 +277,7 @@ function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node
         node.parentElement.removeChild(node);
     }
     nodes[data.id] = node;
-    hashMap[data.hash] = node;
+    addToHashMap(data.hash, node);
 }
 
 function setAttributes(node: HTMLElement, data: Layout.DomData): void {
