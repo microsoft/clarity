@@ -1,7 +1,8 @@
 import { Constant, Source } from "@clarity-types/layout";
-import { Code, Severity } from "@clarity-types/data";
+import { Code, Dimension, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
 import * as dom from "./dom";
+import * as dimension from "@src/data/dimension";
 import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
@@ -104,6 +105,20 @@ export default function (node: Node, source: Source): Node {
                     break;
                 case "NOSCRIPT":
                 case "META":
+                    if (Constant.Property in attributes && Constant.Content in attributes) {
+                        var content = attributes[Constant.Content]
+                        switch(attributes[Constant.Property]) {
+                            case Constant.ogTitle:
+                                dimension.log(Dimension.MetaTitle, content)
+                                break;
+                            case Constant.ogType:
+                                dimension.log(Dimension.MetaType, content)
+                                break;
+                            case Constant.Generator:
+                                dimension.log(Dimension.Generator, content)
+                                break;
+                        } 
+                    }
                     break;
                 case "HEAD":
                     let head = { tag, attributes };

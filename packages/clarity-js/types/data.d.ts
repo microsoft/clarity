@@ -96,7 +96,11 @@ export const enum Dimension {
     TabId = 15,
     PageLanguage = 16,
     DocumentDirection = 17,
-    Headline = 18
+    Headline = 18,
+    MetaType = 19,
+    MetaTitle = 20,
+    Generator = 21
+    
 }
 
 export const enum Check {

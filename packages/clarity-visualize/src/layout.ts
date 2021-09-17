@@ -6,29 +6,17 @@ const TIMEOUT = 3000;
 let stylesheets: Promise<void>[] = [];
 let nodes = {};
 let events = {};
-let documentFragments = [];
+let hashMap = {};
 
 export function reset(): void {
     nodes = {};
     stylesheets = [];
     events = {};
-    documentFragments = [];
+    hashMap = {};
 }
 
 export function get(hash) {
-    let doc = state.window.document;
-    let element = doc.querySelector(`[${Constant.Hash}="${hash}"]`);
-    if (!element && documentFragments.length > 0) {
-        for(var i = 0; i < documentFragments.length; i++) {
-            let documentFragment = documentFragments[i];
-            if (documentFragment) {
-                element = documentFragment.querySelector(`[${Constant.Hash}="${hash}"]`);
-                if (element) {
-                    break;
-                }
-            }
-        }
-    }
+    var element = hash in hashMap ? (hashMap[hash].isConnected ? hashMap[hash] : null) : null;
     return element;
 }
 
@@ -111,6 +99,7 @@ export function markup(event: Layout.DomEvent): void {
                 // In case of polyfill, map shadow dom to it's parent for rendering purposes
                 // All its children should be inserted as regular children to the parent node.
                 nodes[node.id] = parent;
+                hashMap[node.hash] = parent;
                 break;
             case Layout.Constant.ShadowDomTag:
                 if (parent) {
@@ -129,7 +118,7 @@ export function markup(event: Layout.DomEvent): void {
                         shadowRoot.appendChild(shadowStyle);
                     }
                     nodes[node.id] = shadowRoot;
-                    documentFragments.push(shadowRoot);
+                    hashMap[node.hash] = shadowRoot;
                 }
                 break;
             case Layout.Constant.TextTag:
@@ -160,6 +149,7 @@ export function markup(event: Layout.DomEvent): void {
                     // If we are still processing discover events, keep the markup hidden until we are done
                     if (type === Data.Event.Discover) { htmlDoc.documentElement.style.visibility = Constant.Hidden; }
                     nodes[node.id] = htmlDoc.documentElement;
+                    hashMap[node.hash] = htmlDoc.documentElement;
                 }
                 break;
             case "HEAD":
@@ -280,6 +270,7 @@ function insertBefore(data: Layout.DomData, parent: Node, node: Node, next: Node
         node.parentElement.removeChild(node);
     }
     nodes[data.id] = node;
+    hashMap[data.hash] = node;
 }
 
 function setAttributes(node: HTMLElement, data: Layout.DomData): void {
