@@ -11,6 +11,7 @@ export interface Visualize {
     render: (events: Data.DecodedEvent[]) =>  void;
     setup: (target: Window, options: Options) => Visualize;
     time: () => number;
+    get: (hash: string) => HTMLElement;
 }
 
 declare const visualize: Visualize;
