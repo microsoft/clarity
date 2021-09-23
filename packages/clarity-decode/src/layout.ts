@@ -25,8 +25,9 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             for (let i = 2; i < tokens.length; i += 3) {
                 let region: Layout.RegionData = {
                     id: tokens[i] as number,
-                    state: tokens[i + 1] as number,
-                    name: tokens[i + 2] as string
+                    interactionState: tokens[i + 1] as number,
+                    visibilityState: tokens[i + 2] as number,
+                    name: tokens[i + 3] as string
                 };
                 regionData.push(region);
             }

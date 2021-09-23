@@ -38,6 +38,10 @@ export interface ScrollMapInfo {
     percUsers: number;
 }
 
+export interface RegionState {
+    interactionState: Layout.Interaction,
+    visibilityState: Layout.RegionVisibility
+ }
 
 export interface ElementData {
     hash: string;

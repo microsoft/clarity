@@ -12,10 +12,15 @@ export const enum Source {
 }
 
 export const enum InteractionState {
-    Rendered = 0,
-    Visible = 10,
+    None = 20,
     Clicked = 20,
     Input = 30
+}
+
+export const enum RegionVisibilityState {
+    Rendered = 0,
+    Visible = 10,
+    ScrolledToEnd = 20
 }
 
 export const enum Constant {
@@ -181,7 +186,8 @@ export interface DocumentData {
 
 export interface RegionData {
     id: number;
-    state: InteractionState;
+    visibilityState: RegionVisibilityState;
+    interactionState: InteractionState;
     name: string;    
 }
 

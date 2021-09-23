@@ -1,5 +1,5 @@
 import { Event, Setting } from "@clarity-types/data";
-import { InteractionState, RegionData, RegionState, RegionQueue } from "@clarity-types/layout";
+import { InteractionState, RegionData, RegionState, RegionQueue, RegionVisibilityState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
@@ -46,16 +46,16 @@ export function exists(node: Node): boolean {
 
 export function track(id: number, event: Event): void {
     let node = dom.getNode(id);
-    let data = id in regions ? regions[id] : { id, state: InteractionState.Rendered, name: regionMap.get(node) };
+    let data = id in regions ? regions[id] : { id, visibilityState: RegionVisibilityState.Rendered, interactionState: InteractionState.None, name: regionMap.get(node) };
     
     // Determine the interaction state based on incoming event
-    let interactionState = InteractionState.Rendered;
+    let interactionState = InteractionState.None;
     switch (event) {
         case Event.Click: interactionState = InteractionState.Clicked; break;
         case Event.Input: interactionState = InteractionState.Input; break;
     }
     // Process updates to this region, if applicable
-    process(node, data, interactionState);
+    process(node, data, interactionState, data.visibilityState);
 }
 
 export function compute(): void {
@@ -91,27 +91,30 @@ function handler(entries: IntersectionObserverEntry[]): void {
         // Also, if these regions ever become non-zero width or height (through AJAX, user action or orientation change) - we will automatically start monitoring them from that point onwards
         if (regionMap.has(target) && rect.width + rect.height > 0 && viewport.width > 0 && viewport.height > 0) {
             let id = target ? dom.getId(target) : null;
-            let data = id in regions ? regions[id] : { id, name: regionMap.get(target), state: InteractionState.Rendered };
+            let data = id in regions ? regions[id] : { id, name: regionMap.get(target), interactionState: InteractionState.None, visibilityState: RegionVisibilityState.Rendered };
             
             // For regions that have relatively smaller area, we look at intersection ratio and see the overlap relative to element's area
             // However, for larger regions, area of regions could be bigger than viewport and therefore comparison is relative to visible area
             let viewportRatio = overlap ? (overlap.width * overlap.height * 1.0) / (viewport.width * viewport.height) : 0;
             let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio;
-
+            // If an element is either visible or was visible and has been scorlled to the end
+            let scrolledToEnd = (visible || data.visibilityState == RegionVisibilityState.Visible) && Math.abs(rect.top) + viewport.height > rect.height;
             // Process updates to this region, if applicable
-            process(target, data, visible ? InteractionState.Visible : InteractionState.Rendered);
+            process(target, data, data.interactionState, 
+                scrolledToEnd ? RegionVisibilityState.ScrolledToEnd : visible ? RegionVisibilityState.Visible : RegionVisibilityState.Rendered);
 
-            // Stop observing this element now that we have already received visibility signal
-            if (data.state >= InteractionState.Visible && observer) { observer.unobserve(target); }
+            // Stop observing this element now that we have already received scrolled signal
+            if (data.visibilityState >= RegionVisibilityState.ScrolledToEnd && observer) { observer.unobserve(target); }
         }
     }
     if (state.length > 0) { encode(Event.Region); }
 }
 
-function process(n: Node, d: RegionData, s: InteractionState): void {
+function process(n: Node, d: RegionData, s: InteractionState, v: RegionVisibilityState): void {
     // Check if received a state that supersedes existing state
-    let updated = s > d.state;
-    d.state = updated ? s : d.state;
+    let updated = s > d.interactionState || v > d.visibilityState;
+    d.interactionState = s > d.interactionState ? s : d.interactionState;
+    d.visibilityState = v > d.visibilityState ? v : d.visibilityState;
     // If the corresponding node is already discovered, update the internal state
     // Otherwise, track it in a queue to reprocess later.
     if (d.id) {
@@ -123,7 +126,7 @@ function process(n: Node, d: RegionData, s: InteractionState): void {
 }
 
 function clone(r: RegionData): RegionState {
-    return { time: time(), data: { id: r.id, state: r.state, name: r.name }};
+    return { time: time(), data: { id: r.id, interactionState: r.interactionState, visibilityState: r.visibilityState, name: r.name }};
 }
 
 export function reset(): void {

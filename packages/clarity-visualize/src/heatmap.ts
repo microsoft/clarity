@@ -67,7 +67,7 @@ export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
                 const huePercentView = 1 - (currentCombination.cumulativeSum / scrollData[0].cumulativeSum);
                 const percentView = (currentCombination.scrollReachY / 100) * (height / canvas.height);
                 const hue = huePercentView * Setting.MaxHue;
-                if (percentView < 1) {
+                if (percentView <= 1) {
                     grd.addColorStop(percentView, `hsla(${hue}, 100%, 50%, 0.6)`);
                 }
             }
@@ -87,7 +87,7 @@ function addInfoMarkers(context: CanvasRenderingContext2D, scrollMapInfo: Scroll
         const closest = scrollMapInfo.reduce((prev: ScrollMapInfo, curr: ScrollMapInfo): ScrollMapInfo => {
             return ((Math.abs(curr.percUsers - marker)) < (Math.abs(prev.percUsers - marker)) ? curr : prev);
         });
-        if (closest.percUsers >= marker - Setting.MarkerRange || closest.percUsers <= marker + Setting.MarkerRange) {
+        if (closest.percUsers >= marker - Setting.MarkerRange && closest.percUsers <= marker + Setting.MarkerRange) {
             const markerLine = (closest.scrollReachY / 100) * height;
             addMarker(context, width, `${marker}%`, markerLine, Setting.MarkerSmallWidth);
         }
