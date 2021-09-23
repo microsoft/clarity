@@ -50,7 +50,7 @@ export function clear() : void {
     reset();
 }
 
-export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
+export function scroll(activity: ScrollMapInfo[], avgFold: number, addMarkers: boolean): void {
     scrollData = scrollData || activity;
     let canvas = overlay();
     let context = canvas.getContext(Constant.Context);
@@ -75,7 +75,9 @@ export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
             // Fill with gradient
             context.fillStyle = grd;
             context.fillRect(0, 0, canvas.width, canvas.height);
-            addInfoMarkers(context, scrollData, canvas.width, canvas.height, avgFold);
+            if (addMarkers) {
+                addInfoMarkers(context, scrollData, canvas.width, canvas.height, avgFold);
+            }
         }
     };
 }

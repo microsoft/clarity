@@ -125,7 +125,10 @@ export const enum Constant {
     AverageFold = "Average Fold",
     Empty = "",
     Undefined = "undefined",
-    Function = "function"
+    Function = "function",
+    FormTag = "form",
+    AutoComplte = "autocomplete",
+    Off = "off"
 }
 
 export const enum Setting {
