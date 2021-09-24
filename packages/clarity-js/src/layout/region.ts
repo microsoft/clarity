@@ -99,7 +99,7 @@ function handler(entries: IntersectionObserverEntry[]): void {
             let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio;
             // If an element is either visible or was visible and has been scrolled to the end
             // i.e. Scrolled to end is determined by if the starting position of the element + the window height is more than the total element height. 
-            // Intersection observer returns a negative value for rect.top to indicate that the element top is above the viewport
+            // starting position is relative to the viewport - so Intersection observer returns a negative value for rect.top to indicate that the element top is above the viewport
             let scrolledToEnd = (visible || data.visibility == RegionVisibility.Visible) && Math.abs(rect.top) + viewport.height > rect.height;
             // Process updates to this region, if applicable
             process(target, data, data.interaction, 

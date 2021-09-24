@@ -127,7 +127,8 @@ export const enum Constant {
     Undefined = "undefined",
     Function = "function",
     FormTag = "form",
-    AutoComplte = "autocomplete",
+    InputTag = "input",
+    AutoComplete = "autocomplete",
     NewPassword = "new-password"
 }
 

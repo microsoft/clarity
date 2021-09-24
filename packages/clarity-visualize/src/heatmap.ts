@@ -60,6 +60,7 @@ export function scroll(activity: ScrollMapInfo[], avgFold: number, addMarkers: b
     var height = Math.max( body.scrollHeight, body.offsetHeight, 
         de.clientHeight, de.scrollHeight, de.offsetHeight );
     canvas.height = Math.min(height, Setting.ScrollCanvasMaxHeight);
+    canvas.style.top = 0 + Constant.Pixel;
     if (canvas.width > 0 && canvas.height > 0) {
         if (scrollData) {
             const grd = context.createLinearGradient(0, 0, 0, canvas.height);
@@ -216,10 +217,16 @@ function getGradient(): ImageData {
     return gradientPixels;
 }
 
-function redraw(): void {
+function redraw(event): void {
     if (data) {
         if (timeout) { clearTimeout(timeout); }
         timeout = setTimeout(click, Setting.Interval);
+    }
+    else if (scrollData) {
+        if (event.type != 'scroll') {
+            if (timeout) { clearTimeout(timeout); }
+            timeout = setTimeout(scroll, Setting.Interval);
+        }
     }
 }
 
