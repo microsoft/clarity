@@ -52,7 +52,7 @@ export function metric(event: Data.MetricEvent): void {
         // Append region information to metadata
         for (let name in regions) {
             let r = regions[name];
-            let className = (r.visibilityState === Layout.RegionVisibilityState.Visible ? "visible" : (r.interactionState === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty));
+            let className = (r.visibility === Layout.RegionVisibility.Visible ? "visible" : (r.interaction === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty));
             regionMarkup.push(`<span class="${className}">${name}</span>`);
         }
 
@@ -64,7 +64,7 @@ export function region(event: Layout.RegionEvent): void {
     let data = event.data;
     for (let r of data) {
         if (!(r.name in regions)) { 
-            regions[r.name] = { interactionState: r.interactionState , visibilityState: r.visibilityState }
+            regions[r.name] = { interaction: r.interaction , visibility: r.visibility }
         }
         regionMap[r.id] = r.name;
     }

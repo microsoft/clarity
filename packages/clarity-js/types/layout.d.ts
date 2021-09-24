@@ -17,7 +17,7 @@ export const enum InteractionState {
     Input = 30
 }
 
-export const enum RegionVisibilityState {
+export const enum RegionVisibility {
     Rendered = 0,
     Visible = 10,
     ScrolledToEnd = 13
@@ -186,8 +186,8 @@ export interface DocumentData {
 
 export interface RegionData {
     id: number;
-    visibilityState: RegionVisibilityState;
-    interactionState: InteractionState;
+    visibility: RegionVisibility;
+    interaction: InteractionState;
     name: string;    
 }
 

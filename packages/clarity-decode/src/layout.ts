@@ -1,6 +1,6 @@
 import { Constant } from "@clarity-types/data";
 import { helper, Data, Layout } from "clarity-js";
-import { DomData, LayoutEvent, Interaction, RegionVisibilityState  } from "../types/layout";
+import { DomData, LayoutEvent, Interaction, RegionVisibility  } from "../types/layout";
 
 const AverageWordLength = 6;
 const Space = " ";
@@ -29,8 +29,8 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                 if (typeof(tokens[i+2]) == Constant.Number) {
                     region = {
                         id: tokens[i] as number,
-                        interactionState: tokens[i + 1] as number,
-                        visibilityState: tokens[i + 2] as number,
+                        interaction: tokens[i + 1] as number,
+                        visibility: tokens[i + 2] as number,
                         name: tokens[i + 3] as string
                     };
                     increment = 4;
@@ -40,8 +40,8 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                         id: tokens[i] as number,
                         // For backward compatibility before 0.6.24 - where region states were sent as a single enum 
                         // we convert the value into the two states tracked after 0.6.24
-                        interactionState:  state >= Interaction.None ? state : Interaction.None,
-                        visibilityState: state <= RegionVisibilityState.ScrolledToEnd ? state : RegionVisibilityState.Rendered,
+                        interaction:  state >= Interaction.None ? state : Interaction.None,
+                        visibility: state <= RegionVisibility.ScrolledToEnd ? state : RegionVisibility.Rendered,
                         name: tokens[i + 2] as string
                     };
                     increment = 3;

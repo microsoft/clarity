@@ -39,8 +39,8 @@ export interface ScrollMapInfo {
 }
 
 export interface RegionState {
-    interactionState: Layout.Interaction,
-    visibilityState: Layout.RegionVisibility
+    interaction: Layout.Interaction,
+    visibility: Layout.RegionVisibility
  }
 
 export interface ElementData {
