@@ -52,8 +52,7 @@ export function metric(event: Data.MetricEvent): void {
         // Append region information to metadata
         for (let name in regions) {
             let r = regions[name];
-            let className = r.interactionState === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty;
-            className += r.visibilityState === Layout.RegionVisibilityState.Visible ? "visible" : Data.Constant.Empty;
+            let className = (r.visibilityState === Layout.RegionVisibilityState.Visible ? "visible" : (r.interactionState === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty));
             regionMarkup.push(`<span class="${className}">${name}</span>`);
         }
 

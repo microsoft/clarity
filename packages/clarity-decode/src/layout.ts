@@ -23,7 +23,8 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             // From 0.6.15 we send each reach update in an individual event. This allows us to include time with it.
             // To keep it backward compatible (<= 0.6.14), we look for multiple regions in the same event. This works both with newer and older payloads.
             // In future, we can update the logic to look deterministically for only 3 fields and remove the for loop.
-            for (let i = 2; i < tokens.length; i += 3) {
+            let increment: number;
+            for (let i = 2; i < tokens.length; i += increment) {
                 let region: Layout.RegionData;
                 if (typeof(tokens[i+2]) == Constant.Number) {
                     region = {
@@ -32,6 +33,7 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                         visibilityState: tokens[i + 2] as number,
                         name: tokens[i + 3] as string
                     };
+                    increment = 4;
                 } else {
                     let state = tokens[i + 1] as number;
                     region = {
@@ -42,6 +44,7 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                         visibilityState: state <= RegionVisibilityState.ScrolledToEnd ? state : RegionVisibilityState.Rendered,
                         name: tokens[i + 2] as string
                     };
+                    increment = 3;
                 }
                 regionData.push(region);
             }
