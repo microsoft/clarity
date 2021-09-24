@@ -12,7 +12,7 @@ export interface LayoutEvent extends PartialEvent {
 /* Redeclare enums */
 export import Constant = Layout.Constant;
 export import Interaction = Layout.InteractionState;
-export import RegionVisibility = Layout.RegionVisibilityState;
+export import RegionVisibilityState = Layout.RegionVisibilityState;
 
 /* Event Data */
 export interface DomData {

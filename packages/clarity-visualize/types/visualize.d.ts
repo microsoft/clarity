@@ -128,7 +128,7 @@ export const enum Constant {
     Function = "function",
     FormTag = "form",
     AutoComplte = "autocomplete",
-    Off = "off"
+    NewPassword = "new-password"
 }
 
 export const enum Setting {

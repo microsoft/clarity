@@ -53,7 +53,7 @@ export function metric(event: Data.MetricEvent): void {
         for (let name in regions) {
             let r = regions[name];
             let className = r.interactionState === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty;
-            className += r.visibilityState === Layout.RegionVisibility.ScrolledToEnd ? "visible" : Data.Constant.Empty;
+            className += r.visibilityState === Layout.RegionVisibilityState.Visible ? "visible" : Data.Constant.Empty;
             regionMarkup.push(`<span class="${className}">${name}</span>`);
         }
 

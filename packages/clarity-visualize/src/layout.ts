@@ -339,12 +339,13 @@ function setAttributes(node: HTMLElement, data: Layout.DomData): void {
     // Add an empty ALT tag on all IMG elements
     if (tag === Constant.ImageTag && !node.hasAttribute(Constant.AltAttribute)) { node.setAttribute(Constant.AltAttribute, Constant.Empty); }
 
-    // Prevent auto fill from working on forms during visualize
+    // Prevent auto fill from working on forms during visualize. 
+    // During visualization, form fields are filled with saved details from the browser of user who is seeing the visualization
     if (tag === Constant.FormTag) { 
         if (node.hasAttribute(Constant.AutoComplte)) {
             node.removeAttribute(Constant.AutoComplte);
         }
-        node.setAttribute(Constant.AutoComplte, Constant.Off); 
+        node.setAttribute(Constant.AutoComplte, Constant.NewPassword); 
     }
 }
 

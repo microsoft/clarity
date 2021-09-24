@@ -106,7 +106,9 @@ export default function (node: Node, source: Source): Node {
                 case "NOSCRIPT":
                     break;
                 case "META":
-                    var key = Constant.Property in attributes ? Constant.Property : Constant.Name in attributes ? Constant.Name : null;
+                    var key = (Constant.Property in attributes ?
+                                    Constant.Property : 
+                                    (Constant.Name in attributes ? Constant.Name : null));
                     if (key && Constant.Content in attributes) {
                         let content = attributes[Constant.Content]
                         switch(attributes[key]) {

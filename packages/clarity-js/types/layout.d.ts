@@ -12,7 +12,7 @@ export const enum Source {
 }
 
 export const enum InteractionState {
-    None = 20,
+    None = 19,
     Clicked = 20,
     Input = 30
 }
@@ -20,7 +20,7 @@ export const enum InteractionState {
 export const enum RegionVisibilityState {
     Rendered = 0,
     Visible = 10,
-    ScrolledToEnd = 20
+    ScrolledToEnd = 15
 }
 
 export const enum Constant {

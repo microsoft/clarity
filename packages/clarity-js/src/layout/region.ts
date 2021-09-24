@@ -97,11 +97,15 @@ function handler(entries: IntersectionObserverEntry[]): void {
             // However, for larger regions, area of regions could be bigger than viewport and therefore comparison is relative to visible area
             let viewportRatio = overlap ? (overlap.width * overlap.height * 1.0) / (viewport.width * viewport.height) : 0;
             let visible = viewportRatio > Setting.ViewportIntersectionRatio || entry.intersectionRatio > Setting.IntersectionRatio;
-            // If an element is either visible or was visible and has been scorlled to the end
+            // If an element is either visible or was visible and has been scrolled to the end
+            // i.e. Scrolled to end is determined by if the starting position of the element + the window height is more than the total element height. 
+            // Intersection observer returns a negative value for rect.top to indicate that the element top is above the viewport
             let scrolledToEnd = (visible || data.visibilityState == RegionVisibilityState.Visible) && Math.abs(rect.top) + viewport.height > rect.height;
             // Process updates to this region, if applicable
             process(target, data, data.interactionState, 
-                scrolledToEnd ? RegionVisibilityState.ScrolledToEnd : visible ? RegionVisibilityState.Visible : RegionVisibilityState.Rendered);
+                        (scrolledToEnd ? 
+                            RegionVisibilityState.ScrolledToEnd :
+                            (visible ? RegionVisibilityState.Visible : RegionVisibilityState.Rendered)));
 
             // Stop observing this element now that we have already received scrolled signal
             if (data.visibilityState >= RegionVisibilityState.ScrolledToEnd && observer) { observer.unobserve(target); }
