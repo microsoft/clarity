@@ -28,7 +28,8 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             for (let r of region.state) {
                 tokens = [r.time, Event.Region];
                 tokens.push(r.data.id);
-                tokens.push(r.data.state);
+                tokens.push(r.data.interaction);
+                tokens.push(r.data.visibility);
                 tokens.push(r.data.name);
                 queue(tokens);
             }

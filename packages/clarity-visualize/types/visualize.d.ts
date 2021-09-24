@@ -38,6 +38,10 @@ export interface ScrollMapInfo {
     percUsers: number;
 }
 
+export interface RegionState {
+    interaction: Layout.Interaction,
+    visibility: Layout.RegionVisibility
+ }
 
 export interface ElementData {
     hash: string;
@@ -121,7 +125,11 @@ export const enum Constant {
     AverageFold = "Average Fold",
     Empty = "",
     Undefined = "undefined",
-    Function = "function"
+    Function = "function",
+    FormTag = "form",
+    InputTag = "input",
+    AutoComplete = "autocomplete",
+    NewPassword = "new-password"
 }
 
 export const enum Setting {

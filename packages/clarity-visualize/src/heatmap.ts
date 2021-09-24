@@ -50,7 +50,7 @@ export function clear() : void {
     reset();
 }
 
-export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
+export function scroll(activity: ScrollMapInfo[], avgFold: number, addMarkers: boolean): void {
     scrollData = scrollData || activity;
     let canvas = overlay();
     let context = canvas.getContext(Constant.Context);
@@ -60,6 +60,7 @@ export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
     var height = Math.max( body.scrollHeight, body.offsetHeight, 
         de.clientHeight, de.scrollHeight, de.offsetHeight );
     canvas.height = Math.min(height, Setting.ScrollCanvasMaxHeight);
+    canvas.style.top = 0 + Constant.Pixel;
     if (canvas.width > 0 && canvas.height > 0) {
         if (scrollData) {
             const grd = context.createLinearGradient(0, 0, 0, canvas.height);
@@ -67,7 +68,7 @@ export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
                 const huePercentView = 1 - (currentCombination.cumulativeSum / scrollData[0].cumulativeSum);
                 const percentView = (currentCombination.scrollReachY / 100) * (height / canvas.height);
                 const hue = huePercentView * Setting.MaxHue;
-                if (percentView < 1) {
+                if (percentView <= 1) {
                     grd.addColorStop(percentView, `hsla(${hue}, 100%, 50%, 0.6)`);
                 }
             }
@@ -75,7 +76,9 @@ export function scroll(activity: ScrollMapInfo[], avgFold: number): void {
             // Fill with gradient
             context.fillStyle = grd;
             context.fillRect(0, 0, canvas.width, canvas.height);
-            addInfoMarkers(context, scrollData, canvas.width, canvas.height, avgFold);
+            if (addMarkers) {
+                addInfoMarkers(context, scrollData, canvas.width, canvas.height, avgFold);
+            }
         }
     };
 }
@@ -87,7 +90,7 @@ function addInfoMarkers(context: CanvasRenderingContext2D, scrollMapInfo: Scroll
         const closest = scrollMapInfo.reduce((prev: ScrollMapInfo, curr: ScrollMapInfo): ScrollMapInfo => {
             return ((Math.abs(curr.percUsers - marker)) < (Math.abs(prev.percUsers - marker)) ? curr : prev);
         });
-        if (closest.percUsers >= marker - Setting.MarkerRange || closest.percUsers <= marker + Setting.MarkerRange) {
+        if (closest.percUsers >= marker - Setting.MarkerRange && closest.percUsers <= marker + Setting.MarkerRange) {
             const markerLine = (closest.scrollReachY / 100) * height;
             addMarker(context, width, `${marker}%`, markerLine, Setting.MarkerSmallWidth);
         }
@@ -214,10 +217,16 @@ function getGradient(): ImageData {
     return gradientPixels;
 }
 
-function redraw(): void {
+function redraw(event): void {
     if (data) {
         if (timeout) { clearTimeout(timeout); }
         timeout = setTimeout(click, Setting.Interval);
+    }
+    else if (scrollData) {
+        if (event.type != 'scroll') {
+            if (timeout) { clearTimeout(timeout); }
+            timeout = setTimeout(scroll, Setting.Interval);
+        }
     }
 }
 

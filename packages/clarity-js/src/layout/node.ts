@@ -106,9 +106,12 @@ export default function (node: Node, source: Source): Node {
                 case "NOSCRIPT":
                     break;
                 case "META":
-                    if (Constant.Property in attributes && Constant.Content in attributes) {
+                    var key = (Constant.Property in attributes ?
+                                    Constant.Property : 
+                                    (Constant.Name in attributes ? Constant.Name : null));
+                    if (key && Constant.Content in attributes) {
                         let content = attributes[Constant.Content]
-                        switch(attributes[Constant.Property]) {
+                        switch(attributes[key]) {
                             case Constant.ogTitle:
                                 dimension.log(Dimension.MetaTitle, content)
                                 break;
@@ -118,7 +121,7 @@ export default function (node: Node, source: Source): Node {
                             case Constant.Generator:
                                 dimension.log(Dimension.Generator, content)
                                 break;
-                        } 
+                        }
                     }
                     break;
                 case "HEAD":

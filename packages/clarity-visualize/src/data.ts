@@ -1,10 +1,10 @@
 import { Data, Layout } from "clarity-decode";
 import { state } from "./clarity";
-
+import { RegionState } from "@clarity-types/visualize";
 export let lean = false;
 
 let regionMap = {};
-let regions: { [key: string]: Layout.Interaction } = {};
+let regions: { [key: string]:  RegionState} = {};
 let metrics: {[key: number]: number} = null;
 const METRIC_MAP = {};
 METRIC_MAP[Data.Metric.TotalBytes] = { name: "Total Bytes", unit: "KB" };
@@ -52,7 +52,7 @@ export function metric(event: Data.MetricEvent): void {
         // Append region information to metadata
         for (let name in regions) {
             let r = regions[name];
-            let className = r === Layout.Interaction.Visible ? "visible" : (r === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty);
+            let className = (r.visibility === Layout.RegionVisibility.Visible ? "visible" : (r.interaction === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty));
             regionMarkup.push(`<span class="${className}">${name}</span>`);
         }
 
@@ -63,8 +63,9 @@ export function metric(event: Data.MetricEvent): void {
 export function region(event: Layout.RegionEvent): void {
     let data = event.data;
     for (let r of data) {
-        if (!(r.name in regions)) { regions[r.name] = Layout.Interaction.Rendered; }
-        regions[r.name] = r.state;
+        if (!(r.name in regions)) { 
+            regions[r.name] = { interaction: r.interaction , visibility: r.visibility }
+        }
         regionMap[r.id] = r.name;
     }
 }

@@ -6,7 +6,7 @@ export interface Visualize {
     html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number) => Visualize;
     clickmap: (activity?: Activity) => void;
     clearmap: () => void;
-    scrollmap: (data?: ScrollMapInfo[], averageFold?: number) => void;
+    scrollmap: (data?: ScrollMapInfo[], averageFold?: number, addMarkers?: boolean) => void;
     merge: (decoded: Data.DecodedPayload[]) => MergedPayload;
     render: (events: Data.DecodedEvent[]) =>  void;
     setup: (target: Window, options: Options) => Visualize;

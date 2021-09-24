@@ -51,9 +51,9 @@ export function clearmap(): void {
     heatmap.clear();
 }
 
-export function scrollmap(scrollData: ScrollMapInfo[], avgFold: number): void {
+export function scrollmap(scrollData: ScrollMapInfo[], avgFold: number, addMarkers: boolean): void {
     if (state === null) { throw new Error(`Initialize heatmap by calling "html" or "setup" prior to making this call.`); }
-    heatmap.scroll(scrollData, avgFold);
+    heatmap.scroll(scrollData, avgFold, addMarkers);
 }
 
 export function merge(decoded: Data.DecodedPayload[]): MergedPayload {
