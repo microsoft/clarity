@@ -129,7 +129,6 @@ export interface Attributes {
 
 export interface NodeInfo {
     tag: string;
-    path?: string;
     attributes?: Attributes;
     value?: string;
 }

@@ -21,8 +21,8 @@ export interface DomData {
     previous: number;
     tag: string;
     position: number;
-    selector: string;
-    hash: string;
+    selector?: string;
+    hash?: string;
     attributes?: Layout.Attributes;
     value?: string;
     width?: number;

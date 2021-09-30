@@ -60,7 +60,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                     let active = value.metadata.active;
                     let privacy = value.metadata.privacy;
                     let mangle = shouldMangle(value);
-                    let keys = active ? ["tag", "path", "attributes", "value"] : ["tag"];
+                    let keys = active ? ["tag", "attributes", "value"] : ["tag"];
                     box.compute(value.id);
                     for (let key of keys) {
                         if (data[key]) {
@@ -73,9 +73,6 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                     if (value.previous && active) { tokens.push(value.previous); }
                                     tokens.push(value.position ? `${data[key]}~${value.position}` : data[key]);
                                     if (size && size.length === 2) { tokens.push(`${Constant.Box}${str(size[0])}.${str(size[1])}`); }
-                                    break;
-                                case "path":
-                                    tokens.push(`${value.data.path}>`);
                                     break;
                                 case "attributes":
                                     for (let attr in data[key]) {
