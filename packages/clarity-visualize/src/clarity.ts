@@ -1,6 +1,7 @@
 import { Visualize } from "@clarity-types/index";
 import { Activity, Constant, MergedPayload, Options, PlaybackState, ScrollMapInfo } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
+import { helper } from "clarity-js";
 import * as data from "./data";
 import * as heatmap from "./heatmap";
 import * as interaction from "./interaction";
@@ -58,6 +59,9 @@ export function scrollmap(scrollData: ScrollMapInfo[], avgFold: number, addMarke
 
 export function merge(decoded: Data.DecodedPayload[]): MergedPayload {
     let merged: MergedPayload = { timestamp: null, envelope: null, dom: null, events: [] };
+    let selectors: { [key: number]: string } = {};
+    // Re-arrange decoded payloads in the order of their start time
+    decoded = decoded.sort(sortPayloads);
     for (let payload of decoded) {
         merged.timestamp = merged.timestamp ? merged.timestamp : payload.timestamp;
         merged.envelope = payload.envelope;
@@ -65,14 +69,28 @@ export function merge(decoded: Data.DecodedPayload[]): MergedPayload {
             let p = payload[key];
             if (Array.isArray(p)) {
                 for (let entry of p) {
-                    if (key === Constant.Dom && entry.event === Data.Event.Discover) {
-                        merged.dom = entry;
-                    } else { merged.events.push(entry); }
+                    switch (key) {
+                        case Constant.Dom:
+                            // Enrich DomData with selector and hash information
+                            let dom = entry as Layout.DomEvent;
+                            dom.data.forEach(d => {
+                                d.selector = helper.selector(d.tag, selectors[d.parent], d.attributes || {}, d.position);
+                                d.hash = helper.hash(d.selector);
+                                selectors[d.id] = `${d.selector}>`;
+                            });
+                            if (entry.event === Data.Event.Discover) { merged.dom = dom; } else {
+                                merged.events.push(entry);
+                            }
+                            break;
+                        default:
+                            merged.events.push(entry);
+                            break;
+                    }
                 }
             }
         }
     }
-    merged.events = merged.events.sort(sort);
+    merged.events = merged.events.sort(sortEvents);
     return merged;
 }
 
@@ -154,6 +172,10 @@ function reset(): void {
     renderTime = 0;
 }
 
-function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
+function sortEvents(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
     return a.time - b.time;
+}
+
+function sortPayloads(a: Data.DecodedPayload, b: Data.DecodedPayload): number {
+    return a.envelope.start - b.envelope.start;
 }

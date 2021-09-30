@@ -329,12 +329,7 @@ export function has(node: Node): boolean {
 export function updates(): NodeValue[] {
     let output = [];
     for (let id of updateMap) {
-        if (id in values) {
-            let v = values[id];
-            let p = v.parent;
-            v.data.path = p === null || updateMap.indexOf(p) >= 0 || v.selector.length === 0 ? null : values[p].selector;
-            output.push(values[id]);
-        }
+        if (id in values) { output.push(values[id]); }
     }
     updateMap = [];
     return output;
