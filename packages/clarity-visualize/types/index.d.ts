@@ -2,6 +2,7 @@ import { Activity, MergedPayload, Options, PlaybackState, ResizeHandler, ScrollM
 import { Data, Diagnostic, Interaction, Layout } from "clarity-decode"
 
 export interface Visualize {
+    readonly state: PlaybackState;
     dom: (event: Layout.DomEvent) => Promise<void>;
     html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number) => Visualize;
     clickmap: (activity?: Activity) => void;
@@ -19,7 +20,7 @@ declare const visualize: Visualize;
 export { visualize, Data, Diagnostic, Interaction, Layout, MergedPayload, ResizeHandler };
 
 export class Visualizer implements Visualize {
-    state: PlaybackState;
+    readonly state: PlaybackState;
     dom: (event: Layout.DomEvent) => Promise<void>;
     html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number) => Visualizer;
     clickmap: (activity?: Activity) => void;

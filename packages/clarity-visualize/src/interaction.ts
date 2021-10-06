@@ -2,10 +2,10 @@ import { Asset, Constant, PlaybackState, Point, Setting } from "@clarity-types/v
 import { Data, Interaction, Layout } from "clarity-decode";
 import { LayoutHelper } from "./layout";
 
-const TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
-const TRAIL_END_COLOR = [249, 220, 209]; // rgb(249,220,209)
-
 export class InteractionHelper {
+    static TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
+    static TRAIL_END_COLOR = [249, 220, 209]; // rgb(249,220,209)
+
     hoverId: number = null;
     targetId: number = null;
     points: Point[] = [];
@@ -334,8 +334,8 @@ export class InteractionHelper {
     };
 
     private color = (factor: number): string => {
-        let s = TRAIL_START_COLOR;
-        let e = TRAIL_END_COLOR;
+        let s = InteractionHelper.TRAIL_START_COLOR;
+        let e = InteractionHelper.TRAIL_END_COLOR;
         let c = [];
         for (let i = 0; i < 3; i++) { c[i] = Math.round(e[i] + factor * (s[i] - e[i])); }
         return `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${factor})`;

@@ -173,7 +173,7 @@ export class Visualizer implements VisualizerType {
         this.interaction?.reset();
         this.layout?.reset();
         this.heatmap?.reset();
-        
+
         this._state = null;
         this.renderTime = 0;
     }

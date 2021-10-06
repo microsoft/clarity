@@ -177,6 +177,7 @@ export class HeatmapHelper {
             win.addEventListener("scroll", this.redraw, true);
             win.addEventListener("resize", this.redraw, true);
             this.observer = this.state.window["ResizeObserver"] ? new ResizeObserver(this.redraw) : null;
+            
             if (this.observer) { this.observer.observe(doc.body); }
         }
 
@@ -235,7 +236,7 @@ export class HeatmapHelper {
         else if (this.scrollData) {
             if (event.type != 'scroll') {
                 if (this.timeout) { clearTimeout(this.timeout); }
-                this.timeout = setTimeout(scroll, Setting.Interval);
+                this.timeout = setTimeout(this.scroll, Setting.Interval);
             }
         }
     }
