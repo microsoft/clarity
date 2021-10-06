@@ -15,8 +15,13 @@ export function reset(): void {
     hashMap = {};
 }
 
-export function get(hash) {
-    var element = hash in hashMap ? (hashMap[hash].isConnected ? hashMap[hash] : null) : null;
+export function get(hash: string, selector?: string): HTMLElement {
+    let element = hash in hashMap ? (hashMap[hash].isConnected ? hashMap[hash] : null) : null;
+
+    if (!element && selector) {
+        element = state.window.document.querySelector(selector);
+    }
+
     return element;
 }
 

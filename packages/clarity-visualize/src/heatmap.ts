@@ -236,7 +236,7 @@ function transform(): Heatmap[] {
     let localMax = 0;
     let height = state.window && state.window.document ? state.window.document.documentElement.clientHeight : 0;
     for (let element of data) {
-        let el = layout.get(element.hash) as HTMLElement;
+        let el = layout.get(element.hash, element.selector);
         if (el && typeof el.getBoundingClientRect === "function") {
             let r = el.getBoundingClientRect();
             let v = visible(el, r, height);
