@@ -12,6 +12,8 @@ let offscreenRing: HTMLCanvasElement = null;
 let gradientPixels: ImageData = null;
 let timeout = null;
 let observer: ResizeObserver = null;
+let scrollAvgFold: number = null;
+let addScrollMakers: boolean = false;
 
 export function reset(): void {
     data = null;
@@ -52,6 +54,9 @@ export function clear() : void {
 
 export function scroll(activity: ScrollMapInfo[], avgFold: number, addMarkers: boolean): void {
     scrollData = scrollData || activity;
+    scrollAvgFold = avgFold != null ? avgFold : scrollAvgFold;
+    addScrollMakers = addMarkers != null ? addMarkers : addScrollMakers;
+
     let canvas = overlay();
     let context = canvas.getContext(Constant.Context);
     let doc = state.window.document;
@@ -76,8 +81,8 @@ export function scroll(activity: ScrollMapInfo[], avgFold: number, addMarkers: b
             // Fill with gradient
             context.fillStyle = grd;
             context.fillRect(0, 0, canvas.width, canvas.height);
-            if (addMarkers) {
-                addInfoMarkers(context, scrollData, canvas.width, canvas.height, avgFold);
+            if (addScrollMakers) {
+                addInfoMarkers(context, scrollData, canvas.width, canvas.height, scrollAvgFold);
             }
         }
     };
