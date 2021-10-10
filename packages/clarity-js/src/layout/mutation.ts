@@ -141,7 +141,7 @@ async function process(): Promise<void> {
           break;
         case Constant.Suspend:
           let value = dom.get(target);
-          if (value) { value.data.tag = Constant.SuspendMutationTag; }
+          if (value) { value.metadata.suspend = true; }
           break;
         default:
           break;
@@ -155,14 +155,15 @@ async function process(): Promise<void> {
 function track(m: MutationRecord, timer: Timer): string {
   let value = m.target ? dom.get(m.target.parentNode) : null;
   // Check if the parent is already discovered and that the parent is not the document root
-  if (value && value.selector !== Constant.HTML) {
+  if (value && value.data.tag !== Constant.HTML) {
     let inactive = time() > activePeriod;
     let target = dom.get(m.target);
-    let element = target ? target.selector : m.target.nodeName;
+    let element = target && target.selector ? target.selector.join() : m.target.nodeName;
+    let parent = value.selector ? value.selector.join() : Constant.Empty;
     // We use selector, instead of id, to determine the key (signature for the mutation) because in some cases
     // repeated mutations can cause elements to be destroyed and then recreated as new DOM nodes
     // In those cases, IDs will change however the selector (which is relative to DOM xPath) remains the same
-    let key = [value.selector, element, m.attributeName, names(m.addedNodes), names(m.removedNodes)].join();
+    let key = [parent, element, m.attributeName, names(m.addedNodes), names(m.removedNodes)].join();
     // Initialize an entry if it doesn't already exist
     history[key] = key in history ? history[key] : [0];
     let h = history[key];

@@ -20,11 +20,12 @@ export interface DomData {
     parent: number;
     previous: number;
     tag: string;
-    position: number;
-    selector?: string;
-    hash?: string;
     attributes?: Layout.Attributes;
     value?: string;
     width?: number;
     height?: number;
+    selector?: string;
+    hash?: string;
+    selectorBeta?: string;
+    hashBeta?: string;
 }

@@ -99,13 +99,14 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
 }
 
 function process(node: any[] | number[], tagIndex: number): DomData {
-    let [tag, position]: string[]  = node[tagIndex] ? node[tagIndex].split("~") : [node[tagIndex]];
+    // For backward compatibility, only extract the tag even if position is available as part of the tag name
+    // And, continue computing position in the visualization library from decoded payload.
+    let tag  = node[tagIndex].split("~")[0];
     let output: DomData = {
         id: Math.abs(node[0]),
         parent: tagIndex > 1 ? node[1] : null,
         previous: tagIndex > 2 ? node[2] : null,
-        tag,
-        position: position ? parseInt(position, 10) : null
+        tag
     };
     let masked = node[0] < 0;
     let hasAttribute = false;

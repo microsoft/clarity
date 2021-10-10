@@ -34,10 +34,10 @@ export class LayoutHelper {
         }
     }
 
-    private addToHashMap = (hash, node) => {
+    private addToHashMap = (data: Layout.DomData, parent: Node) => {
         // In case of selector collision, prefer the first inserted node
-        let element = this.get(hash)
-        this.hashMap[hash] = element ? element : node;
+        this.hashMap[data.hash] = this.get(data.hash) || parent;
+        this.hashMap[data.hashBeta] = this.get(data.hashBeta) || parent;
     }
 
     private resize = (el: HTMLElement, width: number, height: number): void => {
@@ -111,7 +111,7 @@ export class LayoutHelper {
                     // In case of polyfill, map shadow dom to it's parent for rendering purposes
                     // All its children should be inserted as regular children to the parent node.
                     this.nodes[node.id] = parent;
-                    this.addToHashMap(node.hash, parent);
+                    this.addToHashMap(node, parent);
                     break;
                 case Layout.Constant.ShadowDomTag:
                     if (parent) {
@@ -130,7 +130,7 @@ export class LayoutHelper {
                             shadowRoot.appendChild(shadowStyle);
                         }
                         this.nodes[node.id] = shadowRoot;
-                        this.addToHashMap(node.hash, shadowRoot);
+                        this.addToHashMap(node, shadowRoot);
                     }
                     break;
                 case Layout.Constant.TextTag:
@@ -161,7 +161,7 @@ export class LayoutHelper {
                         // If we are still processing discover events, keep the markup hidden until we are done
                         if (type === Data.Event.Discover) { htmlDoc.documentElement.style.visibility = Constant.Hidden; }
                         this.nodes[node.id] = htmlDoc.documentElement;
-                        this.addToHashMap(node.hash, htmlDoc.documentElement);
+                        this.addToHashMap(node, htmlDoc.documentElement);
                     }
                     break;
                 case "HEAD":
@@ -282,7 +282,7 @@ export class LayoutHelper {
             node.parentElement.removeChild(node);
         }
         this.nodes[data.id] = node;
-        this.addToHashMap(data.hash, node);
+        this.addToHashMap(data, node);
     }
 
     private setAttributes = (node: HTMLElement, data: Layout.DomData): void => {

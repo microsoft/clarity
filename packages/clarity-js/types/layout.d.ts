@@ -11,6 +11,11 @@ export const enum Source {
     CharacterData
 }
 
+export const enum Selector {
+    Stable = 0,
+    Beta = 1
+}
+
 export const enum InteractionState {
     None = 16,
     Clicked = 20,
@@ -137,17 +142,18 @@ export interface NodeValue {
     id: number;
     parent: number;
     previous: number;
-    position: number;
     children: number[];
     data: NodeInfo;
-    selector: string;
+    selector: [string, string];
     region: number;
     metadata: NodeMeta;
 }
 
 export interface NodeMeta {
     active: boolean;
+    suspend: boolean;
     privacy: Privacy;
+    position: number;
     size: number[];
 }
 
@@ -198,8 +204,7 @@ export interface BoxData {
 
 export interface TargetMetadata {
     id: number;
-    hash: string;
+    hash: [string, string];
     privacy: Privacy;
-    selector: string;
     node: Node;
 }
