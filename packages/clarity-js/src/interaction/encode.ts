@@ -1,4 +1,4 @@
-import { Event, Token } from "@clarity-types/data";
+import { Constant, Event, Token } from "@clarity-types/data";
 import scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
@@ -46,6 +46,7 @@ export default async function (type: Event): Promise<void> {
                 let entry = click.state[i];
                 let cTarget = metadata(entry.data.target as Node, entry.event);
                 tokens = [entry.time, entry.event];
+                let cHash = cTarget.hash.join(Constant.Dot);
                 tokens.push(cTarget.id);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
@@ -56,9 +57,9 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.context);
                 tokens.push(scrub(entry.data.text, "click", cTarget.privacy));
                 tokens.push(entry.data.link);
-                tokens.push(cTarget.hash);
+                tokens.push(cHash);
                 queue(tokens);
-                timeline.track(entry.time, entry.event, cTarget.hash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
+                timeline.track(entry.time, entry.event, cHash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
             click.reset();
             break;

@@ -20,7 +20,7 @@ interface Clarity {
 
 interface Helper {
   hash: (input: string) => string;
-  selector: (tag: string, prefix: string, attributes: Layout.Attributes, position: number) => string;
+  selector: (tag: string, prefix: string, attributes: Layout.Attributes, position: number, beta?: boolean) => string;
 }
 
 declare const clarity: Clarity;

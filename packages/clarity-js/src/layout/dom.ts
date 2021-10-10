@@ -1,6 +1,6 @@
 import { Privacy } from "@clarity-types/core";
 import { Code, Setting, Severity } from "@clarity-types/data";
-import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
+import { Constant, NodeChange, NodeInfo, NodeValue, Selector, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
 import * as internal from "@src/diagnostic/internal";
@@ -19,7 +19,6 @@ let nodes: Node[] = [];
 let values: NodeValue[] = [];
 let changes: NodeChange[][] = [];
 let updateMap: number[] = [];
-let selectorMap: number[] = [];
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
@@ -43,7 +42,6 @@ function reset(): void {
     values = [];
     updateMap = [];
     changes = [];
-    selectorMap = [];
     urlMap = {};
     idMap = new WeakMap();
     iframeMap = new WeakMap();
@@ -111,11 +109,10 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         parent: parentId,
         previous: previousId,
         children: [],
-        position: null,
         data,
-        selector: Constant.Empty,
+        selector: null,
         region: regionId,
-        metadata: { active: true, privacy, size: null }
+        metadata: { active: true, suspend: false, privacy, position: null, size: null }
     };
 
     updateSelector(values[id]);
@@ -267,33 +264,28 @@ function diff(a: NodeInfo, b: NodeInfo, field: string): boolean {
 }
 
 function position(parent: NodeValue, child: NodeValue): number {
-    let tag = child.data.tag;
-    let hasClassName = child.data.attributes && !(Constant.Class in child.data.attributes);
-    // Find relative position of the element to generate :nth-of-type selector
-    // We restrict relative positioning to two cases:
-    //   a) For specific whitelist of tags
-    //   b) And, for remaining tags, only if they don't have a valid class name
-    if (parent && (["DIV", "TR", "P", "LI", "UL", "A", "BUTTON"].indexOf(tag) >= 0 || hasClassName)) {
-        child.position = 1;
-        let idx = parent ? parent.children.indexOf(child.id) : -1;
-        while (idx-- > 0) {
-            let sibling = values[parent.children[idx]];
-            if (child.data.tag === sibling.data.tag) {
-                child.position = sibling.position + 1;
-                break;
-            }
+    child.metadata.position = 1;
+    let idx = parent ? parent.children.indexOf(child.id) : -1;
+    while (idx-- > 0) {
+        let sibling = values[parent.children[idx]];
+        if (child.data.tag === sibling.data.tag) {
+            child.metadata.position = sibling.metadata.position + 1;
+            break;
         }
     }
-    return child.position;
+    return child.metadata.position;
 }
 
 function updateSelector(value: NodeValue): void {
     let parent = value.parent && value.parent in values ? values[value.parent] : null;
-    let prefix = parent ? `${parent.selector}>` : null;
-    let ex = value.selector;
-    let current = selector(value.data.tag, prefix, value.data.attributes, position(parent, value));
-    if (current !== ex && selectorMap.indexOf(value.id) === -1) { selectorMap.push(value.id); }
-    value.selector = current;
+    let prefix = parent ? parent.selector : null;
+    let d = value.data;
+    let p = position(parent, value);
+    let usePosition = (d.attributes && !(Constant.Class in d.attributes)) || ["DIV", "TR", "P", "LI", "UL", "A", "BUTTON"].indexOf(d.tag) >= 0;
+    value.selector = [
+        selector(d.tag, prefix ? prefix[Selector.Stable] : null, d.attributes, usePosition ? p : null), /* Stable Selector */
+        selector(d.tag, prefix ? prefix[Selector.Beta] : null, d.attributes, p, true) /* Beta Selector */
+    ];
 }
 
 export function getNode(id: number): Node {

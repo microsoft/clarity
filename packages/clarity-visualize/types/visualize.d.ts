@@ -25,9 +25,20 @@ export interface Options {
     keyframes?: boolean;
 }
 
+export interface NodeData {
+    tag: string;
+    parent: number;
+    previous: number;
+    position?: number;
+    stable?: string;
+    beta?: string;
+}
+
 export interface PlaybackState {
     window: Window;
     options: Options;
+    children: { [key: number]: number[] };
+    nodes: { [key: number]: NodeData };
 }
 
 export type Activity = ElementData[];
@@ -41,7 +52,7 @@ export interface ScrollMapInfo {
 export interface RegionState {
     interaction: Layout.Interaction,
     visibility: Layout.RegionVisibility
- }
+}
 
 export interface ElementData {
     hash: string;

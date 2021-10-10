@@ -37,7 +37,7 @@ function save(mode: Mode): void {
             suffix = "decoded";
             break;
         case Mode.Merged:
-            json = JSON.stringify(visualize.merge(dJson), null, 2);
+            json = JSON.stringify(visualize.merge(copy(dJson)), null, 2);
             suffix = "merged";
             break;
     }
@@ -56,7 +56,7 @@ background.onMessage.addListener(function(message: any): void {
         let decoded = decode(message.payload);
         if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
         pJson.push(JSON.parse(message.payload));
-        dJson.push(decoded);
+        dJson.push(copy(decoded)); // Save a copy of JSON
         let merged = visualize.merge([decoded]);
         events = events.concat(merged.events).sort(sort);
         visualize.dom(merged.dom);
@@ -130,6 +130,10 @@ function reset(envelope: Data.Envelope): void {
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
     return a.time - b.time;
+}
+
+function copy(input: any): any {
+    return JSON.parse(JSON.stringify(input));
 }
 
 // Call replay on every animation frame to emulate near real-time playback

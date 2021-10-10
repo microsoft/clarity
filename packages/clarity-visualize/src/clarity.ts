@@ -1,5 +1,5 @@
 import { Visualize } from "@clarity-types/index";
-import { Activity, Constant, MergedPayload, Options, PlaybackState, ScrollMapInfo } from "@clarity-types/visualize";
+import { Activity, Constant, MergedPayload, NodeData, Options, PlaybackState, ScrollMapInfo } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import { helper } from "clarity-js";
 import * as data from "./data";
@@ -59,9 +59,11 @@ export function scrollmap(scrollData: ScrollMapInfo[], avgFold: number, addMarke
 
 export function merge(decoded: Data.DecodedPayload[]): MergedPayload {
     let merged: MergedPayload = { timestamp: null, envelope: null, dom: null, events: [] };
-    let selectors: { [key: number]: string } = {};
     // Re-arrange decoded payloads in the order of their start time
     decoded = decoded.sort(sortPayloads);
+    // Reset children & selectors if someone ends up calling merge function directly
+    if (decoded[0].envelope.sequence === 1) { state = state || { window: null, options: null, children: {}, nodes: {} }; }
+    // Walk through payloads and generate merged payload from an array of decoded payloads
     for (let payload of decoded) {
         merged.timestamp = merged.timestamp ? merged.timestamp : payload.timestamp;
         merged.envelope = payload.envelope;
@@ -74,9 +76,42 @@ export function merge(decoded: Data.DecodedPayload[]): MergedPayload {
                             // Enrich DomData with selector and hash information
                             let dom = entry as Layout.DomEvent;
                             dom.data.forEach(d => {
-                                d.selector = helper.selector(d.tag, selectors[d.parent], d.attributes || {}, d.position);
+                                let parent = state.nodes[d.parent];
+                                let children = state.children[d.parent] || [];
+                                let node = state.nodes[d.id] || { tag: d.tag, parent: d.parent, previous: d.previous };
+                                let attributes = d.attributes || {};
+                                let usePosition = ["DIV", "TR", "P", "LI", "UL", "A", "BUTTON"].indexOf(d.tag) >= 0 || !(Layout.Constant.Class in attributes);
+
+                                /* Track parent-child relationship for this element */
+                                if (node.parent !== d.parent) {
+                                    let childIndex = d.previous === null ? 0 : children.indexOf(d.previous) + 1;
+                                    children.splice(childIndex, 0, d.id);
+
+                                    // Stop tracking this node from children of previous parent
+                                    if (node.parent !== d.parent) {
+                                        let exParent = state.children[node.parent];
+                                        let nodeIndex = exParent ? exParent.indexOf(d.id) : -1;
+                                        if (nodeIndex >= 0) {
+                                            state.children[node.parent].splice(nodeIndex, 1);
+                                        }
+                                    }
+                                    node.parent = d.parent;
+                                } else if (children.indexOf(d.id) < 0) { children.push(d.id); }
+                                
+                                /* Get current position */
+                                node.position = position(d.id, d.tag, node, children, children.map(c => state.nodes[c]));
+
+                                /* For backward compatibility, continue populating current selector and hash like before in addition to beta selector and hash */
+                                d.selector = helper.selector(d.tag, parent ? parent.stable : null, attributes, usePosition ? node.position : null);
+                                d.selectorBeta = helper.selector(d.tag, parent ? parent.beta : null, attributes, node.position, true);
                                 d.hash = helper.hash(d.selector);
-                                selectors[d.id] = `${d.selector}>`;
+                                d.hashBeta = helper.hash(d.selectorBeta);
+
+                                /* Track state for future reference */
+                                node.stable = d.selector;
+                                node.beta = d.selectorBeta;
+                                state.nodes[d.id] = node;
+                                if (d.parent) { state.children[d.parent] = children; }                             
                             });
                             if (entry.event === Data.Event.Discover) { merged.dom = dom; } else {
                                 merged.events.push(entry);
@@ -101,7 +136,7 @@ export function setup(target: Window, options: Options): Visualize {
     options.keyframes = "keyframes" in options ? options.keyframes : false;
 
     // Set visualization state
-    state = { window: target, options };
+    state = { window: target, options, children: {}, nodes: {} };
 
     // If discover event was passed, render it now
     if (options.dom) { layout.dom(options.dom); }
@@ -177,5 +212,17 @@ function sortEvents(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
 }
 
 function sortPayloads(a: Data.DecodedPayload, b: Data.DecodedPayload): number {
-    return a.envelope.start - b.envelope.start;
+    return a.envelope.sequence - b.envelope.sequence;
+}
+
+function position(id: number, tag: string, child: NodeData, children: number[], siblings: NodeData[]): number {
+    child.position = 1;
+    let idx = children ? children.indexOf(id) : -1;
+    while (idx-- > 0) {
+        if (tag === siblings[idx].tag) {
+            child.position = siblings[idx].position + 1;
+            break;
+        }
+    }
+    return child.position;
 }

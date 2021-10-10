@@ -58,6 +58,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                     if (state === Task.Stop) { break; }
                     let data: NodeInfo = value.data;
                     let active = value.metadata.active;
+                    let suspend = value.metadata.suspend;
                     let privacy = value.metadata.privacy;
                     let mangle = shouldMangle(value);
                     let keys = active ? ["tag", "attributes", "value"] : ["tag"];
@@ -71,7 +72,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                     tokens.push(value.id * factor);
                                     if (value.parent && active) { tokens.push(value.parent); }
                                     if (value.previous && active) { tokens.push(value.previous); }
-                                    tokens.push(value.position ? `${data[key]}~${value.position}` : data[key]);
+                                    tokens.push(suspend ? Constant.SuspendMutationTag : data[key]);
                                     if (size && size.length === 2) { tokens.push(`${Constant.Box}${str(size[0])}.${str(size[1])}`); }
                                     break;
                                 case "attributes":
