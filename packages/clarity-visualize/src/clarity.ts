@@ -1,4 +1,3 @@
-import { Visualizer } from "./Visualizer";
+import { Visualizer } from "./visualizer";
 
-const visualizer = new Visualizer();
-export const { state, dom, get, html, time, clickmap, clearmap, scrollmap, merge, setup, render } = visualizer;
+export const { state, dom, get, html, time, clickmap, clearmap, scrollmap, merge, setup, render } = new Visualizer();
