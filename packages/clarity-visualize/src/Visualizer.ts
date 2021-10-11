@@ -1,11 +1,11 @@
-import { Activity, Constant, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualize } from "@clarity-types/visualize";
+import { Activity, Constant, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import { DataHelper } from "./data";
 import { HeatmapHelper } from "./heatmap";
 import { InteractionHelper } from "./interaction";
 import { LayoutHelper } from "./layout";
 
-export class Visualizer implements Visualize {
+export class Visualizer implements VisualizerType {
     _state: PlaybackState = null;
     renderTime = 0;
 
