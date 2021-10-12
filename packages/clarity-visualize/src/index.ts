@@ -1,2 +1,2 @@
-import * as visualize from "./clarity";
-export { visualize };
+export * as visualize from "./clarity";
+export { Visualizer } from "./visualizer";

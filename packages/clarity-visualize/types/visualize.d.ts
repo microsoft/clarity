@@ -1,5 +1,35 @@
 import { Data, Layout } from "clarity-decode";
 
+/**
+ * @deprecated Use Visualizer instead.
+ */
+export interface Visualize {
+    readonly state: PlaybackState;
+    dom: (event: Layout.DomEvent) => Promise<void>;
+    html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number) => Visualize;
+    clickmap: (activity?: Activity) => void;
+    clearmap: () => void;
+    scrollmap: (data?: ScrollMapInfo[], averageFold?: number, addMarkers?: boolean) => void;
+    merge: (decoded: Data.DecodedPayload[]) => MergedPayload;
+    render: (events: Data.DecodedEvent[]) =>  void;
+    setup: (target: Window, options: Options) => Visualize;
+    time: () => number;
+    get: (hash: string) => HTMLElement;
+}
+
+export class Visualizer {
+    readonly state: PlaybackState;
+    dom: (event: Layout.DomEvent) => Promise<void>;
+    html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number) => Visualizer;
+    clickmap: (activity?: Activity) => void;
+    clearmap: () => void;
+    scrollmap: (data?: ScrollMapInfo[], averageFold?: number, addMarkers?: boolean) => void;
+    merge: (decoded: Data.DecodedPayload[]) => MergedPayload;
+    render: (events: Data.DecodedEvent[]) =>  void;
+    setup: (target: Window, options: Options) => Visualizer;
+    time: () => number;
+    get: (hash: string) => HTMLElement;
+}
 
 export type ResizeHandler  = (width: number, height: number) => void;
 
