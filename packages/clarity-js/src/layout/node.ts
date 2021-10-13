@@ -9,6 +9,7 @@ import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror"];
+const newlineRegex = /[\r\n]+/g;
 
 export default function (node: Node, source: Source): Node {
     let child: Node = null;
@@ -99,7 +100,7 @@ export default function (node: Node, source: Source): Node {
                 case "SCRIPT":
                     if (Constant.Type in attributes && attributes[Constant.Type] === Constant.JsonLD) {
                         try {
-                            schema.ld(JSON.parse((element as HTMLScriptElement).text));
+                            schema.ld(JSON.parse((element as HTMLScriptElement).text.replace(newlineRegex, Constant.Empty)));
                         } catch { /* do nothing */ }
                     }
                     break;
