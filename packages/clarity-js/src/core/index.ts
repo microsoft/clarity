@@ -68,7 +68,7 @@ export function suspend(): void {
     if (status) {
         custom.event(Constant.Clarity, Constant.Suspend);
         clarity.stop();
-        ["document", "touchstart"].forEach(x => event.bind(document, x, restart));
+        ["mousemove", "touchstart"].forEach(x => event.bind(document, x, restart));
         ["resize", "scroll", "pageshow"].forEach(x => event.bind(window, x, restart));
     }
 }
