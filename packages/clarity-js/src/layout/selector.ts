@@ -1,4 +1,4 @@
-import { Setting } from "../../types/data";
+import { Character, Setting } from "../../types/data";
 import { Attributes, Constant } from "../../types/layout";
 
 export default function(tag: string, prefix: string, attributes: Attributes, position: number, beta: boolean = false): string {
@@ -37,7 +37,7 @@ function isAutoGen(value: string): boolean {
     let numbers = 0;
     for (let i = 0; i < value.length; i++) {
         let c = value.charCodeAt(i);
-        numbers += c >= 48 && c <= 57 ? 1 : 0; // Check for digits
+        numbers += c >= Character.Zero && c <= Character.Nine ? 1 : 0; // Check for digits
     }
     return numbers > Setting.AutoGenDigitThreshold;
 }

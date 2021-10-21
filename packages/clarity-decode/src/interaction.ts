@@ -1,4 +1,4 @@
-import { Data, Interaction } from "clarity-js";
+import { Data, Interaction, Layout } from "clarity-js";
 import { InteractionEvent, ClickData, TimelineData } from "../types/interaction";
 
 export function decode(tokens: Data.Token[]): InteractionEvent {
@@ -65,12 +65,12 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let timelineHashes = (tokens[3] as string).split(Data.Constant.Dot);
             let timelineData: TimelineData = {
                 type: tokens[2] as number,
-                hash: timelineHashes[0],
+                hash: timelineHashes[Layout.Selector.Stable],
                 x: tokens[4] as number,
                 y: tokens[5] as number,
                 reaction: tokens[6] as number,
                 context: tokens[7] as number,
-                hashBeta: timelineHashes.length > 0 ? timelineHashes[1] : null
+                hashBeta: timelineHashes.length > 0 ? timelineHashes[Layout.Selector.Beta] : null
             };
             return { time, event, data: timelineData };
         case Data.Event.Visibility:

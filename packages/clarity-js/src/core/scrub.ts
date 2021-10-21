@@ -73,9 +73,9 @@ function redact(value: string): string {
     let array = null;
     for (let i = 0; i < value.length; i++) {
         let c = value.charCodeAt(i);
-        hasDigit = hasDigit || (c >= 48 && c <= 57); // Check for digits in the current word
-        hasEmail = hasEmail || c === 64; // Check for @ sign anywhere within the current word
-        hasWhitespace = c === 9 || c === 10 || c === 13 || c === 32; // Whitespace character (32: blank space | 9: \t | 10: \n | 13: \r)
+        hasDigit = hasDigit || (c >= Data.Character.Zero && c <= Data.Character.Nine); // Check for digits in the current word
+        hasEmail = hasEmail || c === Data.Character.At; // Check for @ sign anywhere within the current word
+        hasWhitespace = c === Data.Character.Tab || c === Data.Character.NewLine || c === Data.Character.Return || c === Data.Character.Blank;
 
         // Process each word as an individual token to redact any sensitive information
         if (i === 0 || i === value.length - 1 || hasWhitespace) {

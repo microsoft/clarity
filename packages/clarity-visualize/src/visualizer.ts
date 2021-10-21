@@ -1,7 +1,7 @@
-import { Activity, Constant, MergedPayload, NodeData, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
+import { Activity, Constant, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
-import { helper } from "clarity-js";
 import { DataHelper } from "./data";
+import { EnrichHelper } from "./enrich";
 import { HeatmapHelper } from "./heatmap";
 import { InteractionHelper } from "./interaction";
 import { LayoutHelper } from "./layout";
@@ -10,6 +10,7 @@ export class Visualizer implements VisualizerType {
     _state: PlaybackState = null;
     renderTime = 0;
 
+    enrich: EnrichHelper;
     layout: LayoutHelper;
     heatmap: HeatmapHelper;
     interaction: InteractionHelper;
@@ -44,7 +45,6 @@ export class Visualizer implements VisualizerType {
                         if (time && this.renderTime > time) {
                             break;
                         }
-
                         this.layout.markup(domEvent);
                         break;
                 }
@@ -77,8 +77,8 @@ export class Visualizer implements VisualizerType {
         let merged: MergedPayload = { timestamp: null, envelope: null, dom: null, events: [] };
         // Re-arrange decoded payloads in the order of their start time
         decoded = decoded.sort(this.sortPayloads);
-        // Reset children & selectors if someone ends up calling merge function directly
-        if (decoded[0].envelope.sequence === 1) { this._state = this._state || { window: null, options: null, children: {}, nodes: {} }; }
+        // Re-initialize enrich class if someone ends up calling merge function directly
+        this.enrich.reset();
         // Walk through payloads and generate merged payload from an array of decoded payloads
         for (let payload of decoded) {
             merged.timestamp = merged.timestamp ? merged.timestamp : payload.timestamp;
@@ -89,47 +89,10 @@ export class Visualizer implements VisualizerType {
                     for (let entry of p) {
                         switch (key) {
                             case Constant.Dom:
-                                // Enrich DomData with selector and hash information
-                                let dom = entry as Layout.DomEvent;
-                                dom.data.forEach(d => {
-                                    let parent = this._state.nodes[d.parent];
-                                    let children = this._state.children[d.parent] || [];
-                                    let node = this._state.nodes[d.id] || { tag: d.tag, parent: d.parent, previous: d.previous };
-                                    let attributes = d.attributes || {};
-                                    let usePosition = ["DIV", "TR", "P", "LI", "UL", "A", "BUTTON"].indexOf(d.tag) >= 0 || !(Layout.Constant.Class in attributes);
-    
-                                    /* Track parent-child relationship for this element */
-                                    if (node.parent !== d.parent) {
-                                        let childIndex = d.previous === null ? 0 : children.indexOf(d.previous) + 1;
-                                        children.splice(childIndex, 0, d.id);
-    
-                                        // Stop tracking this node from children of previous parent
-                                        if (node.parent !== d.parent) {
-                                            let exParent = this._state.children[node.parent];
-                                            let nodeIndex = exParent ? exParent.indexOf(d.id) : -1;
-                                            if (nodeIndex >= 0) {
-                                                this._state.children[node.parent].splice(nodeIndex, 1);
-                                            }
-                                        }
-                                        node.parent = d.parent;
-                                    } else if (children.indexOf(d.id) < 0) { children.push(d.id); }
-    
-                                    /* Get current position */
-                                    node.position = this.position(d.id, d.tag, node, children, children.map(c => this._state.nodes[c]));
-    
-                                    /* For backward compatibility, continue populating current selector and hash like before in addition to beta selector and hash */
-                                    d.selector = helper.selector(d.tag, parent ? parent.stable : null, attributes, usePosition ? node.position : null);
-                                    d.selectorBeta = helper.selector(d.tag, parent ? parent.beta : null, attributes, node.position, true);
-                                    d.hash = helper.hash(d.selector);
-                                    d.hashBeta = helper.hash(d.selectorBeta);
-    
-                                    /* Track state for future reference */
-                                    node.stable = d.selector;
-                                    node.beta = d.selectorBeta;
-                                    this._state.nodes[d.id] = node;
-                                    if (d.parent) { this._state.children[d.parent] = children; }                             
-                                });
-                                if (entry.event === Data.Event.Discover) { merged.dom = dom; } else {
+                                let dom = this.enrich.selectors(entry);
+                                if (entry.event === Data.Event.Discover) {
+                                    merged.dom = dom;
+                                } else {
                                     merged.events.push(entry);
                                 }
                                 break;
@@ -152,9 +115,10 @@ export class Visualizer implements VisualizerType {
         options.keyframes = "keyframes" in options ? options.keyframes : false;
 
         // Set visualization state
-        this._state = { window: target, options, children: {}, nodes: {} };
+        this._state = { window: target, options };
 
         // Initialize helpers
+        this.enrich = new EnrichHelper();
         this.data = new DataHelper(this.state);
         this.layout = new LayoutHelper(this.state);
         this.heatmap = new HeatmapHelper(this.state, this.layout);
@@ -225,6 +189,7 @@ export class Visualizer implements VisualizerType {
         this.interaction?.reset();
         this.layout?.reset();
         this.heatmap?.reset();
+        this.enrich?.reset();
 
         this._state = null;
         this.renderTime = 0;
@@ -236,17 +201,5 @@ export class Visualizer implements VisualizerType {
 
     private sortPayloads = (a: Data.DecodedPayload, b: Data.DecodedPayload): number => {
         return a.envelope.sequence - b.envelope.sequence;
-    }
-    
-    private position = (id: number, tag: string, child: NodeData, children: number[], siblings: NodeData[]): number => {
-        child.position = 1;
-        let idx = children ? children.indexOf(id) : -1;
-        while (idx-- > 0) {
-            if (tag === siblings[idx].tag) {
-                child.position = siblings[idx].position + 1;
-                break;
-            }
-        }
-        return child.position;
     }
 }

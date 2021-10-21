@@ -67,8 +67,6 @@ export interface NodeData {
 export interface PlaybackState {
     window: Window;
     options: Options;
-    children: { [key: number]: number[] };
-    nodes: { [key: number]: NodeData };
 }
 
 export type Activity = ElementData[];
