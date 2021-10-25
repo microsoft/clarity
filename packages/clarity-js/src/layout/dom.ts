@@ -3,6 +3,7 @@ import { Code, Setting, Severity } from "@clarity-types/data";
 import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
+import hash from "@src/core/hash";
 import * as internal from "@src/diagnostic/internal";
 import * as extract from "@src/layout/extract";
 import * as region from "@src/layout/region";
@@ -27,6 +28,7 @@ let iframeMap: WeakMap<Document, HTMLIFrameElement> = null; // Maps iframe's con
 let privacyMap: WeakMap<Node, Privacy> = null; // Maps node => Privacy (enum)
 
 let urlMap: { [url: string]: number } = {};
+let hashMap: { [hash: string]: Node } = {};
 
 export function start(): void {
     reset();
@@ -45,10 +47,11 @@ function reset(): void {
     changes = [];
     selectorMap = [];
     urlMap = {};
+    hashMap = {};
     idMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
-    if (Constant.DevHook in window) { window[Constant.DevHook] = { get, getNode, history }; }
+    if (Constant.DevHook in window) { window[Constant.DevHook] = { get, getNode, getHashMap, history }; }
 }
 
 // We parse new root nodes for any regions or masked nodes in the beginning (document) and
@@ -294,6 +297,11 @@ function updateSelector(value: NodeValue): void {
     let current = selector(value.data.tag, prefix, value.data.attributes, position(parent, value));
     if (current !== ex && selectorMap.indexOf(value.id) === -1) { selectorMap.push(value.id); }
     value.selector = current;
+
+    if (Constant.DevHook in window) {
+        const selectorHash = hash(value.selector);
+        hashMap[selectorHash] = getNode(value.id);
+    }
 }
 
 export function getNode(id: number): Node {
@@ -316,6 +324,8 @@ export function getValue(id: number): NodeValue {
     }
     return null;
 }
+
+export const getHashMap = () => hashMap;
 
 export function get(node: Node): NodeValue {
     let id = getId(node);
