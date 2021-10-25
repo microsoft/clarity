@@ -57,6 +57,7 @@ export const enum Constant {
     IFrameTag = "IFRAME",
     ImageTag = "IMG",
     TitleTag = "TITLE",
+    BodyTag = "BODY",
     SvgTag = "svg:svg",
     BaseTag = "BASE",
     NativeCode = "[native code]",

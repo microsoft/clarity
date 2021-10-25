@@ -298,6 +298,7 @@ export class LayoutHelper {
         // Clarity attributes
         attributes[Constant.Id] = `${data.id}`;
         attributes[Constant.Hash] = `${data.hash}`;
+        attributes[Constant.HashBeta] = `${data.hashBeta}`;
 
         let tag = node.nodeType === NodeType.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
         // First remove all its existing attributes
