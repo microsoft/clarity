@@ -78,6 +78,7 @@ export class Visualizer implements VisualizerType {
         // Re-arrange decoded payloads in the order of their start time
         decoded = decoded.sort(this.sortPayloads);
         // Re-initialize enrich class if someone ends up calling merge function directly
+        this.enrich = this.enrich || new EnrichHelper();
         this.enrich.reset();
         // Walk through payloads and generate merged payload from an array of decoded payloads
         for (let payload of decoded) {
