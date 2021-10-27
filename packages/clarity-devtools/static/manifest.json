@@ -29,6 +29,9 @@
       ]
     }
   ],
+  "web_accessible_resources": [
+    "clarity.js"
+  ],
   "background": {
     "scripts": [
       "background.js"

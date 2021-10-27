@@ -22,7 +22,6 @@ export class EnrichHelper {
             let children = this.children[d.parent] || [];
             let node = this.nodes[d.id] || { tag: d.tag, parent: d.parent, previous: d.previous };
             let attributes = d.attributes || {};
-            let usePosition = ["DIV", "TR", "P", "LI", "UL", "A", "BUTTON"].indexOf(d.tag) >= 0 || !(Layout.Constant.Class in attributes);
 
             /* Track parent-child relationship for this element */
             if (node.parent !== d.parent) {
@@ -44,8 +43,9 @@ export class EnrichHelper {
             node.position = this.position(d.id, d.tag, node, children, children.map(c => this.nodes[c]));
 
             /* For backward compatibility, continue populating current selector and hash like before in addition to beta selector and hash */
-            d.selector = helper.selector(d.tag, parent ? parent.stable : null, attributes, usePosition ? node.position : null);
-            d.selectorBeta = helper.selector(d.tag, parent ? parent.beta : null, attributes, node.position, true);
+            let input: Layout.SelectorInput = { id: d.id, tag: d.tag, prefix: parent ? [parent.stable, parent.beta] : null, position: node.position, attributes };
+            d.selector = helper.selector(input);
+            d.selectorBeta = helper.selector(input, true);
             d.hash = helper.hash(d.selector);
             d.hashBeta = helper.hash(d.selectorBeta);
 

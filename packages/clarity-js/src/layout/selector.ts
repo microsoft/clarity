@@ -1,9 +1,13 @@
 import { Character, Setting } from "../../types/data";
-import { Attributes, Constant } from "../../types/layout";
+import { Constant, Selector, SelectorInput } from "../../types/layout";
 
-export default function(tag: string, prefix: string, attributes: Attributes, position: number, beta: boolean = false): string {
-    let suffix = position ? `:nth-of-type(${position})` : Constant.Empty;
-    switch (tag) {
+const TAGS = ["DIV", "TR", "P", "LI", "UL", "A", "BUTTON"];
+
+export default function(input: SelectorInput, beta: boolean = false): string {
+    let a = input.attributes;
+    let prefix = input.prefix ? input.prefix[beta ? Selector.Beta : Selector.Stable] : null;
+    let suffix = beta || ((a && !(Constant.Class in a)) || TAGS.indexOf(input.tag) >= 0) ? `:nth-of-type(${input.position})` : Constant.Empty;
+    switch (input.tag) {
         case "STYLE":
         case "TITLE":
         case "LINK":
@@ -16,19 +20,19 @@ export default function(tag: string, prefix: string, attributes: Attributes, pos
         default:
             if (prefix === null) { return Constant.Empty; }
             prefix = `${prefix}>`;
-            tag = tag.indexOf(Constant.SvgPrefix) === 0 ? tag.substr(Constant.SvgPrefix.length) : tag;
-            let selector = `${prefix}${tag}${suffix}`;
-            let classes = Constant.Class in attributes && attributes[Constant.Class].length > 0 ? attributes[Constant.Class].trim().split(/\s+/) : null;
+            input.tag = input.tag.indexOf(Constant.SvgPrefix) === 0 ? input.tag.substr(Constant.SvgPrefix.length) : input.tag;
+            let selector = `${prefix}${input.tag}${suffix}`;
+            let classes = Constant.Class in a && a[Constant.Class].length > 0 ? a[Constant.Class].trim().split(/\s+/) : null;
             if (beta) {
                 // In beta mode, update selector to use "id" field when available
                 // The only exception is if "id" appears to be an auto generated string token, e.g. guid or a random id
-                let id = Constant.Id in attributes && attributes[Constant.Id].length > 0 ? attributes[Constant.Id] : null;
-                classes = tag !== Constant.BodyTag && classes ? classes.filter(c => !digits(c)) : [];
-                selector = classes.length > 0 ? `${prefix}${tag}.${classes.join(".")}${suffix}` : selector;
+                let id = Constant.Id in a && a[Constant.Id].length > 0 ? a[Constant.Id] : null;
+                classes = input.tag !== Constant.BodyTag && classes ? classes.filter(c => !digits(c)) : [];
+                selector = classes.length > 0 ? `${prefix}${input.tag}.${classes.join(".")}${suffix}` : selector;
                 selector = id && digits(id) < Setting.AutoGenDigitThreshold ? `#${id}` : selector;
             } else {
                 // Otherwise, fallback to stable mode, where we include class names as part of the selector
-                selector = classes ? `${prefix}${tag}.${classes.join(".")}${suffix}` : selector;
+                selector = classes ? `${prefix}${input.tag}.${classes.join(".")}${suffix}` : selector;
             } 
             return selector;
     }

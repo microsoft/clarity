@@ -13,6 +13,7 @@ export interface LayoutEvent extends PartialEvent {
 export import Constant = Layout.Constant;
 export import Interaction = Layout.InteractionState;
 export import RegionVisibility = Layout.RegionVisibility;
+export import SelectorInput = Layout.SelectorInput;
 
 /* Event Data */
 export interface DomData {

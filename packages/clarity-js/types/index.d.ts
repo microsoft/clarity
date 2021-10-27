@@ -19,8 +19,10 @@ interface Clarity {
 }
 
 interface Helper {
+  get: (node: Node) => Layout.NodeValue;
   hash: (input: string) => string;
-  selector: (tag: string, prefix: string, attributes: Layout.Attributes, position: number, beta?: boolean) => string;
+  getNode: (id: number) => Node;
+  selector: (input: Layout.SelectorInput, beta?: boolean) => string;
 }
 
 declare const clarity: Clarity;

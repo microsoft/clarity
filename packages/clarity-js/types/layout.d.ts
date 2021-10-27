@@ -34,7 +34,6 @@ export const enum Constant {
     DataPrefix = "data:",
     IFramePrefix = "iframe:",
     SvgNamespace = "http://www.w3.org/2000/svg",
-    DevHook = "__CLARITY_DEVTOOLS_HOOK__",
     Id = "id",
     Class = "class",
     Href = "href",
@@ -133,6 +132,14 @@ export interface Attributes {
     [key: string]: string;
 }
 
+export interface SelectorInput {
+    id: number;
+    tag: string;
+    prefix: [string, string];
+    position: number;
+    attributes: Attributes;
+}
+
 export interface NodeInfo {
     tag: string;
     attributes?: Attributes;
@@ -156,12 +163,6 @@ export interface NodeMeta {
     privacy: Privacy;
     position: number;
     size: number[];
-}
-
-export interface NodeChange {
-    time: number;
-    source: Source;
-    value: NodeValue;
 }
 
 export interface MutationQueue {
