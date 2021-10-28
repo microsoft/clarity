@@ -1,7 +1,6 @@
 import { Privacy } from "@clarity-types/core";
 import { Event } from "@clarity-types/data";
 import { TargetMetadata } from "@clarity-types/layout";
-import hash from "@src/core/hash";
 import { track } from "@src/layout/region";
 import * as dom from "@src/layout/dom";
 import * as mutation from "@src/layout/mutation";
@@ -28,13 +27,12 @@ export function link(node: Node): HTMLAnchorElement {
 
 export function metadata(node: Node, event: Event): TargetMetadata {
     // If the node is null, we return a reserved value for id: 0. Valid assignment of id begins from 1+.
-    let output: TargetMetadata = { id: 0, hash: null, selector: null, privacy: Privacy.Text, node };
+    let output: TargetMetadata = { id: 0, hash: null, privacy: Privacy.Text, node };
     if (node) {
         let value = dom.get(node);
         if (value !== null) {
             output.id = value.id;
-            output.hash = value.selector ? hash(value.selector) : null;
-            output.selector = value.selector;
+            output.hash = value.hash;
             output.privacy = value.metadata.privacy;
             if (value.region) { track(value.region, event); }
         }

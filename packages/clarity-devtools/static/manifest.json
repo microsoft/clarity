@@ -2,8 +2,8 @@
   "manifest_version": 2,
   "name": "Clarity Developer Tools",
   "description": "Get insights about how customers use your website.",
-  "version": "0.6.25",
-  "version_name": "0.6.25",
+  "version": "0.6.26",
+  "version_name": "0.6.26",
   "minimum_chrome_version": "50",
   "devtools_page": "devtools.html",
   "icons": {
@@ -28,6 +28,9 @@
         "content.js"
       ]
     }
+  ],
+  "web_accessible_resources": [
+    "clarity.js"
   ],
   "background": {
     "scripts": [

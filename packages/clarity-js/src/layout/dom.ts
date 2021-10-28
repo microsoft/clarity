@@ -1,8 +1,8 @@
 import { Privacy } from "@clarity-types/core";
 import { Code, Setting, Severity } from "@clarity-types/data";
-import { Constant, NodeChange, NodeInfo, NodeValue, Source } from "@clarity-types/layout";
+import { Constant, NodeInfo, NodeValue, SelectorInput, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
-import { time } from "@src/core/time";
+import hash from "@src/core/hash";
 import * as internal from "@src/diagnostic/internal";
 import * as extract from "@src/layout/extract";
 import * as region from "@src/layout/region";
@@ -17,16 +17,13 @@ const DISALLOWED_MATCH = ["address", "password", "contact"];
 
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
-let changes: NodeChange[][] = [];
 let updateMap: number[] = [];
-let selectorMap: number[] = [];
+let hashMap: { [hash: string]: number } = {};
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
 let iframeMap: WeakMap<Document, HTMLIFrameElement> = null; // Maps iframe's contentDocument => parent iframe element
 let privacyMap: WeakMap<Node, Privacy> = null; // Maps node => Privacy (enum)
-
-let urlMap: { [url: string]: number } = {};
 
 export function start(): void {
     reset();
@@ -42,13 +39,10 @@ function reset(): void {
     nodes = [];
     values = [];
     updateMap = [];
-    changes = [];
-    selectorMap = [];
-    urlMap = {};
+    hashMap = {};
     idMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
-    if (Constant.DevHook in window) { window[Constant.DevHook] = { get, getNode, history }; }
 }
 
 // We parse new root nodes for any regions or masked nodes in the beginning (document) and
@@ -111,16 +105,15 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         parent: parentId,
         previous: previousId,
         children: [],
-        position: null,
         data,
-        selector: Constant.Empty,
+        selector: null,
+        hash: null,
         region: regionId,
-        metadata: { active: true, privacy, size: null }
+        metadata: { active: true, suspend: false, privacy, position: null, size: null }
     };
 
     updateSelector(values[id]);
     size(values[id], parentValue);
-    metadata(data.tag, id, parentId);
     track(id, source);
 }
 
@@ -177,7 +170,6 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
 
         // Update selector
         updateSelector(value);
-        metadata(data.tag, id, parentId);
         track(id, source, changed, parentChanged);
     }
 }
@@ -267,45 +259,32 @@ function diff(a: NodeInfo, b: NodeInfo, field: string): boolean {
 }
 
 function position(parent: NodeValue, child: NodeValue): number {
-    let tag = child.data.tag;
-    let hasClassName = child.data.attributes && !(Constant.Class in child.data.attributes);
-    // Find relative position of the element to generate :nth-of-type selector
-    // We restrict relative positioning to two cases:
-    //   a) For specific whitelist of tags
-    //   b) And, for remaining tags, only if they don't have a valid class name
-    if (parent && (["DIV", "TR", "P", "LI", "UL", "A", "BUTTON"].indexOf(tag) >= 0 || hasClassName)) {
-        child.position = 1;
-        let idx = parent ? parent.children.indexOf(child.id) : -1;
-        while (idx-- > 0) {
-            let sibling = values[parent.children[idx]];
-            if (child.data.tag === sibling.data.tag) {
-                child.position = sibling.position + 1;
-                break;
-            }
+    child.metadata.position = 1;
+    let idx = parent ? parent.children.indexOf(child.id) : -1;
+    while (idx-- > 0) {
+        let sibling = values[parent.children[idx]];
+        if (child.data.tag === sibling.data.tag) {
+            child.metadata.position = sibling.metadata.position + 1;
+            break;
         }
     }
-    return child.position;
+    return child.metadata.position;
 }
 
 function updateSelector(value: NodeValue): void {
     let parent = value.parent && value.parent in values ? values[value.parent] : null;
-    let prefix = parent ? `${parent.selector}>` : null;
-    let ex = value.selector;
-    let current = selector(value.data.tag, prefix, value.data.attributes, position(parent, value));
-    if (current !== ex && selectorMap.indexOf(value.id) === -1) { selectorMap.push(value.id); }
-    value.selector = current;
+    let prefix = parent ? parent.selector : null;
+    let d = value.data;
+    let p = position(parent, value);
+    let s: SelectorInput = { tag: d.tag, prefix, position: p, attributes: d.attributes };
+    value.selector = [selector(s), selector(s, true)];
+    value.hash = value.selector.map(x => x ? hash(x) : null) as [string, string];
+    value.hash.forEach(h => hashMap[h] = value.id);
 }
 
 export function getNode(id: number): Node {
     if (id in nodes) {
         return nodes[id];
-    }
-    return null;
-}
-
-export function getMatch(url: string): Node {
-    if (url in urlMap) {
-        return getNode(urlMap[url]);
     }
     return null;
 }
@@ -322,6 +301,10 @@ export function get(node: Node): NodeValue {
     return id in values ? values[id] : null;
 }
 
+export function lookup(hash: string): number {
+    return hash in hashMap ? hashMap[hash] : null;
+}
+
 export function has(node: Node): boolean {
     return getId(node) in nodes;
 }
@@ -329,12 +312,7 @@ export function has(node: Node): boolean {
 export function updates(): NodeValue[] {
     let output = [];
     for (let id of updateMap) {
-        if (id in values) {
-            let v = values[id];
-            let p = v.parent;
-            v.data.path = p === null || updateMap.indexOf(p) >= 0 || v.selector.length === 0 ? null : values[p].selector;
-            output.push(values[id]);
-        }
+        if (id in values) { output.push(values[id]); }
     }
     updateMap = [];
     return output;
@@ -362,44 +340,6 @@ function size(value: NodeValue, parent: NodeValue): void {
     if (data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { value.metadata.size = []; }
 }
 
-function metadata(tag: string, id: number, parentId: number): void {
-    if (id !== null && parentId !== null) {
-        let value = values[id];
-        let attributes = "attributes" in value.data ? value.data.attributes : {};
-        switch (tag) {
-            case "VIDEO":
-            case "AUDIO":
-            case "LINK":
-                // Track mapping between URL and corresponding nodes
-                if (Constant.Href in attributes && attributes[Constant.Href].length > 0) {
-                    urlMap[getFullUrl(attributes[Constant.Href])] = id;
-                }
-                if (Constant.Src in attributes && attributes[Constant.Src].length > 0) {
-                    if (attributes[Constant.Src].indexOf(Constant.DataPrefix) !== 0) {
-                        urlMap[getFullUrl(attributes[Constant.Src])] = id;
-                    }
-                }
-                if (Constant.Srcset in attributes && attributes[Constant.Srcset].length > 0) {
-                    let srcset = attributes[Constant.Srcset];
-                    let urls = srcset.split(",");
-                    for (let u of urls) {
-                        let parts = u.trim().split(" ");
-                        if (parts.length === 2 && parts[0].length > 0) {
-                            urlMap[getFullUrl(parts[0])] = id;
-                        }
-                    }
-                }
-                break;
-        }
-    }
-}
-
-function getFullUrl(relative: string): string {
-    let a = document.createElement("a");
-    a.href = relative;
-    return a.href;
-}
-
 function getPreviousId(node: Node): number {
     let id = null;
 
@@ -412,10 +352,6 @@ function getPreviousId(node: Node): number {
     return id;
 }
 
-function copy(input: NodeValue[]): NodeValue[] {
-    return JSON.parse(JSON.stringify(input));
-}
-
 function track(id: number, source: Source, changed: boolean = true, parentChanged: boolean = false): void {
     // Keep track of the order in which mutations happened, they may not be sequential
     // Edge case: If an element is added later on, and pre-discovered element is moved as a child.
@@ -425,18 +361,4 @@ function track(id: number, source: Source, changed: boolean = true, parentChange
         updateMap.splice(uIndex, 1);
         updateMap.push(id);
     } else if (uIndex === -1 && changed) { updateMap.push(id); }
-
-    if (Constant.DevHook in window) {
-        let value = copy([values[id]])[0];
-        let change = { time: time(), source, value };
-        if (!(id in changes)) { changes[id] = []; }
-        changes[id].push(change);
-    }
-}
-
-function history(id: number): NodeChange[] {
-    if (id in changes) {
-        return changes[id];
-    }
-    return [];
 }

@@ -111,7 +111,6 @@ export interface Report {
 export interface Config {
     projectId?: string;
     delay?: number;
-    cssRules?: boolean;
     lean?: boolean;
     track?: boolean;
     content?: boolean;

@@ -1,6 +1,7 @@
 import { Activity, Constant, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import { DataHelper } from "./data";
+import { EnrichHelper } from "./enrich";
 import { HeatmapHelper } from "./heatmap";
 import { InteractionHelper } from "./interaction";
 import { LayoutHelper } from "./layout";
@@ -9,6 +10,7 @@ export class Visualizer implements VisualizerType {
     _state: PlaybackState = null;
     renderTime = 0;
 
+    enrich: EnrichHelper;
     layout: LayoutHelper;
     heatmap: HeatmapHelper;
     interaction: InteractionHelper;
@@ -43,7 +45,6 @@ export class Visualizer implements VisualizerType {
                         if (time && this.renderTime > time) {
                             break;
                         }
-
                         this.layout.markup(domEvent);
                         break;
                 }
@@ -74,6 +75,13 @@ export class Visualizer implements VisualizerType {
 
     public merge = (decoded: Data.DecodedPayload[]): MergedPayload => {
         let merged: MergedPayload = { timestamp: null, envelope: null, dom: null, events: [] };
+
+        // Re-arrange decoded payloads in the order of their start time
+        decoded = decoded.sort(this.sortPayloads);
+        // Re-initialize enrich class if someone ends up calling merge function directly
+        this.enrich = this.enrich || new EnrichHelper();
+        this.enrich.reset();
+        // Walk through payloads and generate merged payload from an array of decoded payloads
         for (let payload of decoded) {
             merged.timestamp = merged.timestamp ? merged.timestamp : payload.timestamp;
             merged.envelope = payload.envelope;
@@ -81,14 +89,24 @@ export class Visualizer implements VisualizerType {
                 let p = payload[key];
                 if (Array.isArray(p)) {
                     for (let entry of p) {
-                        if (key === Constant.Dom && entry.event === Data.Event.Discover) {
-                            merged.dom = entry;
-                        } else { merged.events.push(entry); }
+                        switch (key) {
+                            case Constant.Dom:
+                                let dom = this.enrich.selectors(entry);
+                                if (entry.event === Data.Event.Discover) {
+                                    merged.dom = dom;
+                                } else {
+                                    merged.events.push(entry);
+                                }
+                                break;
+                            default:
+                                merged.events.push(entry);
+                                break;
+                        }
                     }
                 }
             }
         }
-        merged.events = merged.events.sort(this.sort);
+        merged.events = merged.events.sort(this.sortEvents);
         return merged;
     }
 
@@ -102,6 +120,7 @@ export class Visualizer implements VisualizerType {
         this._state = { window: target, options };
 
         // Initialize helpers
+        this.enrich = new EnrichHelper();
         this.data = new DataHelper(this.state);
         this.layout = new LayoutHelper(this.state);
         this.heatmap = new HeatmapHelper(this.state, this.layout);
@@ -172,12 +191,17 @@ export class Visualizer implements VisualizerType {
         this.interaction?.reset();
         this.layout?.reset();
         this.heatmap?.reset();
+        this.enrich?.reset();
 
         this._state = null;
         this.renderTime = 0;
     }
 
-    private sort = (a: Data.DecodedEvent, b: Data.DecodedEvent): number => {
+    private sortEvents = (a: Data.DecodedEvent, b: Data.DecodedEvent): number => {
         return a.time - b.time;
+    }
+
+    private sortPayloads = (a: Data.DecodedPayload, b: Data.DecodedPayload): number => {
+        return a.envelope.sequence - b.envelope.sequence;
     }
 }

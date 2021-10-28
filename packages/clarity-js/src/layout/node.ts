@@ -1,6 +1,5 @@
 import { Constant, Source } from "@clarity-types/layout";
 import { Code, Dimension, Severity } from "@clarity-types/data";
-import config from "@src/core/config";
 import * as dom from "./dom";
 import * as dimension from "@src/data/dimension";
 import * as internal from "@src/diagnostic/internal";
@@ -170,7 +169,7 @@ function getStyleValue(style: HTMLStyleElement): string {
     // Also, check if stylesheet has any data-* attribute, if so process rules instead of looking up text
     let value = style.textContent ? style.textContent.trim() : Constant.Empty;
     let dataset = style.dataset ? Object.keys(style.dataset).length : 0;
-    if (value.length === 0 || dataset > 0 || config.cssRules) {
+    if (value.length === 0 || dataset > 0) {
         value = getCssRules(style.sheet as CSSStyleSheet);
     }
     return value;

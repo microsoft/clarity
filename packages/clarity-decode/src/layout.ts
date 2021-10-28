@@ -1,14 +1,9 @@
 import { Constant } from "@clarity-types/data";
-import { helper, Data, Layout } from "clarity-js";
+import { Data, Layout } from "clarity-js";
 import { DomData, LayoutEvent, Interaction, RegionVisibility  } from "../types/layout";
 
 const AverageWordLength = 6;
 const Space = " ";
-let hashes: { [key: number]: string } = {};
-
-export function reset(): void {
-    hashes = {};
-}
 
 export function decode(tokens: Data.Token[]): LayoutEvent {
     let time = tokens[0] as number;
@@ -104,21 +99,19 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
 }
 
 function process(node: any[] | number[], tagIndex: number): DomData {
-    let [tag, position]: string[]  = node[tagIndex] ? node[tagIndex].split("~") : [node[tagIndex]];
+    // For backward compatibility, only extract the tag even if position is available as part of the tag name
+    // And, continue computing position in the visualization library from decoded payload.
+    let tag  = node[tagIndex] ? node[tagIndex].split("~")[0] : node[tagIndex];
     let output: DomData = {
         id: Math.abs(node[0]),
         parent: tagIndex > 1 ? node[1] : null,
         previous: tagIndex > 2 ? node[2] : null,
-        tag,
-        position: position ? parseInt(position, 10) : null,
-        selector: null,
-        hash: null
+        tag
     };
     let masked = node[0] < 0;
     let hasAttribute = false;
     let attributes: Layout.Attributes = {};
     let value = null;
-    let prefix = output.parent in hashes ? `${hashes[output.parent]}>` : (output.parent ? Layout.Constant.Empty : null);
 
     for (let i = tagIndex + 1; i < node.length; i++) {
         // Explicitly convert the token into a string value
@@ -129,7 +122,9 @@ function process(node: any[] | number[], tagIndex: number): DomData {
         if (i === (node.length - 1) && output.tag === "STYLE") {
             value = token;
         } else if (output.tag !== Layout.Constant.TextTag && lastChar === ">" && keyIndex === -1) {
-            prefix = token;
+            // Backward compatibility - since v0.6.25
+            // Ignore this conditional block since we no longer compute selectors at decode time to save on uploaded bytes
+            // Instead, we now compute selector and hash at visualization layer where we have access to all payloads together
         } else if (output.tag !== Layout.Constant.TextTag && firstChar === Layout.Constant.Box && keyIndex === -1) {
             let parts = token.substr(1).split(Layout.Constant.Period);
             if (parts.length === 2) {
@@ -144,13 +139,6 @@ function process(node: any[] | number[], tagIndex: number): DomData {
         } else if (output.tag === Layout.Constant.TextTag) {
             value = masked ? unmask(token) : token;
         }
-    }
-
-    let selector = helper.selector(output.tag, prefix, attributes, output.position);
-    if (selector.length > 0) {
-        output.selector = selector;
-        output.hash = helper.hash(selector);
-        hashes[output.id] = selector;
     }
 
     if (hasAttribute) { output.attributes = attributes; }

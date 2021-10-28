@@ -1,4 +1,4 @@
-import { Core, Data, Layout } from "clarity-js";
+import { Core, Data } from "clarity-js";
 
 const enum Region {
     Header = 1,
@@ -9,7 +9,7 @@ const enum Region {
 export default function(): Core.Config {
     return {
         regions: [
-            [Region.Header, "header", 1, Layout.Constant.DevHook], /* 1: Javascript Filter */
+            [Region.Header, "header", 1, Data.Constant.Clarity], /* 1: Javascript Filter */
             [Region.Footer, "footer", 0, "product"], /* 0: Url */
             [Region.Navigation, "nav"]
         ],

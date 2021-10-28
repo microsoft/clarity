@@ -55,6 +55,15 @@ export interface Options {
     keyframes?: boolean;
 }
 
+export interface NodeData {
+    tag: string;
+    parent: number;
+    previous: number;
+    position?: number;
+    stable?: string;
+    beta?: string;
+}
+
 export interface PlaybackState {
     window: Window;
     options: Options;
@@ -71,7 +80,7 @@ export interface ScrollMapInfo {
 export interface RegionState {
     interaction: Layout.Interaction,
     visibility: Layout.RegionVisibility
- }
+}
 
 export interface ElementData {
     hash: string;
@@ -123,6 +132,7 @@ export const enum Constant {
     AdoptedStyleSheet = "clarity-adopted-style",
     Id = "data-clarity-id", 
     Hash = "data-clarity-hash",
+    HashBeta = "data-clarity-hashbeta",
     Hide = "data-clarity-hide",
     Unavailable = "data-clarity-unavailable",
     Suspend = "data-clarity-suspend",

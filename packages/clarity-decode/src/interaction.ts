@@ -1,5 +1,5 @@
-import { Data, Interaction } from "clarity-js";
-import { InteractionEvent } from "../types/interaction";
+import { Data, Interaction, Layout } from "clarity-js";
+import { InteractionEvent, ClickData, TimelineData } from "../types/interaction";
 
 export function decode(tokens: Data.Token[]): InteractionEvent {
     let time = tokens[0] as number;
@@ -21,7 +21,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             };
             return { time, event, data: pointerData };
         case Data.Event.Click:
-            let clickData: Interaction.ClickData = {
+            let clickHashes = (tokens[12] as string).split(Data.Constant.Dot);
+            let clickData: ClickData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
                 y: tokens[4] as number,
@@ -32,7 +33,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 context: tokens[9] as number,
                 text: tokens[10] as string,
                 link: tokens[11] as string,
-                hash: tokens[12] as string
+                hash: clickHashes[0],
+                hashBeta: clickHashes.length > 0 ? clickHashes[1] : null
             };
             return { time, event, data: clickData };
         case Data.Event.Resize:
@@ -60,13 +62,15 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             };
             return { time, event, data: scrollData };
         case Data.Event.Timeline:
-            let timelineData: Interaction.TimelineData = {
+            let timelineHashes = (tokens[3] as string).split(Data.Constant.Dot);
+            let timelineData: TimelineData = {
                 type: tokens[2] as number,
-                hash: tokens[3] as string,
+                hash: timelineHashes[Layout.Selector.Stable],
                 x: tokens[4] as number,
                 y: tokens[5] as number,
                 reaction: tokens[6] as number,
-                context: tokens[7] as number
+                context: tokens[7] as number,
+                hashBeta: timelineHashes.length > 0 ? timelineHashes[Layout.Selector.Beta] : null
             };
             return { time, event, data: timelineData };
         case Data.Event.Visibility:

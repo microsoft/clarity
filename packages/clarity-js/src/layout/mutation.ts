@@ -20,6 +20,7 @@ let observers: MutationObserver[] = [];
 let mutations: MutationQueue[] = [];
 let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
+let attachShadow: (init: ShadowRootInit)  => ShadowRoot = null;
 let queue: Node[] = [];
 let timeout: number = null;
 let activePeriod = null;
@@ -35,6 +36,7 @@ export function start(): void {
 
     if (insertRule === null) { insertRule = CSSStyleSheet.prototype.insertRule; }
     if (deleteRule === null) { deleteRule = CSSStyleSheet.prototype.deleteRule; }
+    if (attachShadow === null) { attachShadow = HTMLElement.prototype.attachShadow; }
 
     // Some popular open source libraries, like styled-components, optimize performance
     // by injecting CSS using insertRule API vs. appending text node. A side effect of
@@ -49,6 +51,11 @@ export function start(): void {
       schedule(this.ownerNode);
       return deleteRule.apply(this, arguments);
     };
+
+    // Listening to attachShadow API
+    HTMLElement.prototype.attachShadow = function (): ShadowRoot {
+      return schedule(attachShadow.apply(this, arguments)) as ShadowRoot;
+    }
 }
 
 export function observe(node: Node): void {
@@ -92,6 +99,12 @@ export function stop(): void {
   if (deleteRule !== null) {
     CSSStyleSheet.prototype.deleteRule = deleteRule;
     deleteRule = null;
+  }
+
+  // Restoring original attachShadow
+  if (attachShadow != null) {
+    HTMLElement.prototype.attachShadow = attachShadow;
+    attachShadow = null;
   }
 
   history = {};
@@ -141,7 +154,7 @@ async function process(): Promise<void> {
           break;
         case Constant.Suspend:
           let value = dom.get(target);
-          if (value) { value.data.tag = Constant.SuspendMutationTag; }
+          if (value) { value.metadata.suspend = true; }
           break;
         default:
           break;
@@ -155,14 +168,15 @@ async function process(): Promise<void> {
 function track(m: MutationRecord, timer: Timer): string {
   let value = m.target ? dom.get(m.target.parentNode) : null;
   // Check if the parent is already discovered and that the parent is not the document root
-  if (value && value.selector !== Constant.HTML) {
+  if (value && value.data.tag !== Constant.HTML) {
     let inactive = time() > activePeriod;
     let target = dom.get(m.target);
-    let element = target ? target.selector : m.target.nodeName;
+    let element = target && target.selector ? target.selector.join() : m.target.nodeName;
+    let parent = value.selector ? value.selector.join() : Constant.Empty;
     // We use selector, instead of id, to determine the key (signature for the mutation) because in some cases
     // repeated mutations can cause elements to be destroyed and then recreated as new DOM nodes
     // In those cases, IDs will change however the selector (which is relative to DOM xPath) remains the same
-    let key = [value.selector, element, m.attributeName, names(m.addedNodes), names(m.removedNodes)].join();
+    let key = [parent, element, m.attributeName, names(m.addedNodes), names(m.removedNodes)].join();
     // Initialize an entry if it doesn't already exist
     history[key] = key in history ? history[key] : [0];
     let h = history[key];
@@ -201,7 +215,7 @@ async function processNodeList(list: NodeList, source: Source, timer: Timer): Pr
   }
 }
 
-function schedule(node: Node): void {
+function schedule(node: Node): Node {
   // Only schedule manual trigger for this node if it's not already in the queue
   if (queue.indexOf(node) < 0) { queue.push(node); }
 
@@ -210,10 +224,17 @@ function schedule(node: Node): void {
   // And in those cases we do not wish to monitor changes multiple times for the same node.
   if (timeout) { clearTimeout(timeout); }
   timeout = setTimeout(trigger, Setting.LookAhead);
+
+  return node;
 }
 
 function trigger(): void {
-  for (let node of queue) { generate(node, Constant.CharacterData); }
+  for (let node of queue) {
+    let shadowRoot = node && node.nodeType === Node.DOCUMENT_FRAGMENT_NODE;
+    // Skip re-processing shadowRoot if it was already discovered
+    if (shadowRoot && dom.has(node)) { continue; }
+    generate(node, shadowRoot ? Constant.ChildList : Constant.CharacterData);
+  }
   queue = [];
 }
 

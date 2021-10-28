@@ -41,7 +41,9 @@ function check(): boolean {
 }
 
 function compute(): void {
-    if (url !== getCurrentUrl() && count <= Setting.CallStackDepth) {
+    count = 0; // Reset the counter
+    if (url !== getCurrentUrl()) {
+        // If the url changed, start tracking it as a new page
         clarity.stop();
         window.setTimeout(clarity.start, Setting.RestartDelay);
     }

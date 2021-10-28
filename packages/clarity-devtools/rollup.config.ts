@@ -23,6 +23,11 @@ export default [
     plugins: [resolve(), typescript({ rollupCommonJSResolveHack: true, clean: true })]
   },
   {
+    input: "src/clarity.ts",
+    output: [{ file: "extension/clarity.js", format: "iife", exports: "named" }],
+    plugins: [resolve(), typescript({ rollupCommonJSResolveHack: true, clean: true })]
+  },
+  {
     input: "src/popup.ts",
     output: [{ file: "extension/popup.js", format: "iife", exports: "named" }],
     plugins: [resolve(), typescript({ rollupCommonJSResolveHack: true, clean: true })]

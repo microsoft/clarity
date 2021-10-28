@@ -37,9 +37,6 @@ export function decode(input: string): DecodedPayload {
         throw new Error(`Invalid version. Actual: ${payload.envelope.version} | Expected: ${version} (+/- 1) | ${input.substr(0, 250)}`);
     }
 
-    /* Reset components before decoding to keep them stateless */
-    layout.reset();
-
     for (let entry of encoded) {
         switch (entry[1]) {
             case Data.Event.Baseline:

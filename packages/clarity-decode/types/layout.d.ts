@@ -13,6 +13,7 @@ export interface LayoutEvent extends PartialEvent {
 export import Constant = Layout.Constant;
 export import Interaction = Layout.InteractionState;
 export import RegionVisibility = Layout.RegionVisibility;
+export import SelectorInput = Layout.SelectorInput;
 
 /* Event Data */
 export interface DomData {
@@ -20,11 +21,12 @@ export interface DomData {
     parent: number;
     previous: number;
     tag: string;
-    position: number;
-    selector: string;
-    hash: string;
     attributes?: Layout.Attributes;
     value?: string;
     width?: number;
     height?: number;
+    selector?: string;
+    hash?: string;
+    selectorBeta?: string;
+    hashBeta?: string;
 }

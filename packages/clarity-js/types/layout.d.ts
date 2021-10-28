@@ -11,6 +11,11 @@ export const enum Source {
     CharacterData
 }
 
+export const enum Selector {
+    Stable = 0,
+    Beta = 1
+}
+
 export const enum InteractionState {
     None = 16,
     Clicked = 20,
@@ -29,7 +34,6 @@ export const enum Constant {
     DataPrefix = "data:",
     IFramePrefix = "iframe:",
     SvgNamespace = "http://www.w3.org/2000/svg",
-    DevHook = "__CLARITY_DEVTOOLS_HOOK__",
     Id = "id",
     Class = "class",
     Href = "href",
@@ -52,6 +56,7 @@ export const enum Constant {
     IFrameTag = "IFRAME",
     ImageTag = "IMG",
     TitleTag = "TITLE",
+    BodyTag = "BODY",
     SvgTag = "svg:svg",
     BaseTag = "BASE",
     NativeCode = "[native code]",
@@ -127,9 +132,15 @@ export interface Attributes {
     [key: string]: string;
 }
 
+export interface SelectorInput {
+    tag: string;
+    prefix: [string, string];
+    position: number;
+    attributes: Attributes;
+}
+
 export interface NodeInfo {
     tag: string;
-    path?: string;
     attributes?: Attributes;
     value?: string;
 }
@@ -138,24 +149,20 @@ export interface NodeValue {
     id: number;
     parent: number;
     previous: number;
-    position: number;
     children: number[];
     data: NodeInfo;
-    selector: string;
+    selector: [string, string];
+    hash: [string, string];
     region: number;
     metadata: NodeMeta;
 }
 
 export interface NodeMeta {
     active: boolean;
+    suspend: boolean;
     privacy: Privacy;
+    position: number;
     size: number[];
-}
-
-export interface NodeChange {
-    time: number;
-    source: Source;
-    value: NodeValue;
 }
 
 export interface MutationQueue {
@@ -199,8 +206,7 @@ export interface BoxData {
 
 export interface TargetMetadata {
     id: number;
-    hash: string;
+    hash: [string, string];
     privacy: Privacy;
-    selector: string;
     node: Node;
 }

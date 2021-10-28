@@ -172,6 +172,16 @@ export const enum Setting {
     MaxUploadDelay = 30 * Time.Second // Do flush out payload once every 30s
 }
 
+export const enum Character {
+    Zero = 48,
+    Nine = 57,
+    At = 64,
+    Blank = 32,
+    Tab = 9,
+    NewLine = 10,
+    Return = 13
+}
+
 export const enum Constant {
     Auto = "Auto",
     Config = "Config",

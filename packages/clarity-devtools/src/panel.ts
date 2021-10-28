@@ -1,6 +1,7 @@
 import { Data, decode } from "clarity-decode";
-import { visualize } from "clarity-visualize";
+import { Visualizer } from "clarity-visualize";
 
+let visualize = new Visualizer();
 let activeTabId = chrome.devtools.inspectedWindow.tabId;
 let background = chrome.runtime.connect({ name: "panel" });
 background.postMessage({ action: "init", tabId: activeTabId });
@@ -11,24 +12,41 @@ let eJson: string[][] = []; // Encoded JSON for the whole session
 let pJson: string[] = []; // Encoded JSON for the page
 let dJson: Data.DecodedPayload[] = []; // Decoded JSON for the page
 
-function save(encoded: boolean = true): void {
-    let data;
+const enum Mode {
+    Encoded = 0,
+    Decoded = 1,
+    Merged = 2
+}
+
+function save(mode: Mode): void {
+    let json: string;
+    let suffix: string;
     let id = `${sessionId}-${pageNum}`;
-    let suffix = "decoded";
-    if (encoded) {
-        // Temporarily append data from the current page
-        eJson.push(pJson);
-        // Beautify data by injecting line breaks
-        data = JSON.stringify(eJson).replace(/\[\{"e"/g, '\r\n  [{"e"').replace("]}]]", "]}]\r\n]");
-        // Clean up temporary data from above
-        eJson.pop();
-        id = sessionId;
-        suffix = "encoded";
-    } else { data = JSON.stringify(dJson, null, 2); }
-    let blob = new Blob([data], {type: "application/json"});
+    switch (mode) {
+        case Mode.Encoded:
+            // Temporarily append data from the current page
+            eJson.push(pJson);
+            // Beautify data by injecting line breaks
+            json = JSON.stringify(eJson).replace(/\[\{"e"/g, '\r\n  [{"e"').replace("]}]]", "]}]\r\n]");
+            // Clean up temporary data from above
+            eJson.pop();
+            id = sessionId;
+            suffix = "encoded";
+            break;
+        case Mode.Decoded:
+            json = JSON.stringify(dJson, null, 2);
+            suffix = "decoded";
+            break;
+        case Mode.Merged:
+            json = JSON.stringify(visualize.merge(copy(dJson)), null, 2);
+            suffix = "merged";
+            break;
+    }
+    let blob = new Blob([json], {type: "application/json"});
     let url  = URL.createObjectURL(blob);
+
     let a = document.createElement("a");
-    a.setAttribute("download", `clarity-${id.toUpperCase()}-${suffix}.json`);
+    a.setAttribute("download", `clarity-${id}-${suffix}.json`);
     a.href = url;
     a.click();
 }
@@ -39,7 +57,7 @@ background.onMessage.addListener(function(message: any): void {
         let decoded = decode(message.payload);
         if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
         pJson.push(JSON.parse(message.payload));
-        dJson.push(decoded);
+        dJson.push(copy(decoded)); // Save a copy of JSON
         let merged = visualize.merge([decoded]);
         events = events.concat(merged.events).sort(sort);
         visualize.dom(merged.dom);
@@ -85,6 +103,7 @@ function reset(envelope: Data.Envelope): void {
     let metadata = document.getElementById("header") as HTMLDivElement;
     let iframe = document.getElementById("clarity") as HTMLIFrameElement;
     let download = document.getElementById("download") as HTMLElement;
+    let links = download.querySelectorAll("a");
     if (iframe) { iframe.parentElement.removeChild(iframe); }
     iframe = document.createElement("iframe");
     iframe.id = "clarity";
@@ -104,13 +123,18 @@ function reset(envelope: Data.Envelope): void {
     metadata.style.display = "block";
     download.style.display = "block";
     iframe.style.display = "block";
-    (download.firstChild as HTMLElement).onclick = function(): void { save(true); };
-    (download.lastChild as HTMLElement).onclick = function(): void { save(false); };
+    for (let i = 0; i < links.length; i++) {
+        (links[i] as HTMLElement).onclick = function(): void { save(i); };
+    }
     visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata });
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
     return a.time - b.time;
+}
+
+function copy(input: any): any {
+    return JSON.parse(JSON.stringify(input));
 }
 
 // Call replay on every animation frame to emulate near real-time playback
