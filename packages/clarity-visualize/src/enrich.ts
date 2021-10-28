@@ -43,11 +43,18 @@ export class EnrichHelper {
             node.position = this.position(d.id, d.tag, node, children, children.map(c => this.nodes[c]));
 
             /* For backward compatibility, continue populating current selector and hash like before in addition to beta selector and hash */
-            let input: Layout.SelectorInput = { id: d.id, tag: d.tag, prefix: parent ? [parent.stable, parent.beta] : null, position: node.position, attributes };
-            d.selector = helper.selector(input);
-            d.selectorBeta = helper.selector(input, true);
-            d.hash = helper.hash(d.selector);
-            d.hashBeta = helper.hash(d.selectorBeta);
+            let input: Layout.SelectorInput = { tag: d.tag, prefix: parent ? [parent.stable, parent.beta] : null, position: node.position, attributes };
+
+            // Get stable selector
+            // We intentionally use "null" value for empty selectors to keep parity with v0.6.25 and before.
+            let selector = helper.selector(input);
+            d.selector = selector.length > 0 ? selector : null;
+            d.hash = selector.length > 0 ? helper.hash(d.selector) : null;
+            
+            // Get beta selector
+            let selectorBeta = helper.selector(input, true);
+            d.selectorBeta = selectorBeta.length > 0 ? selectorBeta : null;
+            d.hashBeta = selectorBeta.length > 0 ? helper.hash(d.selectorBeta) : null;
 
             /* Track state for future reference */
             node.stable = d.selector;

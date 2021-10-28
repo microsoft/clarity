@@ -133,7 +133,6 @@ export interface Attributes {
 }
 
 export interface SelectorInput {
-    id: number;
     tag: string;
     prefix: [string, string];
     position: number;

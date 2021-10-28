@@ -27,9 +27,9 @@ export function start(): void {
     pageNum: s.count
   }
 
-  // Override configuration based on what's in the session storage
+  // Override configuration based on what's in the session storage, unless it is blank
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
-  config.upload = config.track && typeof config.upload === Constant.String && s.upload ? s.upload : config.upload;
+  config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;
   // Log dimensions
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);

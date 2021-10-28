@@ -272,7 +272,7 @@ function updateSelector(value: NodeValue): void {
     let prefix = parent ? parent.selector : null;
     let d = value.data;
     let p = position(parent, value);
-    let s: SelectorInput = { id: value.id, tag: d.tag, prefix, position: p, attributes: d.attributes };
+    let s: SelectorInput = { tag: d.tag, prefix, position: p, attributes: d.attributes };
     value.selector = [selector(s), selector(s, true)];
 }
 
