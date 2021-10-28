@@ -75,6 +75,7 @@ export class Visualizer implements VisualizerType {
 
     public merge = (decoded: Data.DecodedPayload[]): MergedPayload => {
         let merged: MergedPayload = { timestamp: null, envelope: null, dom: null, events: [] };
+
         // Re-arrange decoded payloads in the order of their start time
         decoded = decoded.sort(this.sortPayloads);
         // Re-initialize enrich class if someone ends up calling merge function directly
