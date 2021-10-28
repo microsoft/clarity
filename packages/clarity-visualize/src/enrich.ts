@@ -57,8 +57,8 @@ export class EnrichHelper {
             d.hashBeta = selectorBeta.length > 0 ? helper.hash(d.selectorBeta) : null;
 
             /* Track state for future reference */
-            node.stable = d.selector;
-            node.beta = d.selectorBeta;
+            node.stable = selector;
+            node.beta = selectorBeta;
             this.nodes[d.id] = node;
             if (d.parent) { this.children[d.parent] = children; }                             
         });
