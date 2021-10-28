@@ -278,7 +278,7 @@ function updateSelector(value: NodeValue): void {
     let p = position(parent, value);
     let s: SelectorInput = { tag: d.tag, prefix, position: p, attributes: d.attributes };
     value.selector = [selector(s), selector(s, true)];
-    value.hash = value.selector.map(x => hash(x)) as [string, string];
+    value.hash = value.selector.map(x => x ? hash(x) : null) as [string, string];
     value.hash.forEach(h => hashMap[h] = value.id);
 }
 

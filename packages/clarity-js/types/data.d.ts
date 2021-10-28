@@ -165,7 +165,6 @@ export const enum Setting {
     CallStackDepth = 20, // Maximum call stack depth before bailing out
     RatingScale = 100, // Scale rating to specified scale
     ViewportIntersectionRatio = 0.05, // Ratio of intersection area in comparison to viewport area before it's marked visible
-    AutoGenDigitThreshold = 3, // Number of digits in a token before it is classified as auto-generated token
     IntersectionRatio = 0.8, // Ratio of intersection area in comparison to element's area before it's marked visible
     MaxFirstPayloadBytes = 1 * 1024 * 1024, // 1MB: Cap the very first payload to a maximum of 1MB
     UploadFactor = 3, // Slow down sequence by specified factor

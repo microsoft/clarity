@@ -27,7 +27,7 @@ export function start(): void {
     pageNum: s.count
   }
 
-  // Override configuration based on what's in the session storage, unless it is blank
+  // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
   config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;
   // Log dimensions
