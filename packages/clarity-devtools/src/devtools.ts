@@ -20,7 +20,7 @@ chrome.devtools.panels.elements.createSidebarPane("Clarity", function(sidebar: a
 function inspect(): any {
     let clarity = window[Data.Constant.Clarity];
     let tag = $0 ? $0.tagName : "*NA*";
-    let value = $0 ? clarity("get", $0) : null;
+    let value = $0 && "h" in clarity ? clarity.h("get", $0) : null;
     let id = value ? value.id : null;
     let output = { id, tag, value };
     return output;
