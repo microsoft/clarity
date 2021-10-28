@@ -20,8 +20,9 @@ interface Clarity {
 
 interface Helper {
   get: (node: Node) => Layout.NodeValue;
-  hash: (input: string) => string;
   getNode: (id: number) => Node;
+  hash: (input: string) => string;
+  lookup: (hash: string) => number;
   selector: (input: Layout.SelectorInput, beta?: boolean) => string;
 }
 

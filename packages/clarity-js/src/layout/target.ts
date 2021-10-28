@@ -1,7 +1,6 @@
 import { Privacy } from "@clarity-types/core";
 import { Event } from "@clarity-types/data";
-import { Selector, TargetMetadata } from "@clarity-types/layout";
-import hash from "@src/core/hash";
+import { TargetMetadata } from "@clarity-types/layout";
 import { track } from "@src/layout/region";
 import * as dom from "@src/layout/dom";
 import * as mutation from "@src/layout/mutation";
@@ -33,7 +32,7 @@ export function metadata(node: Node, event: Event): TargetMetadata {
         let value = dom.get(node);
         if (value !== null) {
             output.id = value.id;
-            output.hash = value.selector ? [hash(value.selector[Selector.Stable]), hash(value.selector[Selector.Beta])] : null;
+            output.hash = value.hash;
             output.privacy = value.metadata.privacy;
             if (value.region) { track(value.region, event); }
         }

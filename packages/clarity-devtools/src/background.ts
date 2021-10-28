@@ -47,9 +47,11 @@ chrome.runtime.onMessage.addListener(
           case "payload":
             if (sender.tab) {
               let tabId = sender.tab.id;
-              if (tabId in connections) {
+              let success = tabId in connections;
+              if (success) {
                 connections[tabId].postMessage(message);
               }
+              sendResponse({ success });
             }
             break;
         }

@@ -152,6 +152,7 @@ export interface NodeValue {
     children: number[];
     data: NodeInfo;
     selector: [string, string];
+    hash: [string, string];
     region: number;
     metadata: NodeMeta;
 }

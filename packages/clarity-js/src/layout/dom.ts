@@ -2,6 +2,7 @@ import { Privacy } from "@clarity-types/core";
 import { Code, Setting, Severity } from "@clarity-types/data";
 import { Constant, NodeInfo, NodeValue, SelectorInput, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
+import hash from "@src/core/hash";
 import * as internal from "@src/diagnostic/internal";
 import * as extract from "@src/layout/extract";
 import * as region from "@src/layout/region";
@@ -17,6 +18,7 @@ const DISALLOWED_MATCH = ["address", "password", "contact"];
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
 let updateMap: number[] = [];
+let hashMap: { [hash: string]: number } = {};
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
@@ -37,6 +39,7 @@ function reset(): void {
     nodes = [];
     values = [];
     updateMap = [];
+    hashMap = {};
     idMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
@@ -104,6 +107,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         children: [],
         data,
         selector: null,
+        hash: null,
         region: regionId,
         metadata: { active: true, suspend: false, privacy, position: null, size: null }
     };
@@ -274,6 +278,8 @@ function updateSelector(value: NodeValue): void {
     let p = position(parent, value);
     let s: SelectorInput = { tag: d.tag, prefix, position: p, attributes: d.attributes };
     value.selector = [selector(s), selector(s, true)];
+    value.hash = value.selector.map(x => hash(x)) as [string, string];
+    value.hash.forEach(h => hashMap[h] = value.id);
 }
 
 export function getNode(id: number): Node {
@@ -293,6 +299,10 @@ export function getValue(id: number): NodeValue {
 export function get(node: Node): NodeValue {
     let id = getId(node);
     return id in values ? values[id] : null;
+}
+
+export function lookup(hash: string): number {
+    return hash in hashMap ? hashMap[hash] : null;
 }
 
 export function has(node: Node): boolean {

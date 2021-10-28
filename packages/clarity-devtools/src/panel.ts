@@ -1,6 +1,7 @@
 import { Data, decode } from "clarity-decode";
-import { visualize } from "clarity-visualize";
+import { Visualizer } from "clarity-visualize";
 
+let visualize = new Visualizer();
 let activeTabId = chrome.devtools.inspectedWindow.tabId;
 let background = chrome.runtime.connect({ name: "panel" });
 background.postMessage({ action: "init", tabId: activeTabId });
