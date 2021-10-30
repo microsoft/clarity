@@ -1,9 +1,9 @@
 import { Data } from "clarity-js";
-import { DiagnosticEvent, ImageErrorEvent, LogEvent, ScriptErrorEvent } from "./diagnostic";
-import { ClickEvent, InputEvent, InteractionEvent, PointerEvent, ResizeEvent } from "./interaction";
+import { DiagnosticEvent, LogEvent, ScriptErrorEvent } from "./diagnostic";
+import { ClickEvent, ClipboardEvent, InputEvent, InteractionEvent, PointerEvent, ResizeEvent, SubmitEvent } from "./interaction";
 import { ScrollEvent, SelectionEvent, TimelineEvent, UnloadEvent, VisibilityEvent } from "./interaction";
 import { BoxEvent, DocumentEvent, DomEvent, LayoutEvent, RegionEvent } from "./layout";
-import { ConnectionEvent, NavigationEvent, PerformanceEvent } from "./performance";
+import { NavigationEvent, PerformanceEvent } from "./performance";
 import { PartialEvent } from "./core";
 
 /* Redeclare enums */
@@ -50,14 +50,15 @@ export interface DecodedPayload {
     dimension?: DimensionEvent[];
     ping?: PingEvent[];
     limit?: LimitEvent[];
-    image?: ImageErrorEvent[];
     script?: ScriptErrorEvent[];
     input?: InputEvent[];
     pointer?: PointerEvent[];
     click?: ClickEvent[];
+    clipboard?: ClipboardEvent[];
     resize?: ResizeEvent[];
     scroll?: ScrollEvent[];
     selection?: SelectionEvent[];
+    submit?: SubmitEvent[];
     summary?: SummaryEvent[];
     timeline?: TimelineEvent[];
     unload?: UnloadEvent[];
@@ -68,7 +69,6 @@ export interface DecodedPayload {
     region?: RegionEvent[];
     dom?: DomEvent[];
     doc?: DocumentEvent[];
-    connection?: ConnectionEvent[];
     navigation?: NavigationEvent[];
     log?: LogEvent[];
     baseline?: BaselineEvent[];

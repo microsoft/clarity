@@ -56,6 +56,9 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
                 break;
         }
 
+        // Increment event count metric
+        metric.count(Metric.EventCount);
+
         // Following two checks are precautionary and act as a fail safe mechanism to get out of unexpected situations.
         // Check 1: If for any reason the upload hasn't happened after waiting for 2x the config.delay time,
         // reset the timer. This allows Clarity to attempt an upload again.

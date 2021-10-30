@@ -39,14 +39,22 @@ export const enum Event {
     Input = 27,
     Visibility = 28,
     Navigation = 29,
+/**
+ * @deprecated No longer support Network Connection
+ */
     Connection = 30,
     ScriptError = 31,
+/**
+ * @deprecated No longer support Image Error
+ */
     ImageError = 32,
     Log = 33,
     Variable = 34,
     Limit = 35,
     Summary = 36,
     Box = 37,
+    Clipboard = 38,
+    Submit = 39
 }
 
 export const enum Metric {
@@ -74,7 +82,9 @@ export const enum Metric {
     CartShipping = 21,
     CartDiscount = 22,
     CartTax = 23,
-    CartTotal = 24
+    CartTotal = 24,
+    EventCount = 25,
+    Automation = 26
 }
 
 export const enum Dimension {
@@ -100,7 +110,6 @@ export const enum Dimension {
     MetaType = 19,
     MetaTitle = 20,
     Generator = 21
-    
 }
 
 export const enum Check {
@@ -160,6 +169,7 @@ export const enum Setting {
     BoxPrecision = 100, // Up to 2 decimal points (e.g. 34.56)
     ResizeObserverThreshold = 15, // At least 15 characters before we attach a resize observer for the node
     ScriptErrorLimit = 5, // Do not send the same script error more than 5 times per page
+    DimensionLimit = 256, // Do not extract dimensions which are over 256 characters
     WordLength = 5, // Estimated average size of a word,
     RestartDelay = 250, // Wait for 250ms before starting to wire up again
     CallStackDepth = 20, // Maximum call stack depth before bailing out

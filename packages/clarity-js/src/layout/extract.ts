@@ -1,5 +1,6 @@
-import { Extract, Metric, Region, RegionFilter } from "@clarity-types/core";
-import { Constant } from "@clarity-types/data";
+import { Dimension, Extract, Metric, Region, RegionFilter } from "@clarity-types/core";
+import { Constant, Setting } from "@clarity-types/data";
+import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as region from "@src/layout/region";
 
@@ -33,6 +34,19 @@ export function metrics(root: ParentNode, value: Metric[]): void {
     }
 }
 
+export function dimensions(root: ParentNode, value: Dimension[]): void {
+    for (let v of value) {
+        const [dimensionId, source, match] = v;
+        if (match) {
+            switch (source) {
+                case Extract.Text:  root.querySelectorAll(match).forEach(e => { dimension.log(dimensionId, str((e as HTMLElement).innerText)); }); break;
+                case Extract.Attribute: root.querySelectorAll(`[${match}]`).forEach(e => { dimension.log(dimensionId, str(e.getAttribute(match))); }); break;
+                case Extract.Javascript: dimension.log(dimensionId, str(evaluate(match, Constant.String))); break;
+            }
+        }
+    }
+}
+
 function regex(match: string): RegExp {
     regexCache[match] = match in regexCache ? regexCache[match] : new RegExp(match);
     return regexCache[match];
@@ -50,6 +64,11 @@ function evaluate(variable: string, type: string = null, base: Object = window):
         return output;
     }
     return null;
+}
+
+function str(input: string): string {
+    // Automatically trim string to max of Setting.DimensionLimit to avoid fetching long strings
+    return input ? input.substr(0, Setting.DimensionLimit) : input;
 }
 
 function num(text: string, scale: number, localize: boolean = true): number {

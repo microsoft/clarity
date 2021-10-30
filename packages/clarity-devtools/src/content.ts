@@ -32,7 +32,13 @@ function setup(url: string): void {
             chrome.storage.sync.get({ clarity: { showText: true, leanMode: false } }, (items: any) => {
               let c = config();
               let script = document.createElement("script");
-              script.innerText = wireup({regions: c.regions, metrics: c.metrics, showText: items.clarity.showText, leanMode: items.clarity.leanMode});
+              script.innerText = wireup({
+                regions: c.regions,
+                metrics: c.metrics,
+                dimensions: c.dimensions,
+                showText: items.clarity.showText,
+                leanMode: items.clarity.leanMode
+              });
               document.body.appendChild(script);
             });
             break;
@@ -53,6 +59,7 @@ function wireup(settings: any): string {
       lean: "$__leanMode__$",
       regions: "$__regions__$",
       metrics: "$__metrics__$",
+      dimensions: "$__dimensions__$",
       content: "$__showText__$",
       upload: (data: string): void => { window.postMessage({ action: "upload", payload: data }, "*"); },
       projectId: "devtools"

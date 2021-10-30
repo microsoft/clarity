@@ -41,11 +41,13 @@ export function start(): void {
 
   if (navigator) {
     dimension.log(Dimension.Language, (<any>navigator).userLanguage || navigator.language);
+    metric.max(Metric.Automation, navigator.webdriver ? BooleanFlag.True : BooleanFlag.False);
   }
 
   // Metrics
   metric.max(Metric.ClientTimestamp, s.ts);
   metric.max(Metric.Playback, BooleanFlag.False);
+
   if (screen) {
     metric.max(Metric.ScreenWidth, Math.round(screen.width));
     metric.max(Metric.ScreenHeight, Math.round(screen.height));
