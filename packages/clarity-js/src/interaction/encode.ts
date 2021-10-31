@@ -131,9 +131,7 @@ export default async function (type: Event): Promise<void> {
                 tokens = [entry.time, entry.event];
                 let target = metadata(entry.data.target as Node, entry.event);
                 if (target.id > 0) {
-                    let hash = target.hash.join(Constant.Dot);
                     tokens.push(target.id);
-                    tokens.push(hash);
                     queue(tokens);
                 }
             }

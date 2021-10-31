@@ -83,7 +83,6 @@ export interface InputData {
 
 export interface SubmitData {
     target: Target;
-    hash: string;
 }
 
 export interface PointerData {

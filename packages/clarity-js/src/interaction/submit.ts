@@ -17,7 +17,7 @@ export function observe(root: Node): void {
 }
 
 function recompute(evt: UIEvent): void {
-    state.push({ time: time(), event: Event.Submit, data: { target: target(evt), hash: null } });
+    state.push({ time: time(), event: Event.Submit, data: { target: target(evt) } });
     schedule(encode.bind(this, Event.Submit));
 }
 

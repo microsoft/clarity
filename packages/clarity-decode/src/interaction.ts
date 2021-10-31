@@ -1,5 +1,5 @@
 import { Data, Interaction, Layout } from "clarity-js";
-import { InteractionEvent, ClickData, TimelineData, SubmitData } from "../types/interaction";
+import { InteractionEvent, ClickData, TimelineData } from "../types/interaction";
 
 export function decode(tokens: Data.Token[]): InteractionEvent {
     let time = tokens[0] as number;
@@ -58,11 +58,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             };
             return { time, event, data: selectionData };
         case Data.Event.Submit:
-            let submitHashes = (tokens[3] as string).split(Data.Constant.Dot);
-            let submitData: SubmitData = {
-                target: tokens[2] as number,
-                hash: submitHashes[0],
-                hashBeta: submitHashes.length > 0 ? submitHashes[1] : null
+            let submitData: Interaction.SubmitData = {
+                target: tokens[2] as number
             };
             return { time, event, data: submitData };
         case Data.Event.Scroll:
