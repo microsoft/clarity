@@ -10,6 +10,7 @@ let config: Config = {
     unmask: [],
     regions: [],
     metrics: [],
+    dimensions: [],
     cookies: [],
     report: null,
     upload: null,

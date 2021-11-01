@@ -5,14 +5,6 @@ export function decode(tokens: Data.Token[]): PerformanceEvent  {
     let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
     switch (event) {
-        case Data.Event.Connection:
-            let connectionData: Performance.ConnectionData = {
-                downlink: tokens[2] as number,
-                rtt: tokens[3] as number,
-                saveData: tokens[4] as number,
-                type: tokens[5] as string
-            };
-            return { time, event, data: connectionData };
         case Data.Event.Navigation:
             let navigationData: Performance.NavigationData = {
                 fetchStart: tokens[2] as number,

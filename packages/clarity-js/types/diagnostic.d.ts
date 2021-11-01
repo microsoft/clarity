@@ -9,12 +9,6 @@ export interface ScriptErrorData {
     stack: string;
 }
 
-export interface ImageErrorData {
-    source: string;
-    target: Target;
-    region?: number;
-}
-
 export interface LogData {
     code: Code;
     name: string;

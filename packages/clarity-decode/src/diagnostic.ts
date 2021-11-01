@@ -5,12 +5,6 @@ export function decode(tokens: Data.Token[]): DiagnosticEvent {
     let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
     switch (event) {
-        case Data.Event.ImageError:
-            let imageError: Diagnostic.ImageErrorData = {
-                source: tokens[2] as string,
-                target: tokens[3] as number,
-            };
-            return { time, event, data: imageError };
         case Data.Event.ScriptError:
             let scriptError: Diagnostic.ScriptErrorData = {
                 message: tokens[2] as string,

@@ -17,6 +17,12 @@ export const enum Setting {
     TimelineSpan = 2 * Time.Second, // 2 seconds
 }
 
+export const enum Clipboard {
+    Cut = 0,
+    Copy = 1,
+    Paste = 2
+}
+
 /* Helper Interfaces */
 export interface PointerState {
     time: number;
@@ -30,10 +36,22 @@ export interface ClickState {
     data: ClickData;
 }
 
+export interface ClipboardState {
+    time: number;
+    event: number;
+    data: ClipboardData;
+}
+
 export interface ScrollState {
     time: number;
     event: number;
     data: ScrollData;
+}
+
+export interface SubmitState {
+    time: number;
+    event: number;
+    data: SubmitData;
 }
 
 export interface InputState {
@@ -63,6 +81,10 @@ export interface InputData {
     value: string;
 }
 
+export interface SubmitData {
+    target: Target;
+}
+
 export interface PointerData {
     target: Target;
     x: number;
@@ -81,6 +103,11 @@ export interface ClickData {
     text: string;
     link: string;
     hash: string;
+}
+
+export interface ClipboardData {
+    target: Target;
+    action: Clipboard;
 }
 
 export interface ResizeData {

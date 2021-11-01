@@ -1,11 +1,11 @@
 import { Data, version } from "clarity-js";
 import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
 import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent } from "../types/data";
-import { ImageErrorEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
-import { ClickEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent, TimelineEvent } from "../types/interaction";
+import { LogEvent, ScriptErrorEvent } from "../types/diagnostic";
+import { ClickEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent, SubmitEvent, TimelineEvent } from "../types/interaction";
 import { SelectionEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
 import { BoxEvent, DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
-import { ConnectionEvent, NavigationEvent } from "../types/performance";
+import { NavigationEvent } from "../types/performance";
 
 import * as data from "./data";
 import * as diagnostic from "./diagnostic";
@@ -101,6 +101,11 @@ export function decode(input: string): DecodedPayload {
                 let clickEntry = interaction.decode(entry) as ClickEvent;
                 payload.click.push(clickEntry);
                 break;
+            case Data.Event.Clipboard:
+                if (payload.clipboard === undefined) { payload.clipboard = []; }
+                let clipEntry = interaction.decode(entry) as ClipboardEvent;
+                payload.clipboard.push(clipEntry);
+                break;
             case Data.Event.Scroll:
                 if (payload.scroll === undefined) { payload.scroll = []; }
                 payload.scroll.push(interaction.decode(entry) as ScrollEvent);
@@ -112,6 +117,11 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Selection:
                 if (payload.selection === undefined) { payload.selection = []; }
                 payload.selection.push(interaction.decode(entry) as SelectionEvent);
+                break;
+            case Data.Event.Submit:
+                if (payload.submit === undefined) { payload.submit = []; }
+                let submitEntry = interaction.decode(entry) as SubmitEvent;
+                payload.submit.push(submitEntry);
                 break;
             case Data.Event.Timeline:
                 if (payload.timeline === undefined) { payload.timeline = []; }
@@ -150,17 +160,9 @@ export function decode(input: string): DecodedPayload {
                 if (payload.script === undefined) { payload.script = []; }
                 payload.script.push(diagnostic.decode(entry) as ScriptErrorEvent);
                 break;
-            case Data.Event.ImageError:
-                if (payload.image === undefined) { payload.image = []; }
-                payload.image.push(diagnostic.decode(entry) as ImageErrorEvent);
-                break;
             case Data.Event.Log:
                 if (payload.log === undefined) { payload.log = []; }
                 payload.log.push(diagnostic.decode(entry) as LogEvent);
-                break;
-            case Data.Event.Connection:
-                if (payload.connection === undefined) { payload.connection = []; }
-                payload.connection.push(performance.decode(entry) as ConnectionEvent);
                 break;
             case Data.Event.Navigation:
                 if (payload.navigation === undefined) { payload.navigation = []; }

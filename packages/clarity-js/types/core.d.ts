@@ -5,6 +5,7 @@ type TaskResolve = () => void;
 type UploadCallback = (data: string) => void;
 type Region = [number /* RegionId */, string /* Query Selector */, RegionFilter? /* Region Filter */, string? /* Filter Text */];
 type Metric = [Data.Metric /* MetricId */, Extract /* Extract Filter */, string /* Match Value */, number? /* Scale Factor */];
+type Dimension = [Data.Dimension /* DimensionId */, Extract /* Extract Filter */, string /* Match Value */];
 
 /* Enum */
 
@@ -118,6 +119,7 @@ export interface Config {
     unmask?: string[];
     regions?: Region[];
     metrics?: Metric[];
+    dimensions?: Dimension[];
     cookies?: string[];
     report?: string;
     upload?: string | UploadCallback;

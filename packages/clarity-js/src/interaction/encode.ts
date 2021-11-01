@@ -5,11 +5,13 @@ import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
 import { metadata } from "@src/layout/target";
 import * as click from "./click";
+import * as clipboard from "./clipboard";
 import * as input from "./input";
 import * as pointer from "./pointer";
 import * as resize from "./resize";
 import * as scroll from "./scroll";
 import * as selection from "./selection";
+import * as submit from "./submit";
 import * as timeline from "./timeline";
 import * as unload from "./unload";
 import * as visibility from "./visibility";
@@ -27,8 +29,7 @@ export default async function (type: Event): Promise<void> {
         case Event.TouchEnd:
         case Event.TouchMove:
         case Event.TouchCancel:
-            for (let i = 0; i < pointer.state.length; i++) {
-                let entry = pointer.state[i];
+            for (let entry of pointer.state) {
                 let pTarget = metadata(entry.data.target as Node, entry.event);
                 if (pTarget.id > 0) {
                     tokens = [entry.time, entry.event];
@@ -42,8 +43,7 @@ export default async function (type: Event): Promise<void> {
             pointer.reset();
             break;
         case Event.Click:
-            for (let i = 0; i < click.state.length; i++) {
-                let entry = click.state[i];
+            for (let entry of click.state) {
                 let cTarget = metadata(entry.data.target as Node, entry.event);
                 tokens = [entry.time, entry.event];
                 let cHash = cTarget.hash.join(Constant.Dot);
@@ -63,6 +63,18 @@ export default async function (type: Event): Promise<void> {
             }
             click.reset();
             break;
+        case Event.Clipboard:
+            for (let entry of clipboard.state) {
+                tokens = [entry.time, entry.event];
+                let target = metadata(entry.data.target as Node, entry.event);
+                if (target.id > 0) {
+                    tokens.push(target.id);
+                    tokens.push(entry.data.action);
+                    queue(tokens);
+                }
+            }
+            clipboard.reset();
+            break;
         case Event.Resize:
             let r = resize.data;
             tokens.push(r.width);
@@ -78,8 +90,7 @@ export default async function (type: Event): Promise<void> {
             queue(tokens);
             break;
         case Event.Input:
-            for (let i = 0; i < input.state.length; i++) {
-                let entry = input.state[i];
+            for (let entry of input.state) {
                 let iTarget = metadata(entry.data.target as Node, entry.event);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
@@ -102,8 +113,7 @@ export default async function (type: Event): Promise<void> {
             }
             break;
         case Event.Scroll:
-            for (let i = 0; i < scroll.state.length; i++) {
-                let entry = scroll.state[i];
+            for (let entry of scroll.state) {
                 let sTarget = metadata(entry.data.target as Node, entry.event);
                 if (sTarget.id > 0) {
                     tokens = [entry.time, entry.event];
@@ -116,9 +126,19 @@ export default async function (type: Event): Promise<void> {
             }
             scroll.reset();
             break;
+        case Event.Submit:
+            for (let entry of submit.state) {
+                tokens = [entry.time, entry.event];
+                let target = metadata(entry.data.target as Node, entry.event);
+                if (target.id > 0) {
+                    tokens.push(target.id);
+                    queue(tokens);
+                }
+            }
+            submit.reset();
+            break;
         case Event.Timeline:
-            for (let i = 0; i < timeline.updates.length; i++) {
-                let entry = timeline.updates[i];
+            for (let entry of timeline.updates) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.type);
                 tokens.push(entry.data.hash);

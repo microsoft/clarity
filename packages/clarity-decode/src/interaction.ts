@@ -37,6 +37,9 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 hashBeta: clickHashes.length > 0 ? clickHashes[1] : null
             };
             return { time, event, data: clickData };
+        case Data.Event.Clipboard:
+            let clipData: Interaction.ClipboardData = { target: tokens[2] as number, action: tokens[3] as Interaction.Clipboard };
+            return { time, event, data: clipData };
         case Data.Event.Resize:
             let resizeData: Interaction.ResizeData = { width: tokens[2] as number, height: tokens[3] as number };
             return { time, event, data: resizeData };
@@ -54,6 +57,11 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 endOffset: tokens[5] as number
             };
             return { time, event, data: selectionData };
+        case Data.Event.Submit:
+            let submitData: Interaction.SubmitData = {
+                target: tokens[2] as number
+            };
+            return { time, event, data: submitData };
         case Data.Event.Scroll:
             let scrollData: Interaction.ScrollData = {
                 target: tokens[2] as number,

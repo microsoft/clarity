@@ -56,6 +56,7 @@ export function parse(root: ParentNode): void {
         if ("querySelectorAll" in root) {
             extract.regions(root, config.regions);
             extract.metrics(root, config.metrics);
+            extract.dimensions(root, config.dimensions);
             config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
             config.unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
         }
