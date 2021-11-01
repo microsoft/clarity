@@ -52,10 +52,14 @@ export function start(): void {
       return deleteRule.apply(this, arguments);
     };
 
-    // Listening to attachShadow API
-    HTMLElement.prototype.attachShadow = function (): ShadowRoot {
-      return schedule(attachShadow.apply(this, arguments)) as ShadowRoot;
-    }
+    // Add a hook to attachShadow API calls
+    // In case we are unable to add a hook and browser throws an exception,
+    // reset attachShadow variable and resume processing like before
+    try {
+      HTMLElement.prototype.attachShadow = function (): ShadowRoot {
+        return schedule(attachShadow.apply(this, arguments)) as ShadowRoot;
+      }
+    } catch { attachShadow = null; }
 }
 
 export function observe(node: Node): void {
