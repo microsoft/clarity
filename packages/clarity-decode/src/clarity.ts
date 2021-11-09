@@ -168,6 +168,10 @@ export function decode(input: string): DecodedPayload {
                 if (payload.navigation === undefined) { payload.navigation = []; }
                 payload.navigation.push(performance.decode(entry) as NavigationEvent);
                 break;
+            case Data.Event.Connection:
+            case Data.Event.ImageError:
+                /* Deprecated - Intentionally, no-op. For backward compatibility. */
+                break;
             default:
                 console.error(`No handler for Event: ${JSON.stringify(entry)}`);
                 break;
