@@ -27,7 +27,7 @@ export default function(input: SelectorInput, beta: boolean = false): string {
                 // In beta mode, update selector to use "id" field when available. There are two exceptions:
                 // (1) if "id" appears to be an auto generated string token, e.g. guid or a random id containing digits
                 // (2) if "id" appears inside a shadow DOM, in which case we continue to prefix up to shadow DOM to prevent conflicts
-                let shadowStart = prefix.indexOf(Constant.ShadowDomTag);
+                let shadowStart = prefix.lastIndexOf(Constant.ShadowDomTag);
                 let shadowEnd = prefix.indexOf(">", shadowStart) + 1;
                 let id = Constant.Id in a && a[Constant.Id].length > 0 ? a[Constant.Id] : null;
                 classes = input.tag !== Constant.BodyTag && classes ? classes.filter(c => !hasDigits(c)) : [];
