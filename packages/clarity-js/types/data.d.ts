@@ -243,7 +243,8 @@ export const enum Constant {
     HTTPS = "https://",
     CompressionStream = "CompressionStream",
     Accept = "Accept",
-    ClarityGzip = "application/x-clarity-gzip"
+    ClarityGzip = "application/x-clarity-gzip",
+    Tilde = "~",
 }
 
 export const enum XMLReadyState {

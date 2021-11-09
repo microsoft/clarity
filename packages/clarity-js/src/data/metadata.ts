@@ -76,7 +76,7 @@ export function userAgentData(): void {
         dimension.log(Dimension.Platform, ua.platform); 
         dimension.log(Dimension.PlatformVersion, ua.platformVersion); 
         ua.brands.forEach(brand => {
-          dimension.log(Dimension.Brand, brand.name + "~" + brand.version); 
+          dimension.log(Dimension.Brand, brand.name + Constant.Tilde + brand.version); 
         });
         dimension.log(Dimension.Model, ua.model); 
         metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False); 
