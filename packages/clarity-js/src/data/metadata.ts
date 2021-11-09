@@ -67,8 +67,7 @@ export function start(): void {
 export function userAgentData(): void {
   if (navigator["userAgentData"] && navigator["userAgentData"].getHighEntropyValues) {
     navigator["userAgentData"].getHighEntropyValues(
-      ["architecture",
-      "model",
+      ["model",
       "platform",
       "platformVersion",
       "uaFullVersion"])
