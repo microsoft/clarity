@@ -41,3 +41,5 @@ export function compute(): void {
     summary.compute();
     limit.compute();
 }
+
+export const projectId = () => metadata.data?.projectId;
