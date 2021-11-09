@@ -84,7 +84,8 @@ export const enum Metric {
     CartTax = 23,
     CartTotal = 24,
     EventCount = 25,
-    Automation = 26
+    Automation = 26,
+    Mobile = 27
 }
 
 export const enum Dimension {
@@ -109,7 +110,11 @@ export const enum Dimension {
     Headline = 18,
     MetaType = 19,
     MetaTitle = 20,
-    Generator = 21
+    Generator = 21,
+    Platform = 22,
+    PlatformVersion = 23,
+    Brand = 24,
+    Model = 25
 }
 
 export const enum Check {

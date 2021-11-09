@@ -38,10 +38,10 @@ export function start(): void {
   dimension.log(Dimension.TabId, tab());
   dimension.log(Dimension.PageLanguage, document.documentElement.lang);
   dimension.log(Dimension.DocumentDirection, document.dir);
-
   if (navigator) {
     dimension.log(Dimension.Language, (<any>navigator).userLanguage || navigator.language);
     metric.max(Metric.Automation, navigator.webdriver ? BooleanFlag.True : BooleanFlag.False);
+    userAgentData();
   }
 
   // Metrics
@@ -62,6 +62,26 @@ export function start(): void {
 
   // Track ids using a cookie if configuration allows it
   track(u);
+}
+
+export function userAgentData(): void {
+  if (navigator["userAgentData"] && navigator["userAgentData"].getHighEntropyValues) {
+    navigator["userAgentData"].getHighEntropyValues(
+      ["architecture",
+      "model",
+      "platform",
+      "platformVersion",
+      "uaFullVersion"])
+      .then(ua => { 
+        dimension.log(Dimension.Platform, ua.platform); 
+        dimension.log(Dimension.PlatformVersion, ua.platformVersion); 
+        ua.brands.forEach(brand => {
+          dimension.log(Dimension.Brand, brand.name + "~" + brand.version); 
+        });
+        dimension.log(Dimension.Model, ua.model); 
+        metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False); 
+      });
+  }
 }
 
 export function stop(): void {
