@@ -86,10 +86,18 @@ export function userAgentData(): void {
 export function stop(): void {
   callback = null;
   rootDomain = null;
+  data = null;
 }
 
-export function metadata(cb: MetadataCallback): void {
-  callback = cb;
+export function metadata(cb: MetadataCallback, playback: boolean = true): void {
+  if (data && ((playback && !config.lean) || playback === false)) {
+    // Immediately call the callback function if page is already upgraded
+    // Or, caller explicit asked to not care about valid playback status
+    cb(data, !config.lean);
+  } else {
+    // Save the callback for future reference; so we can inform the caller when page gets upgraded
+    callback = cb;
+  }
 }
 
 export function id(): string {
