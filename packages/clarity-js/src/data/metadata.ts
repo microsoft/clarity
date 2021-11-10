@@ -89,12 +89,12 @@ export function stop(): void {
   data = null;
 }
 
-export function metadata(cb: MetadataCallback, onupgrade: boolean = true): void {
-  if (data && onupgrade === false) {
+export function metadata(cb: MetadataCallback, wait: boolean = true): void {
+  if (data && wait === false) {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
     cb(data, !config.lean);
   } else {
-    // Save the callback for future reference; so we can inform the caller when page gets upgraded
+    // Save the callback for future reference; so we can inform the caller when page gets upgraded and we have a valid playback flag
     callback = cb;
   }
 }
