@@ -38,10 +38,10 @@ export function start(): void {
   dimension.log(Dimension.TabId, tab());
   dimension.log(Dimension.PageLanguage, document.documentElement.lang);
   dimension.log(Dimension.DocumentDirection, document.dir);
-
   if (navigator) {
     dimension.log(Dimension.Language, (<any>navigator).userLanguage || navigator.language);
     metric.max(Metric.Automation, navigator.webdriver ? BooleanFlag.True : BooleanFlag.False);
+    userAgentData();
   }
 
   // Metrics
@@ -64,13 +64,39 @@ export function start(): void {
   track(u);
 }
 
+export function userAgentData(): void {
+  if (navigator["userAgentData"] && navigator["userAgentData"].getHighEntropyValues) {
+    navigator["userAgentData"].getHighEntropyValues(
+      ["model",
+      "platform",
+      "platformVersion",
+      "uaFullVersion"])
+      .then(ua => { 
+        dimension.log(Dimension.Platform, ua.platform); 
+        dimension.log(Dimension.PlatformVersion, ua.platformVersion); 
+        ua.brands.forEach(brand => {
+          dimension.log(Dimension.Brand, brand.name + Constant.Tilde + brand.version); 
+        });
+        dimension.log(Dimension.Model, ua.model); 
+        metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False); 
+      });
+  }
+}
+
 export function stop(): void {
   callback = null;
   rootDomain = null;
+  data = null;
 }
 
-export function metadata(cb: MetadataCallback): void {
-  callback = cb;
+export function metadata(cb: MetadataCallback, wait: boolean = true): void {
+  if (data && wait === false) {
+    // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
+    cb(data, !config.lean);
+  } else {
+    // Save the callback for future reference; so we can inform the caller when page gets upgraded and we have a valid playback flag
+    callback = cb;
+  }
 }
 
 export function id(): string {

@@ -24,12 +24,15 @@ export default function(input: SelectorInput, beta: boolean = false): string {
             let selector = `${prefix}${input.tag}${suffix}`;
             let classes = Constant.Class in a && a[Constant.Class].length > 0 ? a[Constant.Class].trim().split(/\s+/) : null;
             if (beta) {
-                // In beta mode, update selector to use "id" field when available
-                // The only exception is if "id" appears to be an auto generated string token, e.g. guid or a random id
+                // In beta mode, update selector to use "id" field when available. There are two exceptions:
+                // (1) if "id" appears to be an auto generated string token, e.g. guid or a random id containing digits
+                // (2) if "id" appears inside a shadow DOM, in which case we continue to prefix up to shadow DOM to prevent conflicts
+                let shadowStart = prefix.lastIndexOf(Constant.ShadowDomTag);
+                let shadowEnd = prefix.indexOf(">", shadowStart) + 1;
                 let id = Constant.Id in a && a[Constant.Id].length > 0 ? a[Constant.Id] : null;
                 classes = input.tag !== Constant.BodyTag && classes ? classes.filter(c => !hasDigits(c)) : [];
                 selector = classes.length > 0 ? `${prefix}${input.tag}.${classes.join(".")}${suffix}` : selector;
-                selector = id && hasDigits(id) === false ? `#${id}` : selector;
+                selector = id && hasDigits(id) === false ? (shadowStart >= 0 ? `${prefix.substr(0, shadowEnd)}#${id}` : `#${id}`) : selector;
             } else {
                 // Otherwise, fallback to stable mode, where we include class names as part of the selector
                 selector = classes ? `${prefix}${input.tag}.${classes.join(".")}${suffix}` : selector;
@@ -42,7 +45,7 @@ export default function(input: SelectorInput, beta: boolean = false): string {
 function hasDigits(value: string): boolean {
     for (let i = 0; i < value.length; i++) {
         let c = value.charCodeAt(i);
-        return c >= Character.Zero && c <= Character.Nine;
+        if (c >= Character.Zero && c <= Character.Nine) { return true };
     }
     return false;
 }

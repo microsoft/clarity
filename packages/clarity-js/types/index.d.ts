@@ -15,7 +15,7 @@ interface Clarity {
   event: (name: string, value: string) => void;
   set: (variable: string, value: string | string[]) => void;
   identify: (userId: string, sessionId?: string, pageId?: string) => void;
-  metadata: (callback: Data.MetadataCallback) => void;
+  metadata: (callback: Data.MetadataCallback, wait?: boolean) => void;
 }
 
 interface Helper {

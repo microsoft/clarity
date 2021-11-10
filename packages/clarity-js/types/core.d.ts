@@ -101,12 +101,13 @@ export interface BrowserEvent {
 }
 
 export interface Report {
-    c: Data.Check; // Reporting code
+    v: string; // Version
     p: string; // Project Id
     u: string; // User Id
     s: string; // Session Id
     n: number; // Page Number
     m?: string; // Message, optional
+    e?: string; // Error Stack, optional
 }
 
 export interface Config {
