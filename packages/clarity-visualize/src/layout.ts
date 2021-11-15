@@ -8,7 +8,6 @@ export class LayoutHelper {
     nodes = {};
     events = {};
     hashMap = {};
-    hashMapBeta = {};
     state: PlaybackState = null;
     
     constructor(state: PlaybackState) {
@@ -20,14 +19,11 @@ export class LayoutHelper {
         this.stylesheets = [];
         this.events = {};
         this.hashMap = {};
-        this.hashMapBeta = {};
     }
 
-    public get = (hash, beta: boolean = false) => {
-        if (hash in this.hashMap && this.hashMap[hash].isConnected && beta === false) {
+    public get = (hash) => {
+        if (hash in this.hashMap && this.hashMap[hash].isConnected) {
             return this.hashMap[hash];
-        } else if (hash in this.hashMapBeta && this.hashMapBeta[hash].isConnected) {
-            return this.hashMapBeta[hash];
         }
         return null;
     }
@@ -43,7 +39,7 @@ export class LayoutHelper {
     private addToHashMap = (data: Layout.DomData, parent: Node) => {
         // In case of selector collision, prefer the first inserted node
         this.hashMap[data.hash] = this.get(data.hash) || parent;
-        this.hashMapBeta[data.hashBeta] = this.get(data.hashBeta) || parent;
+        this.hashMap[data.hashBeta] = this.get(data.hashBeta) || parent;
     }
 
     private resize = (el: HTMLElement, width: number, height: number): void => {
