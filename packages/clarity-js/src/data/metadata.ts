@@ -1,5 +1,7 @@
 import { Time } from "@clarity-types/core";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, Metric, Session, User, Setting } from "@clarity-types/data";
+import {
+    BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, Metric, Session, Setting, User
+} from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -74,7 +76,7 @@ export function userAgentData(): void {
       .then(ua => { 
         dimension.log(Dimension.Platform, ua.platform); 
         dimension.log(Dimension.PlatformVersion, ua.platformVersion); 
-        ua.brands.forEach(brand => {
+        ua.brands?.forEach(brand => {
           dimension.log(Dimension.Brand, brand.name + Constant.Tilde + brand.version); 
         });
         dimension.log(Dimension.Model, ua.model); 
