@@ -12,7 +12,7 @@ let index: number = 1;
 
 // Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input#%3Cinput%3E_types
 const DISALLOWED_TYPES = ["password", "hidden", "email", "tel"];
-const DISALLOWED_NAMES = ["addr", "cell", "code", "dob", "email", "mob", "name", "phone", "secret", "social", "ssn", "tel", "zip", "pass"];
+const DISALLOWED_NAMES = ["addr", "cell", "code", "dob", "email", "mob", "name", "phone", "secret", "social", "ssn", "tel", "zip", "pass", "card", "account", "cvv", "ccv"];
 const DISALLOWED_MATCH = ["address", "password", "contact"];
 
 let nodes: Node[] = [];
