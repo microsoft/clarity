@@ -74,7 +74,7 @@ export function userAgentData(): void {
       .then(ua => { 
         dimension.log(Dimension.Platform, ua.platform); 
         dimension.log(Dimension.PlatformVersion, ua.platformVersion); 
-        ua.brands.forEach(brand => {
+        ua.brands?.forEach(brand => {
           dimension.log(Dimension.Brand, brand.name + Constant.Tilde + brand.version); 
         });
         dimension.log(Dimension.Model, ua.model); 
