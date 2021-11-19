@@ -27,18 +27,29 @@ export default function(input: SelectorInput, beta: boolean = false): string {
                 // In beta mode, update selector to use "id" field when available. There are two exceptions:
                 // (1) if "id" appears to be an auto generated string token, e.g. guid or a random id containing digits
                 // (2) if "id" appears inside a shadow DOM, in which case we continue to prefix up to shadow DOM to prevent conflicts
-                let shadowStart = prefix.lastIndexOf(Constant.ShadowDomTag);
-                let shadowEnd = prefix.indexOf(">", shadowStart) + 1;
                 let id = Constant.Id in a && a[Constant.Id].length > 0 ? a[Constant.Id] : null;
                 classes = input.tag !== Constant.BodyTag && classes ? classes.filter(c => !hasDigits(c)) : [];
                 selector = classes.length > 0 ? `${prefix}${input.tag}.${classes.join(".")}${suffix}` : selector;
-                selector = id && hasDigits(id) === false ? (shadowStart >= 0 ? `${prefix.substr(0, shadowEnd)}#${id}` : `#${id}`) : selector;
+                selector = id && hasDigits(id) === false ? `${getDomPrefix(prefix)}#${id}` : selector;
             } else {
                 // Otherwise, fallback to stable mode, where we include class names as part of the selector
                 selector = classes ? `${prefix}${input.tag}.${classes.join(".")}${suffix}` : selector;
             } 
             return selector;
     }
+}
+
+function getDomPrefix(prefix: string): string {
+  const shadowDomStart = prefix.lastIndexOf(Constant.ShadowDomTag);
+  const iframeDomStart = prefix.lastIndexOf(`${Constant.IFramePrefix}${Constant.HTML}`);
+  const domStart = Math.max(shadowDomStart, iframeDomStart);
+  
+  if (domStart < 0) {
+    return "";
+  }
+
+  const domEnd = prefix.indexOf(">", domStart) + 1;
+  return prefix.substr(0, domEnd);
 }
 
 // Check if the given input string has digits or not
