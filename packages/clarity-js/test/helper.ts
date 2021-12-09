@@ -1,5 +1,6 @@
 import { Core, Data, Layout } from "clarity-decode";
 import * as fs from 'fs';
+import * as url from 'url';
 import * as path from 'path';
 import { Browser, Page, chromium } from 'playwright';
 
@@ -8,7 +9,13 @@ export async function launch(): Promise<Browser> {
 }
 
 export async function markup(page: Page, file: string, override: Core.Config = null): Promise<string[]> {
-    const html = fs.readFileSync(path.resolve(__dirname, `./html/${file}`), 'utf8');
+    const htmlPath = path.resolve(__dirname, `./html/${file}`);
+    const htmlFileUrl = url.pathToFileURL(htmlPath).toString();
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    await Promise.all([
+        page.goto(htmlFileUrl),
+        page.waitForNavigation()
+    ]);
     await page.setContent(html.replace("</body>", `
         <script>
           window.payloads = [];
@@ -17,6 +24,7 @@ export async function markup(page: Page, file: string, override: Core.Config = n
         </script>
         </body>
     `));
+    await page.hover("#two");
     await page.waitForFunction("payloads && payloads.length > 1");
     return await page.evaluate('payloads');
 }
@@ -34,7 +42,7 @@ export function node(decoded: Data.DecodedPayload[], key: string, value: string 
     }
 
     // Walking over the decoded payload to find the right match
-    for (let i = decoded.length - 1; i > 0; i--) {
+    for (let i = decoded.length - 1; i >= 0; i--) {
         if (decoded[i].dom) {
             for (let j = 0; j < decoded[i].dom.length; j++) {
                 if (decoded[i].dom[j].data) {
