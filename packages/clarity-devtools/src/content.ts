@@ -36,8 +36,8 @@ function setup(url: string): void {
                 regions: c.regions,
                 metrics: c.metrics,
                 dimensions: c.dimensions,
-                mask: [],
-                unmask: [],
+                mask: c.mask,
+                unmask: c.unmask,
                 showText: items.clarity.showText,
                 leanMode: items.clarity.leanMode
               });
