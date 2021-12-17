@@ -36,7 +36,7 @@ export function start(): void {
 
     if (insertRule === null) { insertRule = CSSStyleSheet.prototype.insertRule; }
     if (deleteRule === null) { deleteRule = CSSStyleSheet.prototype.deleteRule; }
-    if (attachShadow === null) { attachShadow = HTMLElement.prototype.attachShadow; }
+    if (attachShadow === null) { attachShadow = Element.prototype.attachShadow; }
 
     // Some popular open source libraries, like styled-components, optimize performance
     // by injecting CSS using insertRule API vs. appending text node. A side effect of
@@ -56,7 +56,7 @@ export function start(): void {
     // In case we are unable to add a hook and browser throws an exception,
     // reset attachShadow variable and resume processing like before
     try {
-      HTMLElement.prototype.attachShadow = function (): ShadowRoot {
+      Element.prototype.attachShadow = function (): ShadowRoot {
         return schedule(attachShadow.apply(this, arguments)) as ShadowRoot;
       }
     } catch { attachShadow = null; }
@@ -107,7 +107,7 @@ export function stop(): void {
 
   // Restoring original attachShadow
   if (attachShadow != null) {
-    HTMLElement.prototype.attachShadow = attachShadow;
+    Element.prototype.attachShadow = attachShadow;
     attachShadow = null;
   }
 
