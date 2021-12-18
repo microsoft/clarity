@@ -8,6 +8,8 @@ const enum Region {
 
 export default function(): Core.Config {
     return {
+        mask: [],
+        unmask: [],
         regions: [
             [Region.Header, "header", 1, Data.Constant.Clarity], /* 1: Javascript Filter */
             [Region.Footer, "footer", 0, "product"], /* 0: Url */

@@ -1,6 +1,6 @@
 import { Privacy } from "@clarity-types/core";
 import { Code, Setting, Severity } from "@clarity-types/data";
-import { Constant, NodeInfo, NodeValue, SelectorInput, Source } from "@clarity-types/layout";
+import { Constant, NodeInfo, NodeValue, Selector, SelectorInput, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
 import * as internal from "@src/diagnostic/internal";
@@ -19,6 +19,8 @@ let nodes: Node[] = [];
 let values: NodeValue[] = [];
 let updateMap: number[] = [];
 let hashMap: { [hash: string]: number } = {};
+let override = [];
+let unmask = [];
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
@@ -27,7 +29,7 @@ let privacyMap: WeakMap<Node, Privacy> = null; // Maps node => Privacy (enum)
 
 export function start(): void {
     reset();
-    parse(document);
+    parse(document, true);
 }
 
 export function stop(): void {
@@ -40,6 +42,8 @@ function reset(): void {
     values = [];
     updateMap = [];
     hashMap = {};
+    override = [];
+    unmask = [];
     idMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
@@ -47,10 +51,13 @@ function reset(): void {
 
 // We parse new root nodes for any regions or masked nodes in the beginning (document) and
 // later whenever there are new additions or modifications to DOM (mutations)
-export function parse(root: ParentNode): void {
+export function parse(root: ParentNode, init: boolean = false): void {
     // Wrap selectors in a try / catch block.
     // It's possible for script to receive invalid selectors, e.g. "'#id'" with extra quotes, and cause the code below to fail
     try {
+        // Parse unmask configuration into separate query selectors and override tokens as part of initialization
+        if (init) { config.unmask.forEach(x => x.indexOf(Constant.Bang) < 0 ? unmask.push(x) : override.push(x.substr(1))); }   
+
         // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
         // We ensure that the root note supports querySelectorAll API before executing the code below to identify new regions.
         if ("querySelectorAll" in root) {
@@ -58,7 +65,7 @@ export function parse(root: ParentNode): void {
             extract.metrics(root, config.metrics);
             extract.dimensions(root, config.dimensions);
             config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
-            config.unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
+            unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
         }
     } catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
 }
@@ -80,19 +87,17 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let previousId = getPreviousId(node);
     let privacy = config.content ? Privacy.Sensitive : Privacy.Text;
     let parentValue = null;
-    let parentTag = Constant.Empty;
     let regionId = region.exists(node) ? id : null;
 
     if (parentId >= 0 && values[parentId]) {
         parentValue = values[parentId];
-        parentTag = parentValue.data.tag;
         parentValue.children.push(id);
         regionId = regionId === null ? parentValue.region : regionId;
         privacy = parentValue.metadata.privacy;
     }
 
     // Check to see if this particular node should be masked or not
-    privacy = getPrivacy(node, data, parentTag, privacy);
+    privacy = getPrivacy(node, data, parentValue, privacy);
 
     // If there's an explicit region attribute set on the element, use it to mark a region on the page
     if (data.attributes && Constant.RegionData in data.attributes) {
@@ -198,12 +203,26 @@ export function iframe(node: Node): HTMLIFrameElement {
     return doc && iframeMap.has(doc) ? iframeMap.get(doc) : null;
 }
 
-function getPrivacy(node: Node, data: NodeInfo, parentTag: string, privacy: Privacy): Privacy {
+function getPrivacy(node: Node, data: NodeInfo, parent: NodeValue, privacy: Privacy): Privacy {
     let attributes = data.attributes;
     let tag = data.tag.toUpperCase();
 
     // If this node was explicitly configured to contain sensitive content, use that information and return the value
     if (privacyMap.has(node)) { return privacyMap.get(node); }
+
+    // If it's a text node belonging to a STYLE or TITLE tag; 
+    // Or, the text node belongs to one of SCRUB_EXCEPTIONS
+    // then reset the privacy setting to ensure we capture the content
+    if (tag === Constant.TextTag && parent && parent.data) {
+        let path = parent.selector ? parent.selector[Selector.Stable] : Constant.Empty;
+        privacy = parent.data.tag === Constant.StyleTag || parent.data.tag === Constant.TitleTag ? Privacy.None : privacy;
+        for (let entry of override) {
+            if (path.indexOf(entry) >= 0) {
+                privacy = Privacy.None;
+                break;
+            }
+        }
+    }
 
     // Do not proceed if attributes are missing for the node
     if (attributes === null || attributes === undefined) { return privacy; }
@@ -242,10 +261,6 @@ function getPrivacy(node: Node, data: NodeInfo, parentTag: string, privacy: Priv
     // Following two conditions supersede any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
     if (Constant.MaskData in attributes) { privacy = Privacy.TextImage; }
     if (Constant.UnmaskData in attributes) { privacy = Privacy.None; }
-
-    // If it's a text node belonging to a STYLE or TITLE tag; then reset the privacy setting to ensure we capture the content
-    let cTag = tag === Constant.TextTag ? parentTag : tag;
-    if (cTag === Constant.StyleTag || cTag === Constant.TitleTag) { privacy = Privacy.None; }
 
     return privacy;
 }
