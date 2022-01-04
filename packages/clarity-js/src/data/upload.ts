@@ -155,10 +155,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
                 // sendBeacon must be binded to the navigator before passing the reference
                 dispatched = navigator.sendBeacon.bind(navigator)(url, payload);
                 if (dispatched) { done(sequence); }
-            } catch (error) {
-                // sendBeacon may throw a "TypeError" exception if the url parsing fails
-                console.error(`Payload upload failed: ${error}`);
-            }
+            } catch (error) { /* do nothing */ }
         }
 
         // Before initiating XHR upload, we check if the data has already been uploaded using sendBeacon
