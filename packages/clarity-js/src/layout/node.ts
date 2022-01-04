@@ -46,6 +46,7 @@ export default function (node: Node, source: Source): Node {
         case Node.DOCUMENT_FRAGMENT_NODE:
             let shadowRoot = (node as ShadowRoot);
             if (shadowRoot.host) {
+                dom.parse(shadowRoot);
                 let type = typeof (shadowRoot.constructor);
                 if (type === Constant.Function && shadowRoot.constructor.toString().indexOf(Constant.NativeCode) >= 0) {
                     observe(shadowRoot);

@@ -36,6 +36,8 @@ function setup(url: string): void {
                 regions: c.regions,
                 metrics: c.metrics,
                 dimensions: c.dimensions,
+                mask: c.mask,
+                unmask: c.unmask,
                 showText: items.clarity.showText,
                 leanMode: items.clarity.leanMode
               });
@@ -60,6 +62,8 @@ function wireup(settings: any): string {
       regions: "$__regions__$",
       metrics: "$__metrics__$",
       dimensions: "$__dimensions__$",
+      mask: "$__mask__$",
+      unmask: "$__unmask__$",
       content: "$__showText__$",
       upload: (data: string): void => { window.postMessage({ action: "upload", payload: data }, "*"); },
       projectId: "devtools"

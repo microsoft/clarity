@@ -145,6 +145,7 @@ async function process(): Promise<void> {
       let target = mutation.target;
       let type = track(mutation, timer);
       if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
+      if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) { dom.parse(target as ShadowRoot); }
       switch (type) {
         case Constant.Attributes:
             processNode(target, Source.Attributes);

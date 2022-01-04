@@ -40,6 +40,7 @@ export const enum Constant {
     Src = "src",
     Srcset = "srcset",
     Box = "#",
+    Bang = "!",
     Period = ".",
     MaskData = "data-clarity-mask",
     UnmaskData = "data-clarity-unmask",
