@@ -1,4 +1,5 @@
-import { BrowserEvent } from "@clarity-types/core";
+import { BrowserEvent, Constant } from "@clarity-types/core";
+import api from "./api";
 import measure from "./measure";
 
 let bindings: BrowserEvent[] = [];
@@ -8,7 +9,7 @@ export function bind(target: EventTarget, event: string, listener: EventListener
     // Wrapping following lines inside try / catch to cover edge cases where we might try to access an inaccessible element.
     // E.g. Iframe may start off as same-origin but later turn into cross-origin, and the following lines will throw an exception.
     try {
-      target.addEventListener(event, listener, capture);
+      target[api(Constant.AddEventListener)](event, listener, capture);
       bindings.push({ event, target, listener, capture });
     } catch { /* do nothing */ }
 }
@@ -18,7 +19,7 @@ export function reset(): void {
   for (let binding of bindings) {
     // Wrapping inside try / catch to avoid situations where the element may be destroyed before we get a chance to unbind
     try {
-      binding.target.removeEventListener(binding.event, binding.listener, binding.capture);
+      binding.target[api(Constant.RemoveEventListener)](binding.event, binding.listener, binding.capture);
     } catch { /* do nothing */ }
   }
   bindings = [];

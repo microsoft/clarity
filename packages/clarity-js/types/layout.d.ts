@@ -75,8 +75,6 @@ export const enum Constant {
     BorderBox = "border-box",
     Value = "value",
     MutationObserver = "MutationObserver",
-    Zone = "Zone",
-    Symbol = "__symbol__",
     JsonLD = "application/ld+json",
     String = "string",
     Number = "number",
