@@ -135,7 +135,10 @@ export const enum Code {
     CallStackDepth = 4,
     Selector = 5,
     Metric = 6,
-    ContentSecurityPolicy = 7 /* Deprecated */
+/**
+ * @deprecated No longer support ContentSecurityPolicy
+ */
+    ContentSecurityPolicy = 7
 }
 
 export const enum Severity {
