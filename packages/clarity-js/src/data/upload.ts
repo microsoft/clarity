@@ -152,10 +152,10 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
         // Also, in case of sendBeacon, we do not have a way to alter HTTP headers and therefore can't send compressed payload
         if (beacon && "sendBeacon" in navigator) {
             try {
-                // sendBeacon must be binded to the navigator before passing the reference
+                // Navigator needs to be bound to sendBeacon before it is used to avoid errors in some browsers
                 dispatched = navigator.sendBeacon.bind(navigator)(url, payload);
                 if (dispatched) { done(sequence); }
-            } catch (error) { /* do nothing */ }
+            } catch { /* do nothing - and we will automatically fallback to XHR below */ }
         }
 
         // Before initiating XHR upload, we check if the data has already been uploaded using sendBeacon
