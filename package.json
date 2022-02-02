@@ -1,7 +1,7 @@
 {
   "name": "clarity",
   "private": true,
-  "version": "0.6.30",
+  "version": "0.6.32",
   "repository": "https://github.com/microsoft/clarity.git",
   "author": "Sarvesh Nagpal <sarveshn@microsoft.com>",
   "license": "MIT",
@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "lerna": "^4.0.0",
-    "tar": "^6.1.7",
+    "tar": "^6.1.11",
     "trim-newlines": "^4.0.2"
   },
   "resolutions": {

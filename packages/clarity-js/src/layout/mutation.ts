@@ -1,6 +1,7 @@
 import { Priority, Task, Timer } from "@clarity-types/core";
 import { Code, Event, Metric, Severity } from "@clarity-types/data";
 import { Constant, MutationHistory, MutationQueue, Setting, Source } from "@clarity-types/layout";
+import api from "@src/core/api";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
@@ -68,11 +69,8 @@ export function observe(node: Node): void {
   // For this reason, we need to wire up mutations every time we see a new shadow dom.
   // Also, wrap it inside a try / catch. In certain browsers (e.g. legacy Edge), observer on shadow dom can throw errors
   try {
-    // In an edge case, it's possible to get stuck into infinite Mutation loop within Angular applications
-    // This appears to be an issue with Zone.js package, see: https://github.com/angular/angular/issues/31712
-    // As a temporary work around, ensuring Clarity can invoke MutationObserver outside of Zone (and use native implementation instead)
-    let api: string = window[Constant.Zone] && Constant.Symbol in window[Constant.Zone] ? window[Constant.Zone][Constant.Symbol](Constant.MutationObserver) : Constant.MutationObserver;
-    let observer =  api in window ? new window[api](measure(handle) as MutationCallback) : null;
+    let m = api(Constant.MutationObserver);
+    let observer =  m in window ? new window[m](measure(handle) as MutationCallback) : null;
     if (observer) {
       observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
       observers.push(observer);
@@ -235,10 +233,13 @@ function schedule(node: Node): Node {
 
 function trigger(): void {
   for (let node of queue) {
-    let shadowRoot = node && node.nodeType === Node.DOCUMENT_FRAGMENT_NODE;
-    // Skip re-processing shadowRoot if it was already discovered
-    if (shadowRoot && dom.has(node)) { continue; }
-    generate(node, shadowRoot ? Constant.ChildList : Constant.CharacterData);
+    // Generate a mutation for this node only if it still exists
+    if (node) {
+      let shadowRoot = node.nodeType === Node.DOCUMENT_FRAGMENT_NODE;
+      // Skip re-processing shadowRoot if it was already discovered
+      if (shadowRoot && dom.has(node)) { continue; }
+      generate(node, shadowRoot ? Constant.ChildList : Constant.CharacterData);
+    }
   }
   queue = [];
 }

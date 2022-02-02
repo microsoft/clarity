@@ -135,6 +135,9 @@ export const enum Code {
     CallStackDepth = 4,
     Selector = 5,
     Metric = 6,
+/**
+ * @deprecated No longer support ContentSecurityPolicy
+ */
     ContentSecurityPolicy = 7
 }
 

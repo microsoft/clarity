@@ -42,7 +42,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         let now = time();
         let type = tokens.length > 1 ? tokens[1] : null;
         let event = JSON.stringify(tokens);
-        
+
         switch (type) {
             case Event.Discover:
                 discoverBytes += event.length;
@@ -118,12 +118,12 @@ async function upload(final: boolean = false): Promise<void> {
 
     let p = sendPlaybackBytes ? `[${playback.join()}]` : Constant.Empty;
     let encoded: EncodedPayload = {e, a, p};
-    
+
     // Get the payload ready for sending over the wire
     // We also attempt to compress the payload if it is not the last payload and the browser supports it
     // In all other cases, we continue to send back string value
     let payload = stringify(encoded);
-    let zipped = last ? null : await compress(payload) 
+    let zipped = last ? null : await compress(payload)
     metric.sum(Metric.TotalBytes, zipped ? zipped.length : payload.length);
     send(payload, zipped, envelope.data.sequence, last);
 
@@ -151,8 +151,11 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
         // However, we don't want to rely on it for every payload, since we have no ability to retry if the upload failed.
         // Also, in case of sendBeacon, we do not have a way to alter HTTP headers and therefore can't send compressed payload
         if (beacon && "sendBeacon" in navigator) {
-            dispatched = navigator.sendBeacon(url, payload);
-            if (dispatched) { done(sequence); }
+            try {
+                // Navigator needs to be bound to sendBeacon before it is used to avoid errors in some browsers
+                dispatched = navigator.sendBeacon.bind(navigator)(url, payload);
+                if (dispatched) { done(sequence); }
+            } catch { /* do nothing - and we will automatically fallback to XHR below */ }
         }
 
         // Before initiating XHR upload, we check if the data has already been uploaded using sendBeacon
@@ -189,7 +192,7 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
     if (xhr && xhr.readyState === XMLReadyState.Done && transitData) {
         // Attempt send payload again (as configured in settings) if we do not receive a success (2XX) response code back from the server
         if ((xhr.status < 200 || xhr.status > 208) && transitData.attempts <= Setting.RetryLimit) {
-            // We re-attempt in all cases except when server explicitly rejects our request with 4XX error 
+            // We re-attempt in all cases except when server explicitly rejects our request with 4XX error
             if (xhr.status >= 400 && xhr.status < 500) {
                 // In case of a 4XX response from the server, we bail out instead of trying again
                 limit.trigger(Check.Server);
@@ -212,7 +215,7 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
             // Handle response if it was a 200 response with a valid body
             if (xhr.status === 200 && xhr.responseText) { response(xhr.responseText); }
             // If we exhausted our retries then trigger Clarity's shutdown for this page since the data will be incomplete
-            if (xhr.status === 0) { 
+            if (xhr.status === 0) {
                 // And, right before we terminate the session, we will attempt one last time to see if we can use
                 // different transport option (sendBeacon vs. XHR) to get this data to the server for analysis purposes
                 send(transitData.data, null, sequence, true);
@@ -233,7 +236,7 @@ function done(sequence: number): void {
 
 function delay(): number {
     // Progressively increase delay as we continue to send more payloads from the client to the server
-    // If we are not uploading data to a server, and instead invoking UploadCallback, in that case keep returning configured value 
+    // If we are not uploading data to a server, and instead invoking UploadCallback, in that case keep returning configured value
     let gap = config.lean === false && discoverBytes > 0 ? Setting.MinUploadDelay : envelope.data.sequence * config.delay;
     return typeof config.upload === Constant.String ? Math.max(Math.min(gap, Setting.MaxUploadDelay), Setting.MinUploadDelay) : config.delay;
 }

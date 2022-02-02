@@ -127,3 +127,10 @@ export interface Config {
     fallback?: string;
     upgrade?: (key: string) => void;
 }
+
+export const enum Constant {
+    Zone = "Zone",
+    Symbol = "__symbol__",
+    AddEventListener = "addEventListener",
+    RemoveEventListener = "removeEventListener"
+}

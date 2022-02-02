@@ -1,7 +1,5 @@
-import { Code, Constant, Event, Severity } from "@clarity-types/data";
+import { Code, Event, Severity } from "@clarity-types/data";
 import { LogData } from "@clarity-types/diagnostic";
-import config from "@src/core/config";
-import { bind } from "@src/core/event";
 import encode from "./encode";
 
 let history: { [key: number]: string[] } = {};
@@ -9,7 +7,6 @@ export let data: LogData;
 
 export function start(): void {
     history = {};
-    bind(document, "securitypolicyviolation", csp);
 }
 
 export function log(code: Code, severity: Severity, name: string = null, message: string = null, stack: string = null): void {
@@ -24,17 +21,6 @@ export function log(code: Code, severity: Severity, name: string = null, message
     if (code in history) { history[code].push(key); } else { history[code] = [key]; }
 
     encode(Event.Log);
-}
-
-function csp(e: SecurityPolicyViolationEvent): void {
-    let upload = config.upload as string;
-    // Look for first "/" starting after initial "https://" string
-    let parts = upload && typeof upload === Constant.String ? upload.substr(0, upload.indexOf("/", Constant.HTTPS.length)).split(Constant.Dot) : []; 
-    let domain = parts.length >= 2 ? parts.splice(-2).join(Constant.Dot) : null;
-    // Capture content security policy violation only if disposition value is not explicitly set to "report"
-    if (domain && e.blockedURI && e.blockedURI.indexOf(domain) >= 0 && e["disposition"] !== Constant.Report) {
-        log(Code.ContentSecurityPolicy, Severity.Warning, e.blockedURI);
-    }
 }
 
 export function stop(): void {
