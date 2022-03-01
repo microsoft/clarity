@@ -6,6 +6,8 @@ const enum Region {
     Navigation = 3
 }
 
+const extractKey = 1;
+
 export default function(): Core.Config {
     return {
         mask: [],
@@ -15,6 +17,6 @@ export default function(): Core.Config {
             [Region.Footer, "footer"], 
             [Region.Navigation, "nav"]
         ],
-        extract: [0, 1234567, "performance.timing"] 
+        extract: [0, extractKey, "performance.timing"] 
     };
 }

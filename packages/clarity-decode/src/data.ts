@@ -67,6 +67,13 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 variables[tokens[v++] as string] = typeof tokens[v + 1] == Constant.String ? [tokens[v++] as string] : tokens[v++] as string[];
             }
             return { time, event, data: variables };
+        case Data.Event.Extract:
+            let e = 2; // Start from 3rd index since first two are used for time & event
+            let extract = {};
+            while (e < tokens.length) {
+                extract[tokens[e++] as string | number] = tokens[e++] as string;
+            }
+            return { time, event, data: extract };
     }
     return null;
 }
