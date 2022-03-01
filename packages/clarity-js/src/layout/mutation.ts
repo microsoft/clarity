@@ -218,7 +218,7 @@ async function processNodeList(list: NodeList, source: Source, timer: Timer): Pr
   }
 }
 
-function schedule(node: Node): Node {
+export function schedule(node: Node, fragment: boolean = false): Node {
   // Only schedule manual trigger for this node if it's not already in the queue
   if (queue.indexOf(node) < 0) { queue.push(node); }
 
@@ -226,19 +226,19 @@ function schedule(node: Node): Node {
   // It's common for a webpage to call multiple synchronous "insertRule" / "deleteRule" calls.
   // And in those cases we do not wish to monitor changes multiple times for the same node.
   if (timeout) { clearTimeout(timeout); }
-  timeout = setTimeout(trigger, Setting.LookAhead);
+  timeout = setTimeout(() => { trigger(fragment) }, Setting.LookAhead);
 
   return node;
 }
 
-function trigger(): void {
+function trigger(fragment: boolean): void {
   for (let node of queue) {
     // Generate a mutation for this node only if it still exists
     if (node) {
       let shadowRoot = node.nodeType === Node.DOCUMENT_FRAGMENT_NODE;
       // Skip re-processing shadowRoot if it was already discovered
       if (shadowRoot && dom.has(node)) { continue; }
-      generate(node, shadowRoot ? Constant.ChildList : Constant.CharacterData);
+      generate(node, shadowRoot || fragment ? Constant.ChildList : Constant.CharacterData);
     }
   }
   queue = [];

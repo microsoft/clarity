@@ -54,7 +54,8 @@ export const enum Event {
     Summary = 36,
     Box = 37,
     Clipboard = 38,
-    Submit = 39
+    Submit = 39,
+    Extract = 40
 }
 
 export const enum Metric {
@@ -187,7 +188,8 @@ export const enum Setting {
     MaxFirstPayloadBytes = 1 * 1024 * 1024, // 1MB: Cap the very first payload to a maximum of 1MB
     UploadFactor = 3, // Slow down sequence by specified factor
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
-    MaxUploadDelay = 30 * Time.Second // Do flush out payload once every 30s
+    MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
+    ExtractLimit = 10000 // Do not extract more than 10000 characters
 }
 
 export const enum Character {
@@ -248,6 +250,9 @@ export const enum Constant {
     Accept = "Accept",
     ClarityGzip = "application/x-clarity-gzip",
     Tilde = "~",
+    ArrayStart = "[",
+    ConditionStart = "{",
+    ConditionEnd = "}"
 }
 
 export const enum XMLReadyState {

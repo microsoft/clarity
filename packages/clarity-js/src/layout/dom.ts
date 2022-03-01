@@ -4,10 +4,9 @@ import { Constant, NodeInfo, NodeValue, Selector, SelectorInput, Source } from "
 import config from "@src/core/config";
 import hash from "@src/core/hash";
 import * as internal from "@src/diagnostic/internal";
-import * as extract from "@src/layout/extract";
 import * as region from "@src/layout/region";
 import selector from "@src/layout/selector";
-
+import * as mutation from "@src/layout/mutation";
 let index: number = 1;
 
 // Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input#%3Cinput%3E_types
@@ -21,6 +20,8 @@ let updateMap: number[] = [];
 let hashMap: { [hash: string]: number } = {};
 let override = [];
 let unmask = [];
+let fragments: string[] = [];
+let updatedFragments = []
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
@@ -61,9 +62,7 @@ export function parse(root: ParentNode, init: boolean = false): void {
         // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
         // We ensure that the root note supports querySelectorAll API before executing the code below to identify new regions.
         if ("querySelectorAll" in root) {
-            extract.regions(root, config.regions);
-            extract.metrics(root, config.metrics);
-            extract.dimensions(root, config.dimensions);
+            config.regions.forEach(x => root.querySelectorAll(x[1]).forEach(e => region.observe(e, `${x[0]}`))); // Regions
             config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
             unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
         }
@@ -88,11 +87,13 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let privacy = config.content ? Privacy.Sensitive : Privacy.Text;
     let parentValue = null;
     let regionId = region.exists(node) ? id : null;
+    let fragmentId = null;
 
     if (parentId >= 0 && values[parentId]) {
         parentValue = values[parentId];
         parentValue.children.push(id);
         regionId = regionId === null ? parentValue.region : regionId;
+        fragmentId = parentValue.fragment;
         privacy = parentValue.metadata.privacy;
     }
 
@@ -115,10 +116,12 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         selector: null,
         hash: null,
         region: regionId,
-        metadata: { active: true, suspend: false, privacy, position: null, size: null }
+        metadata: { active: true, suspend: false, privacy, position: null, size: null },
+        fragment: fragmentId,
     };
 
     updateSelector(values[id]);
+    if (values[id].fragment && updatedFragments.indexOf(values[id].fragment) === -1) { updatedFragments.push(values[id].fragment); }
     size(values[id], parentValue);
     track(id, source);
 }
@@ -176,6 +179,17 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
 
         // Update selector
         updateSelector(value);
+
+        if (value.fragment) {
+            if (updatedFragments.indexOf(value.fragment) === -1) {
+                let fragmentNode = getNode(value.fragment)
+                if (fragmentNode) {
+                    mutation.schedule(fragmentNode, true);
+                    updatedFragments.push(value.fragment);
+                }
+            }
+        }
+
         track(id, source, changed, parentChanged);
     }
 }
@@ -296,6 +310,9 @@ function updateSelector(value: NodeValue): void {
     value.selector = [selector(s), selector(s, true)];
     value.hash = value.selector.map(x => x ? hash(x) : null) as [string, string];
     value.hash.forEach(h => hashMap[h] = value.id);
+    if (value.hash.some(h => fragments.indexOf(h) !== -1)) {
+        value.fragment = value.id;
+    }
 }
 
 export function getNode(id: number): Node {
@@ -332,6 +349,26 @@ export function updates(): NodeValue[] {
     }
     updateMap = [];
     return output;
+}
+
+export function getFragments(): {} {
+    let output = {};
+    if (fragments) {
+        fragments.forEach(hash => {
+            if (hash in hashMap) {
+                let id = hashMap[hash];
+                if (updatedFragments.indexOf(id) !== -1) {
+                    output[hash] = id;
+                }
+            }
+        }); 
+    }
+    updatedFragments = [];
+    return output;
+}
+
+export function setFragments(value: string[]): void {
+    fragments = value;
 }
 
 function remove(id: number, source: Source): void {
