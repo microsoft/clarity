@@ -4,7 +4,7 @@ type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
 type UploadCallback = (data: string) => void;
 type Region = [number /* RegionId */, string /* Query Selector */];
-export type Extract = Source /* Extraction Source */ | number /* Extract Id */ | string  | string[]/* Hash or Query Selector or String Token */;
+export type Extract = ExtractSource /* Extraction Source */ | number /* Extract Id */ | string  | string[]/* Hash or Query Selector or String Token */;
 
 /* Enum */
 
@@ -30,11 +30,23 @@ export const enum Setting {
     LongTask = 30, // 30ms
 }
 
-export const enum Source {
+export const enum ExtractSource {
     Javascript = 0,
     Cookie = 1,
     Text = 2,
     Fragment = 3
+}
+
+export const enum Type {
+    Array = 1, 
+    Object = 2,
+    Simple = 3
+}
+
+export type Syntax = {
+    name: string,
+    type: Type,
+    condition: string
 }
 
 export const enum Privacy {

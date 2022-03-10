@@ -1,4 +1,4 @@
-import { Source } from "@clarity-types/core";
+import { ExtractSource, Syntax, Type } from "@clarity-types/core";
 import { Event, Setting } from "@clarity-types/data";
 import config from "@src/core/config";
 import encode from "./encode";
@@ -9,26 +9,28 @@ import { Code, Constant, Severity } from "@clarity-types/data";
 export let data: {[key: number]: string } = {};
 export let updateKeys: (number | string)[] = [];
 
-let variables : { [key: number]: string } = {};
+let variables : { [key: number]: Syntax[] } = {};
 let selectors : { [key: number]: string } = {};
 
 export function start(): void {
     let e = config.extract;
+    if (!e) { return; }
     for (let i = 0; i < e.length; i+=3) {
-        let source = e[i] as Source;
+        let source = e[i] as ExtractSource;
         let key = e[i+1] as number;
         switch (source) {
-            case Source.Javascript: 
+            case ExtractSource.Javascript: 
                 let variable = e[i+2] as string;
-                variables[key] = variable;
+                variables[key] = parse(variable);
                 break;
-            case Source.Cookie: 
+            case ExtractSource.Cookie: 
+                /*Todo: Add cookie extract logic*/
                 break;
-            case Source.Text:
+            case ExtractSource.Text:
                 let match = e[i+2] as string;
                 selectors[key] = match;
                 break;
-            case Source.Fragment:
+            case ExtractSource.Fragment:
                 let fragments =  e[i+2] as string[];
                 dom.setFragments(fragments);
                 break;
@@ -48,7 +50,7 @@ export function compute(): void {
             if (node) { update(s, node.innerText); }
         }
                 
-        let fragmentIds = dom.getFragments();
+        let fragmentIds = dom.matchFragments();
         for (let hash in fragmentIds) {
             update(hash, fragmentIds[hash], true);
         }
@@ -76,23 +78,42 @@ export function stop(): void {
     selectors = {};
 }
 
+function parse(variable: string): Syntax[] {
+    let syntax: Syntax[] = [];
+    let parts = variable.split(Constant.Dot);
+    while (parts.length > 0) {
+        let s: Syntax;
+        let part = parts.shift();
+        let arrayStart = part.indexOf(Constant.ArrayStart);
+        let conditionStart = part.indexOf(Constant.ConditionStart);
+        let conditionEnd = part.indexOf(Constant.ConditionEnd);
+        s.name = arrayStart > 0 ? part.substring(0, arrayStart) : (conditionStart > 0 ? part.substring(0, conditionStart) : part);
+        s.type = arrayStart > 0 ? Type.Array : (conditionStart > 0 ? Type.Object : Type.Simple);
+        s.condition = conditionStart > 0 ? part.substring(conditionStart + 1, conditionEnd) : null;
+        syntax.push(s);
+    }
+
+    return syntax;
+}
+
 // The function below takes in a variable name in following format: "a.b.c" and safely evaluates its value in javascript context
 // For instance, for a.b.c, it will first check window["a"]. If it exists, it will recursively look at: window["a"]["b"] and finally,
 // return the value for window["a"]["b"]["c"].
-function evaluate(variable: string, type: string = null, base: Object = window): any {
-    let parts = variable.split(Constant.Dot);
-    let syntax = parts.shift();
-    let [first, array, condition] = parse(syntax);
+function evaluate(variable: Syntax[], base: Object = window): any {
+    if (variable.length == 0) { return base; }
+    let part = variable.shift();
     let output;
-    if (base && base[first]) {
-        if (array === -1 && match(base[first], condition)) {
-            output = parts.length > 0 ? evaluate(parts.join(Constant.Dot), type, base[first]) : base[first]
+    if (base && base[part.name]) {
+        let obj = base[part.name];
+        if (part.type !== Type.Array && match(obj, part.condition)) {
+            output = evaluate(variable, obj);
         }
-        else if (Array.isArray(base[first])) {
+        else if (Array.isArray(obj)) {
             let filtered = [];
-            for (var value of base[first]) {
-                if (match(value, condition)) {
-                    parts.length > 0 ? filtered.push(evaluate(parts.join(Constant.Dot), type, value)) : filtered.push(value);
+            for (var value of obj) {
+                if (match(value, part.condition)) {
+                    let op = evaluate(variable, value)
+                    if (op) { filtered.push(op); }
                 }
             }
             output = filtered;
@@ -103,15 +124,6 @@ function evaluate(variable: string, type: string = null, base: Object = window):
 
     return null;
 }
-
-function parse(variable: string): any {
-    let array = variable.indexOf(Constant.ArrayStart);
-    let conditionStart = variable.indexOf(Constant.ConditionStart);
-    let condition = conditionStart > 0 ? variable.substring(conditionStart + 1, variable.indexOf(Constant.ConditionEnd)) : null;
-    let subPart = array > 0 ? variable.substring(0, array) : conditionStart > 0 ? variable.substring(0, conditionStart) : variable;
-    return [subPart, array, condition];
-}
-
 function str(input: string): string {
     // Automatically trim string to max of Setting.DimensionLimit to avoid fetching long strings
     return input ? JSON.stringify(input).substring(0, Setting.ExtractLimit) : input;

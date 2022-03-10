@@ -180,6 +180,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
         // Update selector
         updateSelector(value);
 
+        // if updated node is a part of fragment and the fragment is not being tracked currently, schedule a mutation on the fragment node
         if (value.fragment) {
             if (updatedFragments.indexOf(value.fragment) === -1) {
                 let fragmentNode = getNode(value.fragment)
@@ -351,18 +352,17 @@ export function updates(): NodeValue[] {
     return output;
 }
 
-export function getFragments(): {} {
+export function matchFragments(): {} {
     let output = {};
-    if (fragments) {
-        fragments.forEach(hash => {
-            if (hash in hashMap) {
-                let id = hashMap[hash];
-                if (updatedFragments.indexOf(id) !== -1) {
-                    output[hash] = id;
-                }
+    fragments?.forEach(hash => {
+        if (hash in hashMap) {
+            let id = hashMap[hash];
+            if (updatedFragments.indexOf(id) !== -1) {
+                output[hash] = id;
             }
-        }); 
-    }
+        }
+    }); 
+
     updatedFragments = [];
     return output;
 }
