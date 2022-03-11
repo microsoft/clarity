@@ -1,4 +1,5 @@
 import { Core } from "clarity-js";
+import { ExtractSource } from "clarity-js/types/core";
 
 const enum Region {
     Header = 1,
@@ -6,7 +7,9 @@ const enum Region {
     Navigation = 3
 }
 
-const extractKey = 1;
+const enum Extract {
+    Performance = 1
+}
 
 export default function(): Core.Config {
     return {
@@ -17,6 +20,6 @@ export default function(): Core.Config {
             [Region.Footer, "footer"], 
             [Region.Navigation, "nav"]
         ],
-        extract: [0, extractKey, "performance.timing"] 
+        extract: [ExtractSource.Javascript, Extract.Performance, "performance.timing"] 
     };
 }

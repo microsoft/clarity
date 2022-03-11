@@ -139,7 +139,8 @@ export const enum Code {
 /**
  * @deprecated No longer support ContentSecurityPolicy
  */
-    ContentSecurityPolicy = 7
+    ContentSecurityPolicy = 7,
+    Config = 8
 }
 
 export const enum Severity {

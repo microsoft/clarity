@@ -4,7 +4,7 @@ type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
 type UploadCallback = (data: string) => void;
 type Region = [number /* RegionId */, string /* Query Selector */];
-export type Extract = ExtractSource /* Extraction Source */ | number /* Extract Id */ | string  | string[]/* Hash or Query Selector or String Token */;
+export type Extract = ExtractSource /* Extraction Source */ | number /* Extract Id */ | string  | string[] /* Hash or Query Selector or String Token */;
 
 /* Enum */
 

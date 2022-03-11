@@ -7,6 +7,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as region from "@src/layout/region";
 import selector from "@src/layout/selector";
 import * as mutation from "@src/layout/mutation";
+import * as extract from "@src/data/extract";
 let index: number = 1;
 
 // Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input#%3Cinput%3E_types
@@ -20,7 +21,6 @@ let updateMap: number[] = [];
 let hashMap: { [hash: string]: number } = {};
 let override = [];
 let unmask = [];
-let fragments: string[] = [];
 let updatedFragments = []
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
@@ -121,9 +121,8 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     };
 
     updateSelector(values[id]);
-    if (values[id].fragment && updatedFragments.indexOf(values[id].fragment) === -1) { updatedFragments.push(values[id].fragment); }
     size(values[id], parentValue);
-    track(id, source);
+    track(id, source, values[id].fragment);
 }
 
 export function update(node: Node, parent: Node, data: NodeInfo, source: Source): void {
@@ -179,19 +178,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
 
         // Update selector
         updateSelector(value);
-
-        // if updated node is a part of fragment and the fragment is not being tracked currently, schedule a mutation on the fragment node
-        if (value.fragment) {
-            if (updatedFragments.indexOf(value.fragment) === -1) {
-                let fragmentNode = getNode(value.fragment)
-                if (fragmentNode) {
-                    mutation.schedule(fragmentNode, true);
-                    updatedFragments.push(value.fragment);
-                }
-            }
-        }
-
-        track(id, source, changed, parentChanged);
+        track(id, source, values[id].fragment, changed, parentChanged);
     }
 }
 
@@ -311,7 +298,7 @@ function updateSelector(value: NodeValue): void {
     value.selector = [selector(s), selector(s, true)];
     value.hash = value.selector.map(x => x ? hash(x) : null) as [string, string];
     value.hash.forEach(h => hashMap[h] = value.id);
-    if (value.hash.some(h => fragments.indexOf(h) !== -1)) {
+    if (value.hash.some(h => extract.fragments.indexOf(h) !== -1)) {
         value.fragment = value.id;
     }
 }
@@ -349,26 +336,8 @@ export function updates(): NodeValue[] {
         if (id in values) { output.push(values[id]); }
     }
     updateMap = [];
-    return output;
-}
-
-export function matchFragments(): {} {
-    let output = {};
-    fragments?.forEach(hash => {
-        if (hash in hashMap) {
-            let id = hashMap[hash];
-            if (updatedFragments.indexOf(id) !== -1) {
-                output[hash] = id;
-            }
-        }
-    }); 
-
     updatedFragments = [];
     return output;
-}
-
-export function setFragments(value: string[]): void {
-    fragments = value;
 }
 
 function remove(id: number, source: Source): void {
@@ -405,7 +374,21 @@ function getPreviousId(node: Node): number {
     return id;
 }
 
-function track(id: number, source: Source, changed: boolean = true, parentChanged: boolean = false): void {
+function track(id: number, source: Source, fragment: number = -1, changed: boolean = true, parentChanged: boolean = false): void {
+    // if updated node is a part of fragment and the fragment is not being tracked currently, schedule a mutation on the fragment node
+    if (fragment !== -1 && updatedFragments.indexOf(fragment) === -1) {
+        let node = getNode(fragment)
+        let value = getValue(fragment);
+        if (node && value) {
+            mutation.schedule(node, true);
+            value.hash.forEach(h => {
+                if(extract.fragments.indexOf(h) !== -1) { extract.update(h, fragment)}
+            });
+            
+            updatedFragments.push(fragment);
+        }
+    }
+
     // Keep track of the order in which mutations happened, they may not be sequential
     // Edge case: If an element is added later on, and pre-discovered element is moved as a child.
     // In that case, we need to reorder the pre-discovered element in the update list to keep visualization consistent.

@@ -107,7 +107,7 @@ export default function(event: Event): void {
             }
             break;
         case Event.Extract:
-            let extractKeys = extract.updateKeys;
+            let extractKeys = extract.keys;
             for (let e of extractKeys) {
                 tokens.push(e);
                 tokens.push(extract.data[e]);

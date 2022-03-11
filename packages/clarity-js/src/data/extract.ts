@@ -2,39 +2,43 @@ import { ExtractSource, Syntax, Type } from "@clarity-types/core";
 import { Event, Setting } from "@clarity-types/data";
 import config from "@src/core/config";
 import encode from "./encode";
-import * as dom from "@src/layout/dom";
 import * as internal from "@src/diagnostic/internal";
 import { Code, Constant, Severity } from "@clarity-types/data";
 
 export let data: {[key: number]: string } = {};
-export let updateKeys: (number | string)[] = [];
+export let keys: (number | string)[] = [];
 
 let variables : { [key: number]: Syntax[] } = {};
 let selectors : { [key: number]: string } = {};
+export let fragments: string[] = [];
 
 export function start(): void {
-    let e = config.extract;
-    if (!e) { return; }
-    for (let i = 0; i < e.length; i+=3) {
-        let source = e[i] as ExtractSource;
-        let key = e[i+1] as number;
-        switch (source) {
-            case ExtractSource.Javascript: 
-                let variable = e[i+2] as string;
-                variables[key] = parse(variable);
-                break;
-            case ExtractSource.Cookie: 
-                /*Todo: Add cookie extract logic*/
-                break;
-            case ExtractSource.Text:
-                let match = e[i+2] as string;
-                selectors[key] = match;
-                break;
-            case ExtractSource.Fragment:
-                let fragments =  e[i+2] as string[];
-                dom.setFragments(fragments);
-                break;
+    try {
+        let e = config.extract;
+        if (!e) { return; }
+        for (let i = 0; i < e.length; i+=3) {
+            let source = e[i] as ExtractSource;
+            let key = e[i+1] as number;
+            switch (source) {
+                case ExtractSource.Javascript:
+                    let variable = e[i+2] as string;
+                    variables[key] = parse(variable);
+                    break;
+                case ExtractSource.Cookie:
+                    /*Todo: Add cookie extract logic*/
+                    break;
+                case ExtractSource.Text:
+                    let match = e[i+2] as string;
+                    selectors[key] = match;
+                    break;
+                case ExtractSource.Fragment:
+                    fragments =  e[i+2] as string[];
+                    break;
+            }
         }
+    }
+    catch(e) {
+        internal.log(Code.Config, Severity.Warning, e ? e.name : null);
     }
 }
 
@@ -49,11 +53,6 @@ export function compute(): void {
             let node = document.querySelector(selectors[s] as string) as HTMLElement;
             if (node) { update(s, node.innerText); }
         }
-                
-        let fragmentIds = dom.matchFragments();
-        for (let hash in fragmentIds) {
-            update(hash, fragmentIds[hash], true);
-        }
     }
     catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
 
@@ -61,19 +60,19 @@ export function compute(): void {
 }
 
 export function reset(): void {
-    updateKeys = [];
+    keys = [];
 }
 
-function update(key: number | string, value: string | number, force: boolean = false): void {
+export function update(key: number | string, value: string | number, force: boolean = false): void {
     if (!(key in data) || (key in data && data[key] !== value) || force ) {
         data[key] = value;
-        updateKeys.push(key);
+        keys.push(key);
     }
 }
 
 export function stop(): void {
     data = {};
-    updateKeys = [];
+    keys = [];
     variables = {};
     selectors = {};
 }
@@ -124,8 +123,9 @@ function evaluate(variable: Syntax[], base: Object = window): any {
 
     return null;
 }
+
 function str(input: string): string {
-    // Automatically trim string to max of Setting.DimensionLimit to avoid fetching long strings
+    // Automatically trim string to max of Setting.ExtractLimit to avoid fetching long strings
     return input ? JSON.stringify(input).substring(0, Setting.ExtractLimit) : input;
 }
 
