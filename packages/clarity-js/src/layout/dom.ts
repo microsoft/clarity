@@ -21,7 +21,7 @@ let updateMap: number[] = [];
 let hashMap: { [hash: string]: number } = {};
 let override = [];
 let unmask = [];
-let updatedFragments = []
+let updatedFragments: { [fragment: number]: string } = {};
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
@@ -174,6 +174,11 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
                 changed = true;
                 value["data"][key] = data[key];
             }
+        }
+
+        // track node if it is a part of scheduled fragment mutation
+        if(value.fragment && updatedFragments[value.fragment]) {
+            changed = true;
         }
 
         // Update selector
@@ -336,7 +341,11 @@ export function updates(): NodeValue[] {
         if (id in values) { output.push(values[id]); }
     }
     updateMap = [];
-    updatedFragments = [];
+    for (let id in updatedFragments) {
+        extract.update(updatedFragments[id], id, true)
+    }
+
+    updatedFragments = {}
     return output;
 }
 
@@ -374,18 +383,16 @@ function getPreviousId(node: Node): number {
     return id;
 }
 
-function track(id: number, source: Source, fragment: number = -1, changed: boolean = true, parentChanged: boolean = false): void {
+function track(id: number, source: Source, fragment: number = null, changed: boolean = true, parentChanged: boolean = false): void {
     // if updated node is a part of fragment and the fragment is not being tracked currently, schedule a mutation on the fragment node
-    if (fragment !== -1 && updatedFragments.indexOf(fragment) === -1) {
+    if (fragment && !updatedFragments[fragment]) {
         let node = getNode(fragment)
         let value = getValue(fragment);
         if (node && value) {
             mutation.schedule(node, true);
             value.hash.forEach(h => {
-                if(extract.fragments.indexOf(h) !== -1) { extract.update(h, fragment)}
+                if(extract.fragments.indexOf(h) !== -1) { updatedFragments[fragment] = h;}
             });
-            
-            updatedFragments.push(fragment);
         }
     }
 

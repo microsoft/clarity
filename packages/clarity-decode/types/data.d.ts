@@ -28,6 +28,7 @@ export interface LimitEvent extends PartialEvent { data: Data.LimitData; }
 export interface SummaryEvent extends PartialEvent { data: Data.SummaryData; }
 export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
+export interface ExtractEvent extends PartialEvent { data: Data.ExtractData; }
 export interface DataEvent extends PartialEvent {
     data: Data.BaselineData |
     Data.DimensionData | 
@@ -75,6 +76,7 @@ export interface DecodedPayload {
     baseline?: BaselineEvent[];
     variable?: VariableEvent[];
     custom?: CustomEvent[];
+    extract?: ExtractEvent[];
 }
 
 export interface DecodedVersion {

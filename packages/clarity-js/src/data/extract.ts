@@ -42,10 +42,14 @@ export function start(): void {
     }
 }
 
+export function clone(v: Syntax[]): Syntax[] {
+    return JSON.parse(JSON.stringify(v));
+}
+
 export function compute(): void {
     try {
         for (let v in variables) {
-            let value = evaluate(variables[v]);
+            let value = str(evaluate(clone(variables[v])));
             if (value) { update(v, value); }
         }
 
@@ -81,15 +85,15 @@ function parse(variable: string): Syntax[] {
     let syntax: Syntax[] = [];
     let parts = variable.split(Constant.Dot);
     while (parts.length > 0) {
-        let s: Syntax;
         let part = parts.shift();
         let arrayStart = part.indexOf(Constant.ArrayStart);
         let conditionStart = part.indexOf(Constant.ConditionStart);
         let conditionEnd = part.indexOf(Constant.ConditionEnd);
-        s.name = arrayStart > 0 ? part.substring(0, arrayStart) : (conditionStart > 0 ? part.substring(0, conditionStart) : part);
-        s.type = arrayStart > 0 ? Type.Array : (conditionStart > 0 ? Type.Object : Type.Simple);
-        s.condition = conditionStart > 0 ? part.substring(conditionStart + 1, conditionEnd) : null;
-        syntax.push(s);
+        syntax.push({
+            name : arrayStart > 0 ? part.substring(0, arrayStart) : (conditionStart > 0 ? part.substring(0, conditionStart) : part),
+            type : arrayStart > 0 ? Type.Array : (conditionStart > 0 ? Type.Object : Type.Simple),
+            condition : conditionStart > 0 ? part.substring(conditionStart + 1, conditionEnd) : null
+        });
     }
 
     return syntax;
@@ -118,7 +122,7 @@ function evaluate(variable: Syntax[], base: Object = window): any {
             output = filtered;
         }
         
-        return str(output);
+        return output;
     }
 
     return null;
