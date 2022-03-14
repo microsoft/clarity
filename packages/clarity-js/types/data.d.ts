@@ -372,6 +372,10 @@ export interface UpgradeData {
     key: string;
 }
 
+export interface ExtractData {
+    [key: string]: string | number;
+}
+
 export interface UploadData {
     sequence: number;
     attempts: number;

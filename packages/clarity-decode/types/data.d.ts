@@ -38,7 +38,8 @@ export interface DataEvent extends PartialEvent {
     Data.LimitData |
     Data.SummaryData |
     Data.UpgradeData |
-    Data.UploadData;
+    Data.UploadData | 
+    Data.ExtractData;
 }
 
 export type DecodedEvent = DataEvent | DiagnosticEvent | InteractionEvent | LayoutEvent | PerformanceEvent;

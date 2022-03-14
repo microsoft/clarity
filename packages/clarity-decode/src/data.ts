@@ -69,7 +69,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
             return { time, event, data: variables };
         case Data.Event.Extract:
             let e = 2; // Start from 3rd index since first two are used for time & event
-            let extract = {};
+            let extract: Data.ExtractData = {};
             while (e < tokens.length) {
                 extract[tokens[e++] as string | number] = tokens[e++] as string;
             }

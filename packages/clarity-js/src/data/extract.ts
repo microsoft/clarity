@@ -1,11 +1,11 @@
 import { ExtractSource, Syntax, Type } from "@clarity-types/core";
-import { Event, Setting } from "@clarity-types/data";
+import { Event, Setting, ExtractData } from "@clarity-types/data";
 import config from "@src/core/config";
 import encode from "./encode";
 import * as internal from "@src/diagnostic/internal";
 import { Code, Constant, Severity } from "@clarity-types/data";
 
-export let data: {[key: number]: string } = {};
+export let data: ExtractData = {};
 export let keys: (number | string)[] = [];
 
 let variables : { [key: number]: Syntax[] } = {};
@@ -63,7 +63,7 @@ export function reset(): void {
     keys = [];
 }
 
-export function update(key: number | string, value: string | number, force: boolean = false): void {
+export function update(key: string, value: string | number, force: boolean = false): void {
     if (!(key in data) || (key in data && data[key] !== value) || force ) {
         data[key] = value;
         keys.push(key);
