@@ -11,12 +11,13 @@ import * as summary from "@src/data/summary";
 import * as upgrade from "@src/data/upgrade";
 import * as upload from "@src/data/upload";
 import * as variable from "@src/data/variable";
+import * as extract from "@src/data/extract";
 export { event } from "@src/data/custom";
 export { consent, metadata } from "@src/data/metadata";
 export { upgrade } from "@src/data/upgrade";
 export { set, identify } from "@src/data/variable";
 
-const modules: Module[] = [baseline, dimension, variable, limit, summary, metadata, envelope, upload, ping, upgrade];
+const modules: Module[] = [baseline, dimension, variable, limit, summary, metadata, envelope, upload, ping, upgrade, extract];
 
 export function start(): void {
     // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
@@ -40,4 +41,5 @@ export function compute(): void {
     metric.compute();
     summary.compute();
     limit.compute();
+    extract.compute();
 }

@@ -1,6 +1,6 @@
 import { Data, version } from "clarity-js";
 import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
-import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent } from "../types/data";
+import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent } from "../types/data";
 import { LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ClickEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent, SubmitEvent, TimelineEvent } from "../types/interaction";
 import { SelectionEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
@@ -172,6 +172,10 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.ImageError:
                 /* Deprecated - Intentionally, no-op. For backward compatibility. */
                 break;
+            case Data.Event.Extract:
+                if (payload.extract === undefined) { payload.extract = []; }
+                    payload.extract.push(data.decode(entry) as ExtractEvent);
+                    break;
             default:
                 console.error(`No handler for Event: ${JSON.stringify(entry)}`);
                 break;

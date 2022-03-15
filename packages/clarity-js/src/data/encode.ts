@@ -9,6 +9,7 @@ import * as ping from "@src/data/ping";
 import * as summary from "@src/data/summary";
 import * as upgrade from "@src/data/upgrade";
 import * as variable from "@src/data/variable";
+import * as extract from "@src/data/extract";
 import { queue, track } from "./upload";
 
 export default function(event: Event): void {
@@ -105,5 +106,13 @@ export default function(event: Event): void {
                 queue(tokens, false);
             }
             break;
+        case Event.Extract:
+            let extractKeys = extract.keys;
+            for (let e of extractKeys) {
+                tokens.push(e);
+                tokens.push(extract.data[e]);
+            }
+            extract.reset();
+            queue(tokens, false);
     }
 }

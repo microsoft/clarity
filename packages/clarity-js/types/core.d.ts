@@ -3,9 +3,8 @@ import * as Data from "./data";
 type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
 type UploadCallback = (data: string) => void;
-type Region = [number /* RegionId */, string /* Query Selector */, RegionFilter? /* Region Filter */, string? /* Filter Text */];
-type Metric = [Data.Metric /* MetricId */, Extract /* Extract Filter */, string /* Match Value */, number? /* Scale Factor */];
-type Dimension = [Data.Dimension /* DimensionId */, Extract /* Extract Filter */, string /* Match Value */];
+type Region = [number /* RegionId */, string /* Query Selector */];
+export type Extract = ExtractSource /* Extraction Source */ | number /* Extract Id */ | string  | string[] /* Hash or Query Selector or String Token */;
 
 /* Enum */
 
@@ -21,7 +20,6 @@ export const enum Time {
     Day = 24 * 60 * 60 * 1000
 }
 
-
 export const enum Task {
     Wait = 0,
     Run = 1,
@@ -32,15 +30,23 @@ export const enum Setting {
     LongTask = 30, // 30ms
 }
 
-export const enum RegionFilter {
-    Url = 0,
-    Javascript = 1
+export const enum ExtractSource {
+    Javascript = 0,
+    Cookie = 1,
+    Text = 2,
+    Fragment = 3
 }
 
-export const enum Extract {
-    Text = 0,
-    Javascript = 1,
-    Attribute = 2
+export const enum Type {
+    Array = 1, 
+    Object = 2,
+    Simple = 3
+}
+
+export type Syntax = {
+    name: string,
+    type: Type,
+    condition: string
 }
 
 export const enum Privacy {
@@ -119,8 +125,7 @@ export interface Config {
     mask?: string[];
     unmask?: string[];
     regions?: Region[];
-    metrics?: Metric[];
-    dimensions?: Dimension[];
+    extract?: Extract[];
     cookies?: string[];
     report?: string;
     upload?: string | UploadCallback;

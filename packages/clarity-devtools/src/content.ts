@@ -34,8 +34,7 @@ function setup(url: string): void {
               let script = document.createElement("script");
               script.innerText = wireup({
                 regions: c.regions,
-                metrics: c.metrics,
-                dimensions: c.dimensions,
+                extract: c.extract,
                 mask: c.mask,
                 unmask: c.unmask,
                 showText: items.clarity.showText,
@@ -60,8 +59,7 @@ function wireup(settings: any): string {
       delay: 500,
       lean: "$__leanMode__$",
       regions: "$__regions__$",
-      metrics: "$__metrics__$",
-      dimensions: "$__dimensions__$",
+      extract: "$__extract__$",
       mask: "$__mask__$",
       unmask: "$__unmask__$",
       content: "$__showText__$",
