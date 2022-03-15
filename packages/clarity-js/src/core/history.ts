@@ -3,33 +3,43 @@ import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
 import * as internal from "@src/diagnostic/internal";
 
-let pushState = null;
-let replaceState = null;
+let pushState = history.pushState;
+let replaceState = history.replaceState;
+let enabled = false;
 let url = null;
 let count = 0;
+
+// Add a proxy to history.pushState function
+history.pushState = function(): void {
+    // If Clarity is disabled, bypass its History API proxy
+    if (!enabled) {
+        return pushState.apply(this, arguments);
+    }
+
+    if (check()) {
+        pushState.apply(this, arguments);
+        compute();
+    }
+};
+
+// Add a proxy to history.replaceState function
+history.replaceState = function(): void {
+    // If Clarity is disabled, bypass its History API proxy
+    if (!enabled) {
+        return replaceState.apply(this, arguments);
+    }
+
+    if (check()) {
+        replaceState.apply(this, arguments);
+        compute();
+    }
+};
 
 export function start(): void {
     url = getCurrentUrl();
     count = 0;
+    enabled = true;
     bind(window, "popstate", compute);
-    
-    // Add a proxy to history.pushState function
-    if (pushState === null) { pushState = history.pushState; }
-    history.pushState = function(): void {
-        if (check()) {
-            pushState.apply(this, arguments);
-            compute();
-        }
-    };
-
-    // Add a proxy to history.replaceState function
-    if (replaceState === null) { replaceState = history.replaceState; }
-    history.replaceState = function(): void {
-        if (check()) {
-            replaceState.apply(this, arguments);
-            compute();
-        }
-    };
 }
 
 function check(): boolean {
@@ -54,18 +64,7 @@ function getCurrentUrl(): string {
 }
 
 export function stop(): void {
-    // Restore original function definition of history.pushState
-    if (pushState !== null) {
-        history.pushState = pushState;
-        pushState = null;
-    }
-
-    // Restore original function definition of history.replaceState
-    if (replaceState !== null) {
-        history.replaceState = replaceState;
-        replaceState = null;
-    }
-    
+    enabled = false;
     url = null;
     count = 0;
 }
