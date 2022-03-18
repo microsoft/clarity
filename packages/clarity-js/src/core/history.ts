@@ -3,31 +3,39 @@ import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
 import * as internal from "@src/diagnostic/internal";
 import * as core from "@src/core"
-let pushState = history.pushState;
-let replaceState = history.replaceState;
+let pushState = null;
+let replaceState = null;
 let url = null;
 let count = 0;
-
-// Add a proxy to history.pushState function
-history.pushState = function(): void {
-    pushState.apply(this, arguments);
-    if (core.active() && check()) {
-        compute();
-    }
-};
-
-// Add a proxy to history.replaceState function
-history.replaceState = function(): void {
-    replaceState.apply(this, arguments);
-    if (core.active() && check()) {
-        compute();
-    }
-};
 
 export function start(): void {
     url = getCurrentUrl();
     count = 0;
     bind(window, "popstate", compute);
+
+    // Add a proxy to history.pushState function
+    // Add a proxy to history.pushState function
+    if (pushState === null) { 
+        pushState = history.pushState; 
+        history.pushState = function(): void {
+            pushState.apply(this, arguments);
+            if (core.active() && check()) {
+                compute();
+            }
+        };
+    }
+
+    // Add a proxy to history.replaceState function
+    if (replaceState === null) 
+    { 
+        replaceState = history.replaceState; 
+        history.replaceState = function(): void {
+            replaceState.apply(this, arguments);
+            if (core.active() && check()) {
+                compute();
+            }
+        };
+    }
 }
 
 function check(): boolean {

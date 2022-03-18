@@ -36,33 +36,38 @@ export function start(): void {
     activePeriod = 0;
     history = {};
 
-    if (insertRule === null) { insertRule = CSSStyleSheet.prototype.insertRule; }
-    if (deleteRule === null) { deleteRule = CSSStyleSheet.prototype.deleteRule; }
-    if (attachShadow === null) { attachShadow = Element.prototype.attachShadow; }
-
     // Some popular open source libraries, like styled-components, optimize performance
     // by injecting CSS using insertRule API vs. appending text node. A side effect of
     // using javascript API is that it doesn't trigger DOM mutation and therefore we
     // need to override the insertRule API and listen for changes manually.
-    CSSStyleSheet.prototype.insertRule = function(): number {
-      if (core.active()) { schedule(this.ownerNode); }
-      return insertRule.apply(this, arguments);
-    };
+    if (insertRule === null) { 
+      insertRule = CSSStyleSheet.prototype.insertRule; 
+      CSSStyleSheet.prototype.insertRule = function(): number {
+        if (core.active()) { schedule(this.ownerNode); }
+        return insertRule.apply(this, arguments);
+      };
+    }
 
-    CSSStyleSheet.prototype.deleteRule = function(): void {
-      if (core.active()) { schedule(this.ownerNode); }
-      return deleteRule.apply(this, arguments);
-    };
+    if (deleteRule === null) { 
+      deleteRule = CSSStyleSheet.prototype.deleteRule;
+      CSSStyleSheet.prototype.deleteRule = function(): void {
+        if (core.active()) { schedule(this.ownerNode); }
+        return deleteRule.apply(this, arguments);
+      };
+   }
 
-    // Add a hook to attachShadow API calls
-    // In case we are unable to add a hook and browser throws an exception,
-    // reset attachShadow variable and resume processing like before
-    try {
-      Element.prototype.attachShadow = function (): ShadowRoot {
-        if (core.active()) { return schedule(attachShadow.apply(this, arguments)) as ShadowRoot; }
-        else { return attachShadow.apply(this, arguments)}   
-      }
-    } catch { attachShadow = null; }
+   // Add a hook to attachShadow API calls
+   // In case we are unable to add a hook and browser throws an exception,
+   // reset attachShadow variable and resume processing like before
+   if (attachShadow === null) { 
+     attachShadow = Element.prototype.attachShadow;    
+     try {
+       Element.prototype.attachShadow = function (): ShadowRoot {
+         if (core.active()) { return schedule(attachShadow.apply(this, arguments)) as ShadowRoot; }
+         else { return attachShadow.apply(this, arguments)}   
+       }
+     } catch { attachShadow = null; }
+  } 
 }
 
 export function observe(node: Node): void {
