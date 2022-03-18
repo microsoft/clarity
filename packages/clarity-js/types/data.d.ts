@@ -1,12 +1,16 @@
 import { Time } from "@clarity-types/core";
+import { callback } from "@src/data/metadata";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[]);
 export type DecodedToken = (any | any[]);
 
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
+export interface MetadataCallbackOptions {
+    callback: MetadataCallback, 
+    wait: boolean
+}
 
 /* Enum */
-
 export const enum Event {
     /* Data */
     Metric = 0,

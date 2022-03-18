@@ -1,5 +1,5 @@
 import { Time } from "@clarity-types/core";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, Metric, Session, User, Setting } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -8,11 +8,10 @@ import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
 
 export let data: Metadata = null;
-export let callback: MetadataCallback = null;
+export let callback: MetadataCallbackOptions[] = [];
 let rootDomain = null;
 
 export function start(): void {
-  callback = null;
   rootDomain = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const title = document && document.title ? document.title : Constant.Empty;
@@ -84,7 +83,6 @@ export function userAgentData(): void {
 }
 
 export function stop(): void {
-  callback = null;
   rootDomain = null;
   data = null;
 }
@@ -93,10 +91,9 @@ export function metadata(cb: MetadataCallback, wait: boolean = true): void {
   if (data && wait === false) {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
     cb(data, !config.lean);
-  } else {
-    // Save the callback for future reference; so we can inform the caller when page gets upgraded and we have a valid playback flag
-    callback = cb;
   }
+  
+  callback.push({callback: cb, wait: wait });
 }
 
 export function id(): string {
@@ -127,10 +124,18 @@ function tab(): string {
 
 export function save(): void {
   let ts = Math.round(Date.now());
-  let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let upload = config.upload && typeof config.upload === Constant.String ? (config.upload as string).replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
-  if (upgrade && callback) { callback(data, !config.lean); }
+  let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  processCallback(upgrade);
   setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
+}
+
+function processCallback(upgrade: BooleanFlag) {
+  if (callback.length > 0) {
+    callback.forEach(x => {
+      if (x.callback && (!x.wait || upgrade)) { x.callback(data, !config.lean); }
+    })
+  }
 }
 
 function supported(target: Window | Document, api: string): boolean {
