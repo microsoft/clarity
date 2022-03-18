@@ -2,35 +2,24 @@ import { Code, Constant, Setting, Severity } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
 import * as internal from "@src/diagnostic/internal";
-
+import * as core from "@src/core"
 let pushState = history.pushState;
 let replaceState = history.replaceState;
-let enabled = false;
 let url = null;
 let count = 0;
 
 // Add a proxy to history.pushState function
 history.pushState = function(): void {
-    // If Clarity is disabled, bypass its History API proxy
-    if (!enabled) {
-        return pushState.apply(this, arguments);
-    }
-
-    if (check()) {
-        pushState.apply(this, arguments);
+    pushState.apply(this, arguments);
+    if (core.active() && check()) {
         compute();
     }
 };
 
 // Add a proxy to history.replaceState function
 history.replaceState = function(): void {
-    // If Clarity is disabled, bypass its History API proxy
-    if (!enabled) {
-        return replaceState.apply(this, arguments);
-    }
-
-    if (check()) {
-        replaceState.apply(this, arguments);
+    replaceState.apply(this, arguments);
+    if (core.active() && check()) {
         compute();
     }
 };
@@ -38,7 +27,6 @@ history.replaceState = function(): void {
 export function start(): void {
     url = getCurrentUrl();
     count = 0;
-    enabled = true;
     bind(window, "popstate", compute);
 }
 
@@ -64,7 +52,6 @@ function getCurrentUrl(): string {
 }
 
 export function stop(): void {
-    enabled = false;
     url = null;
     count = 0;
 }
