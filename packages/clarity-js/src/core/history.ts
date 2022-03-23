@@ -14,7 +14,6 @@ export function start(): void {
     bind(window, "popstate", compute);
 
     // Add a proxy to history.pushState function
-    // Add a proxy to history.pushState function
     if (pushState === null) { 
         pushState = history.pushState; 
         history.pushState = function(): void {
