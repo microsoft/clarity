@@ -2,6 +2,7 @@ import { Priority, Task, Timer } from "@clarity-types/core";
 import { Code, Event, Metric, Severity } from "@clarity-types/data";
 import { Constant, MutationHistory, MutationQueue, Setting, Source } from "@clarity-types/layout";
 import api from "@src/core/api";
+import * as core from "@src/core";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
@@ -35,32 +36,38 @@ export function start(): void {
     activePeriod = 0;
     history = {};
 
-    if (insertRule === null) { insertRule = CSSStyleSheet.prototype.insertRule; }
-    if (deleteRule === null) { deleteRule = CSSStyleSheet.prototype.deleteRule; }
-    if (attachShadow === null) { attachShadow = Element.prototype.attachShadow; }
-
     // Some popular open source libraries, like styled-components, optimize performance
     // by injecting CSS using insertRule API vs. appending text node. A side effect of
     // using javascript API is that it doesn't trigger DOM mutation and therefore we
     // need to override the insertRule API and listen for changes manually.
-    CSSStyleSheet.prototype.insertRule = function(): number {
-      schedule(this.ownerNode);
-      return insertRule.apply(this, arguments);
-    };
+    if (insertRule === null) { 
+      insertRule = CSSStyleSheet.prototype.insertRule; 
+      CSSStyleSheet.prototype.insertRule = function(): number {
+        if (core.active()) { schedule(this.ownerNode); }
+        return insertRule.apply(this, arguments);
+      };
+    }
 
-    CSSStyleSheet.prototype.deleteRule = function(): void {
-      schedule(this.ownerNode);
-      return deleteRule.apply(this, arguments);
-    };
+    if (deleteRule === null) { 
+      deleteRule = CSSStyleSheet.prototype.deleteRule;
+      CSSStyleSheet.prototype.deleteRule = function(): void {
+        if (core.active()) { schedule(this.ownerNode); }
+        return deleteRule.apply(this, arguments);
+      };
+   }
 
-    // Add a hook to attachShadow API calls
-    // In case we are unable to add a hook and browser throws an exception,
-    // reset attachShadow variable and resume processing like before
-    try {
-      Element.prototype.attachShadow = function (): ShadowRoot {
-        return schedule(attachShadow.apply(this, arguments)) as ShadowRoot;
-      }
-    } catch { attachShadow = null; }
+   // Add a hook to attachShadow API calls
+   // In case we are unable to add a hook and browser throws an exception,
+   // reset attachShadow variable and resume processing like before
+   if (attachShadow === null) { 
+     attachShadow = Element.prototype.attachShadow;    
+     try {
+       Element.prototype.attachShadow = function (): ShadowRoot {
+         if (core.active()) { return schedule(attachShadow.apply(this, arguments)) as ShadowRoot; }
+         else { return attachShadow.apply(this, arguments)}   
+       }
+     } catch { attachShadow = null; }
+  } 
 }
 
 export function observe(node: Node): void {
@@ -90,25 +97,6 @@ export function monitor(frame: HTMLIFrameElement): void {
 export function stop(): void {
   for (let observer of observers) { if (observer) { observer.disconnect(); } }
   observers = [];
-
-  // Restoring original insertRule
-  if (insertRule !== null) {
-    CSSStyleSheet.prototype.insertRule = insertRule;
-    insertRule = null;
-  }
-
-  // Restoring original deleteRule
-  if (deleteRule !== null) {
-    CSSStyleSheet.prototype.deleteRule = deleteRule;
-    deleteRule = null;
-  }
-
-  // Restoring original attachShadow
-  if (attachShadow != null) {
-    Element.prototype.attachShadow = attachShadow;
-    attachShadow = null;
-  }
-
   history = {};
   mutations = [];
   queue = [];

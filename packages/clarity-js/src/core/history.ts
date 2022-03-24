@@ -2,7 +2,7 @@ import { Code, Constant, Setting, Severity } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
 import * as internal from "@src/diagnostic/internal";
-
+import * as core from "@src/core"
 let pushState = null;
 let replaceState = null;
 let url = null;
@@ -12,24 +12,29 @@ export function start(): void {
     url = getCurrentUrl();
     count = 0;
     bind(window, "popstate", compute);
-    
+
     // Add a proxy to history.pushState function
-    if (pushState === null) { pushState = history.pushState; }
-    history.pushState = function(): void {
-        if (check()) {
+    if (pushState === null) { 
+        pushState = history.pushState; 
+        history.pushState = function(): void {
             pushState.apply(this, arguments);
-            compute();
-        }
-    };
+            if (core.active() && check()) {
+                compute();
+            }
+        };
+    }
 
     // Add a proxy to history.replaceState function
-    if (replaceState === null) { replaceState = history.replaceState; }
-    history.replaceState = function(): void {
-        if (check()) {
+    if (replaceState === null) 
+    { 
+        replaceState = history.replaceState; 
+        history.replaceState = function(): void {
             replaceState.apply(this, arguments);
-            compute();
-        }
-    };
+            if (core.active() && check()) {
+                compute();
+            }
+        };
+    }
 }
 
 function check(): boolean {
@@ -54,18 +59,6 @@ function getCurrentUrl(): string {
 }
 
 export function stop(): void {
-    // Restore original function definition of history.pushState
-    if (pushState !== null) {
-        history.pushState = pushState;
-        pushState = null;
-    }
-
-    // Restore original function definition of history.replaceState
-    if (replaceState !== null) {
-        history.replaceState = replaceState;
-        replaceState = null;
-    }
-    
     url = null;
     count = 0;
 }
