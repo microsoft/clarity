@@ -8,7 +8,7 @@ import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
 
 export let data: Metadata = null;
-export let callback: MetadataCallbackOptions[] = [];
+export let callbacks: MetadataCallbackOptions[] = [];
 let rootDomain = null;
 
 export function start(): void {
@@ -93,7 +93,7 @@ export function metadata(cb: MetadataCallback, wait: boolean = true): void {
     cb(data, !config.lean);
   }
   
-  callback.push({callback: cb, wait: wait });
+  callbacks.push({callback: cb, wait: wait });
 }
 
 export function id(): string {
@@ -131,8 +131,8 @@ export function save(): void {
 }
 
 function processCallback(upgrade: BooleanFlag) {
-  if (callback.length > 0) {
-    callback.forEach(x => {
+  if (callbacks.length > 0) {
+    callbacks.forEach(x => {
       if (x.callback && (!x.wait || upgrade)) { x.callback(data, !config.lean); }
     })
   }
