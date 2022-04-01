@@ -165,7 +165,7 @@ export class LayoutHelper {
                         }
                         this.setAttributes(htmlDoc.documentElement, node);
                         // If we are still processing discover events, keep the markup hidden until we are done
-                        if (type === Data.Event.Discover) { htmlDoc.documentElement.style.visibility = Constant.Hidden; }
+                        if (type === Data.Event.Discover && !parent) { htmlDoc.documentElement.style.visibility = Constant.Hidden; }
                         this.nodes[node.id] = htmlDoc.documentElement;
                         this.addToHashMap(node, htmlDoc.documentElement);
                     }
