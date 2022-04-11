@@ -131,6 +131,7 @@ export interface Config {
     upload?: string | UploadCallback;
     fallback?: string;
     upgrade?: (key: string) => void;
+    tagId?: string
 }
 
 export const enum Constant {

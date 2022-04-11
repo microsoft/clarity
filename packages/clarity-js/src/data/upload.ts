@@ -15,6 +15,7 @@ import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
+import {set} from   "@src/data/variable";  
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -94,6 +95,11 @@ export function stop(): void {
 }
 
 async function upload(final: boolean = false): Promise<void> {
+    // Setting tag Id for debugging
+    if(config.tagId){
+        set(Constant.TagId, config.tagId);
+    }
+    
     timeout = null;
 
     // Check if we can send playback bytes over the wire or not

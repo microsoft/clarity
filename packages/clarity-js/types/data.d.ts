@@ -240,6 +240,7 @@ export const enum Constant {
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
+    TagId= "_t",
     ResizeObserver = "ResizeObserver",
     Mask = "•",
     SessionStorage = "sessionStorage",

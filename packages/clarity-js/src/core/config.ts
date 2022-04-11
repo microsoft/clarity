@@ -14,7 +14,8 @@ let config: Config = {
     report: null,
     upload: null,
     fallback: null,
-    upgrade: null
+    upgrade: null,
+    tagId: null
 };
 
 export default config;
