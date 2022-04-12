@@ -95,7 +95,6 @@ export function stop(): void {
 }
 
 async function upload(final: boolean = false): Promise<void> {
-    // Setting tag Id for debugging
     if(config.tagId){
         set(Constant.TagId, config.tagId);
     }
