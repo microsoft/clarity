@@ -15,11 +15,11 @@ export function stop(): void {
     updates = {};
 }
 
-export function count(metric: Metric, increment: number = 1): void {
+export function count(metric: Metric): void {
     if (!(metric in data)) { data[metric] = 0; }
     if (!(metric in updates)) { updates[metric] = 0; }
-    data[metric] += increment;
-    updates[metric] += increment;
+    data[metric]++;
+    updates[metric]++;
 }
 
 export function sum(metric: Metric, value: number): void {

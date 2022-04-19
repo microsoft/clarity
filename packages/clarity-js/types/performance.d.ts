@@ -31,10 +31,3 @@ export interface NavigationData {
     encodedSize: number;
     decodedSize: number;
 }
-
-export interface ConnectionData {
-    downlink: number;
-    rtt: number;
-    saveData: BooleanFlag;
-    type: string;
-}

@@ -1,4 +1,5 @@
 import { Code, Constant, Dimension, Metric, Severity } from "@clarity-types/data";
+import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import { setTimeout } from "@src/core/timeout";
@@ -56,7 +57,9 @@ function process(entries: PerformanceEntryList): void {
                 navigation.compute(entry as PerformanceNavigationTiming);
                 break;
             case Constant.Resource:
-                dimension.log(Dimension.NetworkHosts, host(entry.name));
+                let name = entry.name;
+                dimension.log(Dimension.NetworkHosts, host(name));
+                if (name === config.upload || name === config.fallback) { metric.max(Metric.UploadTime, entry.duration); }
                 break;
             case Constant.LongTask:
                 metric.count(Metric.LongTaskCount);

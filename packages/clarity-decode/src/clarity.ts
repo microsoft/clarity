@@ -4,7 +4,7 @@ import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadE
 import { LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ClickEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent, SubmitEvent, TimelineEvent } from "../types/interaction";
 import { SelectionEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
-import { BoxEvent, DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
+import { DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
 import { NavigationEvent } from "../types/performance";
 
 import * as data from "./data";
@@ -140,8 +140,7 @@ export function decode(input: string): DecodedPayload {
                 payload.visibility.push(interaction.decode(entry) as VisibilityEvent);
                 break;
             case Data.Event.Box:
-                if (payload.box === undefined) { payload.box = []; }
-                payload.box.push(layout.decode(entry) as BoxEvent);
+                /* Deprecated - Intentionally, no-op. For backward compatibility. */
                 break;
             case Data.Event.Region:
                 if (payload.region === undefined) { payload.region = []; }

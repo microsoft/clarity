@@ -63,7 +63,7 @@ export function start(): void {
   track(u);
 }
 
-export function userAgentData(): void {
+function userAgentData(): void {
   if (navigator["userAgentData"] && navigator["userAgentData"].getHighEntropyValues) {
     navigator["userAgentData"].getHighEntropyValues(
       ["model",

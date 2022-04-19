@@ -107,7 +107,7 @@ function reset(envelope: Data.Envelope): void {
     if (iframe) { iframe.parentElement.removeChild(iframe); }
     iframe = document.createElement("iframe");
     iframe.id = "clarity";
-    iframe.title = "Clarity Developer Tools";
+    iframe.title = "Microsoft Clarity Developer Tools";
     iframe.setAttribute("scrolling", "no");
     document.body.appendChild(iframe);
     console.log("Clearing out previous session... moving on to next one.");

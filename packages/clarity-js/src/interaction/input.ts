@@ -1,7 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { InputData, InputState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
-import scrub from "@src/core/scrub";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
@@ -24,17 +23,11 @@ function recompute(evt: UIEvent): void {
     let input = target(evt) as HTMLInputElement;
     let value = get(input);
     if (input && input.type && value) {
-        let v;
+        let v = input.value;
         switch (input.type) {
             case "radio":
             case "checkbox":
                 v = input.checked ? "true" : "false";
-                break;
-            case "range":
-                v = input.value;
-                break;
-            default:
-                v = scrub(input.value, "input", value.metadata.privacy);
                 break;
         }
 

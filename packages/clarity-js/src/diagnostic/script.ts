@@ -1,7 +1,6 @@
-import { Constant, Event, Setting } from "@clarity-types/data";
+import { Event, Setting } from "@clarity-types/data";
 import { ScriptErrorData } from "@clarity-types/diagnostic";
 import { bind } from "@src/core/event";
-import * as box from "@src/layout/box";
 import encode from "./encode";
 
 let history: { [key: string]: number } = {};
@@ -28,15 +27,6 @@ function handler(error: ErrorEvent): boolean {
             stack: e.stack,
             source: error["filename"]
         };
-
-        // In certain cases, ResizeObserver could lead to flood of benign errors - especially when video element is involved.
-        // Reference Chromium issue: https://bugs.chromium.org/p/chromium/issues/detail?id=809574
-        // Even though it doesn't impact user experience, or show up in console, it can still flood error reporting through on error
-        // To mitigate that, we turn off Clarity's ResizeObserver on getting the first instance of this error
-        if (e.message.indexOf(Constant.ResizeObserver) >= 0) {
-            box.stop();
-            return false;
-        }
 
         encode(Event.ScriptError);
     }

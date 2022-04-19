@@ -38,7 +38,7 @@ chrome.runtime.onMessage.addListener(
               let tabId = sender.tab.id;
               let success = tabId in connections;
               let icon = success ? "icon-activated.png" : "icon.png";
-              let title = success ? "Clarity Developer Tools" : "Clarity Developer Tools: Open developer tools to activate";
+              let title = success ? "Microsoft Clarity Developer Tools" : "Microsoft Clarity: Open developer tools to activate";
               chrome.browserAction.setIcon({ path: icon, tabId });
               chrome.browserAction.setTitle({ title, tabId });
               sendResponse({ success });
