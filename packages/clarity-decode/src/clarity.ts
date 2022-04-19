@@ -176,6 +176,9 @@ export function decode(input: string): DecodedPayload {
                 if (payload.extract === undefined) { payload.extract = []; }
                     payload.extract.push(data.decode(entry) as ExtractEvent);
                     break;
+            case Data.Event.Trace:
+                /* Intentionally, no-op. Used by backend */ 
+                break;
             default:
                 console.error(`No handler for Event: ${JSON.stringify(entry)}`);
                 break;
