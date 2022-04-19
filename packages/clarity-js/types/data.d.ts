@@ -1,5 +1,4 @@
 import { Time } from "@clarity-types/core";
-import { callback } from "@src/data/metadata";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[]);
 export type DecodedToken = (any | any[]);
@@ -95,7 +94,8 @@ export const enum Metric {
     Automation = 26,
     Mobile = 27,
     UploadTime = 28,
-    SinglePage = 29
+    SinglePage = 29,
+    UsedMemory = 30
 }
 
 export const enum Dimension {
@@ -195,6 +195,7 @@ export const enum Setting {
     ViewportIntersectionRatio = 0.05, // Ratio of intersection area in comparison to viewport area before it's marked visible
     IntersectionRatio = 0.8, // Ratio of intersection area in comparison to element's area before it's marked visible
     MaxFirstPayloadBytes = 1 * 1024 * 1024, // 1MB: Cap the very first payload to a maximum of 1MB
+    MegaByte = 1024 * 1024, // 1MB
     UploadFactor = 3, // Slow down sequence by specified factor
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
@@ -220,6 +221,7 @@ export const enum Constant {
     Pause = "pause",
     Resume = "resume",
     Report = "report",
+    Memory = "memory",
     Empty = "",
     Space = " ",
     Expires = "expires=",
