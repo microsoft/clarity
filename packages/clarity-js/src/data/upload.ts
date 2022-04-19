@@ -15,6 +15,7 @@ import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
+import * as diagnostic from "@src/diagnostic/index"
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -107,6 +108,7 @@ async function upload(final: boolean = false): Promise<void> {
     region.compute();
     timeline.compute();
     data.compute();
+    diagnostic.compute();
 
     // Treat this as the last payload only if final boolean was explicitly set to true.
     // In real world tests, we noticed that certain third party scripts (e.g. https://www.npmjs.com/package/raven-js)

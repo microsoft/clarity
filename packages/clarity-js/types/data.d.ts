@@ -1,5 +1,4 @@
 import { Time } from "@clarity-types/core";
-import { callback } from "@src/data/metadata";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[]);
 export type DecodedToken = (any | any[]);
@@ -59,7 +58,8 @@ export const enum Event {
     Box = 37,
     Clipboard = 38,
     Submit = 39,
-    Extract = 40
+    Extract = 40,
+    Trace = 41
 }
 
 export const enum Metric {

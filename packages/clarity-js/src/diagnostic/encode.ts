@@ -3,6 +3,7 @@ import { time } from "@src/core/time";
 import { queue } from "@src/data/upload";
 import * as internal from "@src/diagnostic/internal";
 import * as script from "@src/diagnostic/script";
+import * as trace from "@src/diagnostic/trace";
 
 export default async function (type: Event): Promise<void> {
     let tokens: Token[] = [time(), type];
@@ -23,6 +24,12 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(internal.data.message);
                 tokens.push(internal.data.stack);
                 tokens.push(internal.data.severity);
+                queue(tokens, false);
+            }
+            break;
+        case Event.Trace:
+           if (trace.data){
+                tokens.push(trace.data.tagTraceId);
                 queue(tokens, false);
             }
             break;
