@@ -18,5 +18,5 @@ export interface LogData {
 }
 
 export interface TraceData {
-    tagTraceId: string;
+    tagTraceId?: string;
 }

@@ -28,7 +28,7 @@ export default async function (type: Event): Promise<void> {
             }
             break;
         case Event.Trace:
-           if (trace.data){
+           if (trace.data.tagTraceId){
                 tokens.push(trace.data.tagTraceId);
                 queue(tokens, false);
             }

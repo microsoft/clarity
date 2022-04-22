@@ -5,10 +5,9 @@ import encode from "./encode";
 export let data: TraceData = null;
 
 export function trace(tagTraceId?: string): void {
+  data = {};
   if(tagTraceId){
-    data = {
-      tagTraceId: tagTraceId
-    };
+    data["tagTraceId"] = tagTraceId;
   }
 }
 
