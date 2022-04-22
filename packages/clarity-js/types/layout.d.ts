@@ -168,6 +168,7 @@ export interface NodeMeta {
     suspend: boolean;
     privacy: Privacy;
     position: number;
+    fraud: number;
     size: number[];
 }
 

@@ -65,7 +65,8 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 context: context(a),
                 text: text(t),
                 link: a ? a.href : null,
-                hash: null
+                hash: null,
+                trust: evt.isTrusted ? BooleanFlag.True : BooleanFlag.False
             }
         });
         schedule(encode.bind(this, event));

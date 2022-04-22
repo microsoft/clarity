@@ -35,6 +35,7 @@ function setup(url: string): void {
               script.innerText = wireup({
                 regions: c.regions,
                 extract: c.extract,
+                fraud: c.fraud,
                 mask: c.mask,
                 unmask: c.unmask,
                 showText: items.clarity.showText,
@@ -60,6 +61,7 @@ function wireup(settings: any): string {
       lean: "$__leanMode__$",
       regions: "$__regions__$",
       extract: "$__extract__$",
+      fraud: "$__fraud__$",
       mask: "$__mask__$",
       unmask: "$__unmask__$",
       content: "$__showText__$",

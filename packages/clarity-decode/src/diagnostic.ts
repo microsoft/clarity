@@ -23,6 +23,13 @@ export function decode(tokens: Data.Token[]): DiagnosticEvent {
                 severity: tokens[6] as number
             };
             return { time, event, data: log };
+        case Data.Event.Fraud:
+            let fraud: Diagnostic.FraudData = {
+                id: tokens[2] as number,
+                target: tokens[3] as number,
+                hash: tokens[4] as string
+            };
+            return { time, event, data: fraud };
     }
     return null;
 }

@@ -39,7 +39,6 @@ export function start(): void {
   dimension.log(Dimension.DocumentDirection, document.dir);
   if (navigator) {
     dimension.log(Dimension.Language, (<any>navigator).userLanguage || navigator.language);
-    metric.max(Metric.Automation, navigator.webdriver ? BooleanFlag.True : BooleanFlag.False);
     userAgentData();
   }
 

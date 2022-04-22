@@ -1,7 +1,8 @@
 import { Privacy } from "@clarity-types/core";
 import { Event } from "@clarity-types/data";
 import { TargetMetadata } from "@clarity-types/layout";
-import { track } from "@src/layout/region";
+import * as fraud from "@src/diagnostic/fraud";
+import * as region from "@src/layout/region";
 import * as dom from "@src/layout/dom";
 import * as mutation from "@src/layout/mutation";
 
@@ -25,16 +26,18 @@ export function link(node: Node): HTMLAnchorElement {
     return null;
 }
 
-export function metadata(node: Node, event: Event): TargetMetadata {
+export function metadata(node: Node, event: Event, text: string = null): TargetMetadata {
     // If the node is null, we return a reserved value for id: 0. Valid assignment of id begins from 1+.
     let output: TargetMetadata = { id: 0, hash: null, privacy: Privacy.Text, node };
     if (node) {
         let value = dom.get(node);
         if (value !== null) {
+            let metadata = value.metadata;
             output.id = value.id;
             output.hash = value.hash;
-            output.privacy = value.metadata.privacy;
-            if (value.region) { track(value.region, event); }
+            output.privacy = metadata.privacy;
+            if (value.region) { region.track(value.region, event); }
+            if (metadata.fraud) { fraud.check(metadata.fraud, value.id, text || value.data.value); }
         }
     }
 

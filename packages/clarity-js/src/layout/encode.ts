@@ -8,6 +8,7 @@ import { time } from "@src/core/time";
 import tokenize from "@src/data/token";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
+import * as fraud from "@src/diagnostic/fraud";
 import * as doc from "./document";
 import * as dom from "./dom";
 import * as region from "./region";
@@ -71,6 +72,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                     }
                                     break;
                                 case "value":
+                                    fraud.check(value.metadata.fraud, value.id, data[key]);
                                     tokens.push(scrub(data[key], data.tag, privacy, mangle));
                                     break;
                             }

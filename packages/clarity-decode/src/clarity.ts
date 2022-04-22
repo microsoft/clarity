@@ -1,7 +1,7 @@
 import { Data, version } from "clarity-js";
 import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
 import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent } from "../types/data";
-import { LogEvent, ScriptErrorEvent } from "../types/diagnostic";
+import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ClickEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent, SubmitEvent, TimelineEvent } from "../types/interaction";
 import { SelectionEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
 import { DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
@@ -162,6 +162,10 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Log:
                 if (payload.log === undefined) { payload.log = []; }
                 payload.log.push(diagnostic.decode(entry) as LogEvent);
+                break;
+            case Data.Event.Fraud:
+                if (payload.fraud === undefined) { payload.fraud = []; }
+                payload.fraud.push(diagnostic.decode(entry) as FraudEvent);
                 break;
             case Data.Event.Navigation:
                 if (payload.navigation === undefined) { payload.navigation = []; }

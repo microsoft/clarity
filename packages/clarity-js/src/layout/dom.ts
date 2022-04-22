@@ -23,6 +23,7 @@ let maskDisable = [];
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
 let iframeMap: WeakMap<Document, HTMLIFrameElement> = null; // Maps iframe's contentDocument => parent iframe element
 let privacyMap: WeakMap<Node, Privacy> = null; // Maps node => Privacy (enum)
+let fraudMap: WeakMap<Node, number> = null; // Maps node => FraudId (number)
 
 export function start(): void {
     reset();
@@ -46,6 +47,7 @@ function reset(): void {
     idMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
+    fraudMap = new WeakMap();
 }
 
 // We parse new root nodes for any regions or masked nodes in the beginning (document) and
@@ -62,6 +64,7 @@ export function parse(root: ParentNode, init: boolean = false): void {
         if ("querySelectorAll" in root) {
             config.regions.forEach(x => root.querySelectorAll(x[1]).forEach(e => region.observe(e, `${x[0]}`))); // Regions
             config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
+            config.fraud.forEach(x => root.querySelectorAll(x[1]).forEach(e => fraudMap.set(e, x[0]))); // Fraud Check
             unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
         }
     } catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
@@ -82,9 +85,10 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let id = getId(node, true);
     let parentId = parent ? getId(parent) : null;
     let previousId = getPreviousId(node);
-    let parentValue = null;
+    let parentValue: NodeValue = null;
     let regionId = region.exists(node) ? id : null;
     let fragmentId = null;
+    let fraudId = fraudMap.has(node) ? fraudMap.get(node) : null;
     let privacyId = config.content ? Privacy.Sensitive : Privacy.Text
 
     if (parentId >= 0 && values[parentId]) {
@@ -92,6 +96,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         parentValue.children.push(id);
         regionId = regionId === null ? parentValue.region : regionId;
         fragmentId = parentValue.fragment;
+        fraudId = fraudId === null ? parentValue.metadata.fraud : fraudId;
     }
 
     // If there's an explicit region attribute set on the element, use it to mark a region on the page
@@ -110,7 +115,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         selector: null,
         hash: null,
         region: regionId,
-        metadata: { active: true, suspend: false, privacy: privacyId, position: null, size: null },
+        metadata: { active: true, suspend: false, privacy: privacyId, position: null, fraud: fraudId, size: null },
         fragment: fragmentId,
     };
 
@@ -223,6 +228,10 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             // If this node was explicitly configured to contain sensitive content, honor that privacy setting
             metadata.privacy = privacyMap.get(node);
             break;
+        case fraudMap.has(node):
+            // If this node was explicitly configured to be evaluated for fraud, then also mask content
+            metadata.privacy = Privacy.Text;
+            break;
         case tag === Constant.TextTag:
             // If it's a text node belonging to a STYLE or TITLE tag or one of SCRUB_EXCEPTIONS, then capture content
             let pTag = parent && parent.data ? parent.data.tag : Constant.Empty;
@@ -254,11 +263,8 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
 }
 
 function inspect(input: string, metadata: NodeMeta): Privacy {
-    if (input) {
-        // Check the input against static list of tokens
-        if (maskText.some(x => input.indexOf(x) >= 0)) {
-            return Privacy.Text;
-        }
+    if (input && maskText.some(x => input.indexOf(x) >= 0)) {
+        return Privacy.Text;
     }
     return metadata.privacy;
 }
