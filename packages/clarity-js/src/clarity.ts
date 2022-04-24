@@ -11,7 +11,6 @@ import * as layout from "@src/layout";
 import * as performance from "@src/performance";
 export { version };
 export { consent, event, identify, set, upgrade, metadata } from "@src/data";
-export { trace } from "@src/diagnostic";
 
 const modules: Module[] = [diagnostic, layout, interaction, performance];
 

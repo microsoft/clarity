@@ -16,7 +16,6 @@ interface Clarity {
   set: (variable: string, value: string | string[]) => void;
   identify: (userId: string, sessionId?: string, pageId?: string) => void;
   metadata: (callback: Data.MetadataCallback, wait?: boolean) => void;
-  trace: (tagTraceId?: string) => void;
 }
 
 interface Helper {
