@@ -1,5 +1,5 @@
 import { Privacy, Task, Timer } from "@clarity-types/core";
-import { Event, Token } from "@clarity-types/data";
+import { Event, Setting, Token } from "@clarity-types/data";
 import { Constant, NodeInfo, NodeValue } from "@clarity-types/layout";
 import config from "@src/core/config";
 import scrub from "@src/core/scrub";
@@ -8,7 +8,7 @@ import { time } from "@src/core/time";
 import tokenize from "@src/data/token";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
-import * as box from "./box";
+import * as fraud from "@src/diagnostic/fraud";
 import * as doc from "./document";
 import * as dom from "./dom";
 import * as region from "./region";
@@ -35,16 +35,6 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             }
             region.reset();
             break;
-        case Event.Box:
-            let b = box.data;
-            for (let entry of b) {
-                tokens.push(entry.id);
-                tokens.push(entry.width);
-                tokens.push(entry.height);
-            }
-            box.reset();
-            queue(tokens);
-            break;
         case Event.Discover:
         case Event.Mutation:
             // Check if we are operating within the context of the current page
@@ -62,18 +52,17 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                     let privacy = value.metadata.privacy;
                     let mangle = shouldMangle(value);
                     let keys = active ? ["tag", "attributes", "value"] : ["tag"];
-                    box.compute(value.id);
                     for (let key of keys) {
                         if (data[key]) {
                             switch (key) {
                                 case "tag":
-                                    let size = value.metadata.size;
+                                    let box = size(value);
                                     let factor = mangle ? -1 : 1;
                                     tokens.push(value.id * factor);
                                     if (value.parent && active) { tokens.push(value.parent); }
                                     if (value.previous && active) { tokens.push(value.previous); }
                                     tokens.push(suspend ? Constant.SuspendMutationTag : data[key]);
-                                    if (size && size.length === 2) { tokens.push(`${Constant.Box}${str(size[0])}.${str(size[1])}`); }
+                                    if (box && box.length === 2) { tokens.push(`${Constant.Box}${str(box[0])}.${str(box[1])}`); }
                                     break;
                                 case "attributes":
                                     for (let attr in data[key]) {
@@ -83,6 +72,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                     }
                                     break;
                                 case "value":
+                                    fraud.check(value.metadata.fraud, value.id, data[key]);
                                     tokens.push(scrub(data[key], data.tag, privacy, mangle));
                                     break;
                             }
@@ -99,6 +89,16 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
 function shouldMangle(value: NodeValue): boolean {
     let privacy = value.metadata.privacy;
     return value.data.tag === Constant.TextTag && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
+}
+
+function size(value: NodeValue): number[] {
+    if (value.metadata.size !== null && value.metadata.size.length === 0) {
+        let img = dom.getNode(value.id) as HTMLImageElement;
+        if (img) {
+            return [Math.floor(img.offsetWidth * Setting.BoxPrecision), Math.floor(img.offsetHeight * Setting.BoxPrecision)];
+        }
+    }
+    return value.metadata.size;
 }
 
 function str(input: number): string {

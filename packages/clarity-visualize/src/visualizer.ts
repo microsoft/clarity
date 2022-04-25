@@ -144,9 +144,6 @@ export class Visualizer implements VisualizerType {
                 case Data.Event.Region:
                     this.data.region(entry as Layout.RegionEvent);
                     break;
-                case Data.Event.Box:
-                    this.layout.box(entry as Layout.BoxEvent);
-                    break;
                 case Data.Event.Mutation:
                     this.layout.markup(entry as Layout.DomEvent);
                     break;

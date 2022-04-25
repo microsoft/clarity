@@ -1,21 +1,20 @@
 {
   "manifest_version": 2,
-  "name": "Clarity Developer Tools",
-  "description": "Get insights about how customers use your website.",
-  "version": "0.6.34",
-  "version_name": "0.6.34",
+  "name": "Microsoft Clarity Developer Tools",
+  "description": "Clarity helps you understand how users are interacting with your website.",
+  "version": "0.6.35",
+  "version_name": "0.6.35",
   "minimum_chrome_version": "50",
   "devtools_page": "devtools.html",
   "icons": {
     "16": "icon-16.png",
     "32": "icon-32.png",
     "48": "icon-48.png",
-    "64": "icon-64.png",
     "128": "icon-128.png"
   },
   "browser_action": {
     "default_icon": "icon.png",
-    "default_title": "Clarity Developer Tools",
+    "default_title": "Microsoft Clarity Developer Tools",
     "default_popup": "popup.html"
   },
   "content_scripts": [

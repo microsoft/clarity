@@ -44,17 +44,6 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                 regionData.push(region);
             }
             return { time, event, data: regionData };
-        case Data.Event.Box:
-            let boxData: Layout.BoxData[] = [];
-            for (let i = 2; i < tokens.length; i += 3) {
-                let box: Layout.BoxData = {
-                    id: tokens[i] as number,
-                    width: tokens[i + 1] as number / Data.Setting.BoxPrecision,
-                    height: tokens[i + 2] as number / Data.Setting.BoxPrecision
-                };
-                boxData.push(box);
-            }
-            return { time, event, data: boxData };
         case Data.Event.Discover:
         case Data.Event.Mutation:
             let lastType = null;

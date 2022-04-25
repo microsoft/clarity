@@ -16,3 +16,9 @@ export interface LogData {
     stack: string;
     severity: Severity;
 }
+
+export interface FraudData {
+    id: number;
+    target: number;
+    hash: string;
+}

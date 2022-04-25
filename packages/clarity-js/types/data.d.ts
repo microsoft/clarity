@@ -1,5 +1,4 @@
 import { Time } from "@clarity-types/core";
-import { callback } from "@src/data/metadata";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[]);
 export type DecodedToken = (any | any[]);
@@ -56,10 +55,14 @@ export const enum Event {
     Variable = 34,
     Limit = 35,
     Summary = 36,
+/**
+ * @deprecated No longer support Box event
+ */
     Box = 37,
     Clipboard = 38,
     Submit = 39,
-    Extract = 40
+    Extract = 40,
+    Fraud = 41
 }
 
 export const enum Metric {
@@ -90,7 +93,10 @@ export const enum Metric {
     CartTotal = 24,
     EventCount = 25,
     Automation = 26,
-    Mobile = 27
+    Mobile = 27,
+    UploadTime = 28,
+    SinglePage = 29,
+    UsedMemory = 30
 }
 
 export const enum Dimension {
@@ -181,7 +187,6 @@ export const enum Setting {
     CollectionLimit = 128, // Number of unique entries for dimensions
     ClickPrecision = 32767, // 2^15 - 1
     BoxPrecision = 100, // Up to 2 decimal points (e.g. 34.56)
-    ResizeObserverThreshold = 15, // At least 15 characters before we attach a resize observer for the node
     ScriptErrorLimit = 5, // Do not send the same script error more than 5 times per page
     DimensionLimit = 256, // Do not extract dimensions which are over 256 characters
     WordLength = 5, // Estimated average size of a word,
@@ -191,6 +196,7 @@ export const enum Setting {
     ViewportIntersectionRatio = 0.05, // Ratio of intersection area in comparison to viewport area before it's marked visible
     IntersectionRatio = 0.8, // Ratio of intersection area in comparison to element's area before it's marked visible
     MaxFirstPayloadBytes = 1 * 1024 * 1024, // 1MB: Cap the very first payload to a maximum of 1MB
+    MegaByte = 1024 * 1024, // 1MB
     UploadFactor = 3, // Slow down sequence by specified factor
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
@@ -216,6 +222,7 @@ export const enum Constant {
     Pause = "pause",
     Resume = "resume",
     Report = "report",
+    Memory = "memory",
     Empty = "",
     Space = " ",
     Expires = "expires=",
@@ -240,7 +247,6 @@ export const enum Constant {
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
-    ResizeObserver = "ResizeObserver",
     Mask = "•",
     SessionStorage = "sessionStorage",
     Cookie = "cookie",

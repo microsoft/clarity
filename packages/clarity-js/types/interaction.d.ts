@@ -103,6 +103,7 @@ export interface ClickData {
     text: string;
     link: string;
     hash: string;
+    trust: number;
 }
 
 export interface ClipboardData {

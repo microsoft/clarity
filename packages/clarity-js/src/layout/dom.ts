@@ -1,6 +1,6 @@
 import { Privacy } from "@clarity-types/core";
-import { Code, Setting, Severity } from "@clarity-types/data";
-import { Constant, NodeInfo, NodeValue, Selector, SelectorInput, Source } from "@clarity-types/layout";
+import { Code, Severity } from "@clarity-types/data";
+import { Constant, Mask, NodeInfo, NodeMeta, NodeValue, Selector, SelectorInput, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
 import * as internal from "@src/diagnostic/internal";
@@ -9,12 +9,6 @@ import selector from "@src/layout/selector";
 import * as mutation from "@src/layout/mutation";
 import * as extract from "@src/data/extract";
 let index: number = 1;
-
-// Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input#%3Cinput%3E_types
-const DISALLOWED_TYPES = ["password", "hidden", "email", "tel"];
-const DISALLOWED_NAMES = ["addr", "cell", "code", "dob", "email", "mob", "name", "phone", "secret", "social", "ssn", "tel", "zip", "pass", "card", "account", "cvv", "ccv"];
-const DISALLOWED_MATCH = ["address", "password", "contact"];
-
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
 let updateMap: number[] = [];
@@ -22,11 +16,14 @@ let hashMap: { [hash: string]: number } = {};
 let override = [];
 let unmask = [];
 let updatedFragments: { [fragment: number]: string } = {};
+let maskText = [];
+let maskDisable = [];
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
 let iframeMap: WeakMap<Document, HTMLIFrameElement> = null; // Maps iframe's contentDocument => parent iframe element
 let privacyMap: WeakMap<Node, Privacy> = null; // Maps node => Privacy (enum)
+let fraudMap: WeakMap<Node, number> = null; // Maps node => FraudId (number)
 
 export function start(): void {
     reset();
@@ -45,9 +42,12 @@ function reset(): void {
     hashMap = {};
     override = [];
     unmask = [];
+    maskText = Mask.Text.split(Constant.Comma);
+    maskDisable = Mask.Disable.split(Constant.Comma);
     idMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
+    fraudMap = new WeakMap();
 }
 
 // We parse new root nodes for any regions or masked nodes in the beginning (document) and
@@ -64,6 +64,7 @@ export function parse(root: ParentNode, init: boolean = false): void {
         if ("querySelectorAll" in root) {
             config.regions.forEach(x => root.querySelectorAll(x[1]).forEach(e => region.observe(e, `${x[0]}`))); // Regions
             config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
+            config.fraud.forEach(x => root.querySelectorAll(x[1]).forEach(e => fraudMap.set(e, x[0]))); // Fraud Check
             unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
         }
     } catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
@@ -84,21 +85,19 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let id = getId(node, true);
     let parentId = parent ? getId(parent) : null;
     let previousId = getPreviousId(node);
-    let privacy = config.content ? Privacy.Sensitive : Privacy.Text;
-    let parentValue = null;
+    let parentValue: NodeValue = null;
     let regionId = region.exists(node) ? id : null;
     let fragmentId = null;
+    let fraudId = fraudMap.has(node) ? fraudMap.get(node) : null;
+    let privacyId = config.content ? Privacy.Sensitive : Privacy.Text
 
     if (parentId >= 0 && values[parentId]) {
         parentValue = values[parentId];
         parentValue.children.push(id);
         regionId = regionId === null ? parentValue.region : regionId;
         fragmentId = parentValue.fragment;
-        privacy = parentValue.metadata.privacy;
+        fraudId = fraudId === null ? parentValue.metadata.fraud : fraudId;
     }
-
-    // Check to see if this particular node should be masked or not
-    privacy = getPrivacy(node, data, parentValue, privacy);
 
     // If there's an explicit region attribute set on the element, use it to mark a region on the page
     if (data.attributes && Constant.RegionData in data.attributes) {
@@ -116,12 +115,13 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         selector: null,
         hash: null,
         region: regionId,
-        metadata: { active: true, suspend: false, privacy, position: null, size: null },
+        metadata: { active: true, suspend: false, privacy: privacyId, position: null, fraud: fraudId, size: null },
         fragment: fragmentId,
     };
 
+    privacy(node, values[id], parentValue);
     updateSelector(values[id]);
-    size(values[id], parentValue);
+    size(values[id]);
     track(id, source, values[id].fragment);
 }
 
@@ -210,66 +210,63 @@ export function iframe(node: Node): HTMLIFrameElement {
     return doc && iframeMap.has(doc) ? iframeMap.get(doc) : null;
 }
 
-function getPrivacy(node: Node, data: NodeInfo, parent: NodeValue, privacy: Privacy): Privacy {
-    let attributes = data.attributes;
+function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
+    let data = value.data;
+    let metadata = value.metadata;
+    let current = metadata.privacy;
+    let attributes = data.attributes || {};
     let tag = data.tag.toUpperCase();
 
-    // If this node was explicitly configured to contain sensitive content, use that information and return the value
-    if (privacyMap.has(node)) { return privacyMap.get(node); }
-
-    // If it's a text node belonging to a STYLE or TITLE tag; 
-    // Or, the text node belongs to one of SCRUB_EXCEPTIONS
-    // then reset the privacy setting to ensure we capture the content
-    if (tag === Constant.TextTag && parent && parent.data) {
-        let path = parent.selector ? parent.selector[Selector.Stable] : Constant.Empty;
-        privacy = parent.data.tag === Constant.StyleTag || parent.data.tag === Constant.TitleTag ? Privacy.None : privacy;
-        for (let entry of override) {
-            if (path.indexOf(entry) >= 0) {
-                privacy = Privacy.None;
-                break;
-            }
-        }
-    }
-
-    // Do not proceed if attributes are missing for the node
-    if (attributes === null || attributes === undefined) { return privacy; }
-
-    // Look up for sensitive fields
-    if (Constant.Class in attributes && privacy === Privacy.Sensitive) {
-        for (let match of DISALLOWED_MATCH) {
-            if (attributes[Constant.Class].indexOf(match) >= 0) {
-                privacy = Privacy.Text;
-                break;
-            }
-        }
-    }
-
-    // Check for disallowed list of fields (e.g. address, phone, etc.) only if the input node is not already masked
-    if (tag === Constant.InputTag) {
-        if (privacy === Privacy.None) {
+    switch (true) {
+        case Constant.MaskData in attributes:
+            metadata.privacy = Privacy.TextImage;
+            break;
+        case Constant.UnmaskData in attributes:
+            metadata.privacy = Privacy.None;
+            break;
+        case privacyMap.has(node):
+            // If this node was explicitly configured to contain sensitive content, honor that privacy setting
+            metadata.privacy = privacyMap.get(node);
+            break;
+        case fraudMap.has(node):
+            // If this node was explicitly configured to be evaluated for fraud, then also mask content
+            metadata.privacy = Privacy.Text;
+            break;
+        case tag === Constant.TextTag:
+            // If it's a text node belonging to a STYLE or TITLE tag or one of SCRUB_EXCEPTIONS, then capture content
+            let pTag = parent && parent.data ? parent.data.tag : Constant.Empty;
+            let pSelector = parent && parent.selector ? parent.selector[Selector.Stable] : Constant.Empty;
+            metadata.privacy = pTag === Constant.StyleTag || pTag === Constant.TitleTag || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current; 
+            break;
+        case Constant.Type in attributes:
+            // If this node has an explicit type assigned to it, go through masking rules to determine right privacy setting
+            metadata.privacy  = inspect(attributes[Constant.Type], metadata);
+            break;
+        case tag === Constant.InputTag && current === Privacy.None:
+            // If even default privacy setting is to not mask, we still scan through input fields for any sensitive information
             let field: string = Constant.Empty;
-            // Be aggressive in looking up any attribute (id, class, name, etc.) for disallowed names
-            for (const attribute of Object.keys(attributes)) { field += attributes[attribute].toLowerCase(); }
-            for (let name of DISALLOWED_NAMES) {
-                if (field.indexOf(name) >= 0) {
-                    privacy = Privacy.Text;
-                    break;
-                }
-            }
-        } else if (privacy === Privacy.Sensitive) {
-            // Mask all input fields with an exception of type=submit; since they do not accept user input
-            privacy = attributes && attributes[Constant.Type] === Constant.Submit ? Privacy.None : Privacy.Text;
-        }
+            Object.keys(attributes).forEach(x => field += attributes[x].toLowerCase());
+            metadata.privacy = inspect(field, metadata);
+            break;
+        case current === Privacy.Sensitive && tag === Constant.InputTag:
+            // If it's a button or an input option, make an exception to disable masking
+            metadata.privacy = maskDisable.indexOf(attributes[Constant.Type]) >= 0 ? Privacy.None : current;
+            break;
+        case current === Privacy.Sensitive:
+            // In a mode where we mask sensitive information by default, look through class names to aggressively mask content
+            metadata.privacy = inspect(attributes[Constant.Class], metadata);
+            break;
+        default:
+            metadata.privacy = parent ? parent.metadata.privacy : metadata.privacy;
+            break;
     }
+}
 
-    // Check for disallowed list of types (e.g. password, email, etc.) and set the masked property appropriately
-    if (Constant.Type in attributes && DISALLOWED_TYPES.indexOf(attributes[Constant.Type]) >= 0) { privacy = Privacy.Text; }
-
-    // Following two conditions supersede any of the above. If there are explicit instructions to mask / unmask a field, we honor that.
-    if (Constant.MaskData in attributes) { privacy = Privacy.TextImage; }
-    if (Constant.UnmaskData in attributes) { privacy = Privacy.None; }
-
-    return privacy;
+function inspect(input: string, metadata: NodeMeta): Privacy {
+    if (input && maskText.some(x => input.indexOf(x) >= 0)) {
+        return Privacy.Text;
+    }
+    return metadata.privacy;
 }
 
 function diff(a: NodeInfo, b: NodeInfo, field: string): boolean {
@@ -358,19 +355,10 @@ function remove(id: number, source: Source): void {
     }
 }
 
-function size(value: NodeValue, parent: NodeValue): void {
-    let data = value.data;
-    let tag = data.tag;
-
-    // If this element is a text node, is masked, and longer than configured length, then track box model for the parent element
-    let isLongText = tag === Constant.TextTag && data.value && data.value.length > Setting.ResizeObserverThreshold;
-    let isMasked = value.metadata.privacy === Privacy.Text || value.metadata.privacy === Privacy.TextImage;
-    if (isLongText && isMasked && parent && parent.metadata.size === null) { parent.metadata.size = []; }
-
+function size(value: NodeValue): void {
     // If this element is a image node, and is masked, then track box model for the current element
-    if (data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { value.metadata.size = []; }
+    if (value.data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { value.metadata.size = []; }
 }
-
 function getPreviousId(node: Node): number {
     let id = null;
 

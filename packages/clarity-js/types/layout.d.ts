@@ -28,6 +28,11 @@ export const enum RegionVisibility {
     ScrolledToEnd = 13
 }
 
+export const enum Mask {
+    Text = "password,secret,pass,social,ssn,name,code,dob,cell,mob,contact,hidden,account,cvv,ccv,email,tel,phone,address,addr,card,zip",
+    Disable = "radio,checkbox,range,button,reset,submit"
+}
+
 export const enum Constant {
     Empty = "",
     SvgPrefix = "svg:",
@@ -42,6 +47,7 @@ export const enum Constant {
     Box = "#",
     Bang = "!",
     Period = ".",
+    Comma = ",",
     MaskData = "data-clarity-mask",
     UnmaskData = "data-clarity-unmask",
     RegionData = "data-clarity-region",
@@ -162,6 +168,7 @@ export interface NodeMeta {
     suspend: boolean;
     privacy: Privacy;
     position: number;
+    fraud: number;
     size: number[];
 }
 
@@ -196,12 +203,6 @@ export interface RegionData {
     visibility: RegionVisibility;
     interaction: InteractionState;
     name: string;    
-}
-
-export interface BoxData {
-    id: number;
-    width: number;
-    height: number;
 }
 
 export interface TargetMetadata {

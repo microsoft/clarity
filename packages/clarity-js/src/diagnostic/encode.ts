@@ -1,6 +1,7 @@
 import { Event, Token } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import { queue } from "@src/data/upload";
+import * as fraud from "@src/diagnostic/fraud";
 import * as internal from "@src/diagnostic/internal";
 import * as script from "@src/diagnostic/script";
 
@@ -23,6 +24,14 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(internal.data.message);
                 tokens.push(internal.data.stack);
                 tokens.push(internal.data.severity);
+                queue(tokens, false);
+            }
+            break;
+        case Event.Fraud:
+            if (fraud.data) {
+                tokens.push(fraud.data.id);
+                tokens.push(fraud.data.target);
+                tokens.push(fraud.data.hash);
                 queue(tokens, false);
             }
             break;

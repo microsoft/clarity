@@ -11,6 +11,7 @@ let config: Config = {
     regions: [],
     extract: [],
     cookies: [],
+    fraud: [],
     report: null,
     upload: null,
     fallback: null,

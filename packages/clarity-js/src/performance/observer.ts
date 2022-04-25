@@ -1,4 +1,5 @@
-import { Code, Constant, Dimension, Metric, Severity } from "@clarity-types/data";
+import { Code, Constant, Dimension, Metric, Setting, Severity } from "@clarity-types/data";
+import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
 import { setTimeout } from "@src/core/timeout";
@@ -56,7 +57,9 @@ function process(entries: PerformanceEntryList): void {
                 navigation.compute(entry as PerformanceNavigationTiming);
                 break;
             case Constant.Resource:
-                dimension.log(Dimension.NetworkHosts, host(entry.name));
+                let name = entry.name;
+                dimension.log(Dimension.NetworkHosts, host(name));
+                if (name === config.upload || name === config.fallback) { metric.max(Metric.UploadTime, entry.duration); }
                 break;
             case Constant.LongTask:
                 metric.count(Metric.LongTaskCount);
@@ -72,6 +75,11 @@ function process(entries: PerformanceEntryList): void {
                 if (visible) { metric.max(Metric.LargestPaint, entry.startTime); }
                 break;
         }
+    }
+    if (performance && Constant.Memory in performance && performance[Constant.Memory].usedJSHeapSize) {
+        // Track consumed memory (MBs) where "memory" API is available
+        // Reference: https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory
+        metric.max(Metric.UsedMemory, Math.abs(performance[Constant.Memory].usedJSHeapSize / Setting.MegaByte));
     }
 }
 

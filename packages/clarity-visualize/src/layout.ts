@@ -32,14 +32,6 @@ export class LayoutHelper {
         return null;
     }
 
-    public box = (event: Layout.BoxEvent): void => {
-        let data = event.data;
-        for (let b of data) {
-            let el = this.element(b.id) as HTMLElement;
-            this.resize(el, b.width, b.height);
-        }
-    }
-
     private addToHashMap = (data: Layout.DomData, parent: Node) => {
         // In case of selector collision, prefer the first inserted node
         this.hashMap[data.hash] = this.get(data.hash) || parent;
@@ -53,7 +45,7 @@ export class LayoutHelper {
             el.style.boxSizing = Layout.Constant.BorderBox; // Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing
         }
     }
-
+    
     public element = (nodeId: number): Node => {
         return nodeId !== null && nodeId > 0 && nodeId in this.nodes ? this.nodes[nodeId] : null;
     }

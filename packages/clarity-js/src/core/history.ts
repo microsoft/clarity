@@ -1,8 +1,10 @@
-import { Code, Constant, Setting, Severity } from "@clarity-types/data";
+import { BooleanFlag, Code, Constant, Metric, Setting, Severity } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
+import * as core from "@src/core"
 import { bind } from "@src/core/event";
 import * as internal from "@src/diagnostic/internal";
-import * as core from "@src/core"
+import * as metric from "@src/data/metric";
+
 let pushState = null;
 let replaceState = null;
 let url = null;
@@ -50,8 +52,13 @@ function compute(): void {
     if (url !== getCurrentUrl()) {
         // If the url changed, start tracking it as a new page
         clarity.stop();
-        window.setTimeout(clarity.start, Setting.RestartDelay);
+        window.setTimeout(restart, Setting.RestartDelay);
     }
+}
+
+function restart(): void {
+    clarity.start();
+    metric.max(Metric.SinglePage, BooleanFlag.True);
 }
 
 function getCurrentUrl(): string {

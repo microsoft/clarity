@@ -44,7 +44,7 @@ export default async function (type: Event): Promise<void> {
             break;
         case Event.Click:
             for (let entry of click.state) {
-                let cTarget = metadata(entry.data.target as Node, entry.event);
+                let cTarget = metadata(entry.data.target as Node, entry.event, entry.data.text);
                 tokens = [entry.time, entry.event];
                 let cHash = cTarget.hash.join(Constant.Dot);
                 tokens.push(cTarget.id);
@@ -58,6 +58,7 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(scrub(entry.data.text, "click", cTarget.privacy));
                 tokens.push(entry.data.link);
                 tokens.push(cHash);
+                tokens.push(entry.data.trust);
                 queue(tokens);
                 timeline.track(entry.time, entry.event, cHash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
@@ -91,10 +92,10 @@ export default async function (type: Event): Promise<void> {
             break;
         case Event.Input:
             for (let entry of input.state) {
-                let iTarget = metadata(entry.data.target as Node, entry.event);
+                let iTarget = metadata(entry.data.target as Node, entry.event, entry.data.value);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
-                tokens.push(entry.data.value);
+                tokens.push(scrub(entry.data.value, "input", iTarget.privacy));
                 queue(tokens);
             }
             input.reset();

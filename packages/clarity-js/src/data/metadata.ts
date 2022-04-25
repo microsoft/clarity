@@ -39,7 +39,6 @@ export function start(): void {
   dimension.log(Dimension.DocumentDirection, document.dir);
   if (navigator) {
     dimension.log(Dimension.Language, (<any>navigator).userLanguage || navigator.language);
-    metric.max(Metric.Automation, navigator.webdriver ? BooleanFlag.True : BooleanFlag.False);
     userAgentData();
   }
 
@@ -63,7 +62,7 @@ export function start(): void {
   track(u);
 }
 
-export function userAgentData(): void {
+function userAgentData(): void {
   if (navigator["userAgentData"] && navigator["userAgentData"].getHighEntropyValues) {
     navigator["userAgentData"].getHighEntropyValues(
       ["model",
