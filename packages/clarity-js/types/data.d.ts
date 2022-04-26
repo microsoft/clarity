@@ -170,6 +170,10 @@ export const enum BooleanFlag {
     True = 1
 }
 
+export const enum ApplicationPlatform {
+    WebApp = 0, // Clarity for web.
+}
+
 export const enum Setting {
     Expire = 365, // 1 Year
     SessionExpire = 1, // 1 Day
@@ -293,6 +297,7 @@ export interface Metadata {
     userId: string;
     sessionId: string;
     pageNum: number;
+    applicationPlatform: ApplicationPlatform;
 }
 
 export interface Session {

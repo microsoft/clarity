@@ -1,4 +1,4 @@
-import { BooleanFlag, Token, Upload, Envelope } from "@clarity-types/data";
+import { BooleanFlag, Token, Upload, Envelope, ApplicationPlatform } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import version from "@src/core/version";
 import * as metadata from "@src/data/metadata";
@@ -17,7 +17,8 @@ export function start(): void {
     sessionId: m.sessionId,
     pageNum: m.pageNum,
     upload: Upload.Async,
-    end: BooleanFlag.False
+    end: BooleanFlag.False,
+    applicationPlatform: ApplicationPlatform.WebApp,
   };
 }
 
@@ -41,6 +42,7 @@ export function envelope(last: boolean): Token[] {
     data.sessionId,
     data.pageNum,
     data.upload,
-    data.end
+    data.end,
+    data.applicationPlatform,
   ];
 }
