@@ -89,6 +89,7 @@ export function envelope(tokens: Data.Token[]): Data.Envelope {
         sessionId: tokens[6] as string,
         pageNum: tokens[7] as number,
         upload: tokens[8] as Data.Upload,
-        end: tokens[9] as Data.BooleanFlag
+        end: tokens[9] as Data.BooleanFlag,
+        applicationPlatform: tokens[10] as Data.ApplicationPlatform
     };
 }

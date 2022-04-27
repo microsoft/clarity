@@ -1,5 +1,5 @@
 import { Time } from "@clarity-types/core";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, ApplicationPlatform } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -23,7 +23,8 @@ export function start(): void {
     projectId: config.projectId || hash(location.host),
     userId: u.id,
     sessionId: s.session,
-    pageNum: s.count
+    pageNum: s.count,
+    applicationPlatform: ApplicationPlatform.WebApp
   }
 
   // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
