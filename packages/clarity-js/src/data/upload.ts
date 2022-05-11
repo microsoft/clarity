@@ -105,10 +105,10 @@ async function upload(final: boolean = false): Promise<void> {
 
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
+    diagnostic.compute();
     region.compute();
     timeline.compute();
     data.compute();
-    diagnostic.compute();
 
     // Treat this as the last payload only if final boolean was explicitly set to true.
     // In real world tests, we noticed that certain third party scripts (e.g. https://www.npmjs.com/package/raven-js)

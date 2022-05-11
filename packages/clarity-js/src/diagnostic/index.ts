@@ -5,7 +5,6 @@ import * as trace from "./trace";
 export function start(): void {
     script.start();
     internal.start();
-    trace.start();
 }
 
 export function compute(): void {
