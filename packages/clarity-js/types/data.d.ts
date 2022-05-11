@@ -59,7 +59,6 @@ export const enum Event {
     Clipboard = 38,
     Submit = 39,
     Extract = 40,
-    Trace = 41
 }
 
 export const enum Metric {
@@ -119,7 +118,8 @@ export const enum Dimension {
     Platform = 22,
     PlatformVersion = 23,
     Brand = 24,
-    Model = 25
+    Model = 25,
+    TraceId = 26
 }
 
 export const enum Check {

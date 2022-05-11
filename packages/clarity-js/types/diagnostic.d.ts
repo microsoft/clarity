@@ -16,7 +16,3 @@ export interface LogData {
     stack: string;
     severity: Severity;
 }
-
-export interface TraceData {
-    tagTraceId?: string;
-}

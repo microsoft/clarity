@@ -1,18 +1,7 @@
-import {Event} from "@clarity-types/data";
-import { TraceData } from "@clarity-types/diagnostic";
-import encode from "./encode";
+import { Dimension } from "@clarity-types/data";
 import config from "@src/core/config";
-
-export let data: TraceData = null;
-
-export function start(): void {
-  let tagTraceId : string = config.tagTraceId;
-  data = {};
-  if(tagTraceId){
-    data["tagTraceId"] = tagTraceId;
-  }
-}
+import * as dimension from "@src/data/dimension";
 
 export function compute(): void {
-    encode(Event.Trace);
+  if (config.tagTraceId) { dimension.log(Dimension.TraceId, config.tagTraceId) }
 }
