@@ -114,7 +114,7 @@ function handle(m: MutationRecord[]): void {
   summary.track(Event.Mutation, now);
   mutations.push({ time: now, mutations: m});
   task.schedule(process, Priority.High).then((): void => {
-      measure(doc.compute)();
+      setTimeout(doc.compute)
       measure(region.compute)();
   });
 }
