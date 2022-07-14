@@ -7,7 +7,7 @@ import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
 
-const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror"];
+const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
 const newlineRegex = /[\r\n]+/g;
 
 export default function (node: Node, source: Source): Node {
