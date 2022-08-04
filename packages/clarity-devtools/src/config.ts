@@ -20,6 +20,7 @@ export default function(): Core.Config {
             [Region.Footer, "footer"], 
             [Region.Navigation, "nav"]
         ],
+        fraud: [],
         extract: [ExtractSource.Javascript, Extract.Performance, "performance.timing"] 
     };
 }

@@ -78,6 +78,10 @@ function config(override: Core.Config): string {
     const settings = {
         delay: 100,
         content: true,
+        fraud: [],
+        regions: [],
+        mask: [],
+        unmask: [],
         upload: payload => { window["payloads"].push(payload); window["clarity"]("upgrade", "test"); }
     }
 
@@ -100,6 +104,7 @@ function config(override: Core.Config): string {
             case "unmask":
             case "regions":
             case "cookies":
+            case "fraud":
                 output += `${JSON.stringify(key)}: ${JSON.stringify(settings[key])},`;
                 break;
             default:
