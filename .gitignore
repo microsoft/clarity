@@ -19,3 +19,6 @@ yarn-error.log
 
 # chrome debug
 debug.log
+
+# environment file
+.env

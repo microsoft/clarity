@@ -80,6 +80,9 @@ On Ubuntu, if you run into errors, it may be because you are missing the libfont
 sudo apt-get install libfontconfig
 ```
 
+### Debugging Clarity
+Use [clarity-devtools](https://github.com/microsoft/clarity/tree/master/packages/clarity-devtools) to debug Clarity against any live website.
+
 ### Text Editor
 
 Recommended text editor is Visual Studio Code, but if you prefer a different text editor, feel free to use it.

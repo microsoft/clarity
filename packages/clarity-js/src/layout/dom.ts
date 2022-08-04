@@ -97,6 +97,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         regionId = regionId === null ? parentValue.region : regionId;
         fragmentId = parentValue.fragment;
         fraudId = fraudId === null ? parentValue.metadata.fraud : fraudId;
+        privacyId = parentValue.metadata.privacy;
     }
 
     // If there's an explicit region attribute set on the element, use it to mark a region on the page
