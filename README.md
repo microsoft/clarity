@@ -25,7 +25,7 @@ Here are some example sessions on popular websites visualized to demonstrate the
 </br><a href="https://thumbs.gfycat.com/CoolDependableAdamsstaghornedbeetle-size_restricted.gif"><img src="https://thumbs.gfycat.com/CoolDependableAdamsstaghornedbeetle-size_restricted.gif" title="Clarity - Cook With Manali Example"/></a> 
 
 ## Privacy Notice
-Clarity handles sensitive data with care. By default sensitive content on the page is masked before uploading to the server.
+Clarity handles sensitive data with care. By default sensitive content on the page is masked before uploading to the server. Additionally, Clarity offers several masking configuration options to ensure you are in full control of your data.
 
 ## Improving Clarity
 If you haven't already done so, start contributing by following instructions **[here](https://github.com/microsoft/clarity/blob/master/CONTRIBUTING.md)**.
