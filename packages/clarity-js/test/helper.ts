@@ -1,4 +1,4 @@
-import { Core, Data, Layout } from "clarity-decode";
+import { Core, Data, decode, Interaction, Layout } from "clarity-decode";
 import * as fs from 'fs';
 import * as url from 'url';
 import * as path from 'path';
@@ -25,8 +25,36 @@ export async function markup(page: Page, file: string, override: Core.Config = n
         </body>
     `));
     await page.hover("#two");
-    await page.waitForFunction("payloads && payloads.length > 1");
+    await page.click("#child");
+    await page.locator('#search').fill('query with numb3rs');
+    await page.waitForFunction("payloads && payloads.length > 2");
     return await page.evaluate('payloads');
+}
+
+export function clicks(decoded: Data.DecodedPayload[]): Interaction.ClickEvent[] {
+    let output: Interaction.ClickEvent[] = [];
+    for (let i = decoded.length - 1; i >= 0; i--) {
+        if (decoded[i].click) {
+            for (let j = 0; j < decoded[i].click.length;j++)
+            {
+                output.push(decoded[i].click[j]);
+            }
+        }
+    }
+    return output;
+}
+
+export function inputs(decoded: Data.DecodedPayload[]): Interaction.InputEvent[] {
+    let output: Interaction.InputEvent[] = [];
+    for (let i = decoded.length - 1; i >= 0; i--) {
+        if (decoded[i].input) {
+            for (let j = 0; j < decoded[i].input.length;j++)
+            {
+                output.push(decoded[i].input[j]);
+            }
+        }
+    }
+    return output;
 }
 
 export function node(decoded: Data.DecodedPayload[], key: string, value: string | number, tag: string = null): Layout.DomData {
