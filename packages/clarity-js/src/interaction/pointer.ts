@@ -20,7 +20,7 @@ export function observe(root: Node): void {
     bind(root, "mousedown", mouse.bind(this, Event.MouseDown, root), true);
     bind(root, "mouseup", mouse.bind(this, Event.MouseUp, root), true);
     bind(root, "mousemove", mouse.bind(this, Event.MouseMove, root), true);
-    bind(root, "mousewheel", mouse.bind(this, Event.MouseWheel, root), true);
+    bind(root, "wheel", mouse.bind(this, Event.MouseWheel, root), true);
     bind(root, "dblclick", mouse.bind(this, Event.DoubleClick, root), true);
     bind(root, "touchstart", touch.bind(this, Event.TouchStart, root), true);
     bind(root, "touchend", touch.bind(this, Event.TouchEnd, root), true);
