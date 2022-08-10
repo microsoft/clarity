@@ -92,9 +92,9 @@ function redact(value: string): string {
                 if (array === null) { array = value.split(Data.Constant.Empty); }
                 // Work on a token at a time so we don't have to apply regex to a larger string
                 let token = value.substring(spaceIndex + 1, hasWhitespace ? i : i + 1);
-                // Check if unicode regex is supported, otherwise fallback to legacy regex
+                // Check if unicode regex is supported, otherwise fallback to calling mask function on this token
                 if (currencyRegex.unicode) {
-                    // Do not mask if the token contains a currency symbol
+                    // Do not redact information if the token contains a currency symbol
                     token = token.match(currencyRegex) ? token : token.replace(letterRegex, Data.Constant.Letter).replace(digitRegex, Data.Constant.Digit);
                 } else {
                     token = mask(token);
