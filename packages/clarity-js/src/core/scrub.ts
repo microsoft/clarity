@@ -2,6 +2,13 @@ import { Privacy } from "@clarity-types/core";
 import * as Data from "@clarity-types/data";
 import * as Layout from "@clarity-types/layout";
 
+// Regular expressions using unicode property escapes
+// Reference: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions/Unicode_Property_Escapes
+const digitRegex = /\p{N}/gu;
+const letterRegex = /\p{L}/gu;
+const currencyRegex = /\p{Sc}/u;
+const catchallRegex = /\S/gi;
+
 export default function(value: string, hint: string, privacy: Privacy, mangle: boolean = false): string {
     if (value) {
         switch (privacy) {
@@ -12,9 +19,9 @@ export default function(value: string, hint: string, privacy: Privacy, mangle: b
                     case Layout.Constant.TextTag:
                     case "value":
                     case "placeholder":
-                        return redact(value);
+                    case "click":
                     case "input":
-                        return mangleToken(value);
+                        return redact(value);
                 }
                 return value;
             case Privacy.Text:
@@ -53,7 +60,7 @@ function mangleText(value: string): string {
 }
 
 function mask(value: string): string {
-    return value.replace(/\S/gi, Data.Constant.Mask);
+    return value.replace(catchallRegex, Data.Constant.Mask);
 }
 
 function mangleToken(value: string): string {
@@ -67,6 +74,7 @@ function mangleToken(value: string): string {
 
 function redact(value: string): string {
     let spaceIndex = -1;
+    let gap = 0;
     let hasDigit = false;
     let hasEmail = false;
     let hasWhitespace = false;
@@ -82,7 +90,18 @@ function redact(value: string): string {
             // Performance optimization: Lazy load string -> array conversion only when required
             if (hasDigit || hasEmail) {
                 if (array === null) { array = value.split(Data.Constant.Empty); }
-                mutate(array, spaceIndex, hasWhitespace ? i : i + 1);
+                // Work on a token at a time so we don't have to apply regex to a larger string
+                let token = value.substring(spaceIndex + 1, hasWhitespace ? i : i + 1);
+                // Check if unicode regex is supported, otherwise fallback to calling mask function on this token
+                if (currencyRegex.unicode) {
+                    // Do not redact information if the token contains a currency symbol
+                    token = token.match(currencyRegex) ? token : token.replace(letterRegex, Data.Constant.Letter).replace(digitRegex, Data.Constant.Digit);
+                } else {
+                    token = mask(token);
+                }
+                // Merge token back into array at the right place
+                array.splice(spaceIndex + 1 - gap, token.length, token);
+                gap += token.length - 1;
             }
             // Reset digit and email flags after every word boundary, except the beginning of string
             if (hasWhitespace) {
@@ -93,10 +112,4 @@ function redact(value: string): string {
         }
     }
     return array ? array.join(Data.Constant.Empty) : value;
-}
-
-function mutate(array: string[], start: number, end: number): void {
-    for (let i = start + 1; i < end; i++) {
-        array[i] = Data.Constant.Mask;
-    }
 }

@@ -17,6 +17,7 @@ let override = [];
 let unmask = [];
 let updatedFragments: { [fragment: number]: string } = {};
 let maskText = [];
+let maskInput = [];
 let maskDisable = [];
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
@@ -43,6 +44,7 @@ function reset(): void {
     override = [];
     unmask = [];
     maskText = Mask.Text.split(Constant.Comma);
+    maskInput = Mask.Input.split(Constant.Comma);
     maskDisable = Mask.Disable.split(Constant.Comma);
     idMap = new WeakMap();
     iframeMap = new WeakMap();
@@ -241,30 +243,29 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             break;
         case Constant.Type in attributes:
             // If this node has an explicit type assigned to it, go through masking rules to determine right privacy setting
-            metadata.privacy  = inspect(attributes[Constant.Type], metadata);
+            metadata.privacy  = inspect(attributes[Constant.Type], maskInput, metadata);
             break;
         case tag === Constant.InputTag && current === Privacy.None:
             // If even default privacy setting is to not mask, we still scan through input fields for any sensitive information
             let field: string = Constant.Empty;
             Object.keys(attributes).forEach(x => field += attributes[x].toLowerCase());
-            metadata.privacy = inspect(field, metadata);
+            metadata.privacy = inspect(field, maskInput, metadata);
             break;
         case current === Privacy.Sensitive && tag === Constant.InputTag:
+            // Look through class names to aggressively mask content
+            metadata.privacy = inspect(attributes[Constant.Class], maskText, metadata);
             // If it's a button or an input option, make an exception to disable masking
             metadata.privacy = maskDisable.indexOf(attributes[Constant.Type]) >= 0 ? Privacy.None : current;
             break;
         case current === Privacy.Sensitive:
             // In a mode where we mask sensitive information by default, look through class names to aggressively mask content
-            metadata.privacy = inspect(attributes[Constant.Class], metadata);
-            break;
-        default:
-            metadata.privacy = parent ? parent.metadata.privacy : metadata.privacy;
+            metadata.privacy = inspect(attributes[Constant.Class], maskText, metadata);
             break;
     }
 }
 
-function inspect(input: string, metadata: NodeMeta): Privacy {
-    if (input && maskText.some(x => input.indexOf(x) >= 0)) {
+function inspect(input: string, lookup: string[], metadata: NodeMeta): Privacy {
+    if (input && lookup.some(x => input.indexOf(x) >= 0)) {
         return Privacy.Text;
     }
     return metadata.privacy;

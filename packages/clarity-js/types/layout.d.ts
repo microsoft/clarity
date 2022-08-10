@@ -29,7 +29,8 @@ export const enum RegionVisibility {
 }
 
 export const enum Mask {
-    Text = "password,secret,pass,social,ssn,name,code,dob,cell,mob,contact,hidden,account,cvv,ccv,email,tel,phone,address,addr,card,zip",
+    Text = "address,password,contact",
+    Input = "password,secret,pass,social,ssn,name,code,dob,cell,mob,contact,hidden,account,cvv,ccv,email,tel,phone,address,addr,card,zip",
     Disable = "radio,checkbox,range,button,reset,submit"
 }
 

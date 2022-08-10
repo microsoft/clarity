@@ -247,7 +247,9 @@ export const enum Constant {
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
-    Mask = "•",
+    Mask = "•", // Placeholder character for explicitly masked content
+    Digit = "•", // Placeholder character for digits
+    Letter = "•", // Placeholder character for letters
     SessionStorage = "sessionStorage",
     Cookie = "cookie",
     Navigation = "navigation",
