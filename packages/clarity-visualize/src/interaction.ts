@@ -244,7 +244,10 @@ export class InteractionHelper {
 
         // Play sound
         if (typeof Audio !== Constant.Undefined) {
-            if (this.clickAudio === null) { this.clickAudio = new Audio(Asset.Sound); }
+            if (this.clickAudio === null) { 
+                this.clickAudio = new Audio(Asset.Sound); 
+                click.appendChild(this.clickAudio);
+            }
             this.clickAudio.play();
         }
     };

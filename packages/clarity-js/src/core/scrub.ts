@@ -2,12 +2,11 @@ import { Privacy } from "@clarity-types/core";
 import * as Data from "@clarity-types/data";
 import * as Layout from "@clarity-types/layout";
 
-// Regular expressions using unicode property escapes
-// Reference: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions/Unicode_Property_Escapes
-const digitRegex = /\p{N}/gu;
-const letterRegex = /\p{L}/gu;
-const currencyRegex = /\p{Sc}/u;
 const catchallRegex = /\S/gi;
+let unicodeRegex = true;
+let digitRegex = null;
+let letterRegex = null;
+let currencyRegex = null;
 
 export default function(value: string, hint: string, privacy: Privacy, mangle: boolean = false): string {
     if (value) {
@@ -79,6 +78,17 @@ function redact(value: string): string {
     let hasEmail = false;
     let hasWhitespace = false;
     let array = null;
+
+    // Initialize unicode regex, if supported by the browser
+    // Reference: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions/Unicode_Property_Escapes
+    if (unicodeRegex && digitRegex === null) {
+        try {
+            digitRegex = new RegExp("\\p{N}", "gu");
+            letterRegex = new RegExp("\\p{L}", "gu");
+            currencyRegex = new RegExp("\\p{Sc}", "gu");
+        } catch { unicodeRegex = false; }
+    }
+
     for (let i = 0; i < value.length; i++) {
         let c = value.charCodeAt(i);
         hasDigit = hasDigit || (c >= Data.Character.Zero && c <= Data.Character.Nine); // Check for digits in the current word
@@ -93,7 +103,7 @@ function redact(value: string): string {
                 // Work on a token at a time so we don't have to apply regex to a larger string
                 let token = value.substring(spaceIndex + 1, hasWhitespace ? i : i + 1);
                 // Check if unicode regex is supported, otherwise fallback to calling mask function on this token
-                if (currencyRegex.unicode) {
+                if (unicodeRegex && currencyRegex !== null) {
                     // Do not redact information if the token contains a currency symbol
                     token = token.match(currencyRegex) ? token : token.replace(letterRegex, Data.Constant.Letter).replace(digitRegex, Data.Constant.Digit);
                 } else {
