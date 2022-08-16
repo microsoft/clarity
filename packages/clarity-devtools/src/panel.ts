@@ -74,8 +74,8 @@ function replay(): void {
             event = event[++index];
         }
         visualize.render(events.splice(0, index));
+		requestAnimationFrame(replay);
     }
-    requestAnimationFrame(replay);
 }
 
 function resize(width: number, height: number): void {
