@@ -239,7 +239,8 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             // If it's a text node belonging to a STYLE or TITLE tag or one of SCRUB_EXCEPTIONS, then capture content
             let pTag = parent && parent.data ? parent.data.tag : Constant.Empty;
             let pSelector = parent && parent.selector ? parent.selector[Selector.Stable] : Constant.Empty;
-            metadata.privacy = pTag === Constant.StyleTag || pTag === Constant.TitleTag || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current; 
+            const styleOrTitleTags: string[] = [Constant.StyleTag, Constant.TitleTag, Constant.SvgStyle]
+            metadata.privacy = styleOrTitleTags.includes(pTag) || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current; 
             break;
         case Constant.Type in attributes:
             // If this node has an explicit type assigned to it, go through masking rules to determine right privacy setting

@@ -91,7 +91,8 @@ export const enum Constant {
     Content = "content",
     Generator = "generator",
     ogType = "og:type",
-    ogTitle = "og:title"
+    ogTitle = "og:title",
+    SvgStyle = "svg:style"
 }
 
 export const enum JsonLD { 
