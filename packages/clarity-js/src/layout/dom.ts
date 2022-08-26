@@ -5,7 +5,7 @@ import config from "@src/core/config";
 import hash from "@src/core/hash";
 import * as internal from "@src/diagnostic/internal";
 import * as region from "@src/layout/region";
-import selector from "@src/layout/selector";
+import * as selector from "@src/layout/selector";
 import * as mutation from "@src/layout/mutation";
 import * as extract from "@src/data/extract";
 let index: number = 1;
@@ -50,6 +50,7 @@ function reset(): void {
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
     fraudMap = new WeakMap();
+    selector.reset();
 }
 
 // We parse new root nodes for any regions or masked nodes in the beginning (document) and
@@ -236,9 +237,9 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             metadata.privacy = Privacy.Text;
             break;
         case tag === Constant.TextTag:
-            // If it's a text node belonging to a STYLE or TITLE tag or one of SCRUB_EXCEPTIONS, then capture content
+            // If it's a text node belonging to a STYLE or TITLE tag or one of scrub exceptions, then capture content
             let pTag = parent && parent.data ? parent.data.tag : Constant.Empty;
-            let pSelector = parent && parent.selector ? parent.selector[Selector.Stable] : Constant.Empty;
+            let pSelector = parent && parent.selector ? parent.selector[Selector.Beta] : Constant.Empty;
             metadata.privacy = pTag === Constant.StyleTag || pTag === Constant.TitleTag || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current; 
             break;
         case Constant.Type in attributes:
@@ -298,8 +299,8 @@ function updateSelector(value: NodeValue): void {
     let prefix = parent ? parent.selector : null;
     let d = value.data;
     let p = position(parent, value);
-    let s: SelectorInput = { tag: d.tag, prefix, position: p, attributes: d.attributes };
-    value.selector = [selector(s), selector(s, true)];
+    let s: SelectorInput = { id: value.id, tag: d.tag, prefix, position: p, attributes: d.attributes };
+    value.selector = [selector.get(s, Selector.Alpha), selector.get(s, Selector.Beta)];
     value.hash = value.selector.map(x => x ? hash(x) : null) as [string, string];
     value.hash.forEach(h => hashMap[h] = value.id);
     if (value.hash.some(h => extract.fragments.indexOf(h) !== -1)) {

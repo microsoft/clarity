@@ -18,12 +18,17 @@ interface Clarity {
   metadata: (callback: Data.MetadataCallback, wait?: boolean) => void;
 }
 
+interface Selector {
+  get: (input: Layout.SelectorInput, type: Layout.Selector) => string;
+  reset: () => void;
+}
+
 interface Helper {
   get: (node: Node) => Layout.NodeValue;
   getNode: (id: number) => Node;
   hash: (input: string) => string;
   lookup: (hash: string) => number;
-  selector: (input: Layout.SelectorInput, beta?: boolean) => string;
+  selector: Selector;
 }
 
 declare const clarity: Clarity;

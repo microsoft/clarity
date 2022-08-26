@@ -1,5 +1,4 @@
 import { Privacy } from "@clarity-types/core";
-import { BooleanFlag } from "@clarity-types/data";
 
 /* Enum */
 
@@ -12,7 +11,7 @@ export const enum Source {
 }
 
 export const enum Selector {
-    Stable = 0,
+    Alpha = 0,
     Beta = 1
 }
 
@@ -45,7 +44,10 @@ export const enum Constant {
     Href = "href",
     Src = "src",
     Srcset = "srcset",
-    Box = "#",
+    Hash = "#",
+    Dot = ".",
+    Separator = ">",
+    Tilde = "~",
     Bang = "!",
     Period = ".",
     Comma = ",",
@@ -91,7 +93,8 @@ export const enum Constant {
     Content = "content",
     Generator = "generator",
     ogType = "og:type",
-    ogTitle = "og:title"
+    ogTitle = "og:title",
+    ExcludeClassNames = "load,active,fixed,visible,focus,show,collaps,animat"
 }
 
 export const enum JsonLD { 
@@ -139,6 +142,7 @@ export interface Attributes {
 }
 
 export interface SelectorInput {
+    id: number;
     tag: string;
     prefix: [string, string];
     position: number;

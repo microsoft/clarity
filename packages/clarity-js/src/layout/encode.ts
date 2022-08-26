@@ -62,7 +62,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                     if (value.parent && active) { tokens.push(value.parent); }
                                     if (value.previous && active) { tokens.push(value.previous); }
                                     tokens.push(suspend ? Constant.SuspendMutationTag : data[key]);
-                                    if (box && box.length === 2) { tokens.push(`${Constant.Box}${str(box[0])}.${str(box[1])}`); }
+                                    if (box && box.length === 2) { tokens.push(`${Constant.Hash}${str(box[0])}.${str(box[1])}`); }
                                     break;
                                 case "attributes":
                                     for (let attr in data[key]) {
