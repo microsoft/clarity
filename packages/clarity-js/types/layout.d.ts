@@ -94,6 +94,7 @@ export const enum Constant {
     Generator = "generator",
     ogType = "og:type",
     ogTitle = "og:title",
+    SvgStyle = "svg:style",
     ExcludeClassNames = "load,active,fixed,visible,focus,show,collaps,animat"
 }
 
