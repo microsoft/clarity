@@ -114,7 +114,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
             // Backward compatibility - since v0.6.25
             // Ignore this conditional block since we no longer compute selectors at decode time to save on uploaded bytes
             // Instead, we now compute selector and hash at visualization layer where we have access to all payloads together
-        } else if (output.tag !== Layout.Constant.TextTag && firstChar === Layout.Constant.Box && keyIndex === -1) {
+        } else if (output.tag !== Layout.Constant.TextTag && firstChar === Layout.Constant.Hash && keyIndex === -1) {
             let parts = token.substr(1).split(Layout.Constant.Period);
             if (parts.length === 2) {
                 output.width = num(parts[0]) / Data.Setting.BoxPrecision;
