@@ -239,8 +239,9 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
         case tag === Constant.TextTag:
             // If it's a text node belonging to a STYLE or TITLE tag or one of scrub exceptions, then capture content
             let pTag = parent && parent.data ? parent.data.tag : Constant.Empty;
-            let pSelector = parent && parent.selector ? parent.selector[Selector.Beta] : Constant.Empty;
-            metadata.privacy = [Constant.StyleTag, Constant.TitleTag, Constant.SvgStyle].includes(pTag) || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current;
+            let pSelector = parent && parent.selector ? parent.selector[Selector.Default] : Constant.Empty;
+            let tags : string[] = [Constant.StyleTag, Constant.TitleTag, Constant.SvgStyle];
+            metadata.privacy = tags.includes(pTag) || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current;
             break;
         case Constant.Type in attributes:
             // If this node has an explicit type assigned to it, go through masking rules to determine right privacy setting
@@ -303,6 +304,7 @@ function updateSelector(value: NodeValue): void {
     value.selector = [selector.get(s, Selector.Alpha), selector.get(s, Selector.Beta)];
     value.hash = value.selector.map(x => x ? hash(x) : null) as [string, string];
     value.hash.forEach(h => hashMap[h] = value.id);
+    // Match fragment configuration against both alpha and beta hash
     if (value.hash.some(h => extract.fragments.indexOf(h) !== -1)) {
         value.fragment = value.id;
     }
