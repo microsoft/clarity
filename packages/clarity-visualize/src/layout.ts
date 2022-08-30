@@ -7,7 +7,7 @@ export class LayoutHelper {
     stylesheets: Promise<void>[] = [];
     nodes = {};
     events = {};
-    hashMap = {};
+    hashMapAlpha = {};
     hashMapBeta = {};
     state: PlaybackState = null;
     
@@ -19,22 +19,22 @@ export class LayoutHelper {
         this.nodes = {};
         this.stylesheets = [];
         this.events = {};
-        this.hashMap = {};
+        this.hashMapAlpha = {};
         this.hashMapBeta = {};
     }
 
-    public get = (hash, beta: boolean = false) => {
-        if (hash in this.hashMap && this.hashMap[hash].isConnected && beta === false) {
-            return this.hashMap[hash];
-        } else if (hash in this.hashMapBeta && this.hashMapBeta[hash].isConnected) {
+    public get = (hash) => {
+        if (hash in this.hashMapBeta && this.hashMapBeta[hash].isConnected) {
             return this.hashMapBeta[hash];
+        } else if (hash in this.hashMapAlpha && this.hashMapAlpha[hash].isConnected) {
+            return this.hashMapAlpha[hash];
         }
         return null;
     }
 
     private addToHashMap = (data: Layout.DomData, parent: Node) => {
         // In case of selector collision, prefer the first inserted node
-        this.hashMap[data.hash] = this.get(data.hash) || parent;
+        this.hashMapAlpha[data.hashAlpha] = this.get(data.hashAlpha) || parent;
         this.hashMapBeta[data.hashBeta] = this.get(data.hashBeta) || parent;
     }
 
@@ -289,7 +289,7 @@ export class LayoutHelper {
 
         // Clarity attributes
         attributes[Constant.Id] = `${data.id}`;
-        attributes[Constant.Hash] = `${data.hash}`;
+        attributes[Constant.HashAlpha] = `${data.hashAlpha}`;
         attributes[Constant.HashBeta] = `${data.hashBeta}`;
 
         let tag = node.nodeType === NodeType.ELEMENT_NODE ? node.tagName.toLowerCase() : null;

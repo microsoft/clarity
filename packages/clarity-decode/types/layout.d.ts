@@ -13,6 +13,7 @@ export import Constant = Layout.Constant;
 export import Interaction = Layout.InteractionState;
 export import RegionVisibility = Layout.RegionVisibility;
 export import SelectorInput = Layout.SelectorInput;
+export import Selector = Layout.Selector;
 
 /* Event Data */
 export interface DomData {
@@ -24,8 +25,8 @@ export interface DomData {
     value?: string;
     width?: number;
     height?: number;
-    selector?: string;
-    hash?: string;
+    selectorAlpha?: string;
+    hashAlpha?: string;
     selectorBeta?: string;
     hashBeta?: string;
 }

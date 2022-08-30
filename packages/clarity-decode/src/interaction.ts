@@ -74,7 +74,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let timelineHashes = (tokens[3] as string).split(Data.Constant.Dot);
             let timelineData: TimelineData = {
                 type: tokens[2] as number,
-                hash: timelineHashes[Layout.Selector.Stable],
+                hash: timelineHashes[Layout.Selector.Alpha],
                 x: tokens[4] as number,
                 y: tokens[5] as number,
                 reaction: tokens[6] as number,

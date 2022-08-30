@@ -60,7 +60,7 @@ export interface NodeData {
     parent: number;
     previous: number;
     position?: number;
-    stable?: string;
+    alpha?: string;
     beta?: string;
 }
 
@@ -131,7 +131,7 @@ export const enum Constant {
     Region = "clarity-region",
     AdoptedStyleSheet = "clarity-adopted-style",
     Id = "data-clarity-id", 
-    Hash = "data-clarity-hash",
+    HashAlpha = "data-clarity-hashalpha",
     HashBeta = "data-clarity-hashbeta",
     Hide = "data-clarity-hide",
     Unavailable = "data-clarity-unavailable",
