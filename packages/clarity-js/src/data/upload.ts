@@ -253,7 +253,7 @@ function response(payload: string): void {
             clarity.upgrade(Constant.Auto);
             break;
         case Constant.Action:
-            config.action(payload.split(" ")[1]);
+            config.action && config.action(payload.split(" ")[1]);
             break;
     }
 }
