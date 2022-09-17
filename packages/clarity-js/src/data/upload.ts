@@ -252,5 +252,8 @@ function response(payload: string): void {
             // Upgrade current session to send back playback information
             clarity.upgrade(Constant.Auto);
             break;
+        case Constant.Action:
+            config.action && config.action(payload.split(" ")[1]);
+            break;
     }
 }
