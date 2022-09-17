@@ -243,21 +243,19 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             let tags : string[] = [Constant.StyleTag, Constant.TitleTag, Constant.SvgStyle];
             metadata.privacy = tags.includes(pTag) || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current;
             break;
-        case Constant.Type in attributes:
-            // If this node has an explicit type assigned to it, go through masking rules to determine right privacy setting
-            metadata.privacy  = inspect(attributes[Constant.Type], maskInput, metadata);
-            break;
         case tag === Constant.InputTag && current === Privacy.None:
             // If even default privacy setting is to not mask, we still scan through input fields for any sensitive information
             let field: string = Constant.Empty;
             Object.keys(attributes).forEach(x => field += attributes[x].toLowerCase());
             metadata.privacy = inspect(field, maskInput, metadata);
             break;
-        case current === Privacy.Sensitive && tag === Constant.InputTag:
+        case tag === Constant.InputTag && current === Privacy.Sensitive:
             // Look through class names to aggressively mask content
             metadata.privacy = inspect(attributes[Constant.Class], maskText, metadata);
-            // If it's a button or an input option, make an exception to disable masking
-            metadata.privacy = maskDisable.indexOf(attributes[Constant.Type]) >= 0 ? Privacy.None : current;
+            // If this node has an explicit type assigned to it, go through masking rules to determine right privacy setting
+            metadata.privacy  = inspect(attributes[Constant.Type], maskInput, metadata);
+            // If it's a button or an input option, make an exception to disable masking in sensitive mode
+            metadata.privacy = maskDisable.indexOf(attributes[Constant.Type]) >= 0 ? Privacy.None : metadata.privacy;
             break;
         case current === Privacy.Sensitive:
             // In a mode where we mask sensitive information by default, look through class names to aggressively mask content
