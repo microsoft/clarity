@@ -242,8 +242,8 @@ function delay(): number {
 }
 
 function response(payload: string): void {
-    let key = payload && payload.length > 0 ? payload.split(" ")[0] : Constant.Empty;
-    switch (key) {
+    let parts = payload && payload.length > 0 ? payload.split(" ") : [Constant.Empty];
+    switch (parts[0]) {
         case Constant.End:
             // Clear out session storage and end the session so we can start fresh the next time
             limit.trigger(Check.Server);
@@ -253,7 +253,8 @@ function response(payload: string): void {
             clarity.upgrade(Constant.Auto);
             break;
         case Constant.Action:
-            config.action && config.action(payload.split(" ")[1]);
+            // Invoke action callback, if configured and has a valid value
+            if (config.action && parts.length > 1) { config.action(parts[1]); }
             break;
     }
 }

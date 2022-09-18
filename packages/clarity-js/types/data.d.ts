@@ -244,6 +244,7 @@ export const enum Constant {
     Pipe = "|",
     End = "END",
     Upgrade = "UPGRADE",
+    Action = "ACTION",
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
@@ -265,8 +266,7 @@ export const enum Constant {
     Tilde = "~",
     ArrayStart = "[",
     ConditionStart = "{",
-    ConditionEnd = "}",
-    Action = "Action"
+    ConditionEnd = "}"
 }
 
 export const enum XMLReadyState {
