@@ -244,12 +244,13 @@ export const enum Constant {
     Pipe = "|",
     End = "END",
     Upgrade = "UPGRADE",
+    Action = "ACTION",
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
     Mask = "•", // Placeholder character for explicitly masked content
-    Digit = "•", // Placeholder character for digits
-    Letter = "•", // Placeholder character for letters
+    Digit = "▫", // Placeholder character for digits
+    Letter = "▪", // Placeholder character for letters
     SessionStorage = "sessionStorage",
     Cookie = "cookie",
     Navigation = "navigation",

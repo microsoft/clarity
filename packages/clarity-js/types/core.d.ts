@@ -133,6 +133,7 @@ export interface Config {
     upload?: string | UploadCallback;
     fallback?: string;
     upgrade?: (key: string) => void;
+    action?: (key: string) => void;
 }
 
 export const enum Constant {
