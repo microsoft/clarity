@@ -92,8 +92,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let regionId = region.exists(node) ? id : null;
     let fragmentId = null;
     let fraudId = fraudMap.has(node) ? fraudMap.get(node) : null;
-    let privacyId = config.content ? Privacy.Sensitive : Privacy.Text
-
+    let privacyId = config.content ? Privacy.Sensitive : Privacy.TextImage
     if (parentId >= 0 && values[parentId]) {
         parentValue = values[parentId];
         parentValue.children.push(id);
