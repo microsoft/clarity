@@ -16,7 +16,7 @@ let config: Config = {
     upload: null,
     fallback: null,
     upgrade: null,
-    action: null
+    action: null,
     signals: false,
 };
 
