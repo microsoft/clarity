@@ -401,3 +401,9 @@ export interface UploadData {
     attempts: number;
     status: number;
 }
+
+export interface ClaritySignal {
+    type: string
+    timestamp?: string
+    value?: number
+}

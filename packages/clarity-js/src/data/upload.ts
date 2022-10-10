@@ -3,6 +3,7 @@ import { BooleanFlag, Check, Constant, EncodedPayload, Event, Metric, Setting, T
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
+import { dispatchClarityLiveSignalsEvents } from "@src/core/signals";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import compress from "@src/data/compress";
@@ -242,8 +243,9 @@ function delay(): number {
 }
 
 function response(payload: string): void {
-    let parts = payload && payload.length > 0 ? payload.split(" ") : [Constant.Empty];
-    switch (parts[0]) {
+    const splittedPayload = payload?.length > 0 ? payload.split("|") : []
+    let parts = splittedPayload[0]?.split(" ")
+    switch (parts?.[0]) {
         case Constant.End:
             // Clear out session storage and end the session so we can start fresh the next time
             limit.trigger(Check.Server);
@@ -256,5 +258,9 @@ function response(payload: string): void {
             // Invoke action callback, if configured and has a valid value
             if (config.action && parts.length > 1) { config.action(parts[1]); }
             break;
+    }
+    // dispatch clarity live signals if available and configured
+    if (config.signals && splittedPayload[1]) {
+        dispatchClarityLiveSignalsEvents(splittedPayload[1])
     }
 }
