@@ -11,7 +11,7 @@ import * as layout from "@src/layout";
 import * as performance from "@src/performance";
 export { version };
 export { consent, event, identify, set, upgrade, metadata } from "@src/data";
-export { lookup, getValue } from "@src/layout/dom";
+export { hashText } from "@src/layout";
 
 const modules: Module[] = [diagnostic, layout, interaction, performance];
 

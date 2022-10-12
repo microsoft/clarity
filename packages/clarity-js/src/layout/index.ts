@@ -4,6 +4,8 @@ import * as dom from "@src/layout/dom";
 import * as mutation from "@src/layout/mutation";
 import * as region from "@src/layout/region";
 
+export { hashText } from "@src/layout/dom";
+
 export function start(): void {
     // The order below is important 
     // and is determined by interdependencies of modules
