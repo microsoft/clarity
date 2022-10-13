@@ -171,6 +171,12 @@ export const enum BooleanFlag {
     True = 1
 }
 
+export const enum IframeStatus {
+    Unknown = 0,
+    TopFrame = 1,
+    Iframe = 2
+}
+
 export const enum Setting {
     Expire = 365, // 1 Year
     SessionExpire = 1, // 1 Day

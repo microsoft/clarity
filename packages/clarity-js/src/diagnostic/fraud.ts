@@ -1,4 +1,4 @@
-import { BooleanFlag, Event, Metric, Setting } from "@clarity-types/data";
+import { BooleanFlag, Event, IframeStatus, Metric, Setting } from "@clarity-types/data";
 import { FraudData } from "@clarity-types/diagnostic";
 import hash from "@src/core/hash";
 import * as metric from "@src/data/metric";
@@ -11,9 +11,9 @@ export function start(): void {
     history = [];
     metric.max(Metric.Automation, navigator.webdriver ? BooleanFlag.True : BooleanFlag.False);
     try {
-        metric.max(Metric.Iframed, window.top !== window.self ? BooleanFlag.True : BooleanFlag.False);
+        metric.max(Metric.Iframed, window.top == window.self ? IframeStatus.TopFrame : IframeStatus.Iframe);
     } catch (ex) {
-        // swallow exception if window.top isn't defined, absence of this metric will be sufficient
+        metric.max(Metric.Iframed, IframeStatus.Unknown);
     }
     
 }
