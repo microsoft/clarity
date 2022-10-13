@@ -97,7 +97,7 @@ export const enum Metric {
     UploadTime = 28,
     SinglePage = 29,
     UsedMemory = 30,
-    Iframed = 30,
+    Iframed = 31,
 }
 
 export const enum Dimension {

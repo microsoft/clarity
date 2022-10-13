@@ -8,6 +8,7 @@ import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
 import * as mutation from "@src/layout/mutation";
 import * as extract from "@src/data/extract";
+import { sanitizeString } from "@src/core/scrub";
 let index: number = 1;
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
@@ -310,7 +311,7 @@ function updateSelector(value: NodeValue): void {
 export function hashText(hash: string): string {
     let id = lookup(hash);
     let node = getNode(id);
-    return node != null ? node.textContent : '';
+    return node != null ? sanitizeString(node.textContent) : '';
 }
 
 export function getNode(id: number): Node {

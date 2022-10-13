@@ -10,7 +10,12 @@ export let data: FraudData;
 export function start(): void {
     history = [];
     metric.max(Metric.Automation, navigator.webdriver ? BooleanFlag.True : BooleanFlag.False);
-    metric.max(Metric.Iframed, window.top !== window.self ? BooleanFlag.True : BooleanFlag.False);
+    try {
+        metric.max(Metric.Iframed, window.top !== window.self ? BooleanFlag.True : BooleanFlag.False);
+    } catch (ex) {
+        // swallow exception if window.top isn't defined, absence of this metric will be sufficient
+    }
+    
 }
 
 export function check(id: number, target: number, input: string): void {
