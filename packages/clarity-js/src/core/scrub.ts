@@ -51,7 +51,7 @@ export function sanitizeString(value: string): string {
         // Trim any spaces at the beginning or at the end of string
         // Also, replace multiple occurrence of space characters with a single white space
         // Finally, send only first few characters as specified by the Setting
-        return value.trim().replace(/\s+/g, Data.Constant.Space).substr(0, Data.Setting.ClickText);
+        return value.substr(0, Data.Setting.ClickText);
     }
     return value;
 }
