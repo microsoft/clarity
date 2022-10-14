@@ -1,4 +1,4 @@
-import { BooleanFlag, Event, Metric, Setting } from "@clarity-types/data";
+import { BooleanFlag, Event, IframeStatus, Metric, Setting } from "@clarity-types/data";
 import { FraudData } from "@clarity-types/diagnostic";
 import hash from "@src/core/hash";
 import * as metric from "@src/data/metric";
@@ -10,6 +10,12 @@ export let data: FraudData;
 export function start(): void {
     history = [];
     metric.max(Metric.Automation, navigator.webdriver ? BooleanFlag.True : BooleanFlag.False);
+    try {
+        metric.max(Metric.Iframed, window.top == window.self ? IframeStatus.TopFrame : IframeStatus.Iframe);
+    } catch (ex) {
+        metric.max(Metric.Iframed, IframeStatus.Unknown);
+    }
+    
 }
 
 export function check(id: number, target: number, input: string): void {

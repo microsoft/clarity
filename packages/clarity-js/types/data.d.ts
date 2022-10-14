@@ -96,7 +96,8 @@ export const enum Metric {
     Mobile = 27,
     UploadTime = 28,
     SinglePage = 29,
-    UsedMemory = 30
+    UsedMemory = 30,
+    Iframed = 31,
 }
 
 export const enum Dimension {
@@ -168,6 +169,12 @@ export const enum Upload {
 export const enum BooleanFlag {
     False = 0,
     True = 1
+}
+
+export const enum IframeStatus {
+    Unknown = 0,
+    TopFrame = 1,
+    Iframe = 2
 }
 
 export const enum Setting {

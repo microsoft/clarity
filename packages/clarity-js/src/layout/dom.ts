@@ -1,5 +1,5 @@
 import { Privacy } from "@clarity-types/core";
-import { Code, Severity } from "@clarity-types/data";
+import { Code, Setting, Severity } from "@clarity-types/data";
 import { Constant, Mask, NodeInfo, NodeMeta, NodeValue, Selector, SelectorInput, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -305,6 +305,12 @@ function updateSelector(value: NodeValue): void {
     if (value.hash.some(h => extract.fragments.indexOf(h) !== -1)) {
         value.fragment = value.id;
     }
+}
+
+export function hashText(hash: string): string {
+    let id = lookup(hash);
+    let node = getNode(id);
+    return node !== null && node.textContent !== null ? node.textContent.substr(0, Setting.ClickText) : '';
 }
 
 export function getNode(id: number): Node {
