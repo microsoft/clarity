@@ -2,7 +2,6 @@ import { BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
 import { BrowsingContext, ClickState } from "@clarity-types/interaction";
 import { Box } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
-import { sanitizeString } from "@src/core/scrub";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { iframe } from "@src/layout/dom";
@@ -79,7 +78,12 @@ function text(element: Node): string {
     if (element) {
         // Grab text using "textContent" for most HTMLElements, however, use "value" for HTMLInputElements and "alt" for HTMLImageElement.
         let t = element.textContent || (element as HTMLInputElement).value || (element as HTMLImageElement).alt;
-        output = sanitizeString(t);
+        if (t) {
+            // Trim any spaces at the beginning or at the end of string
+            // Also, replace multiple occurrence of space characters with a single white space
+            // Finally, send only first few characters as specified by the Setting
+            output = t.trim().replace(/\s+/g, Constant.Space).substr(0, Setting.ClickText);
+        }
     }
     return output;
 }

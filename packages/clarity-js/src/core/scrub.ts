@@ -46,16 +46,6 @@ export default function(value: string, hint: string, privacy: Privacy, mangle: b
     return value;
 }
 
-export function sanitizeString(value: string): string {
-    if (value) {
-        // Trim any spaces at the beginning or at the end of string
-        // Also, replace multiple occurrence of space characters with a single white space
-        // Finally, send only first few characters as specified by the Setting
-        return value.substr(0, Data.Setting.ClickText);
-    }
-    return value;
-}
-
 function mangleText(value: string): string {
     let trimmed = value.trim();
     if (trimmed.length > 0) {
