@@ -310,7 +310,7 @@ function updateSelector(value: NodeValue): void {
 export function hashText(hash: string): string {
     let id = lookup(hash);
     let node = getNode(id);
-    return node != null && node.textContent != null ? node.textContent.substr(0, Setting.ClickText) : '';
+    return node !== null && node.textContent !== null ? node.textContent.substr(0, Setting.ClickText) : '';
 }
 
 export function getNode(id: number): Node {
