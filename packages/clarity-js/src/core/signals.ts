@@ -4,15 +4,19 @@ function parseSignals(signalsString: string): ClaritySignal[] {
     const signalsJson: ClaritySignal[] = JSON.parse(signalsString)
     return signalsJson;
 }
-
+3
 export function dispatchClarityLiveSignalsEvents(signalsString: string) {
     try {
-        const signalsJson = parseSignals(signalsString);
-        signalsJson.forEach(signal => {
-            const customSignalEvent = new CustomEvent("clarityLiveSignal", {detail: signal})
-            window.dispatchEvent(customSignalEvent)
-        })
+        const signals = parseSignals(signalsString);
+        dispatchSignals(signals)
     } catch {
         //do nothing
     }
+}
+
+export function dispatchSignals(signals: ClaritySignal[]) {
+    signals.forEach(signal => {
+        const customSignalEvent = new CustomEvent("clarityLiveSignal", {detail: signal})
+        window.dispatchEvent(customSignalEvent)
+    })
 }
