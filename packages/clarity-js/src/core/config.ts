@@ -17,7 +17,6 @@ let config: Config = {
     fallback: null,
     upgrade: null,
     action: null,
-    signals: false,
 };
 
 export default config;
