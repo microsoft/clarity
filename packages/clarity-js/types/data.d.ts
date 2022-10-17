@@ -405,6 +405,6 @@ export interface UploadData {
 
 export interface ClaritySignal {
     type: string
-    timestamp?: string
+    timestamp?: number
     value?: number
 }
