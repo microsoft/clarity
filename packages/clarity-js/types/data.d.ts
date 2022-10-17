@@ -251,7 +251,7 @@ export const enum Constant {
     Pipe = "|",
     End = "END",
     Upgrade = "UPGRADE",
-    Action = "ClientAction",
+    Action = "ACTION",
     Signal = "ClientSignal",
     UserId = "userId",
     SessionId = "sessionId",
