@@ -243,9 +243,8 @@ function delay(): number {
 }
 
 function response(payload: string): void {
-    const splittedPayload = payload?.length > 0 ? payload.split("|") : []
-    let parts = splittedPayload[0]?.split(" ")
-    switch (parts?.[0]) {
+    let parts = payload?.length > 0 ? payload.split(" ") : [Constant.Empty];
+    switch (parts[0]) {
         case Constant.End:
             // Clear out session storage and end the session so we can start fresh the next time
             limit.trigger(Check.Server);
@@ -256,11 +255,9 @@ function response(payload: string): void {
             break;
         case Constant.Action:
             // Invoke action callback, if configured and has a valid value
-            if (config.action && parts.length > 1) { config.action(parts[1]); }
+            if (config.action && parts[1] && parts[1] !== Constant.Signal) { config.action(parts[1]); }
             break;
+        break;
     }
-    // dispatch clarity live signals if available and configured
-    if (config.signals && splittedPayload[1]) {
-        dispatchClarityLiveSignalsEvents(splittedPayload[1])
-    }
+    if (parts.includes(Constant.Signal)) { dispatchClarityLiveSignalsEvents(parts[parts.indexOf(Constant.Signal) +1]) }
 }
