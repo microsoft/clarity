@@ -127,7 +127,9 @@ export default function (node: Node, source: Source): Node {
                     break;
                 case "HEAD":
                     let head = { tag, attributes };
-                    if (location) { head.attributes[Constant.Base] = location.protocol + "//" + location.hostname; }
+                    if (location) {
+                        head.attributes[Constant.Base] = location.protocol + "//" + location.hostname + location.pathname;
+                    }
                     dom[call](node, parent, head, source);
                     break;
                 case "STYLE":
