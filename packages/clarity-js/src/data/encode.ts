@@ -112,6 +112,8 @@ export default function(event: Event): void {
                 tokens.push(e);
                 tokens.push(extract.data[e]);
             }
+            tokens.push('u')
+            tokens.push(location.href)
             extract.reset();
             queue(tokens, false);
     }
