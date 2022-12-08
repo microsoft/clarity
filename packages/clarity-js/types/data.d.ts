@@ -62,7 +62,10 @@ export const enum Event {
     Clipboard = 38,
     Submit = 39,
     Extract = 40,
-    Fraud = 41
+    Fraud = 41,
+    WebViewDiscover = 42,
+    WebViewMutation = 43,
+    MutationError = 44
 }
 
 export const enum Metric {
