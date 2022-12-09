@@ -1,4 +1,4 @@
-import { Code, Constant, Dimension, Metric, Setting, Severity } from "@clarity-types/data";
+import { BooleanFlag, Code, Constant, Dimension, Metric, Setting, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -12,6 +12,12 @@ let observer: PerformanceObserver;
 const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTask, Constant.FID, Constant.CLS, Constant.LCP];
 
 export function start(): void {
+    // Capture connection properties, if available
+    if (navigator && "connection" in navigator) {
+        dimension.log(Dimension.ConnectionType, navigator["connection"]["effectiveType"]);
+        metric.max(Metric.SaveData, navigator["connection"]["saveData"] ? BooleanFlag.True : BooleanFlag.False);
+    }
+
     // Check the browser support performance observer as a pre-requisite for any performance measurement
     if (window["PerformanceObserver"] && PerformanceObserver.supportedEntryTypes) {
         // Start monitoring performance data after page has finished loading.

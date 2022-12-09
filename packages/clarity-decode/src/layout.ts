@@ -1,6 +1,7 @@
 import { Constant } from "@clarity-types/data";
 import { Data, Layout } from "clarity-js";
 import { DomData, LayoutEvent, Interaction, RegionVisibility  } from "../types/layout";
+import { expand } from "./core";
 
 const AverageWordLength = 6;
 const Space = " ";
@@ -97,7 +98,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
         previous: tagIndex > 2 ? node[2] : null,
         tag
     };
-    let masked = node[0] < 0;
+    let mangled = node[0] < 0;
     let hasAttribute = false;
     let attributes: Layout.Attributes = {};
     let value = null;
@@ -125,8 +126,9 @@ function process(node: any[] | number[], tagIndex: number): DomData {
             let k = token.substr(0, keyIndex);
             let v = token.substr(keyIndex + 1);
             attributes[k] = v;
+            if (mangled && k === "value") { [attributes[k], output.checksum] = expand(v); }
         } else if (output.tag === Layout.Constant.TextTag) {
-            value = masked ? unmask(token) : token;
+            value = mangled ? unmask(token) : token;
         }
     }
 

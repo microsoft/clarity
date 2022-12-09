@@ -98,6 +98,10 @@ export const enum Metric {
     SinglePage = 29,
     UsedMemory = 30,
     Iframed = 31,
+    MaxTouchPoints = 32,
+    HardwareConcurrency = 33,
+    DeviceMemory = 34,
+    SaveData = 35
 }
 
 export const enum Dimension {
@@ -126,7 +130,9 @@ export const enum Dimension {
     Platform = 22,
     PlatformVersion = 23,
     Brand = 24,
-    Model = 25
+    Model = 25,
+    DevicePixelRatio = 26,
+    ConnectionType = 27
 }
 
 export const enum Check {
@@ -207,7 +213,8 @@ export const enum Setting {
     UploadFactor = 3, // Slow down sequence by specified factor
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
-    ExtractLimit = 10000 // Do not extract more than 10000 characters
+    ExtractLimit = 10000, // Do not extract more than 10000 characters
+    ChecksumPrecision = 24 // n-bit integer to represent token hash 
 }
 
 export const enum Character {
@@ -234,6 +241,7 @@ export const enum Constant {
     Space = " ",
     Expires = "expires=",
     Domain = "domain=",
+    Dropped = "*na*",
     Comma = ",",
     Dot = ".",
     Semicolon = ";",
@@ -273,7 +281,8 @@ export const enum Constant {
     Tilde = "~",
     ArrayStart = "[",
     ConditionStart = "{",
-    ConditionEnd = "}"
+    ConditionEnd = "}",
+    Zero = "0"
 }
 
 export const enum XMLReadyState {

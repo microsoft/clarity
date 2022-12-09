@@ -39,7 +39,7 @@ function recompute(event: UIEvent = null): void {
     // And, if for some reason that is not available, fall back to looking up scrollTop on document.documentElement.
     let x = element === de && "pageXOffset" in w ? Math.round(w.pageXOffset) : Math.round((element as HTMLElement).scrollLeft);
     let y = element === de && "pageYOffset" in w ? Math.round(w.pageYOffset) : Math.round((element as HTMLElement).scrollTop);
-    let current: ScrollState = { time: time(), event: Event.Scroll, data: {target: element, x, y} };
+    let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y} };
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
     if ((event === null && x === 0 && y === 0) || (x === null || y === null)) { return; }

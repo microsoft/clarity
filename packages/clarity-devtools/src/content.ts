@@ -38,6 +38,7 @@ function setup(url: string): void {
                 fraud: c.fraud,
                 mask: c.mask,
                 unmask: c.unmask,
+                drop: c.drop,
                 showText: items.clarity.showText,
                 leanMode: items.clarity.leanMode
               });
@@ -62,6 +63,7 @@ function wireup(settings: any): string {
       regions: "$__regions__$",
       extract: "$__extract__$",
       fraud: "$__fraud__$",
+      drop: "$__drop__$",
       mask: "$__mask__$",
       unmask: "$__unmask__$",
       content: "$__showText__$",

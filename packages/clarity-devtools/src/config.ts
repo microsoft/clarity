@@ -13,6 +13,7 @@ const enum Extract {
 
 export default function(): Core.Config {
     return {
+        drop: [],
         mask: [],
         unmask: [],
         regions: [
@@ -20,7 +21,8 @@ export default function(): Core.Config {
             [Region.Footer, "footer"], 
             [Region.Navigation, "nav"]
         ],
-        fraud: [],
+        fraud: true,
+        checksum: [],
         extract: [ExtractSource.Javascript, Extract.Performance, "performance.timing"] 
     };
 }

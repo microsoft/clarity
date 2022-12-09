@@ -54,7 +54,7 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
     // Check for null values before processing this event
     if (x !== null && y !== null) {
         state.push({
-            time: time(), event, data: {
+            time: time(evt), event, data: {
                 target: t,
                 x,
                 y,

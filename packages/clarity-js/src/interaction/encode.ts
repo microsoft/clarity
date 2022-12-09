@@ -1,5 +1,6 @@
+import { Privacy } from "@clarity-types/core";
 import { Constant, Event, Token } from "@clarity-types/data";
-import scrub from "@src/core/scrub";
+import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
@@ -16,8 +17,8 @@ import * as timeline from "./timeline";
 import * as unload from "./unload";
 import * as visibility from "./visibility";
 
-export default async function (type: Event): Promise<void> {
-    let t = time();
+export default async function (type: Event, ts: number = null): Promise<void> {
+    let t = ts || time();
     let tokens: Token[] = [t, type];
     switch (type) {
         case Event.MouseDown:
@@ -45,9 +46,10 @@ export default async function (type: Event): Promise<void> {
         case Event.Click:
             for (let entry of click.state) {
                 let cTarget = metadata(entry.data.target as Node, entry.event, entry.data.text);
+                let mangled = cTarget.privacy !== Privacy.None && cTarget.privacy !== Privacy.Sensitive;
                 tokens = [entry.time, entry.event];
                 let cHash = cTarget.hash.join(Constant.Dot);
-                tokens.push(cTarget.id);
+                tokens.push(cTarget.id * (mangled ? -1 : 1));
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
                 tokens.push(entry.data.eX);
@@ -55,8 +57,8 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.button);
                 tokens.push(entry.data.reaction);
                 tokens.push(entry.data.context);
-                tokens.push(scrub(entry.data.text, "click", cTarget.privacy));
-                tokens.push(entry.data.link);
+                tokens.push(scrub.text(entry.data.text, "click", cTarget.privacy));
+                tokens.push(scrub.url(entry.data.link));
                 tokens.push(cHash);
                 tokens.push(entry.data.trust);
                 queue(tokens);
@@ -93,9 +95,10 @@ export default async function (type: Event): Promise<void> {
         case Event.Input:
             for (let entry of input.state) {
                 let iTarget = metadata(entry.data.target as Node, entry.event, entry.data.value);
+                let mangled = iTarget.privacy !== Privacy.None;
                 tokens = [entry.time, entry.event];
-                tokens.push(iTarget.id);
-                tokens.push(scrub(entry.data.value, "input", iTarget.privacy));
+                tokens.push(iTarget.id * (mangled ? -1 : 1));
+                tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy));
                 queue(tokens);
             }
             input.reset();
