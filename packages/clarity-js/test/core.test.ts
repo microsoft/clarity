@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import { Browser, Page } from 'playwright';
-import { clicks, inputs, launch, markup, node, text } from './helper';
-import { Data, decode } from "clarity-decode";
+import { changes, clicks, inputs, launch, markup, node, text } from './helper';
+import { decode } from "clarity-decode";
 
 let browser: Browser;
 let page: Page;
@@ -37,6 +37,7 @@ describe('Core Tests', () => {
         let textarea = text(decoded, "textarea");
         let click = clicks(decoded)[0];
         let input = inputs(decoded)[0];
+        let group = changes(decoded);
         
         // Non-sensitive fields continue to pass through with sensitive bits masked off
         assert.equal(heading, "Thanks for your order #▫▪▪▫▫▫▪▪");
@@ -52,6 +53,15 @@ describe('Core Tests', () => {
         // Clicked text and input value should be consistent with uber masking configuration
         assert.equal(click.data.text, "Hello ▪▪▪▫▪");
         assert.equal(input.data.value, "••••• •••• •••• ••••");
+        assert.equal(group.length, 2);
+        // Search change - we should captured mangled input and hash
+        assert.equal(group[0].data.type, "search");
+        assert.equal(group[0].data.value, "••••• •••• •••• ••••");
+        assert.equal(group[0].data.checksum, "4y7m6");
+        // Password change - we should capture placholder value and empty hash
+        assert.equal(group[1].data.type, "password");
+        assert.equal(group[1].data.value, "••••");
+        assert.equal(group[1].data.checksum, "");
     });
 
     it('should mask all text in strict mode', async () => {

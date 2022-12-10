@@ -22,6 +22,7 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                     case "click":
                         return redact(value);
                     case "input":
+                    case "change":
                         return mangleToken(value);
                 }
                 return value;
@@ -38,6 +39,7 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                     case "value":
                     case "click":
                     case "input":
+                    case "change":
                         return mangleToken(value);
                     case "placeholder":
                         return mask(value);
@@ -48,7 +50,10 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                     case "value":
                     case "input":
                     case "click":
+                    case "change":
                         return Array(Data.Setting.WordLength).join(Data.Constant.Mask);
+                    case "checksum":
+                        return Data.Constant.Empty;
                 }
         }
     }

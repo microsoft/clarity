@@ -135,7 +135,9 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 if (target.id > 0) {
                     tokens = [entry.time, entry.event];
                     tokens.push(target.id);
-                    tokens.push(entry.data.checksum);
+                    tokens.push(entry.data.type);
+                    tokens.push(scrub.text(entry.data.value, "change", target.privacy));
+                    tokens.push(scrub.text(entry.data.checksum, "checksum", target.privacy));
                     queue(tokens);
                 }
             }

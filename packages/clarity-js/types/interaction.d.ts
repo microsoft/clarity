@@ -86,6 +86,7 @@ export interface TimelineData {
 export interface ChangeData {
     target: Target;
     type: string;
+    value: string;
     checksum: string;
 }
 

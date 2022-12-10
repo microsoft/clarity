@@ -59,7 +59,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let changeData: Interaction.ChangeData = {
                 target: tokens[2] as number,
                 type: tokens[3] as string,
-                checksum: tokens[4] as string
+                value: tokens[4] as string,
+                checksum: tokens[5] as string
             };
             return { time, event, data: changeData };
         case Data.Event.Submit:

@@ -101,8 +101,7 @@ export const enum Metric {
     Iframed = 31,
     MaxTouchPoints = 32,
     HardwareConcurrency = 33,
-    DeviceMemory = 34,
-    SaveData = 35
+    DeviceMemory = 34
 }
 
 export const enum Dimension {
