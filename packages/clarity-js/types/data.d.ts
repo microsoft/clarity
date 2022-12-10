@@ -62,7 +62,8 @@ export const enum Event {
     Clipboard = 38,
     Submit = 39,
     Extract = 40,
-    Fraud = 41
+    Fraud = 41,
+    Change = 42
 }
 
 export const enum Metric {
@@ -281,8 +282,7 @@ export const enum Constant {
     Tilde = "~",
     ArrayStart = "[",
     ConditionStart = "{",
-    ConditionEnd = "}",
-    Zero = "0"
+    ConditionEnd = "}"
 }
 
 export const enum XMLReadyState {

@@ -2,7 +2,6 @@ import { Privacy } from "@clarity-types/core";
 import * as Data from "@clarity-types/data";
 import * as Layout from "@clarity-types/layout";
 import config from "@src/core/config";
-import hash from "@src/core/hash";
 
 const catchallRegex = /\S/gi;
 let unicodeRegex = true;
@@ -49,7 +48,7 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                     case "value":
                     case "input":
                     case "click":
-                        return `${Data.Setting.WordLength}.${Data.Constant.Zero}`;
+                        return Array(Data.Setting.WordLength).join(Data.Constant.Mask);
                 }
         }
     }
@@ -84,8 +83,11 @@ function mask(value: string): string {
 
 function mangleToken(value: string): string {
     let length = ((Math.floor(value.length / Data.Setting.WordLength) + 1) * Data.Setting.WordLength);
-    let checksum = value.length >= Data.Setting.WordLength && config.fraud ? hash(value, Data.Setting.ChecksumPrecision) : Data.Constant.Zero;
-    return `${length.toString(36)}${Data.Constant.Dot}${checksum}`;
+    let output: string = Layout.Constant.Empty;
+    for (let i = 0; i < length; i++) {
+        output += i > 0 && i % Data.Setting.WordLength === 0 ? Data.Constant.Space : Data.Constant.Mask;
+    }
+    return output;
 }
 
 function redact(value: string): string {

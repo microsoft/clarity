@@ -1,11 +1,9 @@
 import { Data, Interaction, Layout } from "clarity-js";
-import { InputData, InteractionEvent, ClickData, TimelineData } from "../types/interaction";
-import { expand } from "./core";
+import { InteractionEvent, ClickData, TimelineData } from "../types/interaction";
 
 export function decode(tokens: Data.Token[]): InteractionEvent {
     let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
-    let mangled = (tokens[2] as number) < 0;
     switch (event) {
         case Data.Event.MouseDown:
         case Data.Event.MouseUp:
@@ -25,7 +23,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
         case Data.Event.Click:
             let clickHashes = (tokens[12] as string).split(Data.Constant.Dot);
             let clickData: ClickData = {
-                target: Math.abs(tokens[2] as number),
+                target: tokens[2] as number,
                 x: tokens[3] as number,
                 y: tokens[4] as number,
                 eX: tokens[5] as number,
@@ -39,7 +37,6 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 hashBeta: clickHashes.length > 0 ? clickHashes[1] : null,
                 trust: tokens.length > 13 ? tokens[13] as number : Data.BooleanFlag.True
             };
-            if (mangled) { [clickData.text, clickData.checksum] = expand(clickData.text); }
             return { time, event, data: clickData };
         case Data.Event.Clipboard:
             let clipData: Interaction.ClipboardData = { target: tokens[2] as number, action: tokens[3] as Interaction.Clipboard };
@@ -48,11 +45,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let resizeData: Interaction.ResizeData = { width: tokens[2] as number, height: tokens[3] as number };
             return { time, event, data: resizeData };
         case Data.Event.Input:
-            let inputData: InputData = {
-                target: Math.abs(tokens[2] as number),
-                value: tokens[3] as string
-            };
-            if (mangled) { [inputData.value, inputData.checksum] = expand(inputData.value); }
+            let inputData: Interaction.InputData = { target: tokens[2] as number, value: tokens[3] as string };
             return { time, event, data: inputData };
         case Data.Event.Selection:
             let selectionData: Interaction.SelectionData = {
@@ -62,6 +55,13 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 endOffset: tokens[5] as number
             };
             return { time, event, data: selectionData };
+        case Data.Event.Change:
+            let changeData: Interaction.ChangeData = {
+                target: tokens[2] as number,
+                type: tokens[3] as string,
+                checksum: tokens[4] as string
+            };
+            return { time, event, data: changeData };
         case Data.Event.Submit:
             let submitData: Interaction.SubmitData = {
                 target: tokens[2] as number

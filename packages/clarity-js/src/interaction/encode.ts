@@ -1,10 +1,10 @@
-import { Privacy } from "@clarity-types/core";
 import { Constant, Event, Token } from "@clarity-types/data";
 import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
 import { metadata } from "@src/layout/target";
+import * as change from "./change";
 import * as click from "./click";
 import * as clipboard from "./clipboard";
 import * as input from "./input";
@@ -46,10 +46,9 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.Click:
             for (let entry of click.state) {
                 let cTarget = metadata(entry.data.target as Node, entry.event, entry.data.text);
-                let mangled = cTarget.privacy !== Privacy.None && cTarget.privacy !== Privacy.Sensitive;
                 tokens = [entry.time, entry.event];
                 let cHash = cTarget.hash.join(Constant.Dot);
-                tokens.push(cTarget.id * (mangled ? -1 : 1));
+                tokens.push(cTarget.id);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
                 tokens.push(entry.data.eX);
@@ -95,9 +94,8 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.Input:
             for (let entry of input.state) {
                 let iTarget = metadata(entry.data.target as Node, entry.event, entry.data.value);
-                let mangled = iTarget.privacy !== Privacy.None;
                 tokens = [entry.time, entry.event];
-                tokens.push(iTarget.id * (mangled ? -1 : 1));
+                tokens.push(iTarget.id);
                 tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy));
                 queue(tokens);
             }
@@ -129,6 +127,19 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 }
             }
             scroll.reset();
+            break;
+        case Event.Change:
+            for (let entry of change.state) {
+                tokens = [entry.time, entry.event];
+                let target = metadata(entry.data.target as Node, entry.event);
+                if (target.id > 0) {
+                    tokens = [entry.time, entry.event];
+                    tokens.push(target.id);
+                    tokens.push(entry.data.checksum);
+                    queue(tokens);
+                }
+            }
+            change.reset();
             break;
         case Event.Submit:
             for (let entry of submit.state) {

@@ -88,7 +88,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
 
 function shouldMangle(value: NodeValue): boolean {
     let privacy = value.metadata.privacy;
-    return (value.data.tag === Constant.TextTag || "value" in value.data.attributes) && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
+    return value.data.tag === Constant.TextTag && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
 }
 
 function size(value: NodeValue): number[] {

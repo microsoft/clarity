@@ -36,6 +36,8 @@ export class InteractionHelper {
         let scrollable = scrollTarget.scrollHeight > scrollTarget.clientHeight || scrollTarget.scrollWidth > scrollTarget.clientWidth;
         if (scrollTarget && scrollable) {
             scrollTarget.scrollTo(data.x, data.y);
+            // In an edge case, scrolling API doesn't work when css on HTML element has height:100% and overflow:auto
+            // In those cases, we fall back to scrolling the body element.
             if (scrollTarget === de && scrollTarget.offsetTop !== data.y) {
                 scrollTarget = doc.body;
                 scrollTarget.scrollTo(data.x, data.y);

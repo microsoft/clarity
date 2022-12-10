@@ -44,7 +44,7 @@ describe('Core Tests', () => {
         // Sensitive fields, including input fields, are randomized and masked
         assert.equal(address, "•••••• ••••• ••••• ••••• ••••• •••••");
         assert.equal(email.attributes.value, "••••• •••• •••• ••••");
-        assert.equal(password.attributes.value, "•••••");
+        assert.equal(password.attributes.value, "••••");
         assert.equal(search.attributes.value, "••••• •••• ••••");
         assert.equal(card.attributes.value, "•••••");
         assert.equal(textarea, "••••• •••••");
@@ -70,7 +70,7 @@ describe('Core Tests', () => {
         assert.equal(heading, "• ••••• ••••• ••••• ••••• •••••");
         assert.equal(address, "•••••• ••••• ••••• ••••• ••••• •••••");
         assert.equal(email.attributes.value, "••••• •••• •••• ••••");
-        assert.equal(password.attributes.value, "•••••");
+        assert.equal(password.attributes.value, "••••");
         assert.equal(search.attributes.value, "••••• •••• ••••");
         assert.equal(card.attributes.value, "•••••");
 
@@ -98,7 +98,7 @@ describe('Core Tests', () => {
 
         // Sensitive fields are still masked
         assert.equal(email.attributes.value, "••••• •••• •••• ••••");
-        assert.equal(password.attributes.value, "•••••");
+        assert.equal(password.attributes.value, "••••");
         assert.equal(card.attributes.value, "•••••");
 
         // Clicked text comes through unmasked in relaxed mode but input is still masked

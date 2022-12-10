@@ -55,6 +55,12 @@ export interface SubmitState {
     data: SubmitData;
 }
 
+export interface ChangeState {
+    time: number;
+    event: number;
+    data: ChangeData;
+}
+
 export interface InputState {
     time: number;
     event: number;
@@ -75,6 +81,12 @@ export interface TimelineData {
     y: number;
     reaction: number;
     context: number;
+}
+
+export interface ChangeData {
+    target: Target;
+    type: string;
+    checksum: string;
 }
 
 export interface InputData {

@@ -31,7 +31,7 @@ export function start(): void {
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);
   dimension.log(Dimension.Url, scrub.url(location.href));
-  dimension.log(Dimension.Referrer, scrub.url(document.referrer));
+  dimension.log(Dimension.Referrer, document.referrer);
   dimension.log(Dimension.TabId, tab());
   dimension.log(Dimension.PageLanguage, document.documentElement.lang);
   dimension.log(Dimension.DocumentDirection, document.dir);
