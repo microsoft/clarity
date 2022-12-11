@@ -127,8 +127,21 @@ export default function (node: Node, source: Source): Node {
                     break;
                 case "HEAD":
                     let head = { tag, attributes };
-                    if (location) { head.attributes[Constant.Base] = location.protocol + "//" + location.hostname; }
+                    let baseTags = element.getElementsByTagName("BASE");
+                    let alreadyHasBaseTag = baseTags.length > 0;
+                    if (alreadyHasBaseTag) {
+                        head.attributes[Constant.Base] = baseTags[0].attributes.getNamedItem("href").value;
+                    } else if (insideFrame && node.ownerDocument?.location) {
+                        let iframeLocation = node.ownerDocument.location;
+                        head.attributes[Constant.Base] = iframeLocation.protocol + "//"+
+                            iframeLocation.hostname + iframeLocation.pathname;
+                    } else if (location) {
+                        head.attributes[Constant.Base] = location.protocol + "//" + location.hostname + location.pathname;
+                    }
                     dom[call](node, parent, head, source);
+                    break;
+                case "BASE":
+                    // The base tag is handled while reading the HEAD tag
                     break;
                 case "STYLE":
                     let styleData = { tag, attributes, value: getStyleValue(element as HTMLStyleElement) };
