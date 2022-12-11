@@ -1,4 +1,5 @@
 import { Event, Token } from "@clarity-types/data";
+import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import { queue } from "@src/data/upload";
 import * as fraud from "@src/diagnostic/fraud";
@@ -14,7 +15,7 @@ export default async function (type: Event): Promise<void> {
             tokens.push(script.data.line);
             tokens.push(script.data.column);
             tokens.push(script.data.stack);
-            tokens.push(script.data.source);
+            tokens.push(scrub.url(script.data.source));
             queue(tokens);
             break;
         case Event.Log:
@@ -31,7 +32,7 @@ export default async function (type: Event): Promise<void> {
             if (fraud.data) {
                 tokens.push(fraud.data.id);
                 tokens.push(fraud.data.target);
-                tokens.push(fraud.data.hash);
+                tokens.push(fraud.data.checksum);
                 queue(tokens, false);
             }
             break;

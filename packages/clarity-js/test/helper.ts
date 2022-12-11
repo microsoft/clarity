@@ -26,7 +26,11 @@ export async function markup(page: Page, file: string, override: Core.Config = n
     `));
     await page.hover("#two");
     await page.click("#child");
-    await page.locator('#search').fill('query with numb3rs');
+    await page.locator('#search').fill('');
+    await page.locator('#search').type('query with numb3rs');
+    await page.locator('#pwd').type('p1ssw0rd');
+    await page.locator('#eml').fill('');
+    await page.locator('#eml').type('hello@world.com');
     await page.waitForFunction("payloads && payloads.length > 2");
     return await page.evaluate('payloads');
 }
@@ -51,6 +55,19 @@ export function inputs(decoded: Data.DecodedPayload[]): Interaction.InputEvent[]
             for (let j = 0; j < decoded[i].input.length;j++)
             {
                 output.push(decoded[i].input[j]);
+            }
+        }
+    }
+    return output;
+}
+
+export function changes(decoded: Data.DecodedPayload[]): Interaction.ChangeEvent[] {
+    let output: Interaction.ChangeEvent[] = [];
+    for (let i = decoded.length - 1; i >= 0; i--) {
+        if (decoded[i].change) {
+            for (let j = 0; j < decoded[i].change.length;j++)
+            {
+                output.push(decoded[i].change[j]);
             }
         }
     }

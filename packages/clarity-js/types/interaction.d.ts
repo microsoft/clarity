@@ -12,6 +12,7 @@ export const enum BrowsingContext {
 
 export const enum Setting {
     LookAhead = 500, // 500ms
+    InputLookAhead = 1000, // 1s
     Distance = 20, // 20 pixels
     Interval = 25, // 25 milliseconds
     TimelineSpan = 2 * Time.Second, // 2 seconds
@@ -54,6 +55,12 @@ export interface SubmitState {
     data: SubmitData;
 }
 
+export interface ChangeState {
+    time: number;
+    event: number;
+    data: ChangeData;
+}
+
 export interface InputState {
     time: number;
     event: number;
@@ -74,6 +81,13 @@ export interface TimelineData {
     y: number;
     reaction: number;
     context: number;
+}
+
+export interface ChangeData {
+    target: Target;
+    type: string;
+    value: string;
+    checksum: string;
 }
 
 export interface InputData {

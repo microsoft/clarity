@@ -20,5 +20,5 @@ export interface LogData {
 export interface FraudData {
     id: number;
     target: number;
-    hash: string;
+    checksum: string;
 }
