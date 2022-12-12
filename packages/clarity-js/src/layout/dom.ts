@@ -17,8 +17,9 @@ let override = [];
 let unmask = [];
 let updatedFragments: { [fragment: number]: string } = {};
 let maskText = [];
-let maskInput = [];
+let maskExclude = [];
 let maskDisable = [];
+let maskTags = [];
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
@@ -44,8 +45,9 @@ function reset(): void {
     override = [];
     unmask = [];
     maskText = Mask.Text.split(Constant.Comma);
-    maskInput = Mask.Input.split(Constant.Comma);
+    maskExclude = Mask.Exclude.split(Constant.Comma);
     maskDisable = Mask.Disable.split(Constant.Comma);
+    maskTags = Mask.Tags.split(Constant.Comma);
     idMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
@@ -67,7 +69,7 @@ export function parse(root: ParentNode, init: boolean = false): void {
         if ("querySelectorAll" in root) {
             config.regions.forEach(x => root.querySelectorAll(x[1]).forEach(e => region.observe(e, `${x[0]}`))); // Regions
             config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
-            config.fraud.forEach(x => root.querySelectorAll(x[1]).forEach(e => fraudMap.set(e, x[0]))); // Fraud Check
+            config.checksum.forEach(x => root.querySelectorAll(x[1]).forEach(e => fraudMap.set(e, x[0]))); // Fraud Checksum Check
             unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
         }
     } catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
@@ -221,6 +223,16 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
     let tag = data.tag.toUpperCase();
 
     switch (true) {
+        case maskTags.indexOf(tag) >= 0:
+            let type = attributes[Constant.Type];
+            let meta: string = Constant.Empty;
+            Object.keys(attributes).forEach(x => meta += attributes[x].toLowerCase());
+            let exclude = maskExclude.some(x => meta.indexOf(x) >= 0);
+            // Regardless of privacy mode, always mask off user input from input boxes or drop downs with two exceptions:
+            // (1) The node is detected to be one of the excluded fields, in which case we drop everything
+            // (2) The node's type is one of the allowed types (like checkboxes)
+            metadata.privacy = tag === Constant.InputTag && maskDisable.indexOf(type) >= 0 ? current : (exclude ? Privacy.Exclude : Privacy.Text);
+            break;
         case Constant.MaskData in attributes:
             metadata.privacy = Privacy.TextImage;
             break;
@@ -241,20 +253,6 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             let pSelector = parent && parent.selector ? parent.selector[Selector.Default] : Constant.Empty;
             let tags : string[] = [Constant.StyleTag, Constant.TitleTag, Constant.SvgStyle];
             metadata.privacy = tags.includes(pTag) || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current;
-            break;
-        case tag === Constant.InputTag && current === Privacy.None:
-            // If even default privacy setting is to not mask, we still scan through input fields for any sensitive information
-            let field: string = Constant.Empty;
-            Object.keys(attributes).forEach(x => field += attributes[x].toLowerCase());
-            metadata.privacy = inspect(field, maskInput, metadata);
-            break;
-        case tag === Constant.InputTag && current === Privacy.Sensitive:
-            // Look through class names to aggressively mask content
-            metadata.privacy = inspect(attributes[Constant.Class], maskText, metadata);
-            // If this node has an explicit type assigned to it, go through masking rules to determine right privacy setting
-            metadata.privacy  = inspect(attributes[Constant.Type], maskInput, metadata);
-            // If it's a button or an input option, make an exception to disable masking in sensitive mode
-            metadata.privacy = maskDisable.indexOf(attributes[Constant.Type]) >= 0 ? Privacy.None : metadata.privacy;
             break;
         case current === Privacy.Sensitive:
             // In a mode where we mask sensitive information by default, look through class names to aggressively mask content

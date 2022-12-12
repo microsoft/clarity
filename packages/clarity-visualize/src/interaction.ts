@@ -34,7 +34,15 @@ export class InteractionHelper {
         let de = doc.documentElement;
         let scrollTarget = this.layout.element(data.target as number) as HTMLElement || doc.body;
         let scrollable = scrollTarget.scrollHeight > scrollTarget.clientHeight || scrollTarget.scrollWidth > scrollTarget.clientWidth;
-        if (scrollTarget && scrollable) { scrollTarget.scrollTo(data.x, data.y); }
+        if (scrollTarget && scrollable) {
+            scrollTarget.scrollTo(data.x, data.y);
+            // In an edge case, scrolling API doesn't work when css on HTML element has height:100% and overflow:auto
+            // In those cases, we fall back to scrolling the body element.
+            if (scrollTarget === de && scrollTarget.offsetTop !== data.y) {
+                scrollTarget = doc.body;
+                scrollTarget.scrollTo(data.x, data.y);
+            }
+        }
 
         // Position canvas relative to scroll events on the parent page
         if (scrollTarget === de || scrollTarget === doc.body) {

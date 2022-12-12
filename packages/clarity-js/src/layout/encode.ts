@@ -2,7 +2,7 @@ import { Privacy, Task, Timer } from "@clarity-types/core";
 import { Event, Setting, Token } from "@clarity-types/data";
 import { Constant, NodeInfo, NodeValue } from "@clarity-types/layout";
 import config from "@src/core/config";
-import scrub from "@src/core/scrub";
+import * as scrub from "@src/core/scrub";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import tokenize from "@src/data/token";
@@ -73,7 +73,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                     break;
                                 case "value":
                                     fraud.check(value.metadata.fraud, value.id, data[key]);
-                                    tokens.push(scrub(data[key], data.tag, privacy, mangle));
+                                    tokens.push(scrub.text(data[key], data.tag, privacy, mangle));
                                     break;
                             }
                         }
@@ -106,5 +106,5 @@ function str(input: number): string {
 }
 
 function attribute(key: string, value: string, privacy: Privacy): string {
-    return `${key}=${scrub(value, key, privacy)}`;
+    return `${key}=${scrub.text(value, key, privacy)}`;
 }

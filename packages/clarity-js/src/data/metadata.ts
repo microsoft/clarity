@@ -3,6 +3,7 @@ import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataC
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
+import * as scrub from "@src/core/scrub";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
@@ -19,32 +20,35 @@ export function start(): void {
   // Populate ids for this page
   let s = session();
   let u = user();
-  data = {
-    projectId: config.projectId || hash(location.host),
-    userId: u.id,
-    sessionId: s.session,
-    pageNum: s.count
-  }
+  let projectId = config.projectId || hash(location.host);
+  data = { projectId, userId: u.id, sessionId: s.session, pageNum: s.count };
 
   // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
   config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;
-  // Log dimensions
+  
+  // Log page metadata as dimensions
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);
-  dimension.log(Dimension.Url, location.href);
+  dimension.log(Dimension.Url, scrub.url(location.href));
   dimension.log(Dimension.Referrer, document.referrer);
   dimension.log(Dimension.TabId, tab());
   dimension.log(Dimension.PageLanguage, document.documentElement.lang);
   dimension.log(Dimension.DocumentDirection, document.dir);
-  if (navigator) {
-    dimension.log(Dimension.Language, (<any>navigator).userLanguage || navigator.language);
-    userAgentData();
-  }
-
-  // Metrics
+  dimension.log(Dimension.DevicePixelRatio, `${window.devicePixelRatio}`);
+  
+  // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);
-  metric.max(Metric.Playback, BooleanFlag.False);
+  metric.max(Metric.Playback, BooleanFlag.False); 
+
+  // Capture navigator specific dimensions
+  if (navigator) {
+    dimension.log(Dimension.Language, navigator.language);
+    metric.max(Metric.HardwareConcurrency, navigator.hardwareConcurrency);
+    metric.max(Metric.MaxTouchPoints, navigator.maxTouchPoints);
+    metric.max(Metric.DeviceMemory, Math.round((<any>navigator).deviceMemory));
+    userAgentData();
+  } 
 
   if (screen) {
     metric.max(Metric.ScreenWidth, Math.round(screen.width));
@@ -63,22 +67,16 @@ export function start(): void {
 }
 
 function userAgentData(): void {
-  if (navigator["userAgentData"] && navigator["userAgentData"].getHighEntropyValues) {
-    navigator["userAgentData"].getHighEntropyValues(
-      ["model",
-      "platform",
-      "platformVersion",
-      "uaFullVersion"])
-      .then(ua => { 
-        dimension.log(Dimension.Platform, ua.platform); 
-        dimension.log(Dimension.PlatformVersion, ua.platformVersion); 
-        ua.brands?.forEach(brand => {
-          dimension.log(Dimension.Brand, brand.name + Constant.Tilde + brand.version); 
-        });
-        dimension.log(Dimension.Model, ua.model); 
-        metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False); 
-      });
-  }
+  let uaData = navigator["userAgentData"];
+  if (uaData && uaData.getHighEntropyValues) {
+    uaData.getHighEntropyValues(["model","platform","platformVersion","uaFullVersion"]).then(ua => { 
+      dimension.log(Dimension.Platform, ua.platform); 
+      dimension.log(Dimension.PlatformVersion, ua.platformVersion); 
+      ua.brands?.forEach(brand => { dimension.log(Dimension.Brand, brand.name + Constant.Tilde + brand.version); });
+      dimension.log(Dimension.Model, ua.model); 
+      metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False); 
+    });
+  } else { dimension.log(Dimension.Platform, navigator.platform); }
 }
 
 export function stop(): void {
@@ -91,7 +89,6 @@ export function metadata(cb: MetadataCallback, wait: boolean = true): void {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
     cb(data, !config.lean);
   }
-  
   callbacks.push({callback: cb, wait: wait });
 }
 

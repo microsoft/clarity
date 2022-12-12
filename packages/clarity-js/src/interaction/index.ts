@@ -1,3 +1,4 @@
+import * as change from "@src/interaction/change";
 import * as click from "@src/interaction/click";
 import * as clipboard from "@src/interaction/clipboard";
 import * as input from "@src/interaction/input";
@@ -20,6 +21,7 @@ export function start(): void {
     visibility.start();
     scroll.start();
     selection.start();
+    change.start();
     submit.start();
     unload.start();
 }
@@ -34,6 +36,7 @@ export function stop(): void {
     visibility.stop();
     scroll.stop();
     selection.stop();
+    change.stop();
     submit.stop();
     unload.stop()
 }
@@ -48,6 +51,7 @@ export function observe(root: Node): void {
         pointer.observe(root);
         input.observe(root);
         selection.observe(root);
+        change.observe(root);
         submit.observe(root);
     }
 }

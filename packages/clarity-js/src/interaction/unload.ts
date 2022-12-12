@@ -2,6 +2,7 @@ import { Event } from "@clarity-types/data";
 import { UnloadData } from "@clarity-types/interaction";
 import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
+import { time } from "@src/core/time";
 import encode from "./encode";
 
 export let data: UnloadData;
@@ -12,7 +13,7 @@ export function start(): void {
 
 function recompute(evt: UIEvent): void {
     data = { name: evt.type };
-    encode(Event.Unload);
+    encode(Event.Unload, time(evt));
     clarity.stop();
 }
 

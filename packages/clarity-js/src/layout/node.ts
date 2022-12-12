@@ -127,8 +127,19 @@ export default function (node: Node, source: Source): Node {
                     break;
                 case "HEAD":
                     let head = { tag, attributes };
-                    if (location) { head.attributes[Constant.Base] = location.protocol + "//" + location.hostname; }
+                    let l = insideFrame && node.ownerDocument?.location ? node.ownerDocument.location : location;
+                    head.attributes[Constant.Base] = l.protocol + "//" + l.hostname + l.pathname;
                     dom[call](node, parent, head, source);
+                    break;
+                case "BASE":
+                    // Override the auto detected base path to explicit value specified in this tag
+                    let baseHead = dom.get(node.parentElement);
+                    if (baseHead) {
+                        // We create "a" element so we can generate protocol and hostname for relative paths like "/path/"
+                        let a = document.createElement("a");
+                        a.href = attributes["href"];
+                        baseHead.data.attributes[Constant.Base] = a.protocol + "//" + a.hostname + a.pathname;
+                    }
                     break;
                 case "STYLE":
                     let styleData = { tag, attributes, value: getStyleValue(element as HTMLStyleElement) };

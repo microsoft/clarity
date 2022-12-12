@@ -29,4 +29,5 @@ export interface DomData {
     hashAlpha?: string;
     selectorBeta?: string;
     hashBeta?: string;
+    checksum?: string;
 }

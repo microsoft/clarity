@@ -2,8 +2,8 @@ import { Data, version } from "clarity-js";
 import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
 import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent } from "../types/data";
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
-import { ClickEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent, SubmitEvent, TimelineEvent } from "../types/interaction";
-import { SelectionEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
+import { ChangeEvent, ClickEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
+import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
 import { DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
 import { NavigationEvent } from "../types/performance";
 
@@ -117,6 +117,11 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Selection:
                 if (payload.selection === undefined) { payload.selection = []; }
                 payload.selection.push(interaction.decode(entry) as SelectionEvent);
+                break;
+            case Data.Event.Change:
+                if (payload.change === undefined) { payload.change = []; }
+                let changeEntry = interaction.decode(entry) as ChangeEvent;
+                payload.change.push(changeEntry);
                 break;
             case Data.Event.Submit:
                 if (payload.submit === undefined) { payload.submit = []; }

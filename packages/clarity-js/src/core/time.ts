@@ -4,8 +4,8 @@ export function start(): void {
     startTime = performance.now();
 }
 
-export function time(ts: number = null): number {
-    ts = ts ? ts : performance.now();
+export function time(event: UIEvent = null): number {
+    let ts = event && event.timeStamp > 0 ? event.timeStamp : performance.now();
     return Math.max(Math.round(ts - startTime), 0);
 }
 

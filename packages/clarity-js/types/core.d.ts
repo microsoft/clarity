@@ -4,7 +4,7 @@ type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
 type UploadCallback = (data: string) => void;
 type Region = [number /* RegionId */, string /* Query Selector */];
-type Fraud = [number /* FraudId */, string /* Query Selector */];
+type Checksum = [number /* FraudId */, string /* Query Selector */];
 export type Extract = ExtractSource /* Extraction Source */ | number /* Extract Id */ | string  | string[] /* Hash or Query Selector or String Token */;
 
 /* Enum */
@@ -123,12 +123,14 @@ export interface Config {
     lean?: boolean;
     track?: boolean;
     content?: boolean;
+    drop?: string[];
     mask?: string[];
     unmask?: string[];
     regions?: Region[];
     extract?: Extract[];
     cookies?: string[];
-    fraud?: Fraud[];
+    fraud?: boolean;
+    checksum?: Checksum[];
     report?: string;
     upload?: string | UploadCallback;
     fallback?: string;

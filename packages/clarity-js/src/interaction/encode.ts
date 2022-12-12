@@ -1,9 +1,10 @@
 import { Constant, Event, Token } from "@clarity-types/data";
-import scrub from "@src/core/scrub";
+import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
 import { metadata } from "@src/layout/target";
+import * as change from "./change";
 import * as click from "./click";
 import * as clipboard from "./clipboard";
 import * as input from "./input";
@@ -16,8 +17,8 @@ import * as timeline from "./timeline";
 import * as unload from "./unload";
 import * as visibility from "./visibility";
 
-export default async function (type: Event): Promise<void> {
-    let t = time();
+export default async function (type: Event, ts: number = null): Promise<void> {
+    let t = ts || time();
     let tokens: Token[] = [t, type];
     switch (type) {
         case Event.MouseDown:
@@ -55,8 +56,8 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.button);
                 tokens.push(entry.data.reaction);
                 tokens.push(entry.data.context);
-                tokens.push(scrub(entry.data.text, "click", cTarget.privacy));
-                tokens.push(entry.data.link);
+                tokens.push(scrub.text(entry.data.text, "click", cTarget.privacy));
+                tokens.push(scrub.url(entry.data.link));
                 tokens.push(cHash);
                 tokens.push(entry.data.trust);
                 queue(tokens);
@@ -95,7 +96,7 @@ export default async function (type: Event): Promise<void> {
                 let iTarget = metadata(entry.data.target as Node, entry.event, entry.data.value);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
-                tokens.push(scrub(entry.data.value, "input", iTarget.privacy));
+                tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy));
                 queue(tokens);
             }
             input.reset();
@@ -126,6 +127,21 @@ export default async function (type: Event): Promise<void> {
                 }
             }
             scroll.reset();
+            break;
+        case Event.Change:
+            for (let entry of change.state) {
+                tokens = [entry.time, entry.event];
+                let target = metadata(entry.data.target as Node, entry.event);
+                if (target.id > 0) {
+                    tokens = [entry.time, entry.event];
+                    tokens.push(target.id);
+                    tokens.push(entry.data.type);
+                    tokens.push(scrub.text(entry.data.value, "change", target.privacy));
+                    tokens.push(scrub.text(entry.data.checksum, "checksum", target.privacy));
+                    queue(tokens);
+                }
+            }
+            change.reset();
             break;
         case Event.Submit:
             for (let entry of submit.state) {

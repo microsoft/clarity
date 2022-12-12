@@ -12,6 +12,11 @@ let observer: PerformanceObserver;
 const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTask, Constant.FID, Constant.CLS, Constant.LCP];
 
 export function start(): void {
+    // Capture connection properties, if available
+    if (navigator && "connection" in navigator) {
+        dimension.log(Dimension.ConnectionType, navigator["connection"]["effectiveType"]);
+    }
+
     // Check the browser support performance observer as a pre-requisite for any performance measurement
     if (window["PerformanceObserver"] && PerformanceObserver.supportedEntryTypes) {
         // Start monitoring performance data after page has finished loading.
