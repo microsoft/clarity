@@ -47,6 +47,8 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                 break;
             case Privacy.Exclude:
                 switch (hint) {
+                    case Layout.Constant.TextTag:
+                        return mangle ? mangleText(value) : mask(value);
                     case "value":
                     case "input":
                     case "click":

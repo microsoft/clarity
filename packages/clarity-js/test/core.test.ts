@@ -34,6 +34,7 @@ describe('Core Tests', () => {
         let password = node(decoded, "attributes.id", "pwd");
         let search = node(decoded, "attributes.id", "search");
         let card = node(decoded, "attributes.id", "cardnum");
+        let option = text(decoded, "option1");
         let textarea = text(decoded, "textarea");
         let click = clicks(decoded)[0];
         let input = inputs(decoded)[0];
@@ -49,6 +50,7 @@ describe('Core Tests', () => {
         assert.equal(search.attributes.value, "••••• •••• ••••");
         assert.equal(card.attributes.value, "•••••");
         assert.equal(textarea, "••••• •••••");
+        assert.equal(option, "• •••••");
 
         // Clicked text and input value should be consistent with uber masking configuration
         assert.equal(click.data.text, "Hello ▪▪▪▫▪");
@@ -75,6 +77,7 @@ describe('Core Tests', () => {
         let card = node(decoded, "attributes.id", "cardnum");
         let click = clicks(decoded)[0];
         let input = inputs(decoded)[0];
+        let option = text(decoded, "option1");
 
         // All fields are randomized and masked
         assert.equal(heading, "• ••••• ••••• ••••• ••••• •••••");
@@ -83,6 +86,7 @@ describe('Core Tests', () => {
         assert.equal(password.attributes.value, "••••");
         assert.equal(search.attributes.value, "••••• •••• ••••");
         assert.equal(card.attributes.value, "•••••");
+        assert.equal(option, "• •••••");
 
         // Clicked text and input value should also be masked in strict mode
         assert.equal(click.data.text, "••••• •••• ••••");
@@ -100,11 +104,13 @@ describe('Core Tests', () => {
         let card = node(decoded, "attributes.id", "cardnum");
         let click = clicks(decoded)[0];
         let input = inputs(decoded)[0];
+        let option = text(decoded, "option1");
 
         // Text flows through unmasked for non-sensitive fields, with exception of input fields
         assert.equal(heading, "Thanks for your order #2AB700GH");
         assert.equal(address, "1 Microsoft Way, Redmond, WA - 98052");
         assert.equal(search.attributes.value, "••••• •••• ••••");
+        assert.equal(option, "• •••••");
 
         // Sensitive fields are still masked
         assert.equal(email.attributes.value, "••••• •••• •••• ••••");
