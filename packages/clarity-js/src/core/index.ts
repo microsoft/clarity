@@ -73,6 +73,12 @@ export function suspend(): void {
     }
 }
 
+export function queue(functionName: string, args: IArguments): void {
+    const w = window as any;
+    const c = 'clarity';
+    (w[c].q=w[c].q||[]).push([functionName].concat(Array.from(args)));
+}
+
 function restart(): void {
     clarity.start();
     custom.event(Constant.Clarity, Constant.Restart);

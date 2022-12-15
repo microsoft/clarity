@@ -22,6 +22,7 @@ export function start(config: Config = null): void {
     core.start();
     data.start();
     modules.forEach(x => measure(x.start)());
+    executeQueue();
   }
 }
 
@@ -52,4 +53,11 @@ export function stop(): void {
     data.stop();
     core.stop();
   }
+}
+
+export function executeQueue(): void {
+  const w = window as any;
+  const c = 'clarity';
+  const queue = w[c] ? (w[c].q || []) : [];
+  while (queue.length > 0) { w[c](...queue.shift()); }
 }

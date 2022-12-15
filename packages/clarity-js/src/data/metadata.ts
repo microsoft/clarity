@@ -100,6 +100,8 @@ export function consent(): void {
   if (core.active()) {
     config.track = true;
     track(user(), BooleanFlag.True);
+  } else {
+    core.queue("consent", arguments);
   }
 }
 

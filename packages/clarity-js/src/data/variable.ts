@@ -9,14 +9,23 @@ export function start(): void {
 }
 
 export function set(variable: string, value: string | string[]): void {
-    let values = typeof value === Constant.String ? [value as string] : value as string[];
-    log(variable, values);
+    if (core.active()) {
+        let values = typeof value === Constant.String ? [value as string] : value as string[];
+        log(variable, values);
+    } else {
+        core.queue("set", arguments);
+    }
 }
 
 export function identify(userId: string, sessionId: string = null, pageId: string = null): void {
-    log(Constant.UserId, [userId]);
-    log(Constant.SessionId, [sessionId]);
-    log(Constant.PageId, [pageId]);
+    if (core.active()) {
+        log(Constant.UserId, [userId]);
+        log(Constant.SessionId, [sessionId]);
+        log(Constant.PageId, [pageId]);
+    } else {
+        core.queue("identify", arguments);
+    }
+    
 }
 
 function log(variable: string, value: string[]): void {

@@ -17,6 +17,7 @@ import * as clarity from "@src/clarity";
         const queue = w[c] ? (w[c].q || []) : [];
         w[c] = function(method: string, ...args: any[]): void { return clarity[method](...args); }
         w[c].v = clarity.version;
-        while (queue.length > 0) { w[c](...queue.shift()); }
+        w[c].q = queue;
+        clarity.executeQueue();
     }
 })();
