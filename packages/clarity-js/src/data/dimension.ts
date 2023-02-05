@@ -29,6 +29,12 @@ export function log(dimension: Dimension, value: string): void {
             updates[dimension].push(value);
             // Limit check to ensure we have a cap on number of dimensions we can collect
             if (data[dimension].length > Setting.CollectionLimit) { limit.trigger(Check.Collection); }
+            // We might need to pass the current url over and over so will be excluded from the old data
+        } else if (dimension === Dimension.Url) {
+            if (!(dimension in updates)) { updates[dimension] = []; }
+            if (updates[dimension].indexOf(value) < 0) {
+                updates[dimension].push(value);
+            }
         }
     }
 }

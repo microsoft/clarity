@@ -1,5 +1,5 @@
 import { Privacy } from "@clarity-types/core";
-import { Code, Setting, Severity } from "@clarity-types/data";
+import { Code, Dimension, Setting, Severity } from "@clarity-types/data";
 import { Constant, Mask, NodeInfo, NodeMeta, NodeValue, Selector, SelectorInput, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -8,6 +8,7 @@ import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
 import * as mutation from "@src/layout/mutation";
 import * as extract from "@src/data/extract";
+import * as dimension from "@src/data/dimension";
 let index: number = 1;
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
@@ -348,6 +349,9 @@ export function updates(): NodeValue[] {
     updateMap = [];
     for (let id in updatedFragments) {
         extract.update(updatedFragments[id], id, true)
+    }
+    if (Object.keys(updatedFragments).length !== 0) {
+        dimension.log(Dimension.Url, location.href)
     }
 
     updatedFragments = {}
