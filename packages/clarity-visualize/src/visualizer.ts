@@ -25,10 +25,10 @@ export class Visualizer implements VisualizerType {
     }
 
     public get = (hash: string): HTMLElement => {
-        return this.layout.get(hash);
+        return this.layout?.get(hash);
     }
 
-    public html = async (decoded: Data.DecodedPayload[], target: Window, hash: string = null, time : number, useproxy?: LinkHandler, errorlogger?: ErrorLogger): Promise<Visualizer> => {
+    public html = async (decoded: Data.DecodedPayload[], target: Window, hash: string = null, time : number, useproxy?: LinkHandler, logerror?: ErrorLogger): Promise<Visualizer> => {
         if (decoded && decoded.length > 0 && target) {
             try {
                 // Flatten the payload and parse all events out of them, sorted by time
@@ -51,8 +51,8 @@ export class Visualizer implements VisualizerType {
                     }
                 }
             } catch (e) {
-                if (errorlogger) {
-                    errorlogger(e);
+                if (logerror) {
+                    logerror(e);
                 }
             }
         }

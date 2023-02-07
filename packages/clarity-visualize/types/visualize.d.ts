@@ -20,7 +20,7 @@ export interface Visualize {
 export class Visualizer {
     readonly state: PlaybackState;
     dom: (event: Layout.DomEvent) => Promise<void>;
-    html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number, useproxy?: LinkHandler, errorlogger?: ErrorLogger) => Promise<Visualizer>;
+    html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number, useproxy?: LinkHandler, logerror?: ErrorLogger) => Promise<Visualizer>;
     clickmap: (activity?: Activity) => void;
     clearmap: () => void;
     scrollmap: (data?: ScrollMapInfo[], averageFold?: number, addMarkers?: boolean) => void;
@@ -52,7 +52,7 @@ export interface Options {
     version: string;
     dom?: Layout.DomEvent;
     onresize?: ResizeHandler;
-    errorlogger?: ErrorLogger;
+    logerror?: ErrorLogger;
     useproxy?: LinkHandler;
     metadata?: HTMLElement;
     canvas?: boolean;

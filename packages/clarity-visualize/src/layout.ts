@@ -231,7 +231,7 @@ export class LayoutHelper {
             if (node.id) { this.events[node.id] = node; }
         }
         // Wait on all stylesheets and fonts to finish loading
-        // await Promise.all([this.stylesheets, this.fonts]);
+        await Promise.all([this.stylesheets, this.fonts]);
         this.stylesheets = [];
         this.fonts = [];
     }
@@ -249,8 +249,8 @@ export class LayoutHelper {
                 }
             }
         } catch (e) {
-            if (this.state.options.errorlogger) {
-                this.state.options.errorlogger(e);
+            if (this.state.options.logerror) {
+                this.state.options.logerror(e);
             }
         }
 
