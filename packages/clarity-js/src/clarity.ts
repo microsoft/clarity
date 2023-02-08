@@ -1,5 +1,6 @@
 import { Config, Module } from "@clarity-types/core";
 import { Constant } from "@clarity-types/data";
+import * as queue from "@src/queue";
 import * as core from "@src/core";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
@@ -22,6 +23,10 @@ export function start(config: Config = null): void {
     core.start();
     data.start();
     modules.forEach(x => measure(x.start)());
+
+    // If it's an internal call to start, without explicit configuration,
+    // re-process any newly accumulated items in the queue
+    if (config === null) { queue.process(); }
   }
 }
 
@@ -47,9 +52,10 @@ export function resume(): void {
 
 export function stop(): void {
   if (core.active()) {
-    // Stop modules in the reverse order of their initialization
+    // Stop modules in the reverse order of their initialization and start queuing up items again
     modules.slice().reverse().forEach(x => measure(x.stop)());
     data.stop();
     core.stop();
+    queue.setup();
   }
 }

@@ -1,16 +1,17 @@
 import { Data, Layout } from "clarity-decode";
-import { Asset, Constant, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
+import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
 
     stylesheets: Promise<void>[] = [];
+    fonts: Promise<void>[] = [];
     nodes = {};
     events = {};
     hashMapAlpha = {};
     hashMapBeta = {};
     state: PlaybackState = null;
-    
+
     constructor(state: PlaybackState) {
         this.state = state;
     }
@@ -18,6 +19,7 @@ export class LayoutHelper {
     public reset = (): void => {
         this.nodes = {};
         this.stylesheets = [];
+        this.fonts = [];
         this.events = {};
         this.hashMapAlpha = {};
         this.hashMapBeta = {};
@@ -45,12 +47,12 @@ export class LayoutHelper {
             el.style.boxSizing = Layout.Constant.BorderBox; // Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing
         }
     }
-    
+
     public element = (nodeId: number): Node => {
         return nodeId !== null && nodeId > 0 && nodeId in this.nodes ? this.nodes[nodeId] : null;
     }
 
-    public dom = async (event: Layout.DomEvent): Promise<void> => {
+    public dom = async (event: Layout.DomEvent, useproxy?: LinkHandler): Promise<void> => {
         if (event) {
             // When setting up rendering for the first time, start off with hidden target window
             // This ensures we do not show flickers to the end user
@@ -58,9 +60,7 @@ export class LayoutHelper {
             if (doc && doc.documentElement) {
                 doc.documentElement.style.visibility = Constant.Hidden;
                 // Render all DOM events to reconstruct the page
-                this.markup(event);
-                // Wait on all stylesheets to finish loading
-                await Promise.all(this.stylesheets);
+                await this.markup(event, useproxy);
                 // Toggle back the visibility of target window
                 doc.documentElement.style.visibility = Constant.Visible;
             }
@@ -78,7 +78,7 @@ export class LayoutHelper {
         return false;
     }
 
-    public markup = (event: Layout.DomEvent): void => {
+    public markup = async (event: Layout.DomEvent, useproxy?: LinkHandler): Promise<void> => {
         let data = event.data;
         let type = event.event;
         let doc = this.state.window.document;
@@ -185,17 +185,28 @@ export class LayoutHelper {
                     linkElement = linkElement ? linkElement : this.createElement(doc, node.tag) as HTMLLinkElement;
                     if (!node.attributes) { node.attributes = {}; }
                     this.setAttributes(linkElement as HTMLElement, node);
-                    if ("rel" in node.attributes && node.attributes["rel"] === "stylesheet") {
-                        this.stylesheets.push(new Promise((resolve: () => void): void => {
-                            linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
-                            setTimeout(resolve, LayoutHelper.TIMEOUT);
-                        }));
+                    if ("rel" in node.attributes) {
+                        if (node.attributes["rel"] === "stylesheet") {
+                            this.stylesheets.push(new Promise((resolve: () => void): void => {
+                                const proxy = useproxy ?? this.state.options.useproxy;
+                                linkElement.href = proxy ? proxy(linkElement.href) : linkElement.href;
+                                linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
+                                setTimeout(resolve, LayoutHelper.TIMEOUT);
+                            }));
+                        } else if ((node.attributes["rel"].includes("preload") || node.attributes["rel"].includes("preconnect"))
+                            && (node.attributes?.as === "style" || node.attributes?.as === "font")) {
+                                this.fonts.push(new Promise((resolve: () => void): void => {
+                                    const proxy = useproxy ?? this.state.options.useproxy;
+                                    linkElement.href = proxy ? proxy(linkElement.href) : linkElement.href;
+                                    linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
+                                    setTimeout(resolve, LayoutHelper.TIMEOUT);
+                                }));
+                            }
                     }
                     insert(node, parent, linkElement, pivot);
                     break;
                 case "STYLE":
-                    let styleElement = this.element(node.id) as HTMLStyleElement;
-                    styleElement = styleElement ? styleElement : doc.createElement(node.tag) as HTMLStyleElement;
+                    let styleElement = this.element(node.id) as HTMLStyleElement ?? doc.createElement(node.tag) as HTMLStyleElement;
                     this.setAttributes(styleElement as HTMLElement, node);
                     styleElement.textContent = node.value;
                     insert(node, parent, styleElement, pivot);
@@ -219,6 +230,10 @@ export class LayoutHelper {
             // Track state for this node
             if (node.id) { this.events[node.id] = node; }
         }
+        // Wait on all stylesheets and fonts to finish loading
+        await Promise.all([this.stylesheets, this.fonts]);
+        this.stylesheets = [];
+        this.fonts = [];
     }
 
     private style = (node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void => {
@@ -233,7 +248,11 @@ export class LayoutHelper {
                     sheet.insertRule(css, i);
                 }
             }
-        } catch { /* do nothing */ }
+        } catch (e) {
+            if (this.state.options.logerror) {
+                this.state.options.logerror(e);
+            }
+        }
 
         if (resolve) { resolve(); }
     }
@@ -336,7 +355,7 @@ export class LayoutHelper {
             }
         }
 
-        if (sameorigin === false && tag === Constant.IFrameTag && typeof node.setAttribute == Constant.Function) {
+        if (sameorigin === false && tag === Constant.IFrameTag && typeof node.setAttribute === Constant.Function) {
             node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
         }
 

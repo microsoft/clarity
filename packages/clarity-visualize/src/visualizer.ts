@@ -1,4 +1,4 @@
-import { Activity, Constant, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
+import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
 import { Data, Interaction, Layout } from "clarity-decode";
 import { DataHelper } from "./data";
 import { EnrichHelper } from "./enrich";
@@ -25,28 +25,34 @@ export class Visualizer implements VisualizerType {
     }
 
     public get = (hash: string): HTMLElement => {
-        return this.layout.get(hash);
+        return this.layout?.get(hash);
     }
 
-    public html = (decoded: Data.DecodedPayload[], target: Window, hash: string = null, time : number): Visualizer => {
+    public html = async (decoded: Data.DecodedPayload[], target: Window, hash: string = null, time : number, useproxy?: LinkHandler, logerror?: ErrorLogger): Promise<Visualizer> => {
         if (decoded && decoded.length > 0 && target) {
-            // Flatten the payload and parse all events out of them, sorted by time
-            let merged = this.merge(decoded);
-        
-            this.setup(target, { version: decoded[0].envelope.version, dom: merged.dom });
+            try {
+                // Flatten the payload and parse all events out of them, sorted by time
+                let merged = this.merge(decoded);
 
-            // Render all mutations on top of the initial markup
-            while (merged.events.length > 0 && this.layout.exists(hash) === false) {
-                let entry = merged.events.shift();
-                switch (entry.event) {
-                    case Data.Event.Mutation:
-                        let domEvent = entry as Layout.DomEvent;
-                        this.renderTime = domEvent.time;
-                        if (time && this.renderTime > time) {
+                this.setup(target, { version: decoded[0].envelope.version, dom: merged.dom, useproxy });
+
+                // Render all mutations on top of the initial markup
+                while (merged.events.length > 0 && this.layout.exists(hash) === false) {
+                    let entry = merged.events.shift();
+                    switch (entry.event) {
+                        case Data.Event.Mutation:
+                            let domEvent = entry as Layout.DomEvent;
+                            this.renderTime = domEvent.time;
+                            if (time && this.renderTime > time) {
+                                break;
+                            }
+                            await this.layout.markup(domEvent, useproxy);
                             break;
-                        }
-                        this.layout.markup(domEvent);
-                        break;
+                    }
+                }
+            } catch (e) {
+                if (logerror) {
+                    logerror(e);
                 }
             }
         }
@@ -127,12 +133,12 @@ export class Visualizer implements VisualizerType {
         this.interaction = new InteractionHelper(this.state, this.layout);
 
         // If discover event was passed, render it now
-        if (options.dom) { this.layout.dom(options.dom); }
+        if (options.dom) { this.layout.dom(options.dom, options.useproxy); }
 
         return this;
     }
 
-    public render = (events: Data.DecodedEvent[]): void => {
+    public render = async (events: Data.DecodedEvent[]): Promise<void> => {
         if (this.state === null) { throw new Error(`Initialize visualization by calling "setup" prior to making this call.`); }
         let time = 0;
         for (let entry of events) {
@@ -145,7 +151,7 @@ export class Visualizer implements VisualizerType {
                     this.data.region(entry as Layout.RegionEvent);
                     break;
                 case Data.Event.Mutation:
-                    this.layout.markup(entry as Layout.DomEvent);
+                    await this.layout.markup(entry as Layout.DomEvent);
                     break;
                 case Data.Event.MouseDown:
                 case Data.Event.MouseUp:
