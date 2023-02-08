@@ -26,7 +26,7 @@ export function start(config: Config = null): void {
 
     // If it's an internal call to start, without explicit configuration,
     // re-process any newly accumulated items in the queue
-    if (config === null) { queue.clear(); }
+    if (config === null) { queue.process(); }
   }
 }
 
