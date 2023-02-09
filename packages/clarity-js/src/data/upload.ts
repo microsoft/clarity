@@ -3,7 +3,7 @@ import { BooleanFlag, Check, Constant, EncodedPayload, Event, Metric, Setting, T
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
-import { dispatchClarityLiveSignalsEvents } from "@src/core/signals";
+import { signalEvent } from "@src/core/signal";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import compress from "@src/data/compress";
@@ -16,6 +16,7 @@ import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
+import { signalCallback } from "@src/data/signal";
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -259,5 +260,5 @@ function response(payload: string): void {
             break;
         break;
     }
-    if (parts.includes(Constant.Signal)) { dispatchClarityLiveSignalsEvents(parts[parts.indexOf(Constant.Signal) +1]) }
+    if (signalCallback && parts.includes(Constant.Signal)) { signalEvent(parts[parts.indexOf(Constant.Signal) +1]) }
 }

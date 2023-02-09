@@ -8,6 +8,7 @@ export interface MetadataCallbackOptions {
     callback: MetadataCallback, 
     wait: boolean
 }
+export type SignalCallback = (data: ClaritySignal) => void
 
 /* Enum */
 export const enum Event {
