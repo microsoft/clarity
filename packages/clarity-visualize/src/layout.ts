@@ -273,7 +273,8 @@ export class LayoutHelper {
         // Skip over no-op changes where parent and previous element is still the same
         // In case of IFRAME, re-adding DOM at the exact same place will lead to loss of state and the markup inside will be destroyed
         if (this.events[data.id] && this.events[data.id].parent === data.parent && this.events[data.id].previous === data.previous) { return; }
-        let next = previous && previous.parentElement === parent ? previous.nextSibling : null;
+        // In case parent is a Shadow DOM, previous.parentElement will return null but previous.parentNode will return a valid node
+        let next = previous && (previous.parentElement === parent || previous.parentNode === parent) ? previous.nextSibling : null;
         next = previous === null && parent ? this.firstChild(parent) : next;
         this.insertBefore(data, parent, node, next);
     }
@@ -289,7 +290,8 @@ export class LayoutHelper {
 
     private insertBefore = (data: DecodedLayout.DomData, parent: Node, node: Node, next: Node): void => {
         if (parent !== null) {
-            next = next && next.parentElement !== parent ? null : next;
+            // Compare against both parentNode and parentElement to ensure visualization works correctly for shadow DOMs
+            next = next && (next.parentElement !== parent && next.parentNode !== parent) ? null : next;
             try {
                 parent.insertBefore(node, next);
             } catch (ex) {
@@ -298,6 +300,8 @@ export class LayoutHelper {
             }
         } else if (parent === null && node.parentElement !== null) {
             node.parentElement.removeChild(node);
+        } else if (parent === null && node.parentNode !== null) {
+            node.parentNode.removeChild(node);
         }
         this.nodes[data.id] = node;
         this.addToHashMap(data, node);
