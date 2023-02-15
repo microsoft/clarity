@@ -20,18 +20,20 @@ export interface Visualize {
 export class Visualizer {
     readonly state: PlaybackState;
     dom: (event: Layout.DomEvent) => Promise<void>;
-    html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number) => Visualizer;
+    html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number, useproxy?: LinkHandler, logerror?: ErrorLogger) => Promise<Visualizer>;
     clickmap: (activity?: Activity) => void;
     clearmap: () => void;
     scrollmap: (data?: ScrollMapInfo[], averageFold?: number, addMarkers?: boolean) => void;
     merge: (decoded: Data.DecodedPayload[]) => MergedPayload;
-    render: (events: Data.DecodedEvent[]) =>  void;
+    render: (events: Data.DecodedEvent[]) =>  Promise<void>;
     setup: (target: Window, options: Options) => Visualizer;
     time: () => number;
     get: (hash: string) => HTMLElement;
 }
 
 export type ResizeHandler  = (width: number, height: number) => void;
+export type ErrorLogger = (error: Error) => void;
+export type LinkHandler = (link: string) => string;
 
 export interface MergedPayload {
     timestamp: number;
@@ -50,6 +52,8 @@ export interface Options {
     version: string;
     dom?: Layout.DomEvent;
     onresize?: ResizeHandler;
+    logerror?: ErrorLogger;
+    useproxy?: LinkHandler;
     metadata?: HTMLElement;
     canvas?: boolean;
     keyframes?: boolean;

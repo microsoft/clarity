@@ -186,7 +186,7 @@ export interface MutationQueue {
 }
 
 export interface MutationHistory {
-    [key: string]: [/* Count */ number, /* Remove Nodes Buffer */ NodeList?];
+    [key: string]: [/* Count */ number, /* Instance */ number, /* Remove Nodes Buffer */ NodeList?];
 }
 
 export interface RegionQueue {

@@ -1,5 +1,5 @@
-import { helper } from "clarity-js";
-import { Layout } from "clarity-decode";
+import { helper, Layout } from "clarity-js";
+import { Layout as DecodedLayout } from "clarity-decode";
 import { NodeData } from "@clarity-types/visualize";
 
 export class EnrichHelper {
@@ -17,7 +17,7 @@ export class EnrichHelper {
         helper.selector.reset();
     }
 
-    public selectors = (event: Layout.DomEvent): Layout.DomEvent => {
+    public selectors = (event: DecodedLayout.DomEvent): DecodedLayout.DomEvent => {
         event.data.forEach(d => {
             let parent = this.nodes[d.parent];
             let children = this.children[d.parent] || [];
