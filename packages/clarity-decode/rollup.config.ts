@@ -1,8 +1,8 @@
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
-import typescript from "rollup-plugin-typescript2";
-import { terser } from "rollup-plugin-terser";
-import pkg from "./package.json";
+import terser from "@rollup/plugin-terser";
+import typescript from "@rollup/plugin-typescript";
+import pkg from "./package.json" assert { type: 'json' };
 
 export default [
   {
@@ -13,7 +13,7 @@ export default [
     ],
     plugins: [
       resolve(),
-      typescript({ rollupCommonJSResolveHack: true, clean: true }),
+      typescript(),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
@@ -22,7 +22,7 @@ export default [
     output: [ { file: pkg.unpkg, format: "iife", exports: "named" } ],
     plugins: [
       resolve(),
-      typescript({ rollupCommonJSResolveHack: true, clean: true }),
+      typescript(),
       terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]

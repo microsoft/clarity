@@ -1,4 +1,5 @@
-import { Data, Layout } from "clarity-decode";
+import { Data, Layout } from "clarity-js";
+import type { Data as DecodedData, Layout as DecodedLayout } from "clarity-decode";
 import { PlaybackState, RegionState } from "@clarity-types/visualize";
 
 export class DataHelper {
@@ -31,7 +32,7 @@ export class DataHelper {
         this.regionMap = {};
     }
 
-    public metric = (event: Data.MetricEvent): void => {
+    public metric = (event: DecodedData.MetricEvent): void => {
         if (this.state.options.metadata) { 
             let metricMarkup = [];
             let regionMarkup = [];
@@ -59,7 +60,7 @@ export class DataHelper {
             // Append region information to metadata
             for (let name in this.regions) {
                 let r = this.regions[name];
-                let className = (r.visibility === Layout.RegionVisibility.Visible ? "visible" : (r.interaction === Layout.Interaction.Clicked ? "clicked" : Data.Constant.Empty));
+                let className = (r.visibility === Layout.RegionVisibility.Visible ? "visible" : (r.interaction === Layout.InteractionState.Clicked ? "clicked" : Data.Constant.Empty));
                 regionMarkup.push(`<span class="${className}">${name}</span>`);
             }
 
@@ -67,7 +68,7 @@ export class DataHelper {
         }
     }
 
-    public region(event: Layout.RegionEvent): void {
+    public region(event: DecodedLayout.RegionEvent): void {
         let data = event.data;
         for (let r of data) {
             if (!(r.name in this.regions)) { 

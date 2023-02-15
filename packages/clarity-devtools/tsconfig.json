@@ -8,9 +8,10 @@
         "noImplicitReturns": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
+        "resolveJsonModule": true,
         "esModuleInterop": true,
         "baseUrl": ".",
         "paths": { "@src/*": ["src/*"] }
     },
-    "include":["src/**/*.ts"]
+    "include":["src/**/*.ts", "rollup.config.ts"]
 }

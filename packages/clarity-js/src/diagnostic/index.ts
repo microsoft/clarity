@@ -1,6 +1,6 @@
-import * as fraud from "./fraud";
-import * as internal from "./internal";
-import * as script from "./script";
+import * as fraud from "@src/diagnostic/fraud";
+import * as internal from "@src/diagnostic/internal";
+import * as script from "@src/diagnostic/script";
 
 export function start(): void {
     fraud.start();

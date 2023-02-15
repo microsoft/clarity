@@ -1,8 +1,9 @@
+import alias from "@rollup/plugin-alias";
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
-import typescript from "rollup-plugin-typescript2";
-import { terser } from "rollup-plugin-terser";
-import pkg from "./package.json";
+import terser from "@rollup/plugin-terser";
+import typescript from "@rollup/plugin-typescript";
+import pkg from "./package.json" assert { type: 'json' };
 
 export default [
   {
@@ -13,7 +14,7 @@ export default [
     ],
     plugins: [
       resolve(),
-      typescript({ rollupCommonJSResolveHack: true, clean: true }),
+      typescript(),
       commonjs({ include: ["node_modules/**"] })
     ],
     onwarn(message, warn) {
@@ -30,7 +31,30 @@ export default [
     },
     plugins: [
       resolve(),
-      typescript({ rollupCommonJSResolveHack: true, clean: true }),
+      typescript(),
+      terser({output: {comments: false}}),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/global.ts",
+    output: [ { file: pkg.insight, format: "iife", exports: "named" } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: '@src/interaction/change', replacement: '@src/core/blank' },
+          { find: '@src/interaction/clipboard', replacement: '@src/core/blank' },
+          { find: '@src/interaction/input', replacement: '@src/core/blank' },
+          { find: '@src/interaction/pointer', replacement: '@src/core/blank' },
+          { find: '@src/interaction/selection', replacement: '@src/core/blank' }          
+        ]
+      }),
+      resolve(),
+      typescript(),
       terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]

@@ -97,6 +97,9 @@ export const enum Metric {
     Mobile = 27,
     UploadTime = 28,
     SinglePage = 29,
+/**
+ * @deprecated Browser API is deprecated. Reference: https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory
+ */
     UsedMemory = 30,
     Iframed = 31,
     MaxTouchPoints = 32,

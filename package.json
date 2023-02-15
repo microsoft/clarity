@@ -20,7 +20,7 @@
     "test": "yarn workspace clarity-js test"
   },
   "devDependencies": {
-    "lerna": "^5.5.1",
+    "lerna": "^6.4.1",
     "parse-url": "^8.1.0"
   },
   "resolutions": {

@@ -1,5 +1,6 @@
 import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
-import { Data, Interaction, Layout } from "clarity-decode";
+import { Data } from "clarity-js";
+import type { Data as DecodedData, Interaction, Layout } from "clarity-decode";
 import { DataHelper } from "./data";
 import { EnrichHelper } from "./enrich";
 import { HeatmapHelper } from "./heatmap";
@@ -28,7 +29,7 @@ export class Visualizer implements VisualizerType {
         return this.layout?.get(hash);
     }
 
-    public html = async (decoded: Data.DecodedPayload[], target: Window, hash: string = null, time : number, useproxy?: LinkHandler, logerror?: ErrorLogger): Promise<Visualizer> => {
+    public html = async (decoded: DecodedData.DecodedPayload[], target: Window, hash: string = null, time : number, useproxy?: LinkHandler, logerror?: ErrorLogger): Promise<Visualizer> => {
         if (decoded && decoded.length > 0 && target) {
             try {
                 // Flatten the payload and parse all events out of them, sorted by time
@@ -79,7 +80,7 @@ export class Visualizer implements VisualizerType {
         this.heatmap.scroll(scrollData, avgFold, addMarkers);
     }
 
-    public merge = (decoded: Data.DecodedPayload[]): MergedPayload => {
+    public merge = (decoded: DecodedData.DecodedPayload[]): MergedPayload => {
         let merged: MergedPayload = { timestamp: null, envelope: null, dom: null, events: [] };
 
         // Re-arrange decoded payloads in the order of their start time
@@ -138,14 +139,14 @@ export class Visualizer implements VisualizerType {
         return this;
     }
 
-    public render = async (events: Data.DecodedEvent[]): Promise<void> => {
+    public render = async (events: DecodedData.DecodedEvent[]): Promise<void> => {
         if (this.state === null) { throw new Error(`Initialize visualization by calling "setup" prior to making this call.`); }
         let time = 0;
         for (let entry of events) {
             time = entry.time;
             switch (entry.event) {
                 case Data.Event.Metric:
-                    this.data.metric(entry as Data.MetricEvent);
+                    this.data.metric(entry as DecodedData.MetricEvent);
                     break;
                 case Data.Event.Region:
                     this.data.region(entry as Layout.RegionEvent);
@@ -200,11 +201,11 @@ export class Visualizer implements VisualizerType {
         this.renderTime = 0;
     }
 
-    private sortEvents = (a: Data.DecodedEvent, b: Data.DecodedEvent): number => {
+    private sortEvents = (a: DecodedData.DecodedEvent, b: DecodedData.DecodedEvent): number => {
         return a.time - b.time;
     }
 
-    private sortPayloads = (a: Data.DecodedPayload, b: Data.DecodedPayload): number => {
+    private sortPayloads = (a: DecodedData.DecodedPayload, b: DecodedData.DecodedPayload): number => {
         return a.envelope.sequence - b.envelope.sequence;
     }
 }
