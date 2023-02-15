@@ -1,4 +1,5 @@
-import { Data, Layout } from "clarity-decode";
+import { Data, Layout } from "clarity-js";
+import type { Layout as DecodedLayout } from "clarity-decode";
 import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
 
 export class LayoutHelper {
@@ -34,7 +35,7 @@ export class LayoutHelper {
         return null;
     }
 
-    private addToHashMap = (data: Layout.DomData, parent: Node) => {
+    private addToHashMap = (data: DecodedLayout.DomData, parent: Node) => {
         // In case of selector collision, prefer the first inserted node
         this.hashMapAlpha[data.hashAlpha] = this.get(data.hashAlpha) || parent;
         this.hashMapBeta[data.hashBeta] = this.get(data.hashBeta) || parent;
@@ -52,7 +53,7 @@ export class LayoutHelper {
         return nodeId !== null && nodeId > 0 && nodeId in this.nodes ? this.nodes[nodeId] : null;
     }
 
-    public dom = async (event: Layout.DomEvent, useproxy?: LinkHandler): Promise<void> => {
+    public dom = async (event: DecodedLayout.DomEvent, useproxy?: LinkHandler): Promise<void> => {
         if (event) {
             // When setting up rendering for the first time, start off with hidden target window
             // This ensures we do not show flickers to the end user
@@ -78,7 +79,7 @@ export class LayoutHelper {
         return false;
     }
 
-    public markup = async (event: Layout.DomEvent, useproxy?: LinkHandler): Promise<void> => {
+    public markup = async (event: DecodedLayout.DomEvent, useproxy?: LinkHandler): Promise<void> => {
         let data = event.data;
         let type = event.event;
         let doc = this.state.window.document;
@@ -268,11 +269,12 @@ export class LayoutHelper {
         };
     }
 
-    private insertAfter = (data: Layout.DomData, parent: Node, node: Node, previous: Node): void => {
+    private insertAfter = (data: DecodedLayout.DomData, parent: Node, node: Node, previous: Node): void => {
         // Skip over no-op changes where parent and previous element is still the same
         // In case of IFRAME, re-adding DOM at the exact same place will lead to loss of state and the markup inside will be destroyed
         if (this.events[data.id] && this.events[data.id].parent === data.parent && this.events[data.id].previous === data.previous) { return; }
-        let next = previous && previous.parentElement === parent ? previous.nextSibling : null;
+        // In case parent is a Shadow DOM, previous.parentElement will return null but previous.parentNode will return a valid node
+        let next = previous && (previous.parentElement === parent || previous.parentNode === parent) ? previous.nextSibling : null;
         next = previous === null && parent ? this.firstChild(parent) : next;
         this.insertBefore(data, parent, node, next);
     }
@@ -286,9 +288,10 @@ export class LayoutHelper {
         return child;
     }
 
-    private insertBefore = (data: Layout.DomData, parent: Node, node: Node, next: Node): void => {
+    private insertBefore = (data: DecodedLayout.DomData, parent: Node, node: Node, next: Node): void => {
         if (parent !== null) {
-            next = next && next.parentElement !== parent ? null : next;
+            // Compare against both parentNode and parentElement to ensure visualization works correctly for shadow DOMs
+            next = next && (next.parentElement !== parent && next.parentNode !== parent) ? null : next;
             try {
                 parent.insertBefore(node, next);
             } catch (ex) {
@@ -297,12 +300,14 @@ export class LayoutHelper {
             }
         } else if (parent === null && node.parentElement !== null) {
             node.parentElement.removeChild(node);
+        } else if (parent === null && node.parentNode !== null) {
+            node.parentNode.removeChild(node);
         }
         this.nodes[data.id] = node;
         this.addToHashMap(data, node);
     }
 
-    private setAttributes = (node: HTMLElement, data: Layout.DomData): void => {
+    private setAttributes = (node: HTMLElement, data: DecodedLayout.DomData): void => {
         let attributes = data.attributes || {};
         let sameorigin = false;
 

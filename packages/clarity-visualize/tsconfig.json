@@ -8,6 +8,7 @@
         "noImplicitReturns": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
+        "resolveJsonModule": true,
         "esModuleInterop": true,
         "baseUrl": ".",
         "paths": {
@@ -15,6 +16,6 @@
             "@clarity-types/*": ["types/*"]
         }
     },
-    "include":["src/**/*.ts","types/**/*.d.ts"],
+    "include":["src/**/*.ts", "types/**/*.d.ts", "rollup.config.ts"],
     "exclude": ["node_modules", "build"]
 }
