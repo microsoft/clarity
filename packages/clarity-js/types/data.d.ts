@@ -284,7 +284,8 @@ export const enum Constant {
     Tilde = "~",
     ArrayStart = "[",
     ConditionStart = "{",
-    ConditionEnd = "}"
+    ConditionEnd = "}",
+    Selector = 'SELECTOR'
 }
 
 export const enum XMLReadyState {

@@ -141,3 +141,7 @@ function match(base: Object, condition: string): boolean {
 
     return true;
 }
+
+export function setSelectors(input: { [key: number]: string }) {
+    selectors = input
+}

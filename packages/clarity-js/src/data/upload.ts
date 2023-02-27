@@ -15,6 +15,7 @@ import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
+import * as extract from "@src/data/extract";
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -242,19 +243,24 @@ function delay(): number {
 }
 
 function response(payload: string): void {
-    let parts = payload && payload.length > 0 ? payload.split(" ") : [Constant.Empty];
-    switch (parts[0]) {
-        case Constant.End:
+    let response = payload && payload.length > 0 ? payload.split("|"): [];
+
+    for (let item of response) {
+        if (item.startsWith(Constant.End)) {
             // Clear out session storage and end the session so we can start fresh the next time
             limit.trigger(Check.Server);
-            break;
-        case Constant.Upgrade:
+        } else if (item.startsWith(Constant.Upgrade)) {
             // Upgrade current session to send back playback information
             clarity.upgrade(Constant.Auto);
-            break;
-        case Constant.Action:
-            // Invoke action callback, if configured and has a valid value
+        } else if (item.startsWith(Constant.Action)) {
+            let parts = item.split(" ")
             if (config.action && parts.length > 1) { config.action(parts[1]); }
-            break;
+        } else if (item.startsWith(Constant.Selector)) {
+            const selectorsJson = item.slice(Constant.Selector.length)
+            try {
+                const selectors: { [key: number]: string } = JSON.parse(selectorsJson)
+                extract.setSelectors(selectors)
+            } catch (e) {}    
+        }
     }
 }
