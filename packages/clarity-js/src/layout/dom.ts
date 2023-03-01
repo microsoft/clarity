@@ -6,8 +6,6 @@ import hash from "@src/core/hash";
 import * as internal from "@src/diagnostic/internal";
 import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
-import * as mutation from "@src/layout/mutation";
-import * as extract from "@src/data/extract";
 let index: number = 1;
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
@@ -15,7 +13,6 @@ let updateMap: number[] = [];
 let hashMap: { [hash: string]: number } = {};
 let override = [];
 let unmask = [];
-let updatedFragments: { [fragment: number]: string } = {};
 let maskText = [];
 let maskExclude = [];
 let maskDisable = [];
@@ -92,14 +89,12 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let previousId = getPreviousId(node);
     let parentValue: NodeValue = null;
     let regionId = region.exists(node) ? id : null;
-    let fragmentId = null;
     let fraudId = fraudMap.has(node) ? fraudMap.get(node) : null;
     let privacyId = config.content ? Privacy.Sensitive : Privacy.TextImage
     if (parentId >= 0 && values[parentId]) {
         parentValue = values[parentId];
         parentValue.children.push(id);
         regionId = regionId === null ? parentValue.region : regionId;
-        fragmentId = parentValue.fragment;
         fraudId = fraudId === null ? parentValue.metadata.fraud : fraudId;
         privacyId = parentValue.metadata.privacy;
     }
@@ -121,13 +116,12 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         hash: null,
         region: regionId,
         metadata: { active: true, suspend: false, privacy: privacyId, position: null, fraud: fraudId, size: null },
-        fragment: fragmentId,
     };
 
     privacy(node, values[id], parentValue);
     updateSelector(values[id]);
     size(values[id]);
-    track(id, source, values[id].fragment);
+    track(id, source);
 }
 
 export function update(node: Node, parent: Node, data: NodeInfo, source: Source): void {
@@ -181,14 +175,9 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
             }
         }
 
-        // track node if it is a part of scheduled fragment mutation
-        if(value.fragment && updatedFragments[value.fragment]) {
-            changed = true;
-        }
-
         // Update selector
         updateSelector(value);
-        track(id, source, values[id].fragment, changed, parentChanged);
+        track(id, source, changed, parentChanged);
     }
 }
 
@@ -299,10 +288,6 @@ function updateSelector(value: NodeValue): void {
     value.selector = [selector.get(s, Selector.Alpha), selector.get(s, Selector.Beta)];
     value.hash = value.selector.map(x => x ? hash(x) : null) as [string, string];
     value.hash.forEach(h => hashMap[h] = value.id);
-    // Match fragment configuration against both alpha and beta hash
-    if (value.hash.some(h => extract.fragments.indexOf(h) !== -1)) {
-        value.fragment = value.id;
-    }
 }
 
 export function hashText(hash: string): string {
@@ -344,11 +329,7 @@ export function updates(): NodeValue[] {
         if (id in values) { output.push(values[id]); }
     }
     updateMap = [];
-    for (let id in updatedFragments) {
-        extract.update(updatedFragments[id], id, true)
-    }
-
-    updatedFragments = {}
+   
     return output;
 }
 
@@ -377,19 +358,7 @@ function getPreviousId(node: Node): number {
     return id;
 }
 
-function track(id: number, source: Source, fragment: number = null, changed: boolean = true, parentChanged: boolean = false): void {
-    // if updated node is a part of fragment and the fragment is not being tracked currently, schedule a mutation on the fragment node
-    if (fragment && !updatedFragments[fragment]) {
-        let node = getNode(fragment)
-        let value = getValue(fragment);
-        if (node && value) {
-            mutation.schedule(node, true);
-            value.hash.forEach(h => {
-                if(extract.fragments.indexOf(h) !== -1) { updatedFragments[fragment] = h;}
-            });
-        }
-    }
-
+function track(id: number, source: Source, changed: boolean = true, parentChanged: boolean = false): void {
     // Keep track of the order in which mutations happened, they may not be sequential
     // Edge case: If an element is added later on, and pre-discovered element is moved as a child.
     // In that case, we need to reorder the pre-discovered element in the update list to keep visualization consistent.

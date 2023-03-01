@@ -10,7 +10,6 @@ let config: Config = {
     mask: [],
     unmask: [],
     regions: [],
-    extract: [],
     cookies: [],
     fraud: true,
     checksum: [],

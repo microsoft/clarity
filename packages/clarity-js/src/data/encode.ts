@@ -110,7 +110,7 @@ export default function(event: Event): void {
             let extractKeys = extract.keys;
             for (let e of extractKeys) {
                 tokens.push(e);
-                tokens.push(extract.data[e]);
+                tokens.push([].concat(...extract.data[e]));
             }
             extract.reset();
             queue(tokens, false);

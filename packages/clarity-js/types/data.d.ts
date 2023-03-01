@@ -263,6 +263,7 @@ export const enum Constant {
     End = "END",
     Upgrade = "UPGRADE",
     Action = "ACTION",
+    Extract = "EXTRACT",
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
@@ -284,7 +285,8 @@ export const enum Constant {
     Tilde = "~",
     ArrayStart = "[",
     ConditionStart = "{",
-    ConditionEnd = "}"
+    ConditionEnd = "}",
+    Seperator = "<SEP>"
 }
 
 export const enum XMLReadyState {
@@ -404,7 +406,7 @@ export interface UpgradeData {
 }
 
 export interface ExtractData {
-    [key: string]: string | number;
+    [key: number]: [string, string][];
 }
 
 export interface UploadData {

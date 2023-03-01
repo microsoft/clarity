@@ -5,7 +5,6 @@ type TaskResolve = () => void;
 type UploadCallback = (data: string) => void;
 type Region = [number /* RegionId */, string /* Query Selector */];
 type Checksum = [number /* FraudId */, string /* Query Selector */];
-export type Extract = ExtractSource /* Extraction Source */ | number /* Extract Id */ | string  | string[] /* Hash or Query Selector or String Token */;
 
 /* Enum */
 
@@ -127,7 +126,6 @@ export interface Config {
     mask?: string[];
     unmask?: string[];
     regions?: Region[];
-    extract?: Extract[];
     cookies?: string[];
     fraud?: boolean;
     checksum?: Checksum[];

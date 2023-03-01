@@ -168,7 +168,6 @@ export interface NodeValue {
     hash: [string, string];
     region: number;
     metadata: NodeMeta;
-    fragment: number;
 }
 
 export interface NodeMeta {

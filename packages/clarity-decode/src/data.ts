@@ -71,8 +71,19 @@ export function decode(tokens: Data.Token[]): DataEvent {
             let e = 2; // Start from 3rd index since first two are used for time & event
             let extract: Data.ExtractData = {};
             while (e < tokens.length) {
-                extract[tokens[e++] as string | number] = tokens[e++] as string;
+                if (typeof(tokens[e + 1]) == Constant.String) {
+                    extract[tokens[e++] as string | number] = tokens[e++] as string;
+                }
+                else {
+                    let key = tokens[e++] as number;
+                    let values = tokens[e++] as string[];
+                    extract[key] = [];
+                    for (let i = 0; i < values.length - 1; i += 2) {
+                        extract[key].push([values[i], values[i + 1]]);
+                    }
+                }
             }
+
             return { time, event, data: extract };
     }
     return null;
