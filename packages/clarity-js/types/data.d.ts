@@ -1,6 +1,6 @@
 import { Time } from "@clarity-types/core";
 export type Target = (number | Node);
-export type Token = (string | number | number[] | string[]);
+export type Token = (string | number | number[] | string[] | (string | number)[]);
 export type DecodedToken = (any | any[]);
 
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
@@ -406,7 +406,7 @@ export interface UpgradeData {
 }
 
 export interface ExtractData {
-    [key: number]: [string, string][];
+    [key: number]: [number, string][]; // Array of [id, value] for every extracted data
 }
 
 export interface UploadData {

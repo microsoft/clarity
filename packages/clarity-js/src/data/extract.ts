@@ -7,8 +7,8 @@ import { Code, Constant, Severity } from "@clarity-types/data";
 export let data: ExtractData = {};
 export let keys: number[] = [];
 
-let variables : { [key: number]: { [key: string]: Syntax[] }} = {};
-let selectors : { [key: number]: { [key: string]: string }} = {};
+let variables : { [key: number]: { [key: number]: Syntax[] }} = {};
+let selectors : { [key: number]: { [key: number]: string }} = {};
 export function start(): void {
     reset();
 }
@@ -21,15 +21,16 @@ export function trigger(input: string): void {
         variables[key] = {};
         selectors[key] = {};
         for (var v in values) {
+            let id = parseInt(v);
             let value = values[v] as string;
             let source = value.startsWith(Constant.Tilde) ? ExtractSource.Javascript : ExtractSource.Text;
             switch (source) {
                 case ExtractSource.Javascript:
                     let variable = value.substring(1, value.length);
-                    variables[key][v] = parse(variable);
+                    variables[key][id] = parse(variable);
                     break;
                 case ExtractSource.Text:
-                    selectors[key][v] = value;
+                    selectors[key][id] = value;
                     break;
             }
         }
@@ -49,20 +50,19 @@ export function compute(): void {
             let key = parseInt(v);
             if (!(key in keys)) {
                 let variableData = variables[key];
-                for (let variableKey in variableData) {
+                for (let v in variableData) {
+                    let variableKey = parseInt(v);
                     let value = str(evaluate(clone(variableData[variableKey])));
                     if (value) { update(key, variableKey, value); }
                 }
 
                 let selectorData = selectors[key];
-                for (let selectorKey in selectorData) {
+                for (let s in selectorData) {
+                    let selectorKey = parseInt(s);
                     let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
-                    let text = [];
                     if (nodes) {
-                        nodes.forEach((element) => {
-                            text.push(element.innerText);
-                        })
-                        update(key, selectorKey, text.join(Constant.Seperator));
+                        let text = Array.from(nodes).map(e => e.innerText)
+                        update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
                     }
                 }
             }
@@ -80,7 +80,7 @@ export function reset(): void {
     selectors = {};
 }
 
-export function update(key: number, subkey: string,  value: string): void {
+export function update(key: number, subkey: number,  value: string): void {
     if (!(key in data)) {
         data[key] = []
         keys.push(key);

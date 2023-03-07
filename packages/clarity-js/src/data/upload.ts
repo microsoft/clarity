@@ -243,7 +243,7 @@ function delay(): number {
 }
 
 function response(payload: string): void {
-    let lines = payload && payload.length > 0 ? payload.split("\r\n") : [Constant.Empty];
+    let lines = payload && payload.length > 0 ? payload.split("\r\n") : [];
     for (var line of lines)
     {
         let parts = line && line.length > 0 ? line.split(/ (.*)/) : [Constant.Empty];
