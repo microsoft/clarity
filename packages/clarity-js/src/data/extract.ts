@@ -1,38 +1,36 @@
 import { ExtractSource, Syntax, Type } from "@clarity-types/core";
 import { Event, Setting, ExtractData } from "@clarity-types/data";
-import config from "@src/core/config";
 import encode from "./encode";
 import * as internal from "@src/diagnostic/internal";
 import { Code, Constant, Severity } from "@clarity-types/data";
 
 export let data: ExtractData = {};
-export let keys: (number | string)[] = [];
+export let keys: number[] = [];
 
-let variables : { [key: number]: Syntax[] } = {};
-let selectors : { [key: number]: string } = {};
-export let fragments: string[] = [];
-
+let variables : { [key: number]: { [key: number]: Syntax[] }} = {};
+let selectors : { [key: number]: { [key: number]: string }} = {};
 export function start(): void {
+    reset();
+}
+
+export function trigger(input: string): void { 
     try {
-        let e = config.extract;
-        if (!e) { return; }
-        for (let i = 0; i < e.length; i+=3) {
-            let source = e[i] as ExtractSource;
-            let key = e[i+1] as number;
+        var parts = input && input.length > 0 ? input.split(/ (.*)/) : [Constant.Empty];
+        var key = parseInt(parts[0]);
+        var values = parts.length > 1 ? JSON.parse(parts[1]) : {};
+        variables[key] = {};
+        selectors[key] = {};
+        for (var v in values) {
+            let id = parseInt(v);
+            let value = values[v] as string;
+            let source = value.startsWith(Constant.Tilde) ? ExtractSource.Javascript : ExtractSource.Text;
             switch (source) {
                 case ExtractSource.Javascript:
-                    let variable = e[i+2] as string;
-                    variables[key] = parse(variable);
-                    break;
-                case ExtractSource.Cookie:
-                    /*Todo: Add cookie extract logic*/
+                    let variable = value.substring(1, value.length);
+                    variables[key][id] = parse(variable);
                     break;
                 case ExtractSource.Text:
-                    let match = e[i+2] as string;
-                    selectors[key] = match;
-                    break;
-                case ExtractSource.Fragment:
-                    fragments =  e[i+2] as string[];
+                    selectors[key][id] = value;
                     break;
             }
         }
@@ -49,13 +47,25 @@ export function clone(v: Syntax[]): Syntax[] {
 export function compute(): void {
     try {
         for (let v in variables) {
-            let value = str(evaluate(clone(variables[v])));
-            if (value) { update(v, value); }
-        }
+            let key = parseInt(v);
+            if (!(key in keys)) {
+                let variableData = variables[key];
+                for (let v in variableData) {
+                    let variableKey = parseInt(v);
+                    let value = str(evaluate(clone(variableData[variableKey])));
+                    if (value) { update(key, variableKey, value); }
+                }
 
-        for (let s in selectors) {
-            let node = document.querySelector(selectors[s] as string) as HTMLElement;
-            if (node) { update(s, node.innerText); }
+                let selectorData = selectors[key];
+                for (let s in selectorData) {
+                    let selectorKey = parseInt(s);
+                    let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
+                    if (nodes) {
+                        let text = Array.from(nodes).map(e => e.innerText)
+                        update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
+                    }
+                }
+            }
         }
     }
     catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
@@ -64,21 +74,22 @@ export function compute(): void {
 }
 
 export function reset(): void {
-    keys = [];
-}
-
-export function update(key: string, value: string | number, force: boolean = false): void {
-    if (!(key in data) || (key in data && data[key] !== value) || force ) {
-        data[key] = value;
-        keys.push(key);
-    }
-}
-
-export function stop(): void {
     data = {};
     keys = [];
     variables = {};
     selectors = {};
+}
+
+export function update(key: number, subkey: number,  value: string): void {
+    if (!(key in data)) {
+        data[key] = []
+        keys.push(key);
+    }
+    data[key].push([subkey, value]);
+}
+
+export function stop(): void {
+   reset();
 }
 
 function parse(variable: string): Syntax[] {

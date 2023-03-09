@@ -1,6 +1,6 @@
 import { Time } from "@clarity-types/core";
 export type Target = (number | Node);
-export type Token = (string | number | number[] | string[]);
+export type Token = (string | number | number[] | string[] | (string | number)[]);
 export type DecodedToken = (any | any[]);
 
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
@@ -263,6 +263,7 @@ export const enum Constant {
     End = "END",
     Upgrade = "UPGRADE",
     Action = "ACTION",
+    Extract = "EXTRACT",
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
@@ -284,7 +285,8 @@ export const enum Constant {
     Tilde = "~",
     ArrayStart = "[",
     ConditionStart = "{",
-    ConditionEnd = "}"
+    ConditionEnd = "}",
+    Seperator = "<SEP>"
 }
 
 export const enum XMLReadyState {
@@ -404,7 +406,7 @@ export interface UpgradeData {
 }
 
 export interface ExtractData {
-    [key: string]: string | number;
+    [key: number]: [number, string][]; // Array of [id, value] for every extracted data
 }
 
 export interface UploadData {

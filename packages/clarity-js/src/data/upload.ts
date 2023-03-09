@@ -15,6 +15,7 @@ import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
+import * as extract from "@src/data/extract";
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -242,19 +243,26 @@ function delay(): number {
 }
 
 function response(payload: string): void {
-    let parts = payload && payload.length > 0 ? payload.split(" ") : [Constant.Empty];
-    switch (parts[0]) {
-        case Constant.End:
-            // Clear out session storage and end the session so we can start fresh the next time
-            limit.trigger(Check.Server);
-            break;
-        case Constant.Upgrade:
-            // Upgrade current session to send back playback information
-            clarity.upgrade(Constant.Auto);
-            break;
-        case Constant.Action:
-            // Invoke action callback, if configured and has a valid value
-            if (config.action && parts.length > 1) { config.action(parts[1]); }
-            break;
+    let lines = payload && payload.length > 0 ? payload.split("\n") : [];
+    for (var line of lines)
+    {
+        let parts = line && line.length > 0 ? line.split(/ (.*)/) : [Constant.Empty];
+        switch (parts[0]) {
+            case Constant.End:
+                // Clear out session storage and end the session so we can start fresh the next time
+                limit.trigger(Check.Server);
+                break;
+            case Constant.Upgrade:
+                // Upgrade current session to send back playback information
+                clarity.upgrade(Constant.Auto);
+                break;
+            case Constant.Action:
+                // Invoke action callback, if configured and has a valid value
+                if (config.action && parts.length > 1) { config.action(parts[1]); }
+                break;
+            case Constant.Extract:
+                if (parts.length > 1) { extract.trigger(parts[1]); }
+                break;
+        }
     }
 }
