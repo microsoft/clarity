@@ -1,7 +1,6 @@
 import alias from "@rollup/plugin-alias";
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
-import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import pkg from "./package.json" assert { type: 'json' };
 
@@ -32,7 +31,6 @@ export default [
     plugins: [
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
@@ -55,7 +53,6 @@ export default [
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
   }

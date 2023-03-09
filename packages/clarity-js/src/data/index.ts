@@ -16,6 +16,7 @@ export { event } from "@src/data/custom";
 export { consent, metadata } from "@src/data/metadata";
 export { upgrade } from "@src/data/upgrade";
 export { set, identify } from "@src/data/variable";
+export { upload } from "@src/data/upload";
 
 const modules: Module[] = [baseline, dimension, variable, limit, summary, metadata, envelope, upload, ping, upgrade, extract];
 

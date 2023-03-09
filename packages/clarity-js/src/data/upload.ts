@@ -94,7 +94,7 @@ export function stop(): void {
     active = false;
 }
 
-async function upload(final: boolean = false): Promise<void> {
+export async function upload(final: boolean = false): Promise<void> {
     timeout = null;
 
     // Check if we can send playback bytes over the wire or not
@@ -172,6 +172,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             xhr.open("POST", url);
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence); }; }
             xhr.withCredentials = true;
+            console.log(`sending sequence ${sequence} data ${payload}`);
             if (zipped) {
                 // If we do have valid compressed array, send it with appropriate HTTP headers so server can decode it appropriately
                 xhr.setRequestHeader(Constant.Accept, Constant.ClarityGzip);
@@ -190,6 +191,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
 
 function check(xhr: XMLHttpRequest, sequence: number): void {
     var transitData = transit[sequence];
+    console.log(`checking sequence ${sequence} which is readyState ${xhr.readyState}`);
     if (xhr && xhr.readyState === XMLReadyState.Done && transitData) {
         // Attempt send payload again (as configured in settings) if we do not receive a success (2XX) response code back from the server
         if ((xhr.status < 200 || xhr.status > 208) && transitData.attempts <= Setting.RetryLimit) {
@@ -211,6 +213,7 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
             }
         } else {
             track = { sequence, attempts: transitData.attempts, status: xhr.status };
+            console.log(`status for sequence ${sequence} is ${xhr.status}`);
             // Send back an event only if we were not successful in our first attempt
             if (transitData.attempts > 1) { encode(Event.Upload); }
             // Handle response if it was a 200 response with a valid body

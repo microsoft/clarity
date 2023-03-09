@@ -47,10 +47,11 @@ function check(): boolean {
     return true;
 }
 
-function compute(): void {
+async function compute(): Promise<void> {
     count = 0; // Reset the counter
     if (url !== getCurrentUrl()) {
         // If the url changed, start tracking it as a new page
+        await clarity.upload();
         clarity.stop();
         window.setTimeout(restart, Setting.RestartDelay);
     }
