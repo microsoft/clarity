@@ -170,6 +170,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
             let xhr = new XMLHttpRequest();
             xhr.open("POST", url);
+            xhr.timeout = Setting.UploadTimeout;
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence); }; }
             xhr.withCredentials = true;
             if (zipped) {
