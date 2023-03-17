@@ -287,7 +287,8 @@ export const enum Constant {
     ArrayStart = "[",
     ConditionStart = "{",
     ConditionEnd = "}",
-    Seperator = "<SEP>"
+    Seperator = "<SEP>",
+    Timeout = "Timeout"
 }
 
 export const enum XMLReadyState {
