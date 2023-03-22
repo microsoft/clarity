@@ -19,7 +19,7 @@ export function report(e: Error): Error {
             // Using POST request instead of a GET request (img-src) to not violate existing CSP rules
             // Since, Clarity already uses XHR to upload data, we stick with similar POST mechanism for reporting too
             let xhr = new XMLHttpRequest();
-            xhr.open("POST", url);
+            xhr.open("POST", url, true);
             xhr.send(JSON.stringify(payload));
             history.push(e.message);
         }

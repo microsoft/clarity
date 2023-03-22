@@ -217,7 +217,8 @@ export const enum Setting {
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
     ExtractLimit = 10000, // Do not extract more than 10000 characters
-    ChecksumPrecision = 24 // n-bit integer to represent token hash 
+    ChecksumPrecision = 24, // n-bit integer to represent token hash 
+    UploadTimeout = 15000 // Timeout in ms for XHR requests
 }
 
 export const enum Character {
@@ -286,7 +287,8 @@ export const enum Constant {
     ArrayStart = "[",
     ConditionStart = "{",
     ConditionEnd = "}",
-    Seperator = "<SEP>"
+    Seperator = "<SEP>",
+    Timeout = "Timeout"
 }
 
 export const enum XMLReadyState {

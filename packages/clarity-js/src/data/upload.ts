@@ -16,6 +16,7 @@ import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
 import * as extract from "@src/data/extract";
+import { report } from "@src/core/report";
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -169,7 +170,9 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             // Not all browsers support compression API and the support for it in supported browsers is still experimental
             if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
             let xhr = new XMLHttpRequest();
-            xhr.open("POST", url);
+            xhr.open("POST", url, true);
+            xhr.timeout = Setting.UploadTimeout;
+            xhr.ontimeout = () => { report(new Error(`${Constant.Timeout} : ${url}`)) };
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence); }; }
             xhr.withCredentials = true;
             if (zipped) {
