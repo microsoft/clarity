@@ -91,5 +91,5 @@ export function stop(): void {
 function host(url: string): string {
     let a = document.createElement("a");
     a.href = url;
-    return a.hostname;
+    return a.host;
 }
