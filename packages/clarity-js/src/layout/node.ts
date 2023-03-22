@@ -128,7 +128,7 @@ export default function (node: Node, source: Source): Node {
                 case "HEAD":
                     let head = { tag, attributes };
                     let l = insideFrame && node.ownerDocument?.location ? node.ownerDocument.location : location;
-                    head.attributes[Constant.Base] = l.protocol + "//" + l.hostname + l.pathname;
+                    head.attributes[Constant.Base] = l.protocol + "//" + l.host + l.pathname;
                     dom[call](node, parent, head, source);
                     break;
                 case "BASE":
@@ -138,7 +138,7 @@ export default function (node: Node, source: Source): Node {
                         // We create "a" element so we can generate protocol and hostname for relative paths like "/path/"
                         let a = document.createElement("a");
                         a.href = attributes["href"];
-                        baseHead.data.attributes[Constant.Base] = a.protocol + "//" + a.hostname + a.pathname;
+                        baseHead.data.attributes[Constant.Base] = a.protocol + "//" + a.host + a.pathname;
                     }
                     break;
                 case "STYLE":
