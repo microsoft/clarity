@@ -190,7 +190,13 @@ export class LayoutHelper {
                         if (node.attributes["rel"] === "stylesheet") {
                             this.stylesheets.push(new Promise((resolve: () => void): void => {
                                 const proxy = useproxy ?? this.state.options.useproxy;
-                                linkElement.href = proxy ? proxy(linkElement.href) : linkElement.href;
+                                if (proxy) {
+                                    if (linkElement.integrity) {
+                                        linkElement.removeAttribute('integrity');
+                                    }
+
+                                    linkElement.href = proxy(linkElement.href);
+                                } 
                                 linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
                                 setTimeout(resolve, LayoutHelper.TIMEOUT);
                             }));
