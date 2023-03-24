@@ -47,7 +47,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             for (let entry of click.state) {
                 let cTarget = metadata(entry.data.target as Node, entry.event, entry.data.text);
                 tokens = [entry.time, entry.event];
-                let cHash = cTarget.hash.join(Constant.Dot);
+                let cHash = cTarget.hash ? cTarget.hash.join(Constant.Dot) : Constant.Empty;
                 tokens.push(cTarget.id);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);

@@ -63,7 +63,8 @@ export const enum Event {
     Submit = 39,
     Extract = 40,
     Fraud = 41,
-    Change = 42
+    Change = 42,
+    Snapshot = 43
 }
 
 export const enum Metric {

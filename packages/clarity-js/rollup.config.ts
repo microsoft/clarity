@@ -46,11 +46,11 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: '@src/interaction/change', replacement: '@src/core/blank' },
-          { find: '@src/interaction/clipboard', replacement: '@src/core/blank' },
-          { find: '@src/interaction/input', replacement: '@src/core/blank' },
-          { find: '@src/interaction/pointer', replacement: '@src/core/blank' },
-          { find: '@src/interaction/selection', replacement: '@src/core/blank' }          
+          { find: '@src/layout/document', replacement: '@src/layout/document' },
+          { find: '@src/layout/encode', replacement: '@src/insight/encode' },
+          { find: /@src\/interaction\/(change|clipboard|input|pointer|selection)/, replacement: '@src/insight/blank' },
+          { find: /@src\/layout.*/, replacement: '@src/insight/snapshot' },
+          { find: /@src\/performance.*/, replacement: '@src/insight/blank' }
         ]
       }),
       resolve(),

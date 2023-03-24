@@ -53,6 +53,7 @@ export const enum Constant {
     Bang = "!",
     Period = ".",
     Comma = ",",
+    DataAttribute = "data-",
     MaskData = "data-clarity-mask",
     UnmaskData = "data-clarity-unmask",
     RegionData = "data-clarity-region",

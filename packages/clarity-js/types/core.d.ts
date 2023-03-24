@@ -54,7 +54,8 @@ export const enum Privacy {
     Sensitive = 1,
     Text = 2,
     TextImage = 3,
-    Exclude = 4
+    Exclude = 4,
+    Snapshot = 5
 }
 
 /* Helper Interfaces */

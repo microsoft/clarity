@@ -106,5 +106,5 @@ function str(input: number): string {
 }
 
 function attribute(key: string, value: string, privacy: Privacy): string {
-    return `${key}=${scrub.text(value, key, privacy)}`;
+    return `${key}=${scrub.text(value, key.indexOf(Constant.DataAttribute) === 0 ? Constant.DataAttribute : key, privacy)}`;
 }

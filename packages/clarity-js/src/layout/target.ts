@@ -13,19 +13,6 @@ export function target(evt: UIEvent): Node {
     return node.nodeType === Node.DOCUMENT_NODE ? (node as Document).documentElement : node;
 }
 
-export function link(node: Node): HTMLAnchorElement {
-    while (node && node !== document) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            let element = node as HTMLElement;
-            if (element.tagName === "A") {
-                return element as HTMLAnchorElement;
-            }
-        }
-        node = node.parentNode;
-    }
-    return null;
-}
-
 export function metadata(node: Node, event: Event, text: string = null): TargetMetadata {
     // If the node is null, we return a reserved value for id: 0. Valid assignment of id begins from 1+.
     let output: TargetMetadata = { id: 0, hash: null, privacy: Privacy.Text, node };

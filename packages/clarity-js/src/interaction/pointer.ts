@@ -5,7 +5,7 @@ import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { iframe } from "@src/layout/dom";
-import offset from "@src/layout/offset";
+import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
 import encode from "./encode";
 

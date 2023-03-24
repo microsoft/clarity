@@ -1,6 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { DocumentData } from "@clarity-types/layout";
-import encode from "./encode";
+import encode from "@src/layout/encode";
 
 export let data: DocumentData;
 
@@ -41,6 +41,6 @@ export function compute(): void {
     }
 }
 
-export function end(): void {
+export function stop(): void {
     reset();
 }
