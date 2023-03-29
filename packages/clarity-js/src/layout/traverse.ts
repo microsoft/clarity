@@ -1,13 +1,13 @@
 import { Task, Timer } from "@clarity-types/core";
 import { Source } from "@clarity-types/layout";
 import * as task from "@src/core/task";
-import processNode from "./node";
+import node from "@src/layout/node";
 
 export default async function(root: Node, timer: Timer, source: Source): Promise<void> {
     let queue = [root];
     while (queue.length > 0) {
-        let node = queue.shift();
-        let next = node.firstChild;
+        let entry = queue.shift();
+        let next = entry.firstChild;
 
         while (next) {
             queue.push(next);
@@ -22,7 +22,7 @@ export default async function(root: Node, timer: Timer, source: Source): Promise
         // Check if processing a node gives us a pointer to one of its sub nodes for traversal
         // E.g. an element node may give us a pointer to traverse shadowDom if shadowRoot property is set
         // Or, an iframe from the same origin could give a pointer to it's document for traversing contents of iframe.
-        let subnode = processNode(node, source);
+        let subnode = node(entry, source);
         if (subnode) { queue.push(subnode); }
     }
 }

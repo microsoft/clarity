@@ -1,7 +1,7 @@
 import { OffsetDistance } from "@clarity-types/core";
 import { iframe } from "@src/layout/dom";
 
-export default function(element: HTMLElement): OffsetDistance {
+export function offset(element: HTMLElement): OffsetDistance {
     let output: OffsetDistance = { x: 0, y: 0 };
 
     // Walk up the chain to ensure we compute offset distance correctly

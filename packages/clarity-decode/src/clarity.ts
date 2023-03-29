@@ -153,6 +153,7 @@ export function decode(input: string): DecodedPayload {
                 break;
             case Data.Event.Discover:
             case Data.Event.Mutation:
+            case Data.Event.Snapshot:
                 if (payload.dom === undefined) { payload.dom = []; }
                 payload.dom.push(layout.decode(entry) as DomEvent);
                 break;

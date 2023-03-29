@@ -5,8 +5,8 @@ import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { iframe } from "@src/layout/dom";
-import offset from "@src/layout/offset";
-import { link, target } from "@src/layout/target";
+import { offset } from "@src/layout/offset";
+import { target } from "@src/layout/target";
 import encode from "./encode";
 
 const UserInputTags = ["input", "textarea", "radio", "button", "canvas"];
@@ -71,6 +71,19 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
         });
         schedule(encode.bind(this, event));
     }
+}
+
+function link(node: Node): HTMLAnchorElement {
+    while (node && node !== document) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            let element = node as HTMLElement;
+            if (element.tagName === "A") {
+                return element as HTMLAnchorElement;
+            }
+        }
+        node = node.parentNode;
+    }
+    return null;
 }
 
 function text(element: Node): string {

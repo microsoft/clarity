@@ -152,6 +152,7 @@ export class Visualizer implements VisualizerType {
                     this.data.region(entry as Layout.RegionEvent);
                     break;
                 case Data.Event.Mutation:
+                case Data.Event.Snapshot:
                     await this.layout.markup(entry as Layout.DomEvent);
                     break;
                 case Data.Event.MouseDown:

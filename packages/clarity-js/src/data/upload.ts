@@ -49,7 +49,8 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             case Event.Discover:
                 discoverBytes += event.length;
             case Event.Box:
-            case Event.Mutation:
+            case Event.Mutation:                
+            case Event.Snapshot:
                 playbackBytes += event.length;
                 playback.push(event);
                 break;
