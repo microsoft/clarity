@@ -3,9 +3,12 @@ import { Event, Setting, ExtractData } from "@clarity-types/data";
 import encode from "./encode";
 import * as internal from "@src/diagnostic/internal";
 import { Code, Constant, Severity } from "@clarity-types/data";
+import { hashText } from "@src/clarity";
 
 export let data: ExtractData = {};
 export let keys: number[] = [];
+// hash data is remembered so we can reupload once it changes
+let hashDataCache: { [key: string]: string } = {};
 
 let variables : { [key: number]: { [key: number]: Syntax[] }} = {};
 let selectors : { [key: number]: { [key: number]: string }} = {};
@@ -85,6 +88,19 @@ export function compute(): void {
                 }
             }
         }
+        for (let h in hashes) {
+            let key = parseInt(h);
+            let hashData = hashes[key];
+            for (let d in hashData) {
+                let hashKey = parseInt(d);
+                let content = hashText(hashData[hashKey]);
+                // only update when the contents have changes since we last checked
+                if (content != hashDataCache[hashData[hashKey]]) {
+                    hashDataCache[hashData[hashKey]] = content;
+                    update(key, hashKey, content.substring(0, Setting.ExtractLimit));
+                }
+            }
+        }
     }
     catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
 
@@ -96,9 +112,10 @@ export function reset(): void {
     keys = [];
     variables = {};
     selectors = {};
+    hashes = {};
 }
 
-export function update(key: number, subkey: number,  value: string): void {
+export function update(key: number, subkey: number, value: string): void {
     if (!(key in data)) {
         data[key] = []
         keys.push(key);
