@@ -9,10 +9,16 @@ export let keys: number[] = [];
 
 let variables : { [key: number]: { [key: number]: Syntax[] }} = {};
 let selectors : { [key: number]: { [key: number]: string }} = {};
+let hashes : { [key: number]: { [key: number]: string }} = {};
 export function start(): void {
     reset();
 }
 
+// Input string is of the following form:
+// EXTRACT 101 { "1": ".class1", "2": "~window.a.b", "3": "!abc"}
+// Which will set up event 101 to grab the contents of the class1 selector into component 1,
+// the javascript evaluated contents of window.a.b into component 2,
+// and the contents of Clarity's hash abc into component 3
 export function trigger(input: string): void { 
     try {
         var parts = input && input.length > 0 ? input.split(/ (.*)/) : [Constant.Empty];
@@ -20,10 +26,18 @@ export function trigger(input: string): void {
         var values = parts.length > 1 ? JSON.parse(parts[1]) : {};
         variables[key] = {};
         selectors[key] = {};
+        hashes[key] = {};
         for (var v in values) {
+            // values is a set of strings for proper JSON parsing, but it's more efficient 
+            // to interact with them as numbers
             let id = parseInt(v);
             let value = values[v] as string;
-            let source = value.startsWith(Constant.Tilde) ? ExtractSource.Javascript : ExtractSource.Text;
+            let source = ExtractSource.Text;
+            if (value.startsWith(Constant.Tilde)) {
+                source = ExtractSource.Javascript
+            } else if (value.startsWith(Constant.Bang)) {
+                source = ExtractSource.Hash
+            }
             switch (source) {
                 case ExtractSource.Javascript:
                     let variable = value.substring(1, value.length);
@@ -31,6 +45,10 @@ export function trigger(input: string): void {
                     break;
                 case ExtractSource.Text:
                     selectors[key][id] = value;
+                    break;
+                case ExtractSource.Hash:
+                    let hash = value.substring(1, value.length);
+                    hashes[key][id] = hash;
                     break;
             }
         }

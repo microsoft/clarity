@@ -289,7 +289,8 @@ export const enum Constant {
     ConditionStart = "{",
     ConditionEnd = "}",
     Seperator = "<SEP>",
-    Timeout = "Timeout"
+    Timeout = "Timeout",
+    Bang = "!"
 }
 
 export const enum XMLReadyState {

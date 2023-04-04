@@ -34,7 +34,8 @@ export const enum ExtractSource {
     Javascript = 0,
     Cookie = 1,
     Text = 2,
-    Fragment = 3
+    Fragment = 3,
+    Hash = 4
 }
 
 export const enum Type {
