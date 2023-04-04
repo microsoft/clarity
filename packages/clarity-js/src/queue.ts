@@ -8,7 +8,8 @@ export function setup() {
     // Start queuing up calls while Clarity is inactive and we are in a browser enviornment    
     if (typeof w !== "undefined") {
         w[c] = function() {
-            arguments[0] == "start" ? process() : (w[c].q = w[c].q || []).push(arguments);
+            (w[c].q = w[c].q || []).push(arguments);
+            arguments[0] === "start" && w[c].q.unshift(w[c].q.pop()) && process();
         };
     }
 }
