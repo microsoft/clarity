@@ -410,7 +410,7 @@ export interface UpgradeData {
 }
 
 export interface ExtractData {
-    [key: number]: [number, string][]; // Array of [id, value] for every extracted data
+    [key: number]: [number, string, boolean][]; // Array of [id, value, updateOnChange] for every extracted data
 }
 
 export interface UploadData {

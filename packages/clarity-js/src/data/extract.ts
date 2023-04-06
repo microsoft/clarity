@@ -86,18 +86,28 @@ export function compute(): void {
                         update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
                     }
                 }
-            }
-        }
-        for (let h in hashes) {
-            let key = parseInt(h);
-            let hashData = hashes[key];
-            for (let d in hashData) {
-                let hashKey = parseInt(d);
-                let content = hashText(hashData[hashKey]);
-                // only update when the contents have changes since we last checked
-                if (content != hashDataCache[hashData[hashKey]]) {
-                    hashDataCache[hashData[hashKey]] = content;
-                    update(key, hashKey, content.substring(0, Setting.ExtractLimit));
+
+                let hashData = hashes[key];
+                for (let h in hashData) {
+                    let hashKey = parseInt(h);
+                    // TODO (samart): use the separator?
+                    let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
+                    // update only if we haven't grabbed this before or if it has changed
+                    let shouldUpdate = true;
+                    if (key in data) {
+                        for (let extractData of data[key]) {
+                            if (extractData[0] === hashKey) {
+                                // extractData[1] is the value we uploaded last, check if it has changed
+                                if (extractData[1] !== content) {
+                                    shouldUpdate == true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (shouldUpdate) {
+                        update(key, hashKey, content, true);
+                    }
                 }
             }
         }
@@ -108,19 +118,31 @@ export function compute(): void {
 }
 
 export function reset(): void {
-    data = {};
+    // only clear out the parts of data which weren't marked as updateOnChange
+    let dynamicData = {};
+    for (let d in data) {
+        let key = parseInt(d);
+        for (let row of data[key]) {
+            if (row[2]) {
+                if (!(key in dynamicData)) {
+                    dynamicData[key] = [];
+                }
+                dynamicData[key].push(row);
+            }
+        }
+    }
+    data = dynamicData;
     keys = [];
     variables = {};
     selectors = {};
-    hashes = {};
 }
 
-export function update(key: number, subkey: number, value: string): void {
+export function update(key: number, subkey: number, value: string, updateOnChange: boolean = false): void {
     if (!(key in data)) {
         data[key] = []
         keys.push(key);
     }
-    data[key].push([subkey, value]);
+    data[key].push([subkey, value, updateOnChange]);
 }
 
 export function stop(): void {

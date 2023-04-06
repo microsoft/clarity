@@ -80,7 +80,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
                     let values = tokens[e++] as (number | string)[];
                     extract[key] = [];
                     for (let i = 0; i < values.length - 1; i += 2) {
-                        extract[key].push([values[i] as number, values[i + 1] as string]);
+                        extract[key].push([values[i] as number, values[i + 1] as string, false]);
                     }
                 }
             }
