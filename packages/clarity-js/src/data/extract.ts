@@ -65,8 +65,8 @@ export function clone(v: Syntax[]): Syntax[] {
 
 export function compute(): void {
     try {
-        for (let v in variables) {
-            let key = parseInt(v);
+        for (let h in hashes) {
+            let key = parseInt(h);
             if (!(key in keys)) {
                 let variableData = variables[key];
                 for (let v in variableData) {
@@ -95,8 +95,8 @@ export function compute(): void {
                         for (let extractData of data[key]) {
                             if (extractData[0] === hashKey) {
                                 // extractData[1] is the value we uploaded last, check if it has changed
-                                if (extractData[1] !== content) {
-                                    shouldUpdate == true;
+                                if (extractData[1] === content) {
+                                    shouldUpdate = false;
                                 }
                             }
                         }
