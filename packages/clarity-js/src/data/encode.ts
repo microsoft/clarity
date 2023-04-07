@@ -110,7 +110,8 @@ export default function(event: Event): void {
             let extractKeys = extract.keys;
             for (let e of extractKeys) {
                 tokens.push(e);
-                tokens.push([].concat(...extract.data[e]));
+                // filter out the updateIfChanged flags before upload
+                tokens.push([].concat(...(extract.data[e].map(x => {return [x[0], x[1]]}))));
             }
             extract.reset();
             queue(tokens, false);

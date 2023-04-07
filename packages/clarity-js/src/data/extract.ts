@@ -7,8 +7,6 @@ import { hashText } from "@src/clarity";
 
 export let data: ExtractData = {};
 export let keys: number[] = [];
-// hash data is remembered so we can reupload once it changes
-let hashDataCache: { [key: string]: string } = {};
 
 let variables : { [key: number]: { [key: number]: Syntax[] }} = {};
 let selectors : { [key: number]: { [key: number]: string }} = {};
@@ -90,7 +88,6 @@ export function compute(): void {
                 let hashData = hashes[key];
                 for (let h in hashData) {
                     let hashKey = parseInt(h);
-                    // TODO (samart): use the separator?
                     let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
                     // update only if we haven't grabbed this before or if it has changed
                     let shouldUpdate = true;
