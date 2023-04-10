@@ -108,10 +108,13 @@ export default function(event: Event): void {
             break;
         case Event.Extract:
             let extractKeys = extract.keys;
-            for (let e of extractKeys) {
-                tokens.push(e);
-                // filter out the updateIfChanged flags before upload
-                tokens.push([].concat(...(extract.data[e].map(x => {return [x[0], x[1]]}))));
+            for (let e in extractKeys) {
+                let keyAsNum = parseInt(e);
+                if (extract.data[keyAsNum].updated) {
+                    tokens.push(keyAsNum);
+                    tokens.push([].concat(...extract.data[e].subdata));
+                    extract.data[keyAsNum].updated = false;
+                }
             }
             extract.reset();
             queue(tokens, false);

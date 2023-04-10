@@ -410,7 +410,14 @@ export interface UpgradeData {
 }
 
 export interface ExtractData {
-    [key: number]: [number, string, boolean][]; // Array of [id, value, updateOnChange] for every extracted data
+    [key: number]: {
+        updated: boolean;
+        subdata: [number, string][]; // Array of [id, value, modified] for every extracted data
+     } 
+}
+
+export interface ExtractKeys {
+    [key: number]: boolean;// if false, extract key will be uploaded only once
 }
 
 export interface UploadData {
