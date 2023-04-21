@@ -1,12 +1,12 @@
 import { ExtractSource, Syntax, Type } from "@clarity-types/core";
-import { Event, Setting, ExtractData, ExtractKeys } from "@clarity-types/data";
+import { Event, Setting, ExtractData } from "@clarity-types/data";
 import encode from "./encode";
 import * as internal from "@src/diagnostic/internal";
 import { Code, Constant, Severity } from "@clarity-types/data";
 import { hashText } from "@src/clarity";
 
 export let data: ExtractData = {};
-export let keys: ExtractKeys = {};
+export let keys: Set<number> = new Set();
 
 let variables : { [key: number]: { [key: number]: Syntax[] }} = {};
 let selectors : { [key: number]: { [key: number]: string }} = {};
@@ -28,7 +28,6 @@ export function trigger(input: string): void {
         variables[key] = {};
         selectors[key] = {};
         hashes[key] = {};
-        var updateOnChange = false;
         for (var v in values) {
             // values is a set of strings for proper JSON parsing, but it's more efficient 
             // to interact with them as numbers
@@ -51,12 +50,9 @@ export function trigger(input: string): void {
                 case ExtractSource.Hash:
                     let hash = value.substring(1, value.length);
                     hashes[key][id] = hash;
-                    updateOnChange = true; // if our key contains a hash, we want to update when the content changes
                     break;
             }
         }
-
-        keys[key] = updateOnChange;
     }
     catch(e) {
         internal.log(Code.Config, Severity.Warning, e ? e.name : null);
@@ -69,13 +65,14 @@ export function clone(v: Syntax[]): Syntax[] {
 
 export function compute(): void {
     try {
-        for (let k in keys) {
-            let key = parseInt(k);
+        let newDataToUpload = false;
+        for (let v in variables) {
+            let key = parseInt(v);
             let variableData = variables[key];
             for (let v in variableData) {
                 let variableKey = parseInt(v);
                 let value = str(evaluate(clone(variableData[variableKey])));
-                if (value) { update(key, variableKey, value); }
+                if (value) { newDataToUpload = newDataToUpload || update(key, variableKey, value); }
             }
 
             let selectorData = selectors[key];
@@ -84,7 +81,7 @@ export function compute(): void {
                 let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
                 if (nodes) {
                     let text = Array.from(nodes).map(e => e.innerText)
-                    update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
+                    newDataToUpload = newDataToUpload || update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
                 }
             }
 
@@ -92,60 +89,40 @@ export function compute(): void {
             for (let h in hashData) {
                 let hashKey = parseInt(h);
                 let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
-                update(key, hashKey, content);
+                newDataToUpload = newDataToUpload || update(key, hashKey, content);
             }            
+        }
+
+        if (newDataToUpload) {
+            encode(Event.Extract);
         }
     }
     catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
-
-    encode(Event.Extract);
 }
 
 export function reset(): void {
-    for (let k in keys) {
-        let key = parseInt(k);
-        if (keys[key]) {
-            // this key and its associated data needs to be remembered
-        } else {
-            // this key represents a single upload dataset, clear knowledge of it as we don't need it anymore
-            data[key] = undefined;
-            keys[key] = undefined;
-        }
-    }
+    keys.clear();
 }
 
-
-export function update(key: number, subkey: number, value: string): void {
+export function update(key: number, subkey: number, value: string): boolean {
+    var update = false;
     if (!(key in data)) {
-        // if we don't have any data for this key, we haven't grabbed anything for it yet
-        // and need to initalize our data object for this key
-        data[key] = {
-            updated: true,
-            subdata: [[subkey, value]]
-        }
-    } else if(keys[key]){
-        // if this key was set to updateOnChange, we need to check the previous value and update it, 
-        // unless it is the same in which case we noop
-        let subKeyIndex = -1;
-        for (let subdataIndex = 0; subdataIndex < data[key].subdata.length; subdataIndex++) {
-             if (subkey == data[key].subdata[subKeyIndex][0]) {
-                subKeyIndex = subdataIndex;
-                break;
-             }
-        }
-
-        if (subKeyIndex > -1) {
-            // if we found the subkey uploaded previously was found, check the contents and possibly update
-            if (value !== data[key].subdata[subKeyIndex][1]) {
-                data[key].updated = true;
-                data[key].subdata[subKeyIndex][1] = value;
-            }
-        } else {
-            // we haven't uploaded this subkey before, just need to add it
-            data[key].updated = true;
-            data[key].subdata.push([subkey, value]);
-        }
+        data[key] = {};
+        update = true;
     }
+    
+    if (!isEmpty(hashes[key]) 
+        && (!(subkey in data[key]) || data[key][subkey] != value))
+    {
+        update = true;
+    }
+
+    data[key][subkey] = value;
+    if (update) {
+        keys.add(key);
+    }
+
+    return update;
 }
 
 export function stop(): void {
@@ -211,4 +188,8 @@ function match(base: Object, condition: string): boolean {
     }
 
     return true;
+}
+
+function isEmpty(obj: Object): boolean {
+    return Object.keys(obj).length == 0;
 }

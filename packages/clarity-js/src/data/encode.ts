@@ -108,14 +108,17 @@ export default function(event: Event): void {
             break;
         case Event.Extract:
             let extractKeys = extract.keys;
-            for (let e in extractKeys) {
-                let keyAsNum = parseInt(e);
-                if (extract.data[keyAsNum].updated) {
-                    tokens.push(keyAsNum);
-                    tokens.push([].concat(...extract.data[e].subdata));
-                    extract.data[keyAsNum].updated = false;
+            extractKeys.forEach((e => {
+                tokens.push(e);
+                let token = []
+                for (let d in extract.data[e]) {
+                    let key = parseInt(d, 10);
+                    token.push(key);
+                    token.push(extract.data[e][d]);
                 }
-            }
+                tokens.push(token);
+            }));
+            
             extract.reset();
             queue(tokens, false);
     }

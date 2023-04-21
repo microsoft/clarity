@@ -78,12 +78,9 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 else {
                     let key = tokens[e++] as number;
                     let values = tokens[e++] as (number | string)[];
-                    extract[key] = {
-                        updated: false,
-                        subdata: []
-                    };
+                    extract[key] = [];
                     for (let i = 0; i < values.length - 1; i += 2) {
-                        extract[key].subdata.push([values[i] as number, values[i + 1] as string]);
+                        extract[key][values[i] as number] = values[i + 1] as string;
                     }
                 }
             }
