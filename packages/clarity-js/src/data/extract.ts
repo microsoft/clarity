@@ -1,5 +1,5 @@
 import { ExtractSource, Syntax, Type } from "@clarity-types/core";
-import { Event, Setting, ExtractData, ExtractKeys } from "@clarity-types/data";
+import { Event, Setting, ExtractData } from "@clarity-types/data";
 import encode from "./encode";
 import * as internal from "@src/diagnostic/internal";
 import { Code, Constant, Severity } from "@clarity-types/data";
@@ -65,13 +65,14 @@ export function clone(v: Syntax[]): Syntax[] {
 
 export function compute(): void {
     try {
+        let newDataToUpload = false;
         for (let v in variables) {
             let key = parseInt(v);
             let variableData = variables[key];
             for (let v in variableData) {
                 let variableKey = parseInt(v);
                 let value = str(evaluate(clone(variableData[variableKey])));
-                if (value) { update(key, variableKey, value); }
+                if (value) { newDataToUpload = newDataToUpload || update(key, variableKey, value); }
             }
 
             let selectorData = selectors[key];
@@ -80,7 +81,7 @@ export function compute(): void {
                 let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
                 if (nodes) {
                     let text = Array.from(nodes).map(e => e.innerText)
-                    update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
+                    newDataToUpload = newDataToUpload || update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
                 }
             }
 
@@ -88,20 +89,22 @@ export function compute(): void {
             for (let h in hashData) {
                 let hashKey = parseInt(h);
                 let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
-                update(key, hashKey, content);
+                newDataToUpload = newDataToUpload || update(key, hashKey, content);
             }            
+        }
+
+        if (newDataToUpload) {
+            encode(Event.Extract);
         }
     }
     catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
-
-    encode(Event.Extract);
 }
 
 export function reset(): void {
     keys.clear();
 }
 
-export function update(key: number, subkey: number, value: string): void {
+export function update(key: number, subkey: number, value: string): boolean {
     var update = false;
     if (!(key in data)) {
         data[key] = {};
@@ -118,6 +121,8 @@ export function update(key: number, subkey: number, value: string): void {
     if (update) {
         keys.add(key);
     }
+
+    return update;
 }
 
 export function stop(): void {
