@@ -9,6 +9,7 @@ export function setup() {
     if (typeof w !== "undefined") {
         w[c] = function() {
             (w[c].q = w[c].q || []).push(arguments);
+            // if the start function was called, don't queue it and instead process the queue
             arguments[0] === "start" && w[c].q.unshift(w[c].q.pop()) && process();
         };
     }

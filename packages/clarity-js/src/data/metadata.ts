@@ -92,8 +92,9 @@ export function metadata(cb: MetadataCallback, wait: boolean = true): void {
   if (data && (upgraded || wait === false)) {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
     cb(data, !config.lean);
+  } else {
+    callbacks.push({callback: cb, wait: wait });
   }
-  callbacks.push({callback: cb, wait: wait });
 }
 
 export function id(): string {

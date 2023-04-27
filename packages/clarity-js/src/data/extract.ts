@@ -65,14 +65,15 @@ export function clone(v: Syntax[]): Syntax[] {
 
 export function compute(): void {
     try {
-        let newDataToUpload = false;
         for (let v in variables) {
             let key = parseInt(v);
             let variableData = variables[key];
             for (let v in variableData) {
                 let variableKey = parseInt(v);
                 let value = str(evaluate(clone(variableData[variableKey])));
-                if (value) { newDataToUpload = update(key, variableKey, value) || newDataToUpload; }
+                if (value) { 
+                    update(key, variableKey, value);
+                }
             }
 
             let selectorData = selectors[key];
@@ -81,7 +82,7 @@ export function compute(): void {
                 let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
                 if (nodes) {
                     let text = Array.from(nodes).map(e => e.innerText)
-                    newDataToUpload = update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit))  || newDataToUpload;
+                    update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
                 }
             }
 
@@ -89,11 +90,11 @@ export function compute(): void {
             for (let h in hashData) {
                 let hashKey = parseInt(h);
                 let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
-                newDataToUpload = update(key, hashKey, content)  || newDataToUpload;
+                update(key, hashKey, content);
             }            
         }
 
-        if (newDataToUpload) {
+        if (keys.size > 0) {
             encode(Event.Extract);
         }
     }
@@ -104,7 +105,7 @@ export function reset(): void {
     keys.clear();
 }
 
-export function update(key: number, subkey: number, value: string): boolean {
+export function update(key: number, subkey: number, value: string): void {
     var update = false;
     if (!(key in data)) {
         data[key] = {};
@@ -122,7 +123,7 @@ export function update(key: number, subkey: number, value: string): boolean {
         keys.add(key);
     }
 
-    return update;
+    return;
 }
 
 export function stop(): void {
