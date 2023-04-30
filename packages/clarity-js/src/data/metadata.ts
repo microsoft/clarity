@@ -85,11 +85,16 @@ export function stop(): void {
 }
 
 export function metadata(cb: MetadataCallback, wait: boolean = true): void {
-  if (data && wait === false) {
+  let upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
+  // directly execute the callback rather than adding to our list as we only process callbacks at the moment
+  // we go through the upgrading flow.
+  if (data && (upgraded || wait === false)) {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
     cb(data, !config.lean);
+  } else {
+    callbacks.push({callback: cb, wait: wait });
   }
-  callbacks.push({callback: cb, wait: wait });
 }
 
 export function id(): string {

@@ -289,7 +289,8 @@ export const enum Constant {
     ConditionStart = "{",
     ConditionEnd = "}",
     Seperator = "<SEP>",
-    Timeout = "Timeout"
+    Timeout = "Timeout",
+    Bang = "!"
 }
 
 export const enum XMLReadyState {
@@ -409,7 +410,7 @@ export interface UpgradeData {
 }
 
 export interface ExtractData {
-    [key: number]: [number, string][]; // Array of [id, value] for every extracted data
+    [key: number]: { [subkey : number]: string }; // Array of { subkey: number } representing the extracted data
 }
 
 export interface UploadData {
