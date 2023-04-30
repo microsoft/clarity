@@ -410,7 +410,7 @@ export interface UpgradeData {
 }
 
 export interface ExtractData {
-    [key: number]: { [subkey : number]: string }; // Array of [id, value] for every extracted data
+    [key: number]: { [subkey : number]: string }; // Array of { subkey: number } representing the extracted data
 }
 
 export interface UploadData {
