@@ -144,10 +144,8 @@ function track(u: User, consent: BooleanFlag = null): void {
   // Convert time precision into days to reduce number of bytes we have to write in a cookie
   // E.g. Math.ceil(1628735962643 / (24*60*60*1000)) => 18852 (days) => ejo in base36 (13 bytes => 3 bytes)
   let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day))/Time.Day);
-  // If dob is not set in the user object, use today's date as a dob
-  let date = new Date();
-  let dob = [date.getFullYear(), ('0' + (date.getMonth() + 1)).slice(-2), ('0' + date.getDate()).slice(-2)].join('');
-  dob = u.dob === null ? dob : u.dob;
+  // If DOB is not set in the user object, use today's date as a DOB
+  let dob = u.dob === null ? new Date().toISOString().substring(0, 10).replace(/-/g,'') : u.dob;
   // To avoid cookie churn, write user id cookie only once every day
   if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent || u.dob !== dob) {
     setCookie(Constant.CookieKey, [data.userId, Setting.CookieVersion, end.toString(36), consent, dob].join(Constant.Pipe), Setting.Expire);
