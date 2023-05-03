@@ -155,7 +155,8 @@ function track(u: User, consent: BooleanFlag = null): void {
 
   // To avoid cookie churn, write user id cookie only once every day
   if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent || u.dob !== dob) {
-    setCookie(Constant.CookieKey, [data.userId, Setting.CookieVersion, end.toString(36), consent, dob].join(Constant.Pipe), Setting.Expire);
+    let cookieParts = dob === null ? [data.userId, Setting.CookieVersion, end.toString(36), consent] : [data.userId, Setting.CookieVersion, end.toString(36), consent, dob];
+    setCookie(Constant.CookieKey, cookieParts.join(Constant.Pipe), Setting.Expire);
   }
 }
 
