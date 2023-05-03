@@ -136,7 +136,8 @@ export const enum Dimension {
     Brand = 24,
     Model = 25,
     DevicePixelRatio = 26,
-    ConnectionType = 27
+    ConnectionType = 27,
+    Dob = 28
 }
 
 export const enum Check {
@@ -320,7 +321,6 @@ export interface Metadata {
     userId: string;
     sessionId: string;
     pageNum: number;
-    dob: string;
 }
 
 export interface Session {

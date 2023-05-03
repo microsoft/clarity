@@ -36,6 +36,7 @@ export function start(): void {
   dimension.log(Dimension.PageLanguage, document.documentElement.lang);
   dimension.log(Dimension.DocumentDirection, document.dir);
   dimension.log(Dimension.DevicePixelRatio, `${window.devicePixelRatio}`);
+  dimension.log(Dimension.Dob, u.dob);
 
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);

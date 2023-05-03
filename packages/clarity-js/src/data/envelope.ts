@@ -17,8 +17,7 @@ export function start(): void {
     sessionId: m.sessionId,
     pageNum: m.pageNum,
     upload: Upload.Async,
-    end: BooleanFlag.False,
-    dob: m.dob
+    end: BooleanFlag.False
   };
 }
 
@@ -42,7 +41,6 @@ export function envelope(last: boolean): Token[] {
     data.sessionId,
     data.pageNum,
     data.upload,
-    data.end,
-    data.dob
+    data.end
   ];
 }
