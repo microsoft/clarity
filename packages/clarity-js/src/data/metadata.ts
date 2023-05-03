@@ -21,7 +21,7 @@ export function start(): void {
   let s = session();
   let u = user();
   let projectId = config.projectId || hash(location.host);
-  data = { projectId, userId: u.id, sessionId: s.session, pageNum: s.count, dob: u.dob };
+  data = { projectId, userId: u.id, sessionId: s.session, pageNum: s.count };
 
   // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
@@ -150,8 +150,9 @@ function track(u: User, consent: BooleanFlag = null): void {
   // Convert time precision into days to reduce number of bytes we have to write in a cookie
   // E.g. Math.ceil(1628735962643 / (24*60*60*1000)) => 18852 (days) => ejo in base36 (13 bytes => 3 bytes)
   let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day))/Time.Day);
-  // If DOB is not set in the user object, use today's date as a DOB
-  let dob = u.dob === null ? new Date().toISOString().substring(0, 10).replace(/-/g,'') : u.dob;
+  // If DOB is not set in the user object, use the date set in the config as a DOB
+  let dob = u.dob === null ? config.dob : u.dob;
+
   // To avoid cookie churn, write user id cookie only once every day
   if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent || u.dob !== dob) {
     setCookie(Constant.CookieKey, [data.userId, Setting.CookieVersion, end.toString(36), consent, dob].join(Constant.Pipe), Setting.Expire);
