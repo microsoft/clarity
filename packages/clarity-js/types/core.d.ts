@@ -4,8 +4,7 @@ type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
 type UploadCallback = (data: string) => void;
 type Region = [number /* RegionId */, string /* Query Selector */];
-type Fraud = [number /* FraudId */, string /* Query Selector */];
-export type Extract = ExtractSource /* Extraction Source */ | number /* Extract Id */ | string  | string[] /* Hash or Query Selector or String Token */;
+type Checksum = [number /* FraudId */, string /* Query Selector */];
 
 /* Enum */
 
@@ -35,7 +34,8 @@ export const enum ExtractSource {
     Javascript = 0,
     Cookie = 1,
     Text = 2,
-    Fragment = 3
+    Fragment = 3,
+    Hash = 4
 }
 
 export const enum Type {
@@ -55,7 +55,8 @@ export const enum Privacy {
     Sensitive = 1,
     Text = 2,
     TextImage = 3,
-    Exclude = 4
+    Exclude = 4,
+    Snapshot = 5
 }
 
 /* Helper Interfaces */
@@ -123,12 +124,13 @@ export interface Config {
     lean?: boolean;
     track?: boolean;
     content?: boolean;
+    drop?: string[];
     mask?: string[];
     unmask?: string[];
     regions?: Region[];
-    extract?: Extract[];
     cookies?: string[];
-    fraud?: Fraud[];
+    fraud?: boolean;
+    checksum?: Checksum[];
     report?: string;
     upload?: string | UploadCallback;
     fallback?: string;

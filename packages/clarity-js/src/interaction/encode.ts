@@ -1,23 +1,24 @@
 import { Constant, Event, Token } from "@clarity-types/data";
-import scrub from "@src/core/scrub";
+import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
 import { metadata } from "@src/layout/target";
-import * as click from "./click";
-import * as clipboard from "./clipboard";
-import * as input from "./input";
-import * as pointer from "./pointer";
-import * as resize from "./resize";
-import * as scroll from "./scroll";
-import * as selection from "./selection";
-import * as submit from "./submit";
-import * as timeline from "./timeline";
-import * as unload from "./unload";
-import * as visibility from "./visibility";
+import * as change from "@src/interaction/change";
+import * as click from "@src/interaction/click";
+import * as clipboard from "@src/interaction/clipboard";
+import * as input from "@src/interaction/input";
+import * as pointer from "@src/interaction/pointer";
+import * as resize from "@src/interaction/resize";
+import * as scroll from "@src/interaction/scroll";
+import * as selection from "@src/interaction/selection";
+import * as submit from "@src/interaction/submit";
+import * as timeline from "@src/interaction/timeline";
+import * as unload from "@src/interaction/unload";
+import * as visibility from "@src/interaction/visibility";
 
-export default async function (type: Event): Promise<void> {
-    let t = time();
+export default async function (type: Event, ts: number = null): Promise<void> {
+    let t = ts || time();
     let tokens: Token[] = [t, type];
     switch (type) {
         case Event.MouseDown:
@@ -46,7 +47,7 @@ export default async function (type: Event): Promise<void> {
             for (let entry of click.state) {
                 let cTarget = metadata(entry.data.target as Node, entry.event, entry.data.text);
                 tokens = [entry.time, entry.event];
-                let cHash = cTarget.hash.join(Constant.Dot);
+                let cHash = cTarget.hash ? cTarget.hash.join(Constant.Dot) : Constant.Empty;
                 tokens.push(cTarget.id);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
@@ -55,8 +56,8 @@ export default async function (type: Event): Promise<void> {
                 tokens.push(entry.data.button);
                 tokens.push(entry.data.reaction);
                 tokens.push(entry.data.context);
-                tokens.push(scrub(entry.data.text, "click", cTarget.privacy));
-                tokens.push(entry.data.link);
+                tokens.push(scrub.text(entry.data.text, "click", cTarget.privacy));
+                tokens.push(scrub.url(entry.data.link));
                 tokens.push(cHash);
                 tokens.push(entry.data.trust);
                 queue(tokens);
@@ -95,7 +96,7 @@ export default async function (type: Event): Promise<void> {
                 let iTarget = metadata(entry.data.target as Node, entry.event, entry.data.value);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
-                tokens.push(scrub(entry.data.value, "input", iTarget.privacy));
+                tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy));
                 queue(tokens);
             }
             input.reset();
@@ -126,6 +127,21 @@ export default async function (type: Event): Promise<void> {
                 }
             }
             scroll.reset();
+            break;
+        case Event.Change:
+            for (let entry of change.state) {
+                tokens = [entry.time, entry.event];
+                let target = metadata(entry.data.target as Node, entry.event);
+                if (target.id > 0) {
+                    tokens = [entry.time, entry.event];
+                    tokens.push(target.id);
+                    tokens.push(entry.data.type);
+                    tokens.push(scrub.text(entry.data.value, "change", target.privacy));
+                    tokens.push(scrub.text(entry.data.checksum, "checksum", target.privacy));
+                    queue(tokens);
+                }
+            }
+            change.reset();
             break;
         case Event.Submit:
             for (let entry of submit.state) {

@@ -45,10 +45,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let resizeData: Interaction.ResizeData = { width: tokens[2] as number, height: tokens[3] as number };
             return { time, event, data: resizeData };
         case Data.Event.Input:
-            let inputData: Interaction.InputData = {
-                target: tokens[2] as number,
-                value: tokens[3] as string
-            };
+            let inputData: Interaction.InputData = { target: tokens[2] as number, value: tokens[3] as string };
             return { time, event, data: inputData };
         case Data.Event.Selection:
             let selectionData: Interaction.SelectionData = {
@@ -58,6 +55,14 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 endOffset: tokens[5] as number
             };
             return { time, event, data: selectionData };
+        case Data.Event.Change:
+            let changeData: Interaction.ChangeData = {
+                target: tokens[2] as number,
+                type: tokens[3] as string,
+                value: tokens[4] as string,
+                checksum: tokens[5] as string
+            };
+            return { time, event, data: changeData };
         case Data.Event.Submit:
             let submitData: Interaction.SubmitData = {
                 target: tokens[2] as number

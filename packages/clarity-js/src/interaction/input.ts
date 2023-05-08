@@ -36,10 +36,10 @@ function recompute(evt: UIEvent): void {
         // If last entry in the queue is for the same target node as the current one, remove it so we can later swap it with current data.
         if (state.length > 0 && (state[state.length - 1].data.target === data.target)) { state.pop(); }
 
-        state.push({ time: time(), event: Event.Input, data });
+        state.push({ time: time(evt), event: Event.Input, data });
 
         clearTimeout(timeout);
-        timeout = setTimeout(process, Setting.LookAhead, Event.Input);
+        timeout = setTimeout(process, Setting.InputLookAhead, Event.Input);
     }
 }
 

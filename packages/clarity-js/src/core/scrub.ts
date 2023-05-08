@@ -1,6 +1,7 @@
 import { Privacy } from "@clarity-types/core";
 import * as Data from "@clarity-types/data";
 import * as Layout from "@clarity-types/layout";
+import config from "@src/core/config";
 
 const catchallRegex = /\S/gi;
 let unicodeRegex = true;
@@ -8,7 +9,7 @@ let digitRegex = null;
 let letterRegex = null;
 let currencyRegex = null;
 
-export default function(value: string, hint: string, privacy: Privacy, mangle: boolean = false): string {
+export function text(value: string, hint: string, privacy: Privacy, mangle: boolean = false): string {
     if (value) {
         switch (privacy) {
             case Privacy.None:
@@ -19,14 +20,17 @@ export default function(value: string, hint: string, privacy: Privacy, mangle: b
                     case "value":
                     case "placeholder":
                     case "click":
-                    case "input":
                         return redact(value);
+                    case "input":
+                    case "change":
+                        return mangleToken(value);
                 }
                 return value;
             case Privacy.Text:
             case Privacy.TextImage:
                 switch (hint) {
                     case Layout.Constant.TextTag:
+                    case Layout.Constant.DataAttribute:
                         return mangle ? mangleText(value) : mask(value);
                     case "src":
                     case "srcset":
@@ -36,14 +40,57 @@ export default function(value: string, hint: string, privacy: Privacy, mangle: b
                     case "value":
                     case "click":
                     case "input":
+                    case "change":
                         return mangleToken(value);
                     case "placeholder":
                         return mask(value);
                 }
                 break;
+            case Privacy.Exclude:
+                switch (hint) {
+                    case Layout.Constant.TextTag:
+                    case Layout.Constant.DataAttribute:
+                        return mangle ? mangleText(value) : mask(value);
+                    case "value":
+                    case "input":
+                    case "click":
+                    case "change":
+                        return Array(Data.Setting.WordLength).join(Data.Constant.Mask);
+                    case "checksum":
+                        return Data.Constant.Empty;
+                }
+                break;
+            case Privacy.Snapshot:
+                switch (hint) {
+                    case Layout.Constant.TextTag:
+                    case Layout.Constant.DataAttribute:
+                        return scrub(value);
+                    case "value":
+                    case "input":
+                    case "click":
+                    case "change":
+                        return Array(Data.Setting.WordLength).join(Data.Constant.Mask);
+                    case "checksum":
+                    case "src":
+                    case "srcset":
+                    case "alt":
+                    case "title":
+                        return Data.Constant.Empty;
+                }
+                break;
         }
     }
     return value;
+}
+
+export function url(input: string): string {
+    let drop = config.drop;
+    if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
+      let [path, query] = input.split("?");
+      let swap = Data.Constant.Dropped;
+      return path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
+    }
+    return input;
 }
 
 function mangleText(value: string): string {
@@ -57,9 +104,14 @@ function mangleText(value: string): string {
     }
     return value;
 }
-
+ 
 function mask(value: string): string {
     return value.replace(catchallRegex, Data.Constant.Mask);
+}
+
+function scrub(value: string): string {
+    regex(); // Initialize regular expressions
+    return value.replace(letterRegex, Data.Constant.Letter).replace(digitRegex, Data.Constant.Digit);
 }
 
 function mangleToken(value: string): string {
@@ -71,14 +123,7 @@ function mangleToken(value: string): string {
     return output;
 }
 
-function redact(value: string): string {
-    let spaceIndex = -1;
-    let gap = 0;
-    let hasDigit = false;
-    let hasEmail = false;
-    let hasWhitespace = false;
-    let array = null;
-
+function regex(): void {
     // Initialize unicode regex, if supported by the browser
     // Reference: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions/Unicode_Property_Escapes
     if (unicodeRegex && digitRegex === null) {
@@ -88,6 +133,17 @@ function redact(value: string): string {
             currencyRegex = new RegExp("\\p{Sc}", "gu");
         } catch { unicodeRegex = false; }
     }
+}
+
+function redact(value: string): string {
+    let spaceIndex = -1;
+    let gap = 0;
+    let hasDigit = false;
+    let hasEmail = false;
+    let hasWhitespace = false;
+    let array = null;
+    
+    regex(); // Initialize regular expressions
 
     for (let i = 0; i < value.length; i++) {
         let c = value.charCodeAt(i);

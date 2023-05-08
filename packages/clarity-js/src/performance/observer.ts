@@ -1,4 +1,4 @@
-import { Code, Constant, Dimension, Metric, Setting, Severity } from "@clarity-types/data";
+import { Code, Constant, Dimension, Metric, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -12,6 +12,11 @@ let observer: PerformanceObserver;
 const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTask, Constant.FID, Constant.CLS, Constant.LCP];
 
 export function start(): void {
+    // Capture connection properties, if available
+    if (navigator && "connection" in navigator) {
+        dimension.log(Dimension.ConnectionType, navigator["connection"]["effectiveType"]);
+    }
+
     // Check the browser support performance observer as a pre-requisite for any performance measurement
     if (window["PerformanceObserver"] && PerformanceObserver.supportedEntryTypes) {
         // Start monitoring performance data after page has finished loading.
@@ -76,11 +81,6 @@ function process(entries: PerformanceEntryList): void {
                 break;
         }
     }
-    if (performance && Constant.Memory in performance && performance[Constant.Memory].usedJSHeapSize) {
-        // Track consumed memory (MBs) where "memory" API is available
-        // Reference: https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory
-        metric.max(Metric.UsedMemory, Math.abs(performance[Constant.Memory].usedJSHeapSize / Setting.MegaByte));
-    }
 }
 
 export function stop(): void {
@@ -91,5 +91,5 @@ export function stop(): void {
 function host(url: string): string {
     let a = document.createElement("a");
     a.href = url;
-    return a.hostname;
+    return a.host;
 }

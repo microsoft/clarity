@@ -1,38 +1,55 @@
 import { ExtractSource, Syntax, Type } from "@clarity-types/core";
 import { Event, Setting, ExtractData } from "@clarity-types/data";
-import config from "@src/core/config";
 import encode from "./encode";
 import * as internal from "@src/diagnostic/internal";
 import { Code, Constant, Severity } from "@clarity-types/data";
+import { hashText } from "@src/clarity";
 
 export let data: ExtractData = {};
-export let keys: (number | string)[] = [];
+export let keys: Set<number> = new Set();
 
-let variables : { [key: number]: Syntax[] } = {};
-let selectors : { [key: number]: string } = {};
-export let fragments: string[] = [];
-
+let variables : { [key: number]: { [key: number]: Syntax[] }} = {};
+let selectors : { [key: number]: { [key: number]: string }} = {};
+let hashes : { [key: number]: { [key: number]: string }} = {};
 export function start(): void {
+    reset();
+}
+
+// Input string is of the following form:
+// EXTRACT 101 { "1": ".class1", "2": "~window.a.b", "3": "!abc"}
+// Which will set up event 101 to grab the contents of the class1 selector into component 1,
+// the javascript evaluated contents of window.a.b into component 2,
+// and the contents of Clarity's hash abc into component 3
+export function trigger(input: string): void { 
     try {
-        let e = config.extract;
-        if (!e) { return; }
-        for (let i = 0; i < e.length; i+=3) {
-            let source = e[i] as ExtractSource;
-            let key = e[i+1] as number;
+        var parts = input && input.length > 0 ? input.split(/ (.*)/) : [Constant.Empty];
+        var key = parseInt(parts[0]);
+        var values = parts.length > 1 ? JSON.parse(parts[1]) : {};
+        variables[key] = {};
+        selectors[key] = {};
+        hashes[key] = {};
+        for (var v in values) {
+            // values is a set of strings for proper JSON parsing, but it's more efficient 
+            // to interact with them as numbers
+            let id = parseInt(v);
+            let value = values[v] as string;
+            let source = ExtractSource.Text;
+            if (value.startsWith(Constant.Tilde)) {
+                source = ExtractSource.Javascript
+            } else if (value.startsWith(Constant.Bang)) {
+                source = ExtractSource.Hash
+            }
             switch (source) {
                 case ExtractSource.Javascript:
-                    let variable = e[i+2] as string;
-                    variables[key] = parse(variable);
-                    break;
-                case ExtractSource.Cookie:
-                    /*Todo: Add cookie extract logic*/
+                    let variable = value.substring(1, value.length);
+                    variables[key][id] = parse(variable);
                     break;
                 case ExtractSource.Text:
-                    let match = e[i+2] as string;
-                    selectors[key] = match;
+                    selectors[key][id] = value;
                     break;
-                case ExtractSource.Fragment:
-                    fragments =  e[i+2] as string[];
+                case ExtractSource.Hash:
+                    let hash = value.substring(1, value.length);
+                    hashes[key][id] = hash;
                     break;
             }
         }
@@ -49,36 +66,68 @@ export function clone(v: Syntax[]): Syntax[] {
 export function compute(): void {
     try {
         for (let v in variables) {
-            let value = str(evaluate(clone(variables[v])));
-            if (value) { update(v, value); }
+            let key = parseInt(v);
+            let variableData = variables[key];
+            for (let v in variableData) {
+                let variableKey = parseInt(v);
+                let value = str(evaluate(clone(variableData[variableKey])));
+                if (value) { 
+                    update(key, variableKey, value);
+                }
+            }
+
+            let selectorData = selectors[key];
+            for (let s in selectorData) {
+                let selectorKey = parseInt(s);
+                let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
+                if (nodes) {
+                    let text = Array.from(nodes).map(e => e.innerText)
+                    update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
+                }
+            }
+
+            let hashData = hashes[key];
+            for (let h in hashData) {
+                let hashKey = parseInt(h);
+                let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
+                update(key, hashKey, content);
+            }            
         }
 
-        for (let s in selectors) {
-            let node = document.querySelector(selectors[s] as string) as HTMLElement;
-            if (node) { update(s, node.innerText); }
+        if (keys.size > 0) {
+            encode(Event.Extract);
         }
     }
     catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
-
-    encode(Event.Extract);
 }
 
 export function reset(): void {
-    keys = [];
+    keys.clear();
 }
 
-export function update(key: string, value: string | number, force: boolean = false): void {
-    if (!(key in data) || (key in data && data[key] !== value) || force ) {
-        data[key] = value;
-        keys.push(key);
+export function update(key: number, subkey: number, value: string): void {
+    var update = false;
+    if (!(key in data)) {
+        data[key] = {};
+        update = true;
     }
+    
+    if (!isEmpty(hashes[key]) 
+        && (!(subkey in data[key]) || data[key][subkey] != value))
+    {
+        update = true;
+    }
+
+    data[key][subkey] = value;
+    if (update) {
+        keys.add(key);
+    }
+
+    return;
 }
 
 export function stop(): void {
-    data = {};
-    keys = [];
-    variables = {};
-    selectors = {};
+   reset();
 }
 
 function parse(variable: string): Syntax[] {
@@ -140,4 +189,8 @@ function match(base: Object, condition: string): boolean {
     }
 
     return true;
+}
+
+function isEmpty(obj: Object): boolean {
+    return Object.keys(obj).length == 0;
 }

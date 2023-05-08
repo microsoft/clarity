@@ -17,6 +17,8 @@ import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
 import { signalCallback } from "@src/data/signal";
+import * as extract from "@src/data/extract";
+import { report } from "@src/core/report";
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -49,7 +51,8 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             case Event.Discover:
                 discoverBytes += event.length;
             case Event.Box:
-            case Event.Mutation:
+            case Event.Mutation:                
+            case Event.Snapshot:
                 playbackBytes += event.length;
                 playback.push(event);
                 break;
@@ -170,7 +173,9 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             // Not all browsers support compression API and the support for it in supported browsers is still experimental
             if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
             let xhr = new XMLHttpRequest();
-            xhr.open("POST", url);
+            xhr.open("POST", url, true);
+            xhr.timeout = Setting.UploadTimeout;
+            xhr.ontimeout = () => { report(new Error(`${Constant.Timeout} : ${url}`)) };
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence); }; }
             xhr.withCredentials = true;
             if (zipped) {
@@ -244,21 +249,29 @@ function delay(): number {
 }
 
 function response(payload: string): void {
-    let parts = payload?.length > 0 ? payload.split(" ") : [Constant.Empty];
-    switch (parts[0]) {
-        case Constant.End:
-            // Clear out session storage and end the session so we can start fresh the next time
-            limit.trigger(Check.Server);
-            break;
-        case Constant.Upgrade:
-            // Upgrade current session to send back playback information
-            clarity.upgrade(Constant.Auto);
-            break;
-        case Constant.Action:
-            // Invoke action callback, if configured and has a valid value
-            if (config.action && parts[1] && parts[1] !== Constant.Signal) { config.action(parts[1]); }
-            break;
-        break;
+    let lines = payload && payload.length > 0 ? payload.split("\n") : [];
+    for (var line of lines)
+    {
+        let parts = line && line.length > 0 ? line.split(/ (.*)/) : [Constant.Empty];
+        switch (parts[0]) {
+            case Constant.End:
+                // Clear out session storage and end the session so we can start fresh the next time
+                limit.trigger(Check.Server);
+                break;
+            case Constant.Upgrade:
+                // Upgrade current session to send back playback information
+                clarity.upgrade(Constant.Auto);
+                break;
+            case Constant.Action:
+                // Invoke action callback, if configured and has a valid value
+                if (config.action && parts.length > 1) { config.action(parts[1]); }
+                break;
+            case Constant.Extract:
+                if (parts.length > 1) { extract.trigger(parts[1]); }
+                break;
+            case Constant.Signal:
+                if (parts.length > 1) { signalEvent(parts[1]) }
+                break;
+        }
     }
-    if (signalCallback && parts.includes(Constant.Signal)) { signalEvent(parts[parts.indexOf(Constant.Signal) +1]) }
 }

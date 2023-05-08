@@ -1,6 +1,6 @@
 {
   "name": "clarity-visualize",
-  "version": "0.6.43",
+  "version": "0.7.7",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
   "author": "Microsoft Corp.",
   "license": "MIT",
@@ -27,24 +27,24 @@
     "url": "https://github.com/Microsoft/clarity/issues"
   },
   "dependencies": {
-    "clarity-decode": "^0.6.43"
+    "clarity-decode": "^0.7.7"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^19.0.1",
-    "@rollup/plugin-node-resolve": "^13.0.2",
-    "del-cli": "^4.0.1",
-    "husky": "^7.0.1",
-    "lint-staged": "^11.0.1",
-    "rollup": "^2.53.2",
-    "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-typescript2": "^0.30.0",
+    "@rollup/plugin-commonjs": "^24.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-terser": "^0.4.0",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "del-cli": "^5.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^13.1.0",
+    "rollup": "^3.0.0",
     "ts-node": "^10.1.0",
     "tslint": "^6.1.3",
     "typescript": "^4.3.5"
   },
   "scripts": {
     "build": "yarn build:clean && yarn build:main",
-    "build:main": "rollup -c rollup.config.ts",
+    "build:main": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "build:clean": "del-cli build/*",
     "tslint": "tslint --project ./",
     "tslint:fix": "tslint --fix --project ./ --force"

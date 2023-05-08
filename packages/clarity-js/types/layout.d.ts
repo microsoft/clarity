@@ -30,8 +30,9 @@ export const enum RegionVisibility {
 
 export const enum Mask {
     Text = "address,password,contact",
-    Input = "password,secret,pass,social,ssn,name,code,dob,cell,mob,contact,hidden,account,cvv,ccv,email,tel,phone,address,addr,card,zip",
-    Disable = "radio,checkbox,range,button,reset,submit"
+    Disable = "radio,checkbox,range,button,reset,submit",
+    Exclude = "password,secret,pass,social,ssn,code,hidden",
+    Tags = "INPUT,SELECT,TEXTAREA"
 }
 
 export const enum Constant {
@@ -52,6 +53,7 @@ export const enum Constant {
     Bang = "!",
     Period = ".",
     Comma = ",",
+    DataAttribute = "data-",
     MaskData = "data-clarity-mask",
     UnmaskData = "data-clarity-unmask",
     RegionData = "data-clarity-region",
@@ -167,7 +169,6 @@ export interface NodeValue {
     hash: [string, string];
     region: number;
     metadata: NodeMeta;
-    fragment: number;
 }
 
 export interface NodeMeta {
@@ -185,7 +186,7 @@ export interface MutationQueue {
 }
 
 export interface MutationHistory {
-    [key: string]: [/* Count */ number, /* Remove Nodes Buffer */ NodeList?];
+    [key: string]: [/* Count */ number, /* Instance */ number, /* Remove Nodes Buffer */ NodeList?];
 }
 
 export interface RegionQueue {

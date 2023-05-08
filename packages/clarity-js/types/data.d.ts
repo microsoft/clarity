@@ -1,6 +1,6 @@
 import { Time } from "@clarity-types/core";
 export type Target = (number | Node);
-export type Token = (string | number | number[] | string[]);
+export type Token = (string | number | number[] | string[] | (string | number)[]);
 export type DecodedToken = (any | any[]);
 
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
@@ -63,7 +63,9 @@ export const enum Event {
     Clipboard = 38,
     Submit = 39,
     Extract = 40,
-    Fraud = 41
+    Fraud = 41,
+    Change = 42,
+    Snapshot = 43
 }
 
 export const enum Metric {
@@ -97,8 +99,14 @@ export const enum Metric {
     Mobile = 27,
     UploadTime = 28,
     SinglePage = 29,
+/**
+ * @deprecated Browser API is deprecated. Reference: https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory
+ */
     UsedMemory = 30,
     Iframed = 31,
+    MaxTouchPoints = 32,
+    HardwareConcurrency = 33,
+    DeviceMemory = 34
 }
 
 export const enum Dimension {
@@ -127,7 +135,9 @@ export const enum Dimension {
     Platform = 22,
     PlatformVersion = 23,
     Brand = 24,
-    Model = 25
+    Model = 25,
+    DevicePixelRatio = 26,
+    ConnectionType = 27
 }
 
 export const enum Check {
@@ -208,7 +218,9 @@ export const enum Setting {
     UploadFactor = 3, // Slow down sequence by specified factor
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
-    ExtractLimit = 10000 // Do not extract more than 10000 characters
+    ExtractLimit = 10000, // Do not extract more than 10000 characters
+    ChecksumPrecision = 24, // n-bit integer to represent token hash 
+    UploadTimeout = 15000 // Timeout in ms for XHR requests
 }
 
 export const enum Character {
@@ -235,6 +247,7 @@ export const enum Constant {
     Space = " ",
     Expires = "expires=",
     Domain = "domain=",
+    Dropped = "*na*",
     Comma = ",",
     Dot = ".",
     Semicolon = ";",
@@ -254,6 +267,7 @@ export const enum Constant {
     Upgrade = "UPGRADE",
     Action = "ACTION",
     Signal = "SIGNAL",
+    Extract = "EXTRACT",
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
@@ -275,7 +289,10 @@ export const enum Constant {
     Tilde = "~",
     ArrayStart = "[",
     ConditionStart = "{",
-    ConditionEnd = "}"
+    ConditionEnd = "}",
+    Seperator = "<SEP>",
+    Timeout = "Timeout",
+    Bang = "!"
 }
 
 export const enum XMLReadyState {
@@ -395,7 +412,7 @@ export interface UpgradeData {
 }
 
 export interface ExtractData {
-    [key: string]: string | number;
+    [key: number]: { [subkey : number]: string }; // Array of { subkey: number } representing the extracted data
 }
 
 export interface UploadData {

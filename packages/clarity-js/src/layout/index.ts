@@ -20,5 +20,5 @@ export function stop(): void {
     region.stop();
     dom.stop();
     mutation.stop();
-    doc.end();
+    doc.stop();
 }

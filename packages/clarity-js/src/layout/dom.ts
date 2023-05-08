@@ -6,8 +6,6 @@ import hash from "@src/core/hash";
 import * as internal from "@src/diagnostic/internal";
 import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
-import * as mutation from "@src/layout/mutation";
-import * as extract from "@src/data/extract";
 let index: number = 1;
 let nodes: Node[] = [];
 let values: NodeValue[] = [];
@@ -15,10 +13,10 @@ let updateMap: number[] = [];
 let hashMap: { [hash: string]: number } = {};
 let override = [];
 let unmask = [];
-let updatedFragments: { [fragment: number]: string } = {};
 let maskText = [];
-let maskInput = [];
+let maskExclude = [];
 let maskDisable = [];
+let maskTags = [];
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
@@ -44,8 +42,9 @@ function reset(): void {
     override = [];
     unmask = [];
     maskText = Mask.Text.split(Constant.Comma);
-    maskInput = Mask.Input.split(Constant.Comma);
+    maskExclude = Mask.Exclude.split(Constant.Comma);
     maskDisable = Mask.Disable.split(Constant.Comma);
+    maskTags = Mask.Tags.split(Constant.Comma);
     idMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
@@ -67,7 +66,7 @@ export function parse(root: ParentNode, init: boolean = false): void {
         if ("querySelectorAll" in root) {
             config.regions.forEach(x => root.querySelectorAll(x[1]).forEach(e => region.observe(e, `${x[0]}`))); // Regions
             config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
-            config.fraud.forEach(x => root.querySelectorAll(x[1]).forEach(e => fraudMap.set(e, x[0]))); // Fraud Check
+            config.checksum.forEach(x => root.querySelectorAll(x[1]).forEach(e => fraudMap.set(e, x[0]))); // Fraud Checksum Check
             unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
         }
     } catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
@@ -90,14 +89,12 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let previousId = getPreviousId(node);
     let parentValue: NodeValue = null;
     let regionId = region.exists(node) ? id : null;
-    let fragmentId = null;
     let fraudId = fraudMap.has(node) ? fraudMap.get(node) : null;
     let privacyId = config.content ? Privacy.Sensitive : Privacy.TextImage
     if (parentId >= 0 && values[parentId]) {
         parentValue = values[parentId];
         parentValue.children.push(id);
         regionId = regionId === null ? parentValue.region : regionId;
-        fragmentId = parentValue.fragment;
         fraudId = fraudId === null ? parentValue.metadata.fraud : fraudId;
         privacyId = parentValue.metadata.privacy;
     }
@@ -119,13 +116,12 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         hash: null,
         region: regionId,
         metadata: { active: true, suspend: false, privacy: privacyId, position: null, fraud: fraudId, size: null },
-        fragment: fragmentId,
     };
 
     privacy(node, values[id], parentValue);
     updateSelector(values[id]);
     size(values[id]);
-    track(id, source, values[id].fragment);
+    track(id, source);
 }
 
 export function update(node: Node, parent: Node, data: NodeInfo, source: Source): void {
@@ -179,14 +175,9 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
             }
         }
 
-        // track node if it is a part of scheduled fragment mutation
-        if(value.fragment && updatedFragments[value.fragment]) {
-            changed = true;
-        }
-
         // Update selector
         updateSelector(value);
-        track(id, source, values[id].fragment, changed, parentChanged);
+        track(id, source, changed, parentChanged);
     }
 }
 
@@ -221,6 +212,16 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
     let tag = data.tag.toUpperCase();
 
     switch (true) {
+        case maskTags.indexOf(tag) >= 0:
+            let type = attributes[Constant.Type];
+            let meta: string = Constant.Empty;
+            Object.keys(attributes).forEach(x => meta += attributes[x].toLowerCase());
+            let exclude = maskExclude.some(x => meta.indexOf(x) >= 0);
+            // Regardless of privacy mode, always mask off user input from input boxes or drop downs with two exceptions:
+            // (1) The node is detected to be one of the excluded fields, in which case we drop everything
+            // (2) The node's type is one of the allowed types (like checkboxes)
+            metadata.privacy = tag === Constant.InputTag && maskDisable.indexOf(type) >= 0 ? current : (exclude ? Privacy.Exclude : Privacy.Text);
+            break;
         case Constant.MaskData in attributes:
             metadata.privacy = Privacy.TextImage;
             break;
@@ -241,20 +242,6 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             let pSelector = parent && parent.selector ? parent.selector[Selector.Default] : Constant.Empty;
             let tags : string[] = [Constant.StyleTag, Constant.TitleTag, Constant.SvgStyle];
             metadata.privacy = tags.includes(pTag) || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current;
-            break;
-        case tag === Constant.InputTag && current === Privacy.None:
-            // If even default privacy setting is to not mask, we still scan through input fields for any sensitive information
-            let field: string = Constant.Empty;
-            Object.keys(attributes).forEach(x => field += attributes[x].toLowerCase());
-            metadata.privacy = inspect(field, maskInput, metadata);
-            break;
-        case tag === Constant.InputTag && current === Privacy.Sensitive:
-            // Look through class names to aggressively mask content
-            metadata.privacy = inspect(attributes[Constant.Class], maskText, metadata);
-            // If this node has an explicit type assigned to it, go through masking rules to determine right privacy setting
-            metadata.privacy  = inspect(attributes[Constant.Type], maskInput, metadata);
-            // If it's a button or an input option, make an exception to disable masking in sensitive mode
-            metadata.privacy = maskDisable.indexOf(attributes[Constant.Type]) >= 0 ? Privacy.None : metadata.privacy;
             break;
         case current === Privacy.Sensitive:
             // In a mode where we mask sensitive information by default, look through class names to aggressively mask content
@@ -301,10 +288,6 @@ function updateSelector(value: NodeValue): void {
     value.selector = [selector.get(s, Selector.Alpha), selector.get(s, Selector.Beta)];
     value.hash = value.selector.map(x => x ? hash(x) : null) as [string, string];
     value.hash.forEach(h => hashMap[h] = value.id);
-    // Match fragment configuration against both alpha and beta hash
-    if (value.hash.some(h => extract.fragments.indexOf(h) !== -1)) {
-        value.fragment = value.id;
-    }
 }
 
 export function hashText(hash: string): string {
@@ -346,11 +329,7 @@ export function updates(): NodeValue[] {
         if (id in values) { output.push(values[id]); }
     }
     updateMap = [];
-    for (let id in updatedFragments) {
-        extract.update(updatedFragments[id], id, true)
-    }
-
-    updatedFragments = {}
+   
     return output;
 }
 
@@ -379,19 +358,7 @@ function getPreviousId(node: Node): number {
     return id;
 }
 
-function track(id: number, source: Source, fragment: number = null, changed: boolean = true, parentChanged: boolean = false): void {
-    // if updated node is a part of fragment and the fragment is not being tracked currently, schedule a mutation on the fragment node
-    if (fragment && !updatedFragments[fragment]) {
-        let node = getNode(fragment)
-        let value = getValue(fragment);
-        if (node && value) {
-            mutation.schedule(node, true);
-            value.hash.forEach(h => {
-                if(extract.fragments.indexOf(h) !== -1) { updatedFragments[fragment] = h;}
-            });
-        }
-    }
-
+function track(id: number, source: Source, changed: boolean = true, parentChanged: boolean = false): void {
     // Keep track of the order in which mutations happened, they may not be sequential
     // Edge case: If an element is added later on, and pre-discovered element is moved as a child.
     // In that case, we need to reorder the pre-discovered element in the update list to keep visualization consistent.

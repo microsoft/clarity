@@ -124,12 +124,13 @@ async function process(): Promise<void> {
   task.start(timer);
   while (mutations.length > 0) {
     let record = mutations.shift();
+    let instance = time();
     for (let mutation of record.mutations) {
       let state = task.state(timer);
       if (state === Task.Wait) { state = await task.suspend(timer); }
       if (state === Task.Stop) { break; }      
       let target = mutation.target;
-      let type = track(mutation, timer);
+      let type = track(mutation, timer, instance);
       if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
       if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) { dom.parse(target as ShadowRoot); }
       switch (type) {
@@ -156,7 +157,7 @@ async function process(): Promise<void> {
   task.stop(timer);
 }
 
-function track(m: MutationRecord, timer: Timer): string {
+function track(m: MutationRecord, timer: Timer, instance: number): string {
   let value = m.target ? dom.get(m.target.parentNode) : null;
   // Check if the parent is already discovered and that the parent is not the document root
   if (value && value.data.tag !== Constant.HTML) {
@@ -169,19 +170,22 @@ function track(m: MutationRecord, timer: Timer): string {
     // In those cases, IDs will change however the selector (which is relative to DOM xPath) remains the same
     let key = [parent, element, m.attributeName, names(m.addedNodes), names(m.removedNodes)].join();
     // Initialize an entry if it doesn't already exist
-    history[key] = key in history ? history[key] : [0];
+    history[key] = key in history ? history[key] : [0, instance];
     let h = history[key];
     // Lookup any pending nodes queued up for removal, and process them now if we suspended a mutation before
-    if (inactive === false && h[0] >= Setting.MutationSuspendThreshold) { processNodeList(h[1], Source.ChildListRemove, timer); }
+    if (inactive === false && h[0] >= Setting.MutationSuspendThreshold) { processNodeList(h[2], Source.ChildListRemove, timer); }
     // Update the counter
-    h[0] = inactive ? h[0] + 1 : 1;
+    h[0] = inactive ? (h[1] === instance ? h[0] : h[0] + 1) : 1;
+    h[1] = instance;
     // Return updated mutation type based on if we have already hit the threshold or not
     if (h[0] === Setting.MutationSuspendThreshold) {
       // Store a reference to removedNodes so we can process them later
       // when we resume mutations again on user interactions
-      h[1] = m.removedNodes;
+      h[2] = m.removedNodes;
       return Constant.Suspend;
-    } else if (h[0] > Setting.MutationSuspendThreshold) { return Constant.Empty; }
+    } else if (h[0] > Setting.MutationSuspendThreshold) { 
+      return Constant.Empty; 
+    }
   }
   return m.type;
 }
@@ -206,7 +210,7 @@ async function processNodeList(list: NodeList, source: Source, timer: Timer): Pr
   }
 }
 
-export function schedule(node: Node, fragment: boolean = false): Node {
+export function schedule(node: Node): Node {
   // Only schedule manual trigger for this node if it's not already in the queue
   if (queue.indexOf(node) < 0) { queue.push(node); }
 
@@ -214,19 +218,19 @@ export function schedule(node: Node, fragment: boolean = false): Node {
   // It's common for a webpage to call multiple synchronous "insertRule" / "deleteRule" calls.
   // And in those cases we do not wish to monitor changes multiple times for the same node.
   if (timeout) { clearTimeout(timeout); }
-  timeout = setTimeout(() => { trigger(fragment) }, Setting.LookAhead);
+  timeout = setTimeout(() => { trigger() }, Setting.LookAhead);
 
   return node;
 }
 
-function trigger(fragment: boolean): void {
+function trigger(): void {
   for (let node of queue) {
     // Generate a mutation for this node only if it still exists
     if (node) {
       let shadowRoot = node.nodeType === Node.DOCUMENT_FRAGMENT_NODE;
       // Skip re-processing shadowRoot if it was already discovered
       if (shadowRoot && dom.has(node)) { continue; }
-      generate(node, shadowRoot || fragment ? Constant.ChildList : Constant.CharacterData);
+      generate(node, shadowRoot ? Constant.ChildList : Constant.CharacterData);
     }
   }
   queue = [];

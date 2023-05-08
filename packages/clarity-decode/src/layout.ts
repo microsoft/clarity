@@ -46,6 +46,7 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             return { time, event, data: regionData };
         case Data.Event.Discover:
         case Data.Event.Mutation:
+        case Data.Event.Snapshot:
             let lastType = null;
             let node = [];
             let tagIndex = 0;

@@ -5,7 +5,7 @@ import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { iframe } from "@src/layout/dom";
-import offset from "@src/layout/offset";
+import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
 import encode from "./encode";
 
@@ -41,7 +41,7 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
     }
 
     // Check for null values before processing this event
-    if (x !== null && y !== null) { handler({ time: time(), event, data: { target: target(evt), x, y } }); }
+    if (x !== null && y !== null) { handler({ time: time(evt), event, data: { target: target(evt), x, y } }); }
 }
 
 function touch(event: Event, root: Node, evt: TouchEvent): void {
@@ -49,7 +49,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
     let d = frame ? frame.contentDocument.documentElement : document.documentElement;
     let touches = evt.changedTouches;
 
-    let t = time();
+    let t = time(evt);
     if (touches) {
         for (let i = 0; i < touches.length; i++) {
             let entry = touches[i];

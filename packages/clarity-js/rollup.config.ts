@@ -1,8 +1,9 @@
+import alias from "@rollup/plugin-alias";
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
-import typescript from "rollup-plugin-typescript2";
-import { terser } from "rollup-plugin-terser";
-import pkg from "./package.json";
+import terser from "@rollup/plugin-terser";
+import typescript from "@rollup/plugin-typescript";
+import pkg from "./package.json" assert { type: 'json' };
 
 export default [
   {
@@ -13,7 +14,7 @@ export default [
     ],
     plugins: [
       resolve(),
-      typescript({ rollupCommonJSResolveHack: true, clean: true }),
+      typescript(),
       commonjs({ include: ["node_modules/**"] })
     ],
     onwarn(message, warn) {
@@ -30,7 +31,30 @@ export default [
     },
     plugins: [
       resolve(),
-      typescript({ rollupCommonJSResolveHack: true, clean: true }),
+      typescript(),
+      terser({output: {comments: false}}),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/global.ts",
+    output: [ { file: pkg.insight, format: "iife", exports: "named" } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: '@src/layout/document', replacement: '@src/layout/document' },
+          { find: '@src/layout/encode', replacement: '@src/insight/encode' },
+          { find: /@src\/interaction\/(change|clipboard|input|pointer|selection)/, replacement: '@src/insight/blank' },
+          { find: /@src\/layout.*/, replacement: '@src/insight/snapshot' },
+          { find: /@src\/performance.*/, replacement: '@src/insight/blank' }
+        ]
+      }),
+      resolve(),
+      typescript(),
       terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
