@@ -39,7 +39,7 @@ export const enum ExtractSource {
 }
 
 export const enum Type {
-    Array = 1, 
+    Array = 1,
     Object = 2,
     Simple = 3
 }
@@ -136,6 +136,7 @@ export interface Config {
     fallback?: string;
     upgrade?: (key: string) => void;
     action?: (key: string) => void;
+    dob?: string;
 }
 
 export const enum Constant {

@@ -5,7 +5,7 @@ export type DecodedToken = (any | any[]);
 
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
 export interface MetadataCallbackOptions {
-    callback: MetadataCallback, 
+    callback: MetadataCallback,
     wait: boolean
 }
 
@@ -137,7 +137,8 @@ export const enum Dimension {
     Brand = 24,
     Model = 25,
     DevicePixelRatio = 26,
-    ConnectionType = 27
+    ConnectionType = 27,
+    Dob = 28
 }
 
 export const enum Check {
@@ -191,7 +192,7 @@ export const enum IframeStatus {
 export const enum Setting {
     Expire = 365, // 1 Year
     SessionExpire = 1, // 1 Day
-    CookieVersion = 1, // Increment this version every time there's a cookie schema change
+    CookieVersion = 2, // Increment this version every time there's a cookie schema change
     SessionTimeout = 30 * Time.Minute, // 30 minutes
     CookieInterval = 1, // 1 Day
     PingInterval = 1 * Time.Minute, // 1 Minute
@@ -219,7 +220,7 @@ export const enum Setting {
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
     ExtractLimit = 10000, // Do not extract more than 10000 characters
-    ChecksumPrecision = 24, // n-bit integer to represent token hash 
+    ChecksumPrecision = 24, // n-bit integer to represent token hash
     UploadTimeout = 15000 // Timeout in ms for XHR requests
 }
 
@@ -343,6 +344,7 @@ export interface User {
     id: string;
     expiry: number;
     consent: BooleanFlag;
+    dob: string;
 }
 
 export interface Envelope extends Metadata {
