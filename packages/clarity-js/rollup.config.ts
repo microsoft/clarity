@@ -69,9 +69,10 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: /@src\/interaction.*/, replacement: '@src/insight/blank' },
-          { find: /@src\/layout.*/, replacement: '@src/insight/blank' },
-          { find: /@src\/diagnostic.*/, replacement: '@src/insight/blank' }
+          { find: /@src\/interaction.*/, replacement: '@src/performance/blank' },
+          { find: /@src\/layout.*/, replacement: '@src/performance/blank' },
+          { find: /@src\/diagnostic.*/, replacement: '@src/performance/blank' },
+          { find: /@src\/data\/(extract|baseline|summary)/, replacement: '@src/performance/blank' }
         ]
       }),
       resolve(),
