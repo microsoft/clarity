@@ -105,7 +105,8 @@ export const enum Metric {
     Iframed = 31,
     MaxTouchPoints = 32,
     HardwareConcurrency = 33,
-    DeviceMemory = 34
+    DeviceMemory = 34,
+    Electron = 35
 }
 
 export const enum Dimension {
@@ -250,6 +251,8 @@ export const enum Constant {
     Dropped = "*na*",
     Comma = ",",
     Dot = ".",
+    At = "@",
+    Asterix = "*",
     Semicolon = ";",
     Equals = "=",
     Path = ";path=/",
@@ -259,6 +262,7 @@ export const enum Constant {
     Top = "_top",
     String = "string",
     Number = "number",
+    Email = "email",
     CookieKey = "_clck", // Clarity Cookie Key
     SessionKey = "_clsk", // Clarity Session Key
     TabKey = "_cltk", // Clarity Tab Key
@@ -267,6 +271,8 @@ export const enum Constant {
     Upgrade = "UPGRADE",
     Action = "ACTION",
     Extract = "EXTRACT",
+    UserHint = "userHint",
+    UserType = "userType",
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
@@ -291,7 +297,10 @@ export const enum Constant {
     ConditionEnd = "}",
     Seperator = "<SEP>",
     Timeout = "Timeout",
-    Bang = "!"
+    Bang = "!",
+    SHA256 = "SHA-256",
+    UTF8 = "utf-8",
+    Electron = "Electron"
 }
 
 export const enum XMLReadyState {
@@ -372,6 +381,13 @@ export interface BaselineData {
     pointerX: number;
     pointerY: number;
     activityTime: number;
+}
+
+export interface IdentityData {
+    userId: string;
+    userHint: string;
+    sessionId?: string;
+    pageId?: string;
 }
 
 export interface DimensionData {
