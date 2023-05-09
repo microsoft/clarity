@@ -38,10 +38,11 @@ export function start(): void {
   dimension.log(Dimension.DocumentDirection, document.dir);
   dimension.log(Dimension.DevicePixelRatio, `${window.devicePixelRatio}`);
   dimension.log(Dimension.Dob, u.dob);
+  dimension.log(Dimension.ClckVersion, u.clckVersion.toString());
 
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);
-  metric.max(Metric.Playback, BooleanFlag.False); 
+  metric.max(Metric.Playback, BooleanFlag.False);
   metric.max(Metric.Electron, electron);
 
   // Capture navigator specific dimensions
@@ -192,7 +193,7 @@ function num(string: string, base: number = 10): number {
 }
 
 function user(): User {
-  let output: User = { id: shortid(), expiry: null, consent: BooleanFlag.False, dob: null };
+  let output: User = { id: shortid(), expiry: null, consent: BooleanFlag.False, dob: null, clckVersion: 0 };
   let cookie = getCookie(Constant.CookieKey);
   if(cookie && cookie.length > 0) {
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
@@ -216,6 +217,8 @@ function user(): User {
     // Check if we have explicit consent to track this user
     if (parts.length > 3 && num(parts[3]) === 1) { output.consent = BooleanFlag.True; }
     if (parts.length > 4 && num(parts[1]) > 1) { output.dob = parts[4]; }
+    // Set the cookie version
+    if (parts.length > 1) { output.clckVersion = num(parts[1]); }
     // Set track configuration to true for this user if we have explicit consent, regardless of project setting
     config.track = config.track || output.consent === BooleanFlag.True;
     // Get user id from cookie only if we tracking is enabled, otherwise fallback to a random id

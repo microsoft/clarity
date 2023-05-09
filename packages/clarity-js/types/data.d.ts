@@ -138,7 +138,8 @@ export const enum Dimension {
     Model = 25,
     DevicePixelRatio = 26,
     ConnectionType = 27,
-    Dob = 28
+    Dob = 28,
+    ClckVersion = 29
 }
 
 export const enum Check {
@@ -345,6 +346,7 @@ export interface User {
     expiry: number;
     consent: BooleanFlag;
     dob: string;
+    clckVersion: number;
 }
 
 export interface Envelope extends Metadata {
