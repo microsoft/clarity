@@ -81,7 +81,7 @@ export function compute(): void {
                 let selectorKey = parseInt(s);
                 let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
                 if (nodes) {
-                    let text = Array.from(nodes).map(e => e.innerText)
+                    let text = Array.from(nodes).map(e => e.textContent)
                     update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
                 }
             }
