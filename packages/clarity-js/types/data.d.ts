@@ -139,7 +139,7 @@ export const enum Dimension {
     DevicePixelRatio = 26,
     ConnectionType = 27,
     Dob = 28,
-    ClckVersion = 29
+    CookieVersion = 29
 }
 
 export const enum Check {
@@ -344,10 +344,10 @@ export interface Session {
 
 export interface User {
     id: string;
+    version: number;
     expiry: number;
     consent: BooleanFlag;
     dob: string;
-    clckVersion: number;
 }
 
 export interface Envelope extends Metadata {
