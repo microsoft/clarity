@@ -92,10 +92,10 @@ function text(element: Node): string {
         // Grab text using "textContent" for most HTMLElements, however, use "value" for HTMLInputElements and "alt" for HTMLImageElement.
         let t = element.textContent || (element as HTMLInputElement).value || (element as HTMLImageElement).alt;
         if (t) {
-            // Trim any spaces at the beginning or at the end of string
-            // Also, replace multiple occurrence of space characters with a single white space
+            // Replace multiple occurrence of space characters with a single white space
+            // Also, trim any spaces at the beginning or at the end of string
             // Finally, send only first few characters as specified by the Setting
-            output = t.trim().replace(/\s+/g, Constant.Space).substr(0, Setting.ClickText);
+            output = t.replace(/\s+/g, Constant.Space).trim().substr(0, Setting.ClickText);
         }
     }
     return output;
