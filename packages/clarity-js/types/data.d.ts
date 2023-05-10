@@ -149,7 +149,8 @@ export const enum Check {
     Retry = 3,
     Bytes = 4,
     Collection = 5,
-    Server = 6
+    Server = 6,
+    Page = 7
 }
 
 export const enum Code {
@@ -201,6 +202,7 @@ export const enum Setting {
     SummaryInterval = 100, // Same events within 100ms will be collapsed into single summary
     ClickText = 25, // Maximum number of characters to send as part of Click event's text field
     PayloadLimit = 128, // Do not allow more than specified payloads per page
+    PageLimit = 128, // Do not allow more than 128 pages in a session
     ShutdownLimit = 2 * Time.Hour, // Shutdown instrumentation after specified time
     RetryLimit = 1, // Maximum number of attempts to upload a payload before giving up
     PlaybackBytesLimit = 10 * 1024 * 1024, // 10MB
@@ -300,7 +302,6 @@ export const enum Constant {
     Timeout = "Timeout",
     Bang = "!",
     SHA256 = "SHA-256",
-    UTF8 = "utf-8",
     Electron = "Electron"
 }
 

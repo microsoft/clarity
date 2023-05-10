@@ -14,7 +14,7 @@ export function set(variable: string, value: string | string[]): void {
     log(variable, values);
 }
 
-export async function identify(userId: string, sessionId: string = null, pageId: string = null, userHint: string = null): Promise<IdentityData> {
+export async function identify(userId: string = Constant.Empty, sessionId: string = null, pageId: string = null, userHint: string = null): Promise<IdentityData> {
     let output: IdentityData = { userId: await sha256(userId), userHint: userHint || redact(userId) };
 
     // By default, hash custom userId using SHA256 algorithm on the client to preserve privacy
@@ -73,7 +73,7 @@ async function sha256(input: string): Promise<string> {
     try {
         if (crypto) {
             // Reference: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest#converting_a_digest_to_a_hex_string
-            const buffer = await crypto.subtle.digest(Constant.SHA256, new (TextEncoder as any)(Constant.UTF8).encode(input));
+            const buffer = await crypto.subtle.digest(Constant.SHA256, new TextEncoder().encode(input));
             return Array.prototype.map.call(new Uint8Array(buffer), (x: any) =>(('00'+x.toString(16)).slice(-2))).join('');
         } else { return Constant.Empty; }
     } catch { return Constant.Empty; }

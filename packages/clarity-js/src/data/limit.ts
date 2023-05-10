@@ -15,6 +15,7 @@ export function check(bytes: number): void {
     if (data.check === Check.None) {
         let reason = data.check;
         reason = envelope.data.sequence >= Setting.PayloadLimit ? Check.Payload : reason;
+        reason = envelope.data.pageNum >= Setting.PageLimit ? Check.Page : reason;
         reason = time() > Setting.ShutdownLimit ? Check.Shutdown : reason;
         reason = bytes > Setting.PlaybackBytesLimit ? Check.Shutdown : reason;
         if (reason !== data.check) {
