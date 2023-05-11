@@ -1,6 +1,6 @@
 {
   "name": "clarity-decode",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
   "author": "Microsoft Corp.",
   "license": "MIT",
@@ -26,7 +26,7 @@
     "url": "https://github.com/Microsoft/clarity/issues"
   },
   "dependencies": {
-    "clarity-js": "^0.7.7"
+    "clarity-js": "^0.7.8"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^24.0.0",

@@ -64,7 +64,7 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                 switch (hint) {
                     case Layout.Constant.TextTag:
                     case Layout.Constant.DataAttribute:
-                        return scrub(value);
+                        return scrub(value, Data.Constant.Letter, Data.Constant.Digit);
                     case "value":
                     case "input":
                     case "click":
@@ -83,7 +83,10 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
     return value;
 }
 
-export function url(input: string): string {
+export function url(input: string, electron: boolean = false): string {
+    // Replace the URL for Electron apps so we don't send back file:/// URL
+    if (electron) { return `${Data.Constant.HTTPS}${Data.Constant.Electron}`; }
+
     let drop = config.drop;
     if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
       let [path, query] = input.split("?");
@@ -109,9 +112,9 @@ function mask(value: string): string {
     return value.replace(catchallRegex, Data.Constant.Mask);
 }
 
-function scrub(value: string): string {
+export function scrub(value: string, letter: string, digit: string): string {
     regex(); // Initialize regular expressions
-    return value.replace(letterRegex, Data.Constant.Letter).replace(digitRegex, Data.Constant.Digit);
+    return value ? value.replace(letterRegex, letter).replace(digitRegex, digit) : value;
 }
 
 function mangleToken(value: string): string {
@@ -161,7 +164,7 @@ function redact(value: string): string {
                 // Check if unicode regex is supported, otherwise fallback to calling mask function on this token
                 if (unicodeRegex && currencyRegex !== null) {
                     // Do not redact information if the token contains a currency symbol
-                    token = token.match(currencyRegex) ? token : token.replace(letterRegex, Data.Constant.Letter).replace(digitRegex, Data.Constant.Digit);
+                    token = token.match(currencyRegex) ? token : scrub(token, Data.Constant.Letter, Data.Constant.Digit);
                 } else {
                     token = mask(token);
                 }

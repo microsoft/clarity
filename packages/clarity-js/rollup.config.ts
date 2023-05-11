@@ -58,5 +58,27 @@ export default [
       terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
+  },
+  {
+    input: "src/global.ts",
+    output: [ { file: pkg.performance, format: "iife", exports: "named" } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: /@src\/interaction.*/, replacement: '@src/performance/blank' },
+          { find: /@src\/layout.*/, replacement: '@src/performance/blank' },
+          { find: /@src\/diagnostic.*/, replacement: '@src/performance/blank' },
+          { find: /@src\/data\/(extract|baseline|summary)/, replacement: '@src/performance/blank' }
+        ]
+      }),
+      resolve(),
+      typescript(),
+      terser({output: {comments: false}}),
+      commonjs({ include: ["node_modules/**"] })
+    ]
   }
 ];
