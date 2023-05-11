@@ -37,7 +37,7 @@ export function start(): void {
   dimension.log(Dimension.PageLanguage, document.documentElement.lang);
   dimension.log(Dimension.DocumentDirection, document.dir);
   dimension.log(Dimension.DevicePixelRatio, `${window.devicePixelRatio}`);
-  dimension.log(Dimension.Dob, u.dob);
+  dimension.log(Dimension.Dob, u.dob.toString());
   dimension.log(Dimension.CookieVersion, u.version.toString());
 
   // Capture additional metadata as metrics
@@ -154,11 +154,11 @@ function track(u: User, consent: BooleanFlag = null): void {
   // E.g. Math.ceil(1628735962643 / (24*60*60*1000)) => 18852 (days) => ejo in base36 (13 bytes => 3 bytes)
   let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day))/Time.Day);
   // If DOB is not set in the user object, use the date set in the config as a DOB
-  let dob = u.dob === null ? config.dob : u.dob;
+  let dob = u.dob === 0 ? (config.dob === null ? 0 : config.dob) : u.dob;
 
   // To avoid cookie churn, write user id cookie only once every day
   if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent || u.dob !== dob) {
-    let cookieParts = dob === null ? [data.userId, Setting.CookieVersion, end.toString(36), consent] : [data.userId, Setting.CookieVersion, end.toString(36), consent, dob];
+    let cookieParts = [data.userId, Setting.CookieVersion, end.toString(36), consent, dob];
     setCookie(Constant.CookieKey, cookieParts.join(Constant.Pipe), Setting.Expire);
   }
 }
@@ -193,7 +193,7 @@ function num(string: string, base: number = 10): number {
 }
 
 function user(): User {
-  let output: User = { id: shortid(), version: 0, expiry: null, consent: BooleanFlag.False, dob: null };
+  let output: User = { id: shortid(), version: 0, expiry: null, consent: BooleanFlag.False, dob: 0 };
   let cookie = getCookie(Constant.CookieKey);
   if(cookie && cookie.length > 0) {
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
@@ -217,7 +217,7 @@ function user(): User {
     if (parts.length > 2) { output.expiry = num(parts[2], 36); }
     // Check if we have explicit consent to track this user
     if (parts.length > 3 && num(parts[3]) === 1) { output.consent = BooleanFlag.True; }
-    if (parts.length > 4 && num(parts[1]) > 1) { output.dob = parts[4]; }
+    if (parts.length > 4 && num(parts[1]) > 1) { output.dob = num(parts[4]); }
     // Set track configuration to true for this user if we have explicit consent, regardless of project setting
     config.track = config.track || output.consent === BooleanFlag.True;
     // Get user id from cookie only if we tracking is enabled, otherwise fallback to a random id

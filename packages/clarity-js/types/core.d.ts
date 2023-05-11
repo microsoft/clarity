@@ -136,7 +136,7 @@ export interface Config {
     fallback?: string;
     upgrade?: (key: string) => void;
     action?: (key: string) => void;
-    dob?: string;
+    dob?: number;
 }
 
 export const enum Constant {

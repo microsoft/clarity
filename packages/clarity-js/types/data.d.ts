@@ -347,7 +347,7 @@ export interface User {
     version: number;
     expiry: number;
     consent: BooleanFlag;
-    dob: string;
+    dob: number;
 }
 
 export interface Envelope extends Metadata {
