@@ -114,7 +114,7 @@ function mask(value: string): string {
 
 export function scrub(value: string, letter: string, digit: string): string {
     regex(); // Initialize regular expressions
-    return value.replace(letterRegex, letter).replace(digitRegex, digit);
+    return value ? value.replace(letterRegex, letter).replace(digitRegex, digit) : value;
 }
 
 function mangleToken(value: string): string {
