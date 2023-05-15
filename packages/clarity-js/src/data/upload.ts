@@ -16,7 +16,6 @@ import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
-import { signalCallback } from "@src/data/signal";
 import * as extract from "@src/data/extract";
 import { report } from "@src/core/report";
 
