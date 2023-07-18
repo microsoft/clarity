@@ -14,7 +14,7 @@ import { queue, track } from "./upload";
 
 export default function(event: Event): void {
     let t = time();
-    let tokens: Token[] = [t, event];
+    let tokens: Token[] = [t, event]; 
     switch (event) {
         case Event.Baseline:
             let b = baseline.state;
@@ -79,7 +79,7 @@ export default function(event: Event): void {
                     tokens.push(Math.round(metric.updates[m]));
                 }
                 metric.reset();
-                queue(tokens, false);
+                queue(tokens);
             }
             break;
         case Event.Dimension:
