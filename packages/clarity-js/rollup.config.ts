@@ -38,7 +38,33 @@ export default [
   },
   {
     input: "src/global.ts",
-    output: [ { file: pkg.insight, format: "iife", exports: "named" } ],
+    output: [
+      { file: pkg.insight, format: "cjs", exports: "named" }
+    ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: '@src/layout/document', replacement: '@src/layout/document' },
+          { find: '@src/layout/encode', replacement: '@src/insight/encode' },
+          { find: /@src\/interaction\/(change|clipboard|input|pointer|selection)/, replacement: '@src/insight/blank' },
+          { find: /@src\/layout.*/, replacement: '@src/insight/snapshot' },
+          { find: /@src\/performance.*/, replacement: '@src/insight/blank' }
+        ]
+      }),
+      resolve(),
+      typescript(),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/global.ts",
+    output: [
+      { file: pkg.insightunpkg, format: "iife", exports: "named" }
+    ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
