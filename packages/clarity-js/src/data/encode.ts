@@ -79,7 +79,7 @@ export default function(event: Event): void {
                     tokens.push(Math.round(metric.updates[m]));
                 }
                 metric.reset();
-                queue(tokens);
+                queue(tokens, false);
             }
             break;
         case Event.Dimension:
