@@ -61,7 +61,12 @@ export class LayoutHelper {
             if (doc && doc.documentElement) {
                 doc.documentElement.style.visibility = Constant.Hidden;
                 // Render all DOM events to reconstruct the page
-                await this.markup(event, useproxy);
+                this.markup(event, useproxy);
+                // Wait on all stylesheets and fonts to finish loading
+                await Promise.all([
+                    Promise.all(this.stylesheets),
+                    Promise.all(this.fonts)
+                ]);
                 // Toggle back the visibility of target window
                 doc.documentElement.style.visibility = Constant.Visible;
             }
@@ -79,7 +84,7 @@ export class LayoutHelper {
         return false;
     }
 
-    public markup = async (event: DecodedLayout.DomEvent, useproxy?: LinkHandler): Promise<void> => {
+    public markup = (event: DecodedLayout.DomEvent, useproxy?: LinkHandler): void => {
         let data = event.data;
         let type = event.event;
         let doc = this.state.window.document;
@@ -247,10 +252,6 @@ export class LayoutHelper {
             // Track state for this node
             if (node.id) { this.events[node.id] = node; }
         }
-        // Wait on all stylesheets and fonts to finish loading
-        await Promise.all([this.stylesheets, this.fonts]);
-        this.stylesheets = [];
-        this.fonts = [];
     }
 
     private style = (node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void => {
