@@ -11,23 +11,28 @@ export let keys: Set<number> = new Set();
 let variables : { [key: number]: { [key: number]: Syntax[] }} = {};
 let selectors : { [key: number]: { [key: number]: string }} = {};
 let hashes : { [key: number]: { [key: number]: string }} = {};
+let validation : { [key: number]: string } = {};
+
 export function start(): void {
     reset();
 }
 
 // Input string is of the following form:
-// EXTRACT 101 { "1": ".class1", "2": "~window.a.b", "3": "!abc"}
-// Which will set up event 101 to grab the contents of the class1 selector into component 1,
+// EXTRACT 101|element { "1": ".class1", "2": "~window.a.b", "3": "!abc"}
+// if element is present on the page it will set up event 101 to grab the contents of the class1 selector into component 1,
 // the javascript evaluated contents of window.a.b into component 2,
 // and the contents of Clarity's hash abc into component 3
 export function trigger(input: string): void { 
     try {
         var parts = input && input.length > 0 ? input.split(/ (.*)/) : [Constant.Empty];
-        var key = parseInt(parts[0]);
+        var keyparts = parts[0].split(/\|(.*)/);
+        var key = parseInt(keyparts[0]);
+        var element = keyparts.length > 1 ?  keyparts[1] : Constant.Empty;
         var values = parts.length > 1 ? JSON.parse(parts[1]) : {};
         variables[key] = {};
         selectors[key] = {};
         hashes[key] = {};
+        validation[key] = element;
         for (var v in values) {
             // values is a set of strings for proper JSON parsing, but it's more efficient 
             // to interact with them as numbers
@@ -67,31 +72,34 @@ export function compute(): void {
     try {
         for (let v in variables) {
             let key = parseInt(v);
-            let variableData = variables[key];
-            for (let v in variableData) {
-                let variableKey = parseInt(v);
-                let value = str(evaluate(clone(variableData[variableKey])));
-                if (value) { 
-                    update(key, variableKey, value);
+            if (validation[key] == Constant.Empty || document.querySelector(validation[key]))
+            {
+                let variableData = variables[key];
+                for (let v in variableData) {
+                    let variableKey = parseInt(v);
+                    let value = str(evaluate(clone(variableData[variableKey])));
+                    if (value) { 
+                        update(key, variableKey, value);
+                    }
                 }
-            }
 
-            let selectorData = selectors[key];
-            for (let s in selectorData) {
-                let selectorKey = parseInt(s);
-                let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
-                if (nodes) {
-                    let text = Array.from(nodes).map(e => e.textContent)
-                    update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
+                let selectorData = selectors[key];
+                for (let s in selectorData) {
+                    let selectorKey = parseInt(s);
+                    let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
+                    if (nodes) {
+                        let text = Array.from(nodes).map(e => e.textContent)
+                        update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
+                    }
                 }
-            }
 
-            let hashData = hashes[key];
-            for (let h in hashData) {
-                let hashKey = parseInt(h);
-                let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
-                update(key, hashKey, content);
-            }            
+                let hashData = hashes[key];
+                for (let h in hashData) {
+                    let hashKey = parseInt(h);
+                    let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
+                    update(key, hashKey, content);
+                }  
+            }
         }
 
         if (keys.size > 0) {

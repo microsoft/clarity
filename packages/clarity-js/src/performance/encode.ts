@@ -25,7 +25,7 @@ export default async function(type: Event): Promise<void> {
             tokens.push(navigation.data.encodedSize);
             tokens.push(navigation.data.decodedSize);
             navigation.reset();
-            queue(tokens, false);
+            queue(tokens);
             break;
     }
 }

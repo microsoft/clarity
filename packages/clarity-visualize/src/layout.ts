@@ -200,7 +200,7 @@ export class LayoutHelper {
                                         linkElement.removeAttribute('integrity');
                                     }
 
-                                    linkElement.href = proxy(linkElement.href);
+                                    linkElement.href = proxy(linkElement.href, linkElement.id, "stylesheet");
                                 } 
                                 linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
                                 setTimeout(resolve, LayoutHelper.TIMEOUT);
@@ -209,13 +209,23 @@ export class LayoutHelper {
                             && (node.attributes?.as === "style" || node.attributes?.as === "font")) {
                                 this.fonts.push(new Promise((resolve: () => void): void => {
                                     const proxy = useproxy ?? this.state.options.useproxy;
-                                    linkElement.href = proxy ? proxy(linkElement.href) : linkElement.href;
+                                    linkElement.href = proxy ? proxy(linkElement.href, linkElement.id, node.attributes.as) : linkElement.href;
                                     linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
                                     setTimeout(resolve, LayoutHelper.TIMEOUT);
                                 }));
                             }
                     }
                     insert(node, parent, linkElement, pivot);
+                    break;
+                case Layout.Constant.ImageTag:
+                    let imgElement = this.element(node.id) as HTMLImageElement ?? this.createElement(doc, node.tag) as HTMLImageElement;
+                    const proxy = useproxy ?? this.state.options.useproxy;
+                    if (proxy && !!node.attributes?.src) {
+                        node.attributes.src = proxy(node.attributes.src, node.attributes.id, Layout.Constant.ImageTag);
+                    }
+                    this.setAttributes(imgElement as HTMLElement, node);
+                    this.resize(imgElement, node.width, node.height);
+                    insert(node, parent, imgElement, pivot);
                     break;
                 case "STYLE":
                     let styleElement = this.element(node.id) as HTMLStyleElement ?? doc.createElement(node.tag) as HTMLStyleElement;

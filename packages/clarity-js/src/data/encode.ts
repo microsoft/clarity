@@ -14,7 +14,7 @@ import { queue, track } from "./upload";
 
 export default function(event: Event): void {
     let t = time();
-    let tokens: Token[] = [t, event];
+    let tokens: Token[] = [t, event]; 
     switch (event) {
         case Event.Baseline:
             let b = baseline.state;
