@@ -33,7 +33,7 @@ export class Visualizer {
 
 export type ResizeHandler  = (width: number, height: number) => void;
 export type ErrorLogger = (error: Error) => void;
-export type LinkHandler = (link: string) => string;
+export type LinkHandler = (link: string, id: string, linkType: string) => string;
 
 export interface MergedPayload {
     timestamp: number;
