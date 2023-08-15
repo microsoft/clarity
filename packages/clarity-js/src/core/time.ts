@@ -5,7 +5,7 @@ export function start(): void {
 }
 
 export function time(event: UIEvent = null): number {
-    let ts = event && event.timeStamp > 0 ? event.timeStamp : performance.now();
+    let ts = performance.now();
     return Math.max(Math.round(ts - startTime), 0);
 }
 
