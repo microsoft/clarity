@@ -66,7 +66,10 @@ function wireup(settings: any): string {
       unmask: "$__unmask__$",
       content: "$__showText__$",
       upload: (data: string): void => { window.postMessage({ action: "upload", payload: data }, "*"); },
-      projectId: "devtools"
+      projectId: "devtools",
+      liveSignalsActionParams: [],
+      defaultAction: 0,
+      customAction: () => {}
     });
   }).toString();
   Object.keys(settings).forEach(s => code = code.replace(`"$__${s}__$"`, JSON.stringify(settings[s])));

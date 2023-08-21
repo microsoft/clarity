@@ -51,7 +51,10 @@ export function config(override: Config): boolean {
     // Process custom configuration overrides, if available
     if (override === null || status) { return false; }
     for (let key in override) {
-        if (key in configuration) { configuration[key] = override[key]; }
+        if (key in configuration) { 
+            if (key === "customAction") { configuration[key] = eval(String(override[key])); continue; }
+            configuration[key] = override[key]; 
+        }
     }
     return true;
 }

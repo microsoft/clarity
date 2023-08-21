@@ -18,7 +18,10 @@ let config: Config = {
     fallback: null,
     upgrade: null,
     action: null,
-    dob: null
+    dob: null,
+    liveSignalsActionParams: [],
+    defaultAction: null,
+    customAction: null
 };
 
 export default config;
