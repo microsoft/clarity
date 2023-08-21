@@ -217,6 +217,28 @@ function getAttributes(element: HTMLElement): { [key: string]: string } {
         }
     }
 
+    // TODO (samart): I think I want to maintain a list of animations separate from the elements
+    // and then just create those animations in visualize, and capture the play/pause/etc at encoding time
+    // and replay those in visualzie. Handling it on a per element basis seems too hard.
+    // actually i think we want to try to capture them on the elements and then save Animation control calls separately
+    let animations = element.getAnimations();
+    if (animations && animations.length > 0) {
+        for (let i = 0; i < animations.length; i++) {
+            let animation = animations[i];
+             // TODO (samart): sloppy way to determine it is a web animation, see if we can do better
+            if (!('animationName' in animation) || ('transitionProperty' in animation)) {
+                // TODO (samart): the animations don't have names - going to try to use their index as an id
+                let keyframes = (<KeyframeEffect>animation.effect).getKeyframes();
+                // TODO (samart): ignoring timeline argument for now, can come back to that
+                output[`data-ca-kf${i}`] = JSON.stringify(keyframes);
+                output[`data-ca-ps${i}`] = animation.playState;
+            }
+        }
+    } else {
+        // console.log('no animations');
+    }
+    
+
     // For INPUT tags read the dynamic "value" property if an explicit "value" attribute is not set
     if (element.tagName === Constant.InputTag && !(Constant.Value in output) && (element as HTMLInputElement).value) {
         output[Constant.Value] = (element as HTMLInputElement).value;

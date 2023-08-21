@@ -11,6 +11,7 @@ export class LayoutHelper {
     events = {};
     hashMapAlpha = {};
     hashMapBeta = {};
+    animations = {};
     state: PlaybackState = null;
 
     constructor(state: PlaybackState) {
@@ -354,6 +355,12 @@ export class LayoutHelper {
                     let v = attributes[attribute];
                     if (attribute.indexOf("xlink:") === 0) {
                         node.setAttributeNS("http://www.w3.org/1999/xlink", attribute, v);
+                    } else if (attribute.startsWith("data-ca-kf")) {
+                        // TODO (samart): cleaner way to recognize our animation logic? should we have a separate area for attributes?
+                        this.animations[`${data.id}.${attribute.split('data-ca-kf')[1]}`] = node.animate(JSON.parse(v));
+                    } else if (attribute.startsWith("data-ca-ps")) {
+                        // TODO (samart): cleaner way to recognize our animation logic? should we have a separate area for attributes?
+                        this.animations[`${data.id}.${attribute.split('data-ca-ps')[1]}`] = node.animate(JSON.parse(v));
                     } else if (attribute.indexOf(Layout.Constant.SameOrigin) === 0) {
                         sameorigin = true;
                     } else if (attribute.indexOf("*") === 0) {

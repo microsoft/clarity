@@ -16,8 +16,8 @@ export default async function(root: Node, timer: Timer, source: Source): Promise
       
         // Check the status of current task to see if we should yield before continuing
         let state = task.state(timer);
-        if (state === Task.Wait) { state = await task.suspend(timer); }
-        if (state === Task.Stop) { break; }
+        if (state === Task.Wait) { console.log(`waiting in ${timer.id}`); state = await task.suspend(timer); }
+        if (state === Task.Stop) { console.log(`stopping in ${timer.id}`); break; }
 
         // Check if processing a node gives us a pointer to one of its sub nodes for traversal
         // E.g. an element node may give us a pointer to traverse shadowDom if shadowRoot property is set
@@ -25,4 +25,5 @@ export default async function(root: Node, timer: Timer, source: Source): Promise
         let subnode = node(entry, source);
         if (subnode) { queue.push(subnode); }
     }
+    console.log(`finished ${timer.id}`);
 }

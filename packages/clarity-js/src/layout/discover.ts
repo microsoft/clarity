@@ -19,9 +19,12 @@ export function start(): void {
 
 async function discover(): Promise<void> {
     let ts = time();
+    
     let timer: Timer = { id: id(), cost: Metric.LayoutCost };
+    console.log(`starting discover at ${ts} with id ${timer.id}`);
     task.start(timer);
     await traverse(document, timer, Source.Discover);
     await encode(Event.Discover, timer, ts);
     task.stop(timer);
+    console.log(`finished discover at ${time()} with id ${timer.id}`);
 }
