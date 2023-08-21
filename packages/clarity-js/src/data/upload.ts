@@ -146,7 +146,7 @@ function stringify(encoded: EncodedPayload): string {
 
 function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boolean = false): void {
     // Upload data if a valid URL is defined in the config
-    if (typeof config.upload === Constant.String) {    
+    if (typeof config.upload === Constant.String) {
         const url = config.upload as string;
         let dispatched = false;
 
@@ -167,7 +167,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
         //   a) It's not the last payload, and therefore we didn't attempt sending sendBeacon
         //   b) It's the last payload, however, we failed to queue sendBeacon call and need to now fall back to XHR.
         //      E.g. if data is over 64KB, several user agents (like Chrome) will reject to queue the sendBeacon call.
-        if (dispatched === false) { 
+        if (dispatched === false) {
             // While tracking payload for retry, we only track string value of the payload to err on the safe side
             // Not all browsers support compression API and the support for it in supported browsers is still experimental
             if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
@@ -186,7 +186,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
                 xhr.send(payload);
             }
         }
-    } else if (config.upload) {  
+    } else if (config.upload) {
         const callback = config.upload as UploadCallback;
         callback(payload);
         done(sequence);
@@ -251,7 +251,7 @@ function response(payload: string): void {
     let lines = payload && payload.length > 0 ? payload.split("\n") : [];
     for (var line of lines)
     {
-        let parts = line && line.length > 0 ? line.split(/ (.*)/) : [Constant.Empty];    
+        let parts = line && line.length > 0 ? line.split(/ (.*)/) : [Constant.Empty];
         switch (parts[0]) {
             case Constant.End:
                 // Clear out session storage and end the session so we can start fresh the next time
