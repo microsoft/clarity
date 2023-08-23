@@ -8,7 +8,7 @@ import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
-import { id } from "@src/data/metadata";
+import { id, shortid } from "@src/data/metadata";
 import * as summary from "@src/data/summary";
 import * as internal from "@src/diagnostic/internal";
 import * as doc from "@src/layout/document";
@@ -24,6 +24,7 @@ let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
 let attachShadow: (init: ShadowRootInit)  => ShadowRoot = null;
 let animate: (keyframes: Keyframe[] | Keyframe, options: KeyframeEffectOptions) => Animation = null;
+let animationConstructor: Function = null;
 let queue: Node[] = [];
 let timeout: number = null;
 let activePeriod = null;
@@ -37,6 +38,7 @@ let animationFinish: () => void = null;
 let animationUpdateTiming: () => void = null;
 let animationSetKeyFrames: () => void = null;
 
+// TODO (samart): these seem to get undone before people are actually calling play on https://cdpn.io/rachelnabors/fullpage/eJyWzm?anon=true&editors=0010&view=
 function overrideAnimationHelper(whereToStoreFunction: () => void, name: string) {
   if (whereToStoreFunction === null) {
     whereToStoreFunction = Animation.prototype[name];
@@ -82,6 +84,8 @@ export function start(): void {
       };
    }
 
+   // TODO (samart): I don't think we will need this - if we hook onto the Animate call, this just calls into that anyway
+   //https://developer.mozilla.org/en-US/docs/Web/API/Element/animate
     if (animate === null) {
       animate = Element.prototype.animate;
       Element.prototype.animate = function(): Animation {
@@ -90,6 +94,23 @@ export function start(): void {
         return animate.apply(this, arguments);
       }
     }
+
+  if (animationConstructor === null) {
+    animationConstructor = Animation.prototype.constructor;
+    Animation.prototype.constructor = function(): Animation {
+      console.log('sam you successfully shimed animation constructor');
+      // TODO (samart): browser gets angry here
+      var constructedAnimation = animationConstructor.apply(this, arguments);
+      constructedAnimation['clarityAnimationName'] = shortid();
+      // TODO (samart): I think at this point we need to mark the underlying Element as mutated somehow.
+      // TODO (samart): I'm pretty unsure on this part - not sure target is going to be set in a way we understand
+      // or that we will correctly trigger the desired effect. But hopefully this will make us call getAnimations on
+      // the element in our discover-esque flow and then we will serialize it there. If that's the case do we even
+      // need to do this shortId nonsense here? Maybe it can entirely live in the other spot we have animationName
+      processNode(arguments[0].target, Source.Attributes);
+      return constructedAnimation;
+    }
+  }
 
    // Add a hook to attachShadow API calls
    // In case we are unable to add a hook and browser throws an exception,

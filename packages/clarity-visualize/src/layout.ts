@@ -1,6 +1,7 @@
 import { Data, Layout } from "clarity-js";
 import type { Layout as DecodedLayout } from "clarity-decode";
 import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
+import { AnimationOperation } from "clarity-js/types/layout";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
@@ -52,6 +53,34 @@ export class LayoutHelper {
 
     public element = (nodeId: number): Node => {
         return nodeId !== null && nodeId > 0 && nodeId in this.nodes ? this.nodes[nodeId] : null;
+    }
+
+    public animateChange = (event: DecodedLayout.AnimationEvent): void => {
+        // TODO (samart): I'm not sure if I need to handle timing here, I assume not for now
+        let animation: Animation = this.animations[event.data.id];
+        if (!animation) {
+            // TODO (samart): we didn't have a reference to this animation, something has gone wrong
+            console.log('animation problem');
+            return;
+        }
+        switch(event.data.operation) {
+            case AnimationOperation.Cancel:
+                animation.cancel();
+                break;
+            case AnimationOperation.Finish:
+                animation.finish();
+                break;
+            case AnimationOperation.Pause:
+                animation.pause();
+                break;
+            case AnimationOperation.Play:
+                animation.play();
+                break;
+            case AnimationOperation.SetKeyFrames:
+            case AnimationOperation.UpdateTiming:
+                // TODO (samart): not done yet, will need to update the animation event format to handle these
+                break;
+        }
     }
 
     public dom = async (event: DecodedLayout.DomEvent, useproxy?: LinkHandler): Promise<void> => {
@@ -355,12 +384,19 @@ export class LayoutHelper {
                     let v = attributes[attribute];
                     if (attribute.indexOf("xlink:") === 0) {
                         node.setAttributeNS("http://www.w3.org/1999/xlink", attribute, v);
-                    } else if (attribute.startsWith("data-ca-kf")) {
+                    } else if (attribute.startsWith("data-ca-kf-")) {
                         // TODO (samart): cleaner way to recognize our animation logic? should we have a separate area for attributes?
-                        this.animations[`${data.id}.${attribute.split('data-ca-kf')[1]}`] = node.animate(JSON.parse(v));
-                    } else if (attribute.startsWith("data-ca-ps")) {
-                        // TODO (samart): cleaner way to recognize our animation logic? should we have a separate area for attributes?
-                        this.animations[`${data.id}.${attribute.split('data-ca-ps')[1]}`] = node.animate(JSON.parse(v));
+                        this.animations[attribute.split('data-ca-kf-')[1]] = node.animate(JSON.parse(v));
+                    } else if (attribute.startsWith("data-ca-ps-")) {
+                        let animation: Animation = this.animations[attribute.split('data-ca-ps-')[1]];
+                        switch (<AnimationPlayState>v) {
+                            case "paused":
+                                animation.pause();
+                            case "finished":
+                                animation.finish();
+                            default:
+                                // TODO (samart): only need to pause the animation - if it is running or idle etc we can just let it go at this point
+                        }
                     } else if (attribute.indexOf(Layout.Constant.SameOrigin) === 0) {
                         sameorigin = true;
                     } else if (attribute.indexOf("*") === 0) {

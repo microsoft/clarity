@@ -16,6 +16,7 @@ import * as submit from "@src/interaction/submit";
 import * as timeline from "@src/interaction/timeline";
 import * as unload from "@src/interaction/unload";
 import * as visibility from "@src/interaction/visibility";
+import * as animation from "@src/interaction/animation";
 
 export default async function (type: Event, ts: number = null): Promise<void> {
     let t = ts || time();
@@ -166,6 +167,15 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 queue(tokens, false);
             }
             timeline.reset();
+            break;
+        case Event.Animation:
+            for (let entry of animation.state) {
+                tokens = [entry.time, entry.event];
+                tokens.push(entry.data.id);
+                tokens.push(entry.data.operation);
+                queue(tokens);
+            }
+            animation.reset();
             break;
         case Event.Visibility:
             let v = visibility.data;

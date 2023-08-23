@@ -6,6 +6,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
+import { shortid } from "@src/data/metadata";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
 const newlineRegex = /[\r\n]+/g;
@@ -228,10 +229,15 @@ function getAttributes(element: HTMLElement): { [key: string]: string } {
              // TODO (samart): sloppy way to determine it is a web animation, see if we can do better
             if (!('animationName' in animation) || ('transitionProperty' in animation)) {
                 // TODO (samart): the animations don't have names - going to try to use their index as an id
+                let animationId = animation['clarityAnimationName'];
+                if (!animationId) {
+                    // TODO (samart): not sure shortid is the best here, maybe temporary
+                    animationId = animation['clarityAnimationName'] = shortid();
+                }
                 let keyframes = (<KeyframeEffect>animation.effect).getKeyframes();
                 // TODO (samart): ignoring timeline argument for now, can come back to that
-                output[`data-ca-kf${i}`] = JSON.stringify(keyframes);
-                output[`data-ca-ps${i}`] = animation.playState;
+                output[`data-ca-kf-${animationId}`] = JSON.stringify(keyframes);
+                output[`data-ca-ps-${animationId}`] = animation.playState;
             }
         }
     } else {

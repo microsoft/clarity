@@ -2,6 +2,15 @@ import { Privacy } from "@clarity-types/core";
 
 /* Enum */
 
+export const enum AnimationOperation {
+    Play = 0,
+    Pause = 1,
+    Cancel = 2,
+    Finish = 3,
+    UpdateTiming = 4, // TODO (samart): ignoring these last two for now
+    SetKeyFrames = 5,
+}
+
 export const enum Source {
     Discover,
     ChildListAdd,
@@ -20,6 +29,17 @@ export const enum InteractionState {
     None = 16,
     Clicked = 20,
     Input = 30
+}
+
+export interface AnimationState {
+    time: number;
+    event: number;
+    data: AnimationData;
+}
+
+export interface AnimationData {
+    id: string;
+    operation: AnimationOperation;
 }
 
 export const enum RegionVisibility {

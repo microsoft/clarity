@@ -9,7 +9,6 @@ export interface MetadataCallbackOptions {
     wait: boolean
 }
 
-// TODO (samart): I think I like having animation Events here, can have definitions and also operations
 /* Enum */
 export const enum Event {
     /* Data */
@@ -65,7 +64,8 @@ export const enum Event {
     Extract = 40,
     Fraud = 41,
     Change = 42,
-    Snapshot = 43
+    Snapshot = 43,
+    Animation = 44
 }
 
 export const enum Metric {
