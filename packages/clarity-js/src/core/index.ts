@@ -52,7 +52,7 @@ export function config(override: Config): boolean {
     if (override === null || status) { return false; }
     for (let key in override) {
         if (key in configuration) { 
-            if (key === "customAction") { configuration[key] = eval(String(override[key])); continue; }
+            if (key === "liveSignalsCustomAction") { configuration[key] = eval("() => { " + String(override[key]) + "}"); continue; }
             configuration[key] = override[key]; 
         }
     }

@@ -137,9 +137,9 @@ export interface Config {
     upgrade?: (key: string) => void;
     action?: (key: string) => void;
     dob?: number;
-    liveSignalsActionParams?: string[];
-    defaultAction?: number;
-    customAction?: Data.SignalCallback; 
+    liveSignalsActionConfigs?: Map<string, string>;
+    liveSignalsActionType?: number;
+    liveSignalsCustomAction?: Data.SignalCallback; 
 }
 
 export const enum Constant {

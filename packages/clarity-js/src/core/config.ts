@@ -19,9 +19,9 @@ let config: Config = {
     upgrade: null,
     action: null,
     dob: null,
-    liveSignalsActionParams: [],
-    defaultAction: null,
-    customAction: null
+    liveSignalsActionConfigs: new Map<string, string>(),
+    liveSignalsActionType: null,
+    liveSignalsCustomAction: null
 };
 
 export default config;

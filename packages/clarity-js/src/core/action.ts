@@ -3,15 +3,19 @@ import { signal } from "@src/data/signal";
 
 
 export function determineAction(): void {
-    switch (config.defaultAction) {
+    switch (config.liveSignalsActionType) {
         case 0:
-            // A custom action written by the client
-            signal(config.customAction);
+            // No action
+            signal(null);
             break;
         case 1:
-            signal(showDialog);
+            // A custom action written by the client
+            signal(config.liveSignalsCustomAction);
             break;
         case 2:
+            signal(showDialog);
+            break;
+        case 3:
             signal(showAlert);
             break;
         default:
@@ -23,10 +27,10 @@ export function determineAction(): void {
 function showAlert(): void {
     // Shows a blocking warning
     var str: string = "It seems you might be facing some troubles. Please contact us at: ";
-    if (config.liveSignalsActionParams?.length > 0)
+    if ("email" in config.liveSignalsActionConfigs)
     {
         // The client email for example
-        str += config.liveSignalsActionParams[0];
+        str += config.liveSignalsActionConfigs["email"];
     }
     alert(str);
 }
@@ -37,17 +41,17 @@ function showDialog(): void {
         // Tries to get the dialog element if it exists
         const dialog = document.getElementById("zdialog") as HTMLDialogElement;     // using a weird ID to avoid potential conflict with existing IDs
         var str: string = "It seems you might be facing some troubles. Please contact us at: ";
-        if (config.liveSignalsActionParams?.length > 0)
+        if ("email" in config.liveSignalsActionConfigs)
         {
-            // possibly the email
-            str += config.liveSignalsActionParams[0];
+            // The client email for example
+            str += config.liveSignalsActionConfigs["email"];
         }
         dialog.innerHTML = str;
         
         var lightmode : boolean = false;
-        if (config.liveSignalsActionParams?.length > 1)
+        if ("lightmode" in config.liveSignalsActionConfigs)
         {
-            lightmode = (config.liveSignalsActionParams[1].toLowerCase() == "true")? true : false;
+            lightmode = (config.liveSignalsActionConfigs["lightmode"] == "true")? true : false;
         }
 
         styleDialog(dialog, lightmode);
@@ -57,15 +61,16 @@ function showDialog(): void {
         const dialog = document.createElement("dialog") as HTMLDialogElement;
         // dialog.innerHTML = "Non-Blocking test dialog 2";
         var str: string = "It seems you might be facing some troubles. Please contact us at: ";
-        if (config.liveSignalsActionParams?.length > 0)
+        if ("email" in config.liveSignalsActionConfigs)
         {
-            str += config.liveSignalsActionParams[0];
+            // The client email for example
+            str += config.liveSignalsActionConfigs["email"];
         }
         dialog.innerHTML = str;
         var lightmode : boolean = false;
-        if (config.liveSignalsActionParams?.length > 1)
+        if ("lightmode" in config.liveSignalsActionConfigs)
         {
-            lightmode = (config.liveSignalsActionParams[1].toLowerCase() == "true")? true : false;
+            lightmode = (config.liveSignalsActionConfigs["lightmode"] == "true")? true : false;
         }
         styleDialog(dialog, lightmode);
     }
