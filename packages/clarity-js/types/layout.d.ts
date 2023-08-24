@@ -9,6 +9,7 @@ export const enum AnimationOperation {
     Finish = 3,
     UpdateTiming = 4, // TODO (samart): ignoring these last two for now
     SetKeyFrames = 5,
+    Create = 6, // TODO (samart): we synthetically create this event when we notice the animation is new
 }
 
 export const enum Source {
@@ -40,6 +41,9 @@ export interface AnimationState {
 export interface AnimationData {
     id: string;
     operation: AnimationOperation;
+    keyFrames?: string; // TODO (samart): only given when we are creating the animation
+    timeline?: string;
+    targetId?: number;
 }
 
 export const enum RegionVisibility {

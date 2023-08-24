@@ -8,7 +8,7 @@ import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
-import { id, shortid } from "@src/data/metadata";
+import { id } from "@src/data/metadata";
 import * as summary from "@src/data/summary";
 import * as internal from "@src/diagnostic/internal";
 import * as doc from "@src/layout/document";
@@ -23,32 +23,17 @@ let mutations: MutationQueue[] = [];
 let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
 let attachShadow: (init: ShadowRootInit)  => ShadowRoot = null;
-let animate: (keyframes: Keyframe[] | Keyframe, options: KeyframeEffectOptions) => Animation = null;
-let animationConstructor: Function = null;
+// TODO (samart): pretty sure we dont want these
+//let animate: (keyframes: Keyframe[] | Keyframe, options: KeyframeEffectOptions) => Animation = null;
+//let animationConstructor: Function = null;
 let queue: Node[] = [];
 let timeout: number = null;
 let activePeriod = null;
 let history: MutationHistory = {};
 
-// TODO (samart): think we should have an animation module probably
-let animationPlay: () => void = null;
-let animationPause: () => void = null;
-let animationCancel: () => void = null;
-let animationFinish: () => void = null;
-let animationUpdateTiming: () => void = null;
-let animationSetKeyFrames: () => void = null;
 
-// TODO (samart): these seem to get undone before people are actually calling play on https://cdpn.io/rachelnabors/fullpage/eJyWzm?anon=true&editors=0010&view=
-function overrideAnimationHelper(whereToStoreFunction: () => void, name: string) {
-  if (whereToStoreFunction === null) {
-    whereToStoreFunction = Animation.prototype[name];
-    Animation.prototype[name] = function(): void {
-      console.log(`samart here are animate ${name}`);
-      console.log(arguments);
-      return whereToStoreFunction.apply(this, arguments);
-    }
-  }
-}
+
+
 
 export function start(): void {
     observers = [];
@@ -57,12 +42,7 @@ export function start(): void {
     activePeriod = 0;
     history = {};
 
-    overrideAnimationHelper(animationPlay, "play");
-    overrideAnimationHelper(animationPause, "pause");
-    overrideAnimationHelper(animationCancel, "cancel");
-    overrideAnimationHelper(animationFinish, "finish");
-    overrideAnimationHelper(animationUpdateTiming, "updateTiming");
-    overrideAnimationHelper(animationSetKeyFrames, "setKeyFrames");
+    
 
     // Some popular open source libraries, like styled-components, optimize performance
     // by injecting CSS using insertRule API vs. appending text node. A side effect of
@@ -86,10 +66,12 @@ export function start(): void {
 
    // TODO (samart): I don't think we will need this - if we hook onto the Animate call, this just calls into that anyway
    //https://developer.mozilla.org/en-US/docs/Web/API/Element/animate
+   /*
     if (animate === null) {
       animate = Element.prototype.animate;
       Element.prototype.animate = function(): Animation {
         console.log('samart here are animate things');
+        console.log(this);
         console.log(arguments);
         return animate.apply(this, arguments);
       }
@@ -111,7 +93,7 @@ export function start(): void {
       return constructedAnimation;
     }
   }
-
+*/
    // Add a hook to attachShadow API calls
    // In case we are unable to add a hook and browser throws an exception,
    // reset attachShadow variable and resume processing like before

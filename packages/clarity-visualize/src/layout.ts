@@ -58,12 +58,17 @@ export class LayoutHelper {
     public animateChange = (event: DecodedLayout.AnimationEvent): void => {
         // TODO (samart): I'm not sure if I need to handle timing here, I assume not for now
         let animation: Animation = this.animations[event.data.id];
-        if (!animation) {
+        if (!animation && event.data.operation !== AnimationOperation.Create) {
             // TODO (samart): we didn't have a reference to this animation, something has gone wrong
             console.log('animation problem');
             return;
         }
         switch(event.data.operation) {
+            case AnimationOperation.Create:
+                // TODO (samart): can we get the node by number here or do we have to use hash
+                let target = this.element(event.data.targetId);
+                this.animations[event.data.id] = (target as HTMLElement).animate(JSON.parse(event.data.keyFrames));
+                break;
             case AnimationOperation.Cancel:
                 animation.cancel();
                 break;
@@ -386,6 +391,7 @@ export class LayoutHelper {
                         node.setAttributeNS("http://www.w3.org/1999/xlink", attribute, v);
                     } else if (attribute.startsWith("data-ca-kf-")) {
                         // TODO (samart): cleaner way to recognize our animation logic? should we have a separate area for attributes?
+                        // TODO (samart): I think we can go with the animation module I built and pass in there
                         this.animations[attribute.split('data-ca-kf-')[1]] = node.animate(JSON.parse(v));
                     } else if (attribute.startsWith("data-ca-ps-")) {
                         let animation: Animation = this.animations[attribute.split('data-ca-ps-')[1]];

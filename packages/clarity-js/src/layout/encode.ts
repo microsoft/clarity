@@ -12,6 +12,7 @@ import * as fraud from "@src/diagnostic/fraud";
 import * as doc from "./document";
 import * as dom from "./dom";
 import * as region from "./region";
+import * as animation from "@src/layout/animation";
 
 export default async function (type: Event, timer: Timer = null, ts: number = null): Promise<void> {
     let eventTime = ts || time()
@@ -34,6 +35,15 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 queue(tokens);
             }
             region.reset();
+            break;
+        case Event.Animation:
+            for (let entry of animation.state) {
+                tokens = [entry.time, entry.event];
+                tokens.push(entry.data.id);
+                tokens.push(entry.data.operation);
+                queue(tokens);
+            }
+            animation.reset();
             break;
         case Event.Discover:
         case Event.Mutation:
