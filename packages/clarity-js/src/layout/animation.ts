@@ -28,7 +28,7 @@ export function reset(): void {
     state = [];
 }
 
-export function track(time: number, id: string, operation: AnimationOperation, keyFrames?: string, targetId?: number, timeline?: string): void {
+export function track(time: number, id: string, operation: AnimationOperation, keyFrames?: string, timing?: string, targetId?: number, timeline?: string): void {
     console.log(`animation track operation ${operation} on id ${id}`);
     state.push({
         time,
@@ -37,6 +37,7 @@ export function track(time: number, id: string, operation: AnimationOperation, k
             id,
             operation,
             keyFrames,
+            timing,
             targetId,
             timeline
         }
@@ -61,7 +62,8 @@ function overrideAnimationHelper(whereToStoreFunction: () => void, name: string)
         if (!this['clarityAnimationName']) {
           this['clarityAnimationName'] = shortid();
           let keyframes = (<KeyframeEffect>this.effect).getKeyframes();
-          track(time(), this['clarityAnimationName'], AnimationOperation.Create, JSON.stringify(keyframes), getId(this.effect.target));
+          let timing = (<KeyframeEffect>this.effect).getTiming();
+          track(time(), this['clarityAnimationName'], AnimationOperation.Create, JSON.stringify(keyframes), JSON.stringify(timing), getId(this.effect.target));
         }
 
         switch (name) {

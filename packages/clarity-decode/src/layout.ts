@@ -50,8 +50,9 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                 id: tokens[2] as string,
                 operation: tokens[3] as number,
                 keyFrames: tokens[4] as string,
-                timeline: tokens[5] as string,
-                targetId: tokens[6] as number
+                timing: tokens[5] as string,
+                timeline: tokens[6] as string,
+                targetId: tokens[7] as number
             }
             return { time, event, data: animationData};
         case Data.Event.Discover:

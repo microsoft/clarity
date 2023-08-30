@@ -42,6 +42,7 @@ export interface AnimationData {
     id: string;
     operation: AnimationOperation;
     keyFrames?: string; // TODO (samart): only given when we are creating the animation
+    timing?: string;
     timeline?: string;
     targetId?: number;
 }

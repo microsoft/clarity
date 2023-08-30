@@ -42,6 +42,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.keyFrames);
+                tokens.push(entry.data.timing);
                 tokens.push(entry.data.timeline);
                 tokens.push(entry.data.targetId);
                 queue(tokens);

@@ -67,7 +67,7 @@ export class LayoutHelper {
             case AnimationOperation.Create:
                 // TODO (samart): can we get the node by number here or do we have to use hash
                 let target = this.element(event.data.targetId);
-                this.animations[event.data.id] = (target as HTMLElement).animate(JSON.parse(event.data.keyFrames));
+                this.animations[event.data.id] = (target as HTMLElement).animate(JSON.parse(event.data.keyFrames), JSON.parse(event.data.timing));
                 break;
             case AnimationOperation.Cancel:
                 animation.cancel();
