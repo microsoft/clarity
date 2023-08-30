@@ -3,13 +3,11 @@ import { Privacy } from "@clarity-types/core";
 /* Enum */
 
 export const enum AnimationOperation {
-    Play = 0,
-    Pause = 1,
-    Cancel = 2,
-    Finish = 3,
-    UpdateTiming = 4, // TODO (samart): ignoring these last two for now
-    SetKeyFrames = 5,
-    Create = 6, // TODO (samart): we synthetically create this event when we notice the animation is new
+    Create = 0,
+    Play = 1,
+    Pause = 2,
+    Cancel = 3,
+    Finish = 4
 }
 
 export const enum Source {
@@ -41,7 +39,7 @@ export interface AnimationState {
 export interface AnimationData {
     id: string;
     operation: AnimationOperation;
-    keyFrames?: string; // TODO (samart): only given when we are creating the animation
+    keyFrames?: string;
     timing?: string;
     timeline?: string;
     targetId?: number;

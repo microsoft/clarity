@@ -18,8 +18,7 @@ export class EnrichHelper {
     }
 
     public selectors = (event: DecodedLayout.DomEvent): DecodedLayout.DomEvent => {
-        // TODO (samart): weird that we have dom events with a new schema now, I may need to restructure
-        event.data.forEach && event.data.forEach(d => {
+        event.data.forEach(d => {
             let parent = this.nodes[d.parent];
             let children = this.children[d.parent] || [];
             let node = this.nodes[d.id] || { tag: d.tag, parent: d.parent, previous: d.previous };
