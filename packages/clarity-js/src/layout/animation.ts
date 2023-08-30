@@ -2,7 +2,7 @@ import { Event } from "@clarity-types/data";
 import { AnimationOperation, AnimationState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import { shortid } from "@src/data/metadata";
-import encode from "@src/interaction/encode";
+import encode from "@src/layout/encode";
 import { getId } from "@src/layout/dom";
 
 export let state: AnimationState[] = [];
@@ -29,6 +29,7 @@ export function reset(): void {
 }
 
 export function track(time: number, id: string, operation: AnimationOperation, keyFrames?: string, targetId?: number, timeline?: string): void {
+    console.log(`animation track operation ${operation} on id ${id}`);
     state.push({
         time,
         event: Event.Animation,
@@ -53,6 +54,7 @@ export function stop(): void {
 function overrideAnimationHelper(whereToStoreFunction: () => void, name: string) {
     if (whereToStoreFunction === null) {
       whereToStoreFunction = Animation.prototype[name];
+      Animation['clarity'] = true;
       Animation.prototype[name] = function(): void {
         console.log(`samart here are animate ${name}`);
         console.log(this);

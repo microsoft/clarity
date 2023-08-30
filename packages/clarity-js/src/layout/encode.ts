@@ -41,6 +41,9 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
+                tokens.push(entry.data.keyFrames);
+                tokens.push(entry.data.timeline);
+                tokens.push(entry.data.targetId);
                 queue(tokens);
             }
             animation.reset();

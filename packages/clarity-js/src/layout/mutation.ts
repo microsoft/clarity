@@ -23,17 +23,10 @@ let mutations: MutationQueue[] = [];
 let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
 let attachShadow: (init: ShadowRootInit)  => ShadowRoot = null;
-// TODO (samart): pretty sure we dont want these
-//let animate: (keyframes: Keyframe[] | Keyframe, options: KeyframeEffectOptions) => Animation = null;
-//let animationConstructor: Function = null;
 let queue: Node[] = [];
 let timeout: number = null;
 let activePeriod = null;
 let history: MutationHistory = {};
-
-
-
-
 
 export function start(): void {
     observers = [];
@@ -41,8 +34,6 @@ export function start(): void {
     timeout = null;
     activePeriod = 0;
     history = {};
-
-    
 
     // Some popular open source libraries, like styled-components, optimize performance
     // by injecting CSS using insertRule API vs. appending text node. A side effect of
@@ -64,36 +55,6 @@ export function start(): void {
       };
    }
 
-   // TODO (samart): I don't think we will need this - if we hook onto the Animate call, this just calls into that anyway
-   //https://developer.mozilla.org/en-US/docs/Web/API/Element/animate
-   /*
-    if (animate === null) {
-      animate = Element.prototype.animate;
-      Element.prototype.animate = function(): Animation {
-        console.log('samart here are animate things');
-        console.log(this);
-        console.log(arguments);
-        return animate.apply(this, arguments);
-      }
-    }
-
-  if (animationConstructor === null) {
-    animationConstructor = Animation.prototype.constructor;
-    Animation.prototype.constructor = function(): Animation {
-      console.log('sam you successfully shimed animation constructor');
-      // TODO (samart): browser gets angry here
-      var constructedAnimation = animationConstructor.apply(this, arguments);
-      constructedAnimation['clarityAnimationName'] = shortid();
-      // TODO (samart): I think at this point we need to mark the underlying Element as mutated somehow.
-      // TODO (samart): I'm pretty unsure on this part - not sure target is going to be set in a way we understand
-      // or that we will correctly trigger the desired effect. But hopefully this will make us call getAnimations on
-      // the element in our discover-esque flow and then we will serialize it there. If that's the case do we even
-      // need to do this shortId nonsense here? Maybe it can entirely live in the other spot we have animationName
-      processNode(arguments[0].target, Source.Attributes);
-      return constructedAnimation;
-    }
-  }
-*/
    // Add a hook to attachShadow API calls
    // In case we are unable to add a hook and browser throws an exception,
    // reset attachShadow variable and resume processing like before
@@ -146,7 +107,7 @@ export function active(): void {
   activePeriod = time() + Setting.MutationActivePeriod;
 }
 
-function handle(m: MutationRecord[]): void {  
+function handle(m: MutationRecord[]): void {
   // Queue up mutation records for asynchronous processing
   let now = time();
   summary.track(Event.Mutation, now);

@@ -79,6 +79,7 @@ export class LayoutHelper {
                 animation.pause();
                 break;
             case AnimationOperation.Play:
+                // TODO (samart): add some logging here, it's getting called but I think the animation isn't quite right
                 animation.play();
                 break;
             case AnimationOperation.SetKeyFrames:
