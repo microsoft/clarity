@@ -7,7 +7,18 @@ function parseSignals(signalsString: string): ClaritySignal[] {
     return signalsJson;
 }
 
+
+const LiveSignalType: Map<string, number> = new Map([
+    ["BotSignal", 0],
+    ["FrustrationScore", 1],
+    ["PurchaseProbability", 2]
+  ]);
+
 export function signalEvent(signalsString: string) {
+    let botThreshold : number = 0.5;
+    let frustrationThreshold : number = 0.65;
+    let purchaseThreshold : number = 0.5;
+    const thresholds : number[] = [botThreshold, frustrationThreshold, purchaseThreshold];
     try {
         const signals = parseSignals(signalsString);
 
@@ -15,8 +26,9 @@ export function signalEvent(signalsString: string) {
         // if yes, execute an action based on configuration
         if(!signalCallback) determineAction();
         signals.forEach(signal => {
-            signalCallback(signal)
+            if (signal["value"] > thresholds[LiveSignalType.get(signal["type"])]) {
+                signalCallback(signal);
+            }
         })
-    } catch (err) {
-    }
+    } catch (err) { }
 }

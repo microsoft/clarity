@@ -315,6 +315,15 @@ export const enum XMLReadyState {
     Done = 4
 }
 
+/* Live Signals */
+
+export const enum LiveSignalsActionType {
+    NoAction = 0,
+    CustomAction = 1,
+    ContactUsDialogueBox = 2,
+    ContactUsAlert = 3
+}
+
 /* Helper Interfaces */
 
 export interface Payload {

@@ -1,21 +1,21 @@
 import config from "@src/core/config";
 import { signal } from "@src/data/signal";
-
+import { LiveSignalsActionType } from "@clarity-types/data";
 
 export function determineAction(): void {
     switch (config.liveSignalsActionType) {
-        case 0:
+        case LiveSignalsActionType.NoAction:
             // No action
             signal(null);
             break;
-        case 1:
+        case LiveSignalsActionType.CustomAction:
             // A custom action written by the client
             signal(config.liveSignalsCustomAction);
             break;
-        case 2:
+        case LiveSignalsActionType.ContactUsDialogueBox:
             signal(showDialog);
             break;
-        case 3:
+        case LiveSignalsActionType.ContactUsAlert:
             signal(showAlert);
             break;
         default:
@@ -26,52 +26,44 @@ export function determineAction(): void {
 
 function showAlert(): void {
     // Shows a blocking warning
-    var str: string = "It seems you might be facing some troubles. Please contact us at: ";
+    var alertMessage: string = "It seems you might be facing some troubles. Please contact us at: ";
     if ("email" in config.liveSignalsActionConfigs)
     {
         // The client email for example
-        str += config.liveSignalsActionConfigs["email"];
+        alertMessage += config.liveSignalsActionConfigs["email"];
     }
-    alert(str);
+    alert(alertMessage);
 }
 
 function showDialog(): void {
+    // Shows a non-blocking dialog box
     // This function may be further optimized and cleaned up
+    var dialogMessage: string = "It seems you might be facing some troubles. Please contact us at: ";
+    if ("email" in config.liveSignalsActionConfigs)
+    {
+        // The client email for example
+        dialogMessage += config.liveSignalsActionConfigs["email"];
+    }
+
+    var lightmode : boolean = false;
+    if ("lightmode" in config.liveSignalsActionConfigs)
+    {
+        if (typeof(config.liveSignalsActionConfigs["lightmode"]) == "string")
+        {
+            lightmode = (config.liveSignalsActionConfigs["lightmode"].toLowerCase() == "true")? true : false;
+        }
+    }
+
     try {
         // Tries to get the dialog element if it exists
         const dialog = document.getElementById("zdialog") as HTMLDialogElement;     // using a weird ID to avoid potential conflict with existing IDs
-        var str: string = "It seems you might be facing some troubles. Please contact us at: ";
-        if ("email" in config.liveSignalsActionConfigs)
-        {
-            // The client email for example
-            str += config.liveSignalsActionConfigs["email"];
-        }
-        dialog.innerHTML = str;
-        
-        var lightmode : boolean = false;
-        if ("lightmode" in config.liveSignalsActionConfigs)
-        {
-            lightmode = (config.liveSignalsActionConfigs["lightmode"] == "true")? true : false;
-        }
-
+        dialog.innerHTML = dialogMessage;
         styleDialog(dialog, lightmode);
-        dialog.style.display = "block";
     } catch (err) {
         // If not, creates a new dialog element
         const dialog = document.createElement("dialog") as HTMLDialogElement;
         // dialog.innerHTML = "Non-Blocking test dialog 2";
-        var str: string = "It seems you might be facing some troubles. Please contact us at: ";
-        if ("email" in config.liveSignalsActionConfigs)
-        {
-            // The client email for example
-            str += config.liveSignalsActionConfigs["email"];
-        }
-        dialog.innerHTML = str;
-        var lightmode : boolean = false;
-        if ("lightmode" in config.liveSignalsActionConfigs)
-        {
-            lightmode = (config.liveSignalsActionConfigs["lightmode"] == "true")? true : false;
-        }
+        dialog.innerHTML = dialogMessage;
         styleDialog(dialog, lightmode);
     }
 }
@@ -102,11 +94,11 @@ function styleDialog(dialog: HTMLDialogElement, lightMode = false): void {
     if (lightMode) {
       dialog.style.backgroundColor = "rgba(39, 54, 223, 0.93)";
       dialog.style.color = "rgb(245, 245, 245)";
-      dialog.style.border = "2px solid #ddd"; // Thicker border in light mode
+      dialog.style.border = "2px solid #ddd";
     } else {
       dialog.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
       dialog.style.color = "#fff";
-      dialog.style.border = "2px solid #666"; // Thicker border in dark mode
+      dialog.style.border = "2px solid #666";
     }
   
     // Create a close button
