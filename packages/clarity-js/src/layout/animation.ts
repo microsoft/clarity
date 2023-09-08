@@ -4,12 +4,16 @@ import { time } from "@src/core/time";
 import { shortid } from "@src/data/metadata";
 import encode from "@src/layout/encode";
 import { getId } from "@src/layout/dom";
+import * as core from "@src/core";
 
 export let state: AnimationState[] = [];
 let animationPlay: () => void = null;
 let animationPause: () => void = null;
 let animationCancel: () => void = null;
 let animationFinish: () => void = null;
+const animationId = 'clarityAnimationId';
+const operationCount = 'clarityOperationCount';
+const maxOperations = 20;
 
 export function start(): void {
     reset();
@@ -23,7 +27,7 @@ export function reset(): void {
     state = [];
 }
 
-export function track(time: number, id: string, operation: AnimationOperation, keyFrames?: string, timing?: string, targetId?: number, timeline?: string): void {
+function track(time: number, id: string, operation: AnimationOperation, keyFrames?: string, timing?: string, targetId?: number, timeline?: string): void {
     state.push({
         time,
         event: Event.Animation,
@@ -41,37 +45,41 @@ export function track(time: number, id: string, operation: AnimationOperation, k
 }
 
 export function stop(): void {
-    state = [];
     reset();
 }
 
-function overrideAnimationHelper(whereToStoreFunction: () => void, name: string) {
-    if (whereToStoreFunction === null) {
-      whereToStoreFunction = Animation.prototype[name];
-      Animation['clarity'] = true;
+function overrideAnimationHelper(functionToOverride: () => void, name: string) {
+    if (functionToOverride === null) {
+      functionToOverride = Animation.prototype[name];
       Animation.prototype[name] = function(): void {
-        if (!this['clarityAnimationName']) {
-          this['clarityAnimationName'] = shortid();
-          let keyframes = (<KeyframeEffect>this.effect).getKeyframes();
-          let timing = (<KeyframeEffect>this.effect).getTiming();
-          track(time(), this['clarityAnimationName'], AnimationOperation.Create, JSON.stringify(keyframes), JSON.stringify(timing), getId(this.effect.target));
-        }
+        if (core.active()) {
+            if (!this[animationId]) {
+                this[animationId] = shortid();
+                this[operationCount] = 0;
+                let keyframes = (<KeyframeEffect>this.effect).getKeyframes();
+                let timing = (<KeyframeEffect>this.effect).getTiming();
+                track(time(), this[animationId], AnimationOperation.Create, JSON.stringify(keyframes), JSON.stringify(timing), getId(this.effect.target));
+            }
 
-        switch (name) {
-            case "play":
-                track(time(), this['clarityAnimationName'], AnimationOperation.Play);
-                break;
-            case "pause":
-                track(time(), this['clarityAnimationName'], AnimationOperation.Pause);
-                break;
-            case "cancel":
-                track(time(), this['clarityAnimationName'], AnimationOperation.Cancel);
-                break;
-            case "finish":
-                track(time(), this['clarityAnimationName'], AnimationOperation.Finish);
-                break;
+            if (this[operationCount]++ < maxOperations)  {
+                switch (name) {
+                    case "play":
+                        track(time(), this[animationId], AnimationOperation.Play);
+                        break;
+                    case "pause":
+                        track(time(), this[animationId], AnimationOperation.Pause);
+                        break;
+                    case "cancel":
+                        track(time(), this[animationId], AnimationOperation.Cancel);
+                        break;
+                    case "finish":
+                        track(time(), this[animationId], AnimationOperation.Finish);
+                        break;
+                }
+            }
         }
-        return whereToStoreFunction.apply(this, arguments);
+        
+        return functionToOverride.apply(this, arguments);
       }
     }
   }

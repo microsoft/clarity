@@ -98,8 +98,8 @@ export class Visualizer implements VisualizerType {
                     for (let entry of p) {
                         switch (key) {
                             case Constant.Dom:
+                                let dom = this.enrich.selectors(entry);
                                 if (entry.event === Data.Event.Discover) {
-                                    let dom = this.enrich.selectors(entry);
                                     merged.dom = dom;
                                 } else {
                                     merged.events.push(entry);
