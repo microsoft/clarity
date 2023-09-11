@@ -64,7 +64,10 @@ export const enum Event {
     Extract = 40,
     Fraud = 41,
     Change = 42,
-    Snapshot = 43
+    Snapshot = 43,
+    Animation = 44,
+    StyleSheetAdoption = 45,
+    StyleSheetUpdate = 46
 }
 
 export const enum Metric {

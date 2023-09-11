@@ -6,6 +6,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
+import { watchDocument } from "./adoptedStyles";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
 const newlineRegex = /[\r\n]+/g;
@@ -41,15 +42,19 @@ export default function (node: Node, source: Source): Node {
             // We check for regions in the beginning when discovering document and
             // later whenever there are new additions or modifications to DOM (mutations)
             if (node === document) dom.parse(document);
+            watchDocument(node as Document);
             observe(node);
             break;
         case Node.DOCUMENT_FRAGMENT_NODE:
             let shadowRoot = (node as ShadowRoot);
             if (shadowRoot.host) {
+                // TODO (samart): I think we can get rid of the other adoptedStyleSheets stuff here and rely on my code. Might need to make sure the dom[call] happens first though
+                watchDocument(node as Document);
                 dom.parse(shadowRoot);
                 let type = typeof (shadowRoot.constructor);
                 if (type === Constant.Function && shadowRoot.constructor.toString().indexOf(Constant.NativeCode) >= 0) {
                     observe(shadowRoot);
+                    
                     // See: https://wicg.github.io/construct-stylesheets/ for more details on adoptedStyleSheets.
                     // At the moment, we are only able to capture "open" shadow DOM nodes. If they are closed, they are not accessible.
                     // In future we may decide to proxy "attachShadow" call to gain access, but at the moment, we don't want to
@@ -187,7 +192,7 @@ function getStyleValue(style: HTMLStyleElement): string {
     return value;
 }
 
-function getCssRules(sheet: CSSStyleSheet): string {
+export function getCssRules(sheet: CSSStyleSheet): string {
     let value = Constant.Empty as string;
     let cssRules = null;
     // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain

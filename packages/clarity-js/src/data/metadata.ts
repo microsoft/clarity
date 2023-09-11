@@ -163,7 +163,7 @@ function track(u: User, consent: BooleanFlag = null): void {
   }
 }
 
-function shortid(): string {
+export function shortid(): string {
   let id = Math.floor(Math.random() * Math.pow(2, 32));
   if (window && window.crypto && window.crypto.getRandomValues && Uint32Array) {
     id = window.crypto.getRandomValues(new Uint32Array(1))[0];

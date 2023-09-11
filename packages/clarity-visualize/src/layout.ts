@@ -1,6 +1,7 @@
 import { Data, Layout } from "clarity-js";
 import type { Layout as DecodedLayout } from "clarity-decode";
 import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
+import { StyleSheetOperation } from "clarity-js/types/layout";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
@@ -11,6 +12,7 @@ export class LayoutHelper {
     events = {};
     hashMapAlpha = {};
     hashMapBeta = {};
+    styleSheets = {};
     state: PlaybackState = null;
 
     constructor(state: PlaybackState) {
@@ -70,6 +72,33 @@ export class LayoutHelper {
                 // Toggle back the visibility of target window
                 doc.documentElement.style.visibility = Constant.Visible;
             }
+        }
+    }
+
+    public styleChange = (event: DecodedLayout.StyleSheetEvent): void => {
+        let styleSheet: CSSStyleSheet = this.styleSheets[event.data.id];
+        if (!styleSheet && event.data.operation !== StyleSheetOperation.Create) {
+            return;
+        }
+        switch (event.event) {
+            case Data.Event.StyleSheetUpdate:
+                switch (event.data.operation) {
+                    case StyleSheetOperation.Create:
+                        this.styleSheets[event.data.id] = new CSSStyleSheet();
+                        break;
+                    case StyleSheetOperation.Replace:
+                        styleSheet.replace(event.data.cssRules);
+                        break;
+                    case StyleSheetOperation.ReplaceSync:
+                        styleSheet.replaceSync(event.data.cssRules);
+                        break;
+                }
+                break;
+            case Data.Event.StyleSheetAdoption:
+                let targetDocument = this.element(event.data.id as number) as Document;
+                let newSheets = event.data.newIds.map(x => this.styleSheets[x]);
+                targetDocument.adoptedStyleSheets = newSheets;
+                break;
         }
     }
 

@@ -133,6 +133,13 @@ export const enum Setting {
     MutationActivePeriod = 3000 // Unit: milliseconds. Let mutations continue as normal during active periods of user interactions
 }
 
+export const enum StyleSheetOperation {
+    Create = 0,
+    Replace = 1,
+    ReplaceSync = 2,
+    SetAdoptedStyles = 3
+}
+
 /* Helper Interfaces */
 export interface Box {
     x: number; // Left
@@ -199,6 +206,12 @@ export interface RegionState {
     data: RegionData;
 }
 
+export interface StyleSheetState {
+    time: number;
+    event: number,
+    data: StyleSheetData
+}
+
 /* Event Data */
 
 export interface DocumentData {
@@ -218,4 +231,11 @@ export interface TargetMetadata {
     hash: [string, string];
     privacy: Privacy;
     node: Node;
+}
+
+export interface StyleSheetData {
+    id: number | string;
+    operation: StyleSheetOperation;
+    cssRules?: string;
+    newIds?: string[]
 }
