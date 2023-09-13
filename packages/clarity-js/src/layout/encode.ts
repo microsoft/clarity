@@ -42,7 +42,9 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.newIds);
+                queue(tokens);
             }
+            adoptedStyles.reset();
             break;
         case Event.StyleSheetUpdate:
             for (let entry of adoptedStyles.state) {
@@ -50,7 +52,9 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.cssRules);
+                queue(tokens);
             }
+            adoptedStyles.reset();
             break;
         case Event.Discover:
         case Event.Mutation:

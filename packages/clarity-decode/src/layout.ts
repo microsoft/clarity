@@ -48,14 +48,14 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             let styleSheetAdoptionData: Layout.StyleSheetData = {
                 id: tokens[2] as number,
                 operation: tokens[3] as number,
-                cssRules: tokens[3] as string
+                newIds: tokens[4] as string[]
             };
             return { time, event, data: styleSheetAdoptionData };
         case Data.Event.StyleSheetUpdate:
             let styleSheetUpdateData: Layout.StyleSheetData = {
                 id: tokens[2] as string,
                 operation: tokens[3] as number,
-                newIds: tokens[3] as string[]
+                cssRules: tokens[4] as string
             }
             return { time, event, data: styleSheetUpdateData };
         case Data.Event.Discover:

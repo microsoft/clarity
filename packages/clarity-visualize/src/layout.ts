@@ -76,12 +76,12 @@ export class LayoutHelper {
     }
 
     public styleChange = (event: DecodedLayout.StyleSheetEvent): void => {
-        let styleSheet: CSSStyleSheet = this.styleSheets[event.data.id];
-        if (!styleSheet && event.data.operation !== StyleSheetOperation.Create) {
-            return;
-        }
         switch (event.event) {
             case Data.Event.StyleSheetUpdate:
+                let styleSheet: CSSStyleSheet = this.styleSheets[event.data.id];
+                if (!styleSheet && event.data.operation !== StyleSheetOperation.Create) {
+                    return;
+                }
                 switch (event.data.operation) {
                     case StyleSheetOperation.Create:
                         this.styleSheets[event.data.id] = new CSSStyleSheet();

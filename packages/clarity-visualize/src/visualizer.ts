@@ -182,6 +182,10 @@ export class Visualizer implements VisualizerType {
                 case Data.Event.Scroll:
                     this.interaction.scroll(entry as Interaction.ScrollEvent);
                     break;
+                case Data.Event.StyleSheetAdoption:
+                case Data.Event.StyleSheetUpdate:
+                    this.layout.styleChange(entry as Layout.StyleSheetEvent);
+                    break;
             }
         }
 

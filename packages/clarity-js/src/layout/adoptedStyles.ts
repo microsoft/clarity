@@ -3,7 +3,7 @@ import { StyleSheetOperation, StyleSheetState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import { shortid } from "@src/data/metadata";
 import encode from "@src/layout/encode";
-import { getId } from "@src/layout/dom";
+import { getId, getNode } from "@src/layout/dom";
 import * as core from "@src/core";
 import { getCssRules } from "./node";
 
@@ -43,38 +43,47 @@ export function start(): void {
                 }
                 trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
             }
-            console.log('replaceSync:');
-            console.log(this);
-            console.log(arguments);
             return replaceSync.apply(this, arguments);
         };
     }
 }
 
-export function watchDocument(documentNode: Document): void {
-    if (!documentNode[styleSheetId]) {
-        documentNode[styleSheetId] = shortid();
-        styleSheetMap[documentNode[styleSheetId]] = documentNode.adoptedStyleSheets;
-        Object.defineProperty(documentNode, "adoptedStyleSheets", {
-            set(newStyleSheets: CSSStyleSheet[]) {
-                for (var styleSheet of newStyleSheets) {
-                    // if we haven't seen this style sheet, create it and pass a replaceSync with its contents
-                    styleSheet[styleSheetId] = shortid();
-                    trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.Create);
-                    trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.ReplaceSync, getCssRules(styleSheet));
-                }
-                var newIds = <string[]>newStyleSheets.map(x => x[styleSheetId]);
-                trackStyleAdoption(time(), getId(documentNode), StyleSheetOperation.SetAdoptedStyles, newIds);
-                console.log('watchDocument:');
-                console.log(documentNode);
-                console.log(newStyleSheets);
-                styleSheetMap[documentNode[styleSheetId]] = newStyleSheets;
-            },
-            get() {
-                return styleSheetMap[documentNode[styleSheetId]];
-            },
-        });
-    }    
+function arraysEqual(a: number[], b: number[]): boolean {
+    if (a.length !== b.length) {
+        return false;
+    }
+
+    return a.every((value, index) => value === b[index]);
+}
+
+export function checkDocumentStyles(documentNode: Document): void {
+    if (!documentNode?.adoptedStyleSheets) {
+        // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
+        return;
+    }
+    let currentStyleSheets = [];
+    for (var styleSheet of documentNode.adoptedStyleSheets) {
+        // if we haven't seen this style sheet, create it and pass a replaceSync with its contents
+        if (!styleSheet[styleSheetId]) {
+            styleSheet[styleSheetId] = shortid();
+            trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.Create);
+            trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.ReplaceSync, getCssRules(styleSheet));
+        }
+        currentStyleSheets.push(styleSheet[styleSheetId]);
+    }
+
+    let documentId = getId(documentNode, true);
+    if (!styleSheetMap[documentId]) {
+        styleSheetMap[documentId] = [];
+    }
+    if (!arraysEqual(currentStyleSheets, styleSheetMap[documentId])) {
+        trackStyleAdoption(time(), getId(documentNode), StyleSheetOperation.SetAdoptedStyles, currentStyleSheets);
+        styleSheetMap[documentId] = currentStyleSheets;
+    }
+}
+
+export function compute(): void {
+    Object.keys(styleSheetMap).forEach((x) => checkDocumentStyles(getNode(parseInt(x, 10)) as Document))
 }
 
 export function reset(): void {
@@ -95,7 +104,8 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
     encode(Event.StyleSheetUpdate);
 }
 
-function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds?: string[]): void {
+function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: string[]): void {
+    // todo (samart)
     state.push({
         time,
         event: Event.StyleSheetAdoption,
@@ -105,6 +115,7 @@ function trackStyleAdoption(time: number, id: number, operation: StyleSheetOpera
             newIds
         }
     });
+    console.log(state);
 
     encode(Event.StyleSheetAdoption);
 }
