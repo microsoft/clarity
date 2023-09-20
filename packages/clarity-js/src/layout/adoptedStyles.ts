@@ -61,7 +61,7 @@ export function checkDocumentStyles(documentNode: Document): void {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
         return;
     }
-    let currentStyleSheets = [];
+    let currentStyleSheets: number[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
         // if we haven't seen this style sheet, create it and pass a replaceSync with its contents
         if (!styleSheet[styleSheetId]) {
@@ -75,15 +75,22 @@ export function checkDocumentStyles(documentNode: Document): void {
     let documentId = getId(documentNode, true);
     if (!styleSheetMap[documentId]) {
         styleSheetMap[documentId] = [];
+        console.log(`saw ${documentId} for the first time`);
+        const debugTag = document.createElement("meta");
+        debugTag.innerText = `${documentId}`;
+        documentNode.head ? documentNode.head.appendChild(debugTag) : documentNode.appendChild(debugTag); 
     }
     if (!arraysEqual(currentStyleSheets, styleSheetMap[documentId])) {
+        console.log(`setting ${documentId} to have ${currentStyleSheets.length} style sheets`);
         trackStyleAdoption(time(), getId(documentNode), StyleSheetOperation.SetAdoptedStyles, currentStyleSheets);
         styleSheetMap[documentId] = currentStyleSheets;
     }
 }
 
 export function compute(): void {
-    Object.keys(styleSheetMap).forEach((x) => checkDocumentStyles(getNode(parseInt(x, 10)) as Document))
+    // TODO (samart): hacky but we aren't tracking document as a node it seems
+    checkDocumentStyles(document);
+    Object.keys(styleSheetMap).forEach((x) => checkDocumentStyles(getNode(parseInt(x, 10)) as Document));
 }
 
 export function reset(): void {
@@ -104,7 +111,7 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
     encode(Event.StyleSheetUpdate);
 }
 
-function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: string[]): void {
+function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: number[]): void {
     state.push({
         time,
         event: Event.StyleSheetAdoption,

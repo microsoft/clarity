@@ -14,6 +14,7 @@ export class LayoutHelper {
     hashMapBeta = {};
     adoptedStyleSheets = {};
     state: PlaybackState = null;
+    eventsToRetry: DecodedLayout.StyleSheetEvent[] = [];
 
     constructor(state: PlaybackState) {
         this.state = state;
@@ -95,25 +96,30 @@ export class LayoutHelper {
                 }
                 break;
             case Data.Event.StyleSheetAdoption:
-                let targetDocument = this.element(event.data.id as number) as Document;
-                let rootDoc = this.state.window.document;
-                console.log(`we know about ${Object.keys(this.adoptedStyleSheets).length} stylesheets`);
-
+                let elementId = event.data.id as number;
                 // TODO (samart): hacky but I think the main document isn't in our element list
+                let targetDocument = elementId === 1 ? this.state.window.document : this.element(elementId) as Document;
+                //console.log(`we know about ${Object.keys(this.adoptedStyleSheets).length} stylesheets`);
+
                 if (!targetDocument) {
-                    targetDocument = rootDoc;
+                    // todo (samart)
+                    console.log(`trying to set element ${event.data.id} to ${event.data.newIds} but we didn't know the element`);
+                    this.eventsToRetry.push(event);
+                    for (var missedEvent of this.eventsToRetry) {
+                        var maybeFound = this.element(missedEvent.data.id as number);
+                        console.log(`${missedEvent.data.id} is currently ${maybeFound}`)
+                    }
+                    break;
                 }
                 let newSheets = event.data.newIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
 
-                let styleNode = targetDocument.getElementById(Constant.AdoptedStyleSheet) ?? rootDoc.createElement("style");
+                let styleNode = targetDocument.getElementById(Constant.AdoptedStyleSheet) ?? this.state.window.document.createElement("style");
                 styleNode.id = Constant.AdoptedStyleSheet;
                 let ruleLengths = [];
                 styleNode.textContent = newSheets.map(x => { let newRule = this.getCssRules(x); ruleLengths.push(newRule.length); return newRule; }).join('\n');
+                styleNode.setAttribute('data-parentid', `${event.data.id}`);
                 //console.log(`${styleNode.textContent.length} should equal ${ruleLengths.reduce((a, b) => a + b, 0) + ruleLengths.length}`);
-                if (styleNode.textContent.length < 5) {
-                    console.log(`we had an issue with putting an empty style doc onto ${event.data.id}`);
-                    console.log(`newSheets length was ${newSheets.length}`);
-                }
+                // console.log(`understanding ${event.data.id} to have ${newSheets.length} style sheets`);
                 if (targetDocument.head) {
                     targetDocument.head.appendChild(styleNode);
                 } else {
@@ -201,6 +207,7 @@ export class LayoutHelper {
                     if (parent) {
                         let shadowRoot = this.element(node.id);
                         shadowRoot = shadowRoot ? shadowRoot : (parent as HTMLElement).attachShadow({ mode: "open" });
+                        /* todo (samart): i removed the need for this hopefully
                         if ("style" in node.attributes) {
                             let shadowStyle = doc.createElement("style");
                             // Support for adoptedStyleSheet is limited and not available in all browsers.
@@ -213,6 +220,7 @@ export class LayoutHelper {
                             shadowStyle.textContent = node.attributes["style"];
                             shadowRoot.appendChild(shadowStyle);
                         }
+                        */
                         this.nodes[node.id] = shadowRoot;
                         this.addToHashMap(node, shadowRoot);
                     }
