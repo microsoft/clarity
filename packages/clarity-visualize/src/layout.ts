@@ -97,6 +97,7 @@ export class LayoutHelper {
             case Data.Event.StyleSheetAdoption:
                 let targetDocument = this.element(event.data.id as number) as Document;
                 let rootDoc = this.state.window.document;
+                console.log(`we know about ${Object.keys(this.adoptedStyleSheets).length} stylesheets`);
 
                 // TODO (samart): hacky but I think the main document isn't in our element list
                 if (!targetDocument) {
@@ -106,7 +107,13 @@ export class LayoutHelper {
 
                 let styleNode = targetDocument.getElementById(Constant.AdoptedStyleSheet) ?? rootDoc.createElement("style");
                 styleNode.id = Constant.AdoptedStyleSheet;
-                styleNode.textContent = newSheets.map(x => this.getCssRules(x)).join('\n');
+                let ruleLengths = [];
+                styleNode.textContent = newSheets.map(x => { let newRule = this.getCssRules(x); ruleLengths.push(newRule.length); return newRule; }).join('\n');
+                //console.log(`${styleNode.textContent.length} should equal ${ruleLengths.reduce((a, b) => a + b, 0) + ruleLengths.length}`);
+                if (styleNode.textContent.length < 5) {
+                    console.log(`we had an issue with putting an empty style doc onto ${event.data.id}`);
+                    console.log(`newSheets length was ${newSheets.length}`);
+                }
                 if (targetDocument.head) {
                     targetDocument.head.appendChild(styleNode);
                 } else {
@@ -141,8 +148,8 @@ export class LayoutHelper {
         }
     
         // todo (samart)
-        console.log(sheet);
-        console.log(`became ${value}`);
+        // console.log(sheet);
+        // console.log(`became ${value}`);
         return value;
     }
 

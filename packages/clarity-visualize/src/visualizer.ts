@@ -129,6 +129,7 @@ export class Visualizer implements VisualizerType {
         // Initialize helpers
         this.enrich = new EnrichHelper();
         this.data = new DataHelper(this.state);
+        console.log('creating a new layouthelper');
         this.layout = new LayoutHelper(this.state);
         this.heatmap = new HeatmapHelper(this.state, this.layout);
         this.interaction = new InteractionHelper(this.state, this.layout);
