@@ -105,7 +105,6 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
 }
 
 function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: string[]): void {
-    // todo (samart)
     state.push({
         time,
         event: Event.StyleSheetAdoption,
@@ -115,7 +114,6 @@ function trackStyleAdoption(time: number, id: number, operation: StyleSheetOpera
             newIds
         }
     });
-    console.log(state);
 
     encode(Event.StyleSheetAdoption);
 }

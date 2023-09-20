@@ -60,8 +60,9 @@ export default function (node: Node, source: Source): Node {
                     // In future we may decide to proxy "attachShadow" call to gain access, but at the moment, we don't want to
                     // cause any unintended side effect to the page. We will re-evaluate after we gather more real world data on this.
                     let style = Constant.Empty as string;
-                    let adoptedStyleSheets: CSSStyleSheet[] = "adoptedStyleSheets" in shadowRoot ? shadowRoot["adoptedStyleSheets"] : [];
-                    for (let styleSheet of adoptedStyleSheets) { style += getCssRules(styleSheet); }
+                    // TODO (samart): attempting to move all of this elsewhere
+                    // let adoptedStyleSheets: CSSStyleSheet[] = "adoptedStyleSheets" in shadowRoot ? shadowRoot["adoptedStyleSheets"] : [];
+                    // for (let styleSheet of adoptedStyleSheets) { style += getCssRules(styleSheet); }
                     let fragementData = { tag: Constant.ShadowDomTag, attributes: { style } };
                     dom[call](node, shadowRoot.host, fragementData, source);
                 } else {

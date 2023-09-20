@@ -12,7 +12,7 @@ export class LayoutHelper {
     events = {};
     hashMapAlpha = {};
     hashMapBeta = {};
-    styleSheets = {};
+    adoptedStyleSheets = {};
     state: PlaybackState = null;
 
     constructor(state: PlaybackState) {
@@ -78,13 +78,13 @@ export class LayoutHelper {
     public styleChange = (event: DecodedLayout.StyleSheetEvent): void => {
         switch (event.event) {
             case Data.Event.StyleSheetUpdate:
-                let styleSheet: CSSStyleSheet = this.styleSheets[event.data.id];
+                let styleSheet: CSSStyleSheet = this.adoptedStyleSheets[event.data.id];
                 if (!styleSheet && event.data.operation !== StyleSheetOperation.Create) {
                     return;
                 }
                 switch (event.data.operation) {
                     case StyleSheetOperation.Create:
-                        this.styleSheets[event.data.id] = new CSSStyleSheet();
+                        this.adoptedStyleSheets[event.data.id] = new CSSStyleSheet();
                         break;
                     case StyleSheetOperation.Replace:
                         styleSheet.replace(event.data.cssRules);
@@ -96,10 +96,54 @@ export class LayoutHelper {
                 break;
             case Data.Event.StyleSheetAdoption:
                 let targetDocument = this.element(event.data.id as number) as Document;
-                let newSheets = event.data.newIds.map(x => this.styleSheets[x]);
-                targetDocument.adoptedStyleSheets = newSheets;
+                let rootDoc = this.state.window.document;
+
+                // TODO (samart): hacky but I think the main document isn't in our element list
+                if (!targetDocument) {
+                    targetDocument = rootDoc;
+                }
+                let newSheets = event.data.newIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
+
+                let styleNode = targetDocument.getElementById(Constant.AdoptedStyleSheet) ?? rootDoc.createElement("style");
+                styleNode.id = Constant.AdoptedStyleSheet;
+                styleNode.textContent = newSheets.map(x => this.getCssRules(x)).join('\n');
+                if (targetDocument.head) {
+                    targetDocument.head.appendChild(styleNode);
+                } else {
+                    // todo (samart): fix this
+                    /*
+                    if (!targetDocument.getElementById('styleHead')) {
+                        const styleHead = rootDoc.createElement("head");
+                        styleHead.id = "styleHead";
+                        targetDocument.appendChild(styleHead);
+                    }
+                    targetDocument.getElementById('styleHead').appendChild(styleNode);
+                    */
+                   targetDocument.appendChild(styleNode);
+                }
+
                 break;
         }
+    }
+
+    // todo (samart): I think we can avoid building the style sheets and just store the rules instead
+    private getCssRules(sheet: CSSStyleSheet): string {
+        let value = Constant.Empty as string;
+        let cssRules = null;
+        try { cssRules = sheet ? sheet.cssRules : []; } catch (e) {
+            if (e && e.name !== "SecurityError") { throw e; }
+        }
+    
+        if (cssRules !== null) {
+            for (let i = 0; i < cssRules.length; i++) {
+                value += cssRules[i].cssText;
+            }
+        }
+    
+        // todo (samart)
+        console.log(sheet);
+        console.log(`became ${value}`);
+        return value;
     }
 
     public exists = (hash: string): boolean => {
