@@ -48,8 +48,6 @@ export default function (node: Node, source: Source): Node {
         case Node.DOCUMENT_FRAGMENT_NODE:
             let shadowRoot = (node as ShadowRoot);
             if (shadowRoot.host) {
-                // TODO (samart): I think we can get rid of the other adoptedStyleSheets stuff here and rely on my code. Might need to make sure the dom[call] happens first though
-                checkDocumentStyles(node as Document);
                 dom.parse(shadowRoot);
                 let type = typeof (shadowRoot.constructor);
                 if (type === Constant.Function && shadowRoot.constructor.toString().indexOf(Constant.NativeCode) >= 0) {
@@ -71,6 +69,8 @@ export default function (node: Node, source: Source): Node {
                     // the same way we observe real shadow DOM nodes (encapsulation provided by the browser).
                     dom[call](node, shadowRoot.host, { tag: Constant.PolyfillShadowDomTag, attributes: {} }, source);
                 }
+                // TODO (samart): I think we can get rid of the other adoptedStyleSheets stuff here and rely on my code. Might need to make sure the dom[call] happens first though
+                checkDocumentStyles(node as Document);
             }
             break;
         case Node.TEXT_NODE:
