@@ -62,19 +62,23 @@ function overrideAnimationHelper(functionToOverride: () => void, name: string) {
             }
 
             if (this[operationCount]++ < maxOperations)  {
+                let operation: AnimationOperation = null;
                 switch (name) {
                     case "play":
-                        track(time(), this[animationId], AnimationOperation.Play);
+                        operation = AnimationOperation.Play;
                         break;
                     case "pause":
-                        track(time(), this[animationId], AnimationOperation.Pause);
+                        operation = AnimationOperation.Pause;
                         break;
                     case "cancel":
-                        track(time(), this[animationId], AnimationOperation.Cancel);
+                        operation = AnimationOperation.Cancel;
                         break;
                     case "finish":
-                        track(time(), this[animationId], AnimationOperation.Finish);
+                        operation = AnimationOperation.Finish;
                         break;
+                }
+                if (operation) {
+                    track(time(), this[animationId], operation);
                 }
             }
         }

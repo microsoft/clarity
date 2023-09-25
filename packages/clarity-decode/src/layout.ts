@@ -1,7 +1,6 @@
 import { Constant } from "@clarity-types/data";
 import { Data, Layout } from "clarity-js";
 import { DomData, LayoutEvent, Interaction, RegionVisibility  } from "../types/layout";
-import { AnimationData } from "clarity-js/types/layout";
 
 const AverageWordLength = 6;
 const Space = " ";
@@ -46,7 +45,7 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             }
             return { time, event, data: regionData };
         case Data.Event.Animation:
-            let animationData: AnimationData = {
+            let animationData: Layout.AnimationData = {
                 id: tokens[2] as string,
                 operation: tokens[3] as number,
                 keyFrames: tokens[4] as string,
