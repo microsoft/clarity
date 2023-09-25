@@ -154,6 +154,7 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Discover:
             case Data.Event.Mutation:
             case Data.Event.Snapshot:
+            case Data.Event.Animation:
                 if (payload.dom === undefined) { payload.dom = []; }
                 payload.dom.push(layout.decode(entry) as DomEvent);
                 break;

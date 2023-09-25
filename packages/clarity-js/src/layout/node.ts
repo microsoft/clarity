@@ -57,8 +57,8 @@ export default function (node: Node, source: Source): Node {
                     let style = Constant.Empty as string;
                     let adoptedStyleSheets: CSSStyleSheet[] = "adoptedStyleSheets" in shadowRoot ? shadowRoot["adoptedStyleSheets"] : [];
                     for (let styleSheet of adoptedStyleSheets) { style += getCssRules(styleSheet); }
-                    let fragementData = { tag: Constant.ShadowDomTag, attributes: { style } };
-                    dom[call](node, shadowRoot.host, fragementData, source);
+                    let fragmentData = { tag: Constant.ShadowDomTag, attributes: { style } };
+                    dom[call](node, shadowRoot.host, fragmentData, source);
                 } else {
                     // If the browser doesn't support shadow DOM natively, we detect that, and send appropriate tag back.
                     // The differentiation is important because we don't have to observe pollyfill shadow DOM nodes,
