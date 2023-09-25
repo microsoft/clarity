@@ -52,6 +52,8 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             case Event.Box:
             case Event.Mutation:                
             case Event.Snapshot:
+            case Event.StyleSheetAdoption:
+            case Event.StyleSheetUpdate:
                 playbackBytes += event.length;
                 playback.push(event);
                 break;

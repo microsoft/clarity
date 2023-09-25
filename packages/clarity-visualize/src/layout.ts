@@ -14,7 +14,8 @@ export class LayoutHelper {
     hashMapBeta = {};
     adoptedStyleSheets = {};
     state: PlaybackState = null;
-    eventsToRetry: DecodedLayout.StyleSheetEvent[] = [];
+    eventsToRetry: { [id: string] : string[] } = {};
+    styleSheetMap: { [id: number] : string[]; } = {};
 
     constructor(state: PlaybackState) {
         this.state = state;
@@ -89,6 +90,14 @@ export class LayoutHelper {
                         break;
                     case StyleSheetOperation.Replace:
                         styleSheet.replace(event.data.cssRules);
+                        // TODO (samart): we need to actually update the style at this point - just changing the sheet isn't sufficient as we no longer rely on the brower for that part
+                        for (var documentIdAsString of Object.keys(this.styleSheetMap)) {
+                            var documentId = parseInt(documentIdAsString, 10);
+                            if (this.styleSheetMap[documentId].indexOf(event.data.id as string) > -1) {
+                                // update this document
+                                this.setDocumentStyles(documentId, this.styleSheetMap[documentId]);
+                            }
+                        }
                         break;
                     case StyleSheetOperation.ReplaceSync:
                         styleSheet.replaceSync(event.data.cssRules);
@@ -96,46 +105,63 @@ export class LayoutHelper {
                 }
                 break;
             case Data.Event.StyleSheetAdoption:
-                let elementId = event.data.id as number;
-                // TODO (samart): hacky but I think the main document isn't in our element list
-                let targetDocument = elementId === 1 ? this.state.window.document : this.element(elementId) as Document;
-                //console.log(`we know about ${Object.keys(this.adoptedStyleSheets).length} stylesheets`);
-
-                if (!targetDocument) {
-                    // todo (samart)
-                    console.log(`trying to set element ${event.data.id} to ${event.data.newIds} but we didn't know the element`);
-                    this.eventsToRetry.push(event);
-                    for (var missedEvent of this.eventsToRetry) {
-                        var maybeFound = this.element(missedEvent.data.id as number);
-                        console.log(`${missedEvent.data.id} is currently ${maybeFound}`)
-                    }
-                    break;
-                }
-                let newSheets = event.data.newIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
-
-                let styleNode = targetDocument.getElementById(Constant.AdoptedStyleSheet) ?? this.state.window.document.createElement("style");
-                styleNode.id = Constant.AdoptedStyleSheet;
-                let ruleLengths = [];
-                styleNode.textContent = newSheets.map(x => { let newRule = this.getCssRules(x); ruleLengths.push(newRule.length); return newRule; }).join('\n');
-                styleNode.setAttribute('data-parentid', `${event.data.id}`);
-                //console.log(`${styleNode.textContent.length} should equal ${ruleLengths.reduce((a, b) => a + b, 0) + ruleLengths.length}`);
-                // console.log(`understanding ${event.data.id} to have ${newSheets.length} style sheets`);
-                if (targetDocument.head) {
-                    targetDocument.head.appendChild(styleNode);
-                } else {
-                    // todo (samart): fix this
-                    /*
-                    if (!targetDocument.getElementById('styleHead')) {
-                        const styleHead = rootDoc.createElement("head");
-                        styleHead.id = "styleHead";
-                        targetDocument.appendChild(styleHead);
-                    }
-                    targetDocument.getElementById('styleHead').appendChild(styleNode);
-                    */
-                   targetDocument.appendChild(styleNode);
-                }
-
+                this.setDocumentStyles(event.data.id as number, event.data.newIds);
                 break;
+        }
+    }
+
+    private setDocumentStyles(documentId: number, styleIds: string[]) {
+        // TODO (samart): hacky but I think the main document isn't in our element list
+        let targetDocument = documentId === -1 ? this.state.window.document : this.element(documentId) as Document;
+
+        if (documentId === -1) {
+            // TODO (samart)
+            console.log(`changing main doc to ${styleIds}`);
+        }
+
+        if (!targetDocument) {
+            // todo (samart)
+            console.log(`trying to set element ${documentId} to ${styleIds} but we didn't know the element`);
+            if (!this.eventsToRetry[documentId]) {
+                this.eventsToRetry[documentId] = [];
+            }
+            // TODO (samart): rename eventsToRetry
+            this.eventsToRetry[documentId] = styleIds;
+            for (var missedEventKey of Object.keys(this.eventsToRetry)) {
+                var maybeFound = this.element(parseInt(missedEventKey, 10));
+                console.log(`${missedEventKey} is currently ${maybeFound}`);
+            }
+            return;
+        }
+
+        // todo (samart): keeping a note of which style sheets belong to which documents
+        this.styleSheetMap[documentId] = styleIds;
+        let newSheets = styleIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
+
+        let styleNode = targetDocument.getElementById(Constant.AdoptedStyleSheet) ?? this.state.window.document.createElement("style");
+        styleNode.id = Constant.AdoptedStyleSheet;
+        let ruleLengths = [];
+        styleNode.textContent = newSheets.map(x => { let newRule = this.getCssRules(x); ruleLengths.push(newRule.length); return newRule; }).join('\n');
+        styleNode.setAttribute('data-parentid', `${documentId}`);
+        //console.log(`${styleNode.textContent.length} should equal ${ruleLengths.reduce((a, b) => a + b, 0) + ruleLengths.length}`);
+        // console.log(`understanding ${event.data.id} to have ${newSheets.length} style sheets`);
+        //if (documentId === 1) {
+          //  console.log('here is the style we are adding to the main document');
+            //console.log(styleNode.textContent)
+        //}
+        if (targetDocument.head) {
+            targetDocument.head.appendChild(styleNode);
+        } else {
+            // todo (samart): fix this
+            /*
+            if (!targetDocument.getElementById('styleHead')) {
+                const styleHead = rootDoc.createElement("head");
+                styleHead.id = "styleHead";
+                targetDocument.appendChild(styleHead);
+            }
+            targetDocument.getElementById('styleHead').appendChild(styleNode);
+            */
+           targetDocument.appendChild(styleNode);
         }
     }
 
@@ -223,6 +249,7 @@ export class LayoutHelper {
                         */
                         this.nodes[node.id] = shadowRoot;
                         this.addToHashMap(node, shadowRoot);
+                        this.addStyles(node.id);
                     }
                     break;
                 case Layout.Constant.TextTag:
@@ -363,11 +390,22 @@ export class LayoutHelper {
         if (resolve) { resolve(); }
     }
 
+    private addStyles = (id: number): void => {
+        let adoptedStylesToAdd = this.eventsToRetry[id];
+        if (adoptedStylesToAdd && adoptedStylesToAdd.length > 0) {
+            console.log(`calling style change on ${id} because we just created it`)
+            this.setDocumentStyles(id, this.eventsToRetry[id]);
+            delete this.eventsToRetry[id];
+        }
+    }
+
     private createElement = (doc: Document, tag: string): HTMLElement => {
         if (tag && tag.indexOf(Layout.Constant.SvgPrefix) === 0) {
             return doc.createElementNS(Layout.Constant.SvgNamespace as string, tag.substr(Layout.Constant.SvgPrefix.length)) as HTMLElement;
         }
-        try { return doc.createElement(tag); } catch (ex) {
+        try { 
+            return doc.createElement(tag);
+        } catch (ex) {
             // We log the warning on non-standard markup but continue with the visualization
             console.warn(`Exception encountered while creating element ${tag}: ${ex}`);
             return doc.createElement(Constant.UnknownTag);

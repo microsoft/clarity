@@ -6,6 +6,7 @@ import encode from "@src/layout/encode";
 import { getId, getNode } from "@src/layout/dom";
 import * as core from "@src/core";
 import { getCssRules } from "./node";
+import * as metadata from "@src/data/metadata";
 
 export let state: StyleSheetState[] = [];
 let replace: (text?: string) => Promise<CSSStyleSheet> = null;
@@ -48,7 +49,7 @@ export function start(): void {
     }
 }
 
-function arraysEqual(a: number[], b: number[]): boolean {
+function arraysEqual(a: string[], b: string[]): boolean {
     if (a.length !== b.length) {
         return false;
     }
@@ -61,7 +62,7 @@ export function checkDocumentStyles(documentNode: Document): void {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
         return;
     }
-    let currentStyleSheets: number[] = [];
+    let currentStyleSheets: string[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
         // if we haven't seen this style sheet, create it and pass a replaceSync with its contents
         if (!styleSheet[styleSheetId]) {
@@ -75,14 +76,17 @@ export function checkDocumentStyles(documentNode: Document): void {
     let documentId = getId(documentNode, true);
     if (!styleSheetMap[documentId]) {
         styleSheetMap[documentId] = [];
-        console.log(`saw ${documentId} for the first time`);
-        const debugTag = document.createElement("meta");
-        debugTag.innerText = `${documentId}`;
-        documentNode.head ? documentNode.head.appendChild(debugTag) : documentNode.appendChild(debugTag); 
+        // TODO (samart) remove
+        // console.log(`saw ${documentId} for the first time`);
+        // const debugTag = document.createElement("meta");
+        // debugTag.innerText = `${documentId}`;
+        // documentNode.head ? documentNode.head.appendChild(debugTag) : documentNode.appendChild(debugTag); 
     }
     if (!arraysEqual(currentStyleSheets, styleSheetMap[documentId])) {
-        console.log(`setting ${documentId} to have ${currentStyleSheets.length} style sheets`);
-        trackStyleAdoption(time(), getId(documentNode), StyleSheetOperation.SetAdoptedStyles, currentStyleSheets);
+        // TODO (samart) remove
+        // console.log(`setting ${documentId} to have ${currentStyleSheets.length} style sheets`);
+        // TODO (samart): using -1 to signify the root document node rather than relying on 1, seems like it isn't always 1
+        trackStyleAdoption(time(), documentNode == document ? -1 : getId(documentNode), StyleSheetOperation.SetAdoptedStyles, currentStyleSheets);
         styleSheetMap[documentId] = currentStyleSheets;
     }
 }
@@ -95,6 +99,7 @@ export function compute(): void {
 
 export function reset(): void {
     state = [];
+    
 }
 
 function trackStyleChange(time: number, id: string, operation: StyleSheetOperation, cssRules?: string): void {
@@ -111,7 +116,10 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
     encode(Event.StyleSheetUpdate);
 }
 
-function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: number[]): void {
+function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: string[]): void {
+    if (id === -1) {
+        console.log(`logging we had a document styles change on page ${metadata.data.pageNum}`);
+    }
     state.push({
         time,
         event: Event.StyleSheetAdoption,
@@ -126,6 +134,7 @@ function trackStyleAdoption(time: number, id: number, operation: StyleSheetOpera
 }
 
 export function stop(): void {
-    state = [];
+    styleSheetMap = {};
+    // TODO (samart): I may need to refresh all the style sheets on SPA navigation - but I think its ok
     reset();
 }
