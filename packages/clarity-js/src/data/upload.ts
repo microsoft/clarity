@@ -113,7 +113,6 @@ async function upload(final: boolean = false): Promise<void> {
     region.compute();
     timeline.compute();
     data.compute();
-    // TODO (samart): ensure this isn't a performance drag, the adoptedStyles should be light in general
     adoptedStyles.compute();
 
     // Treat this as the last payload only if final boolean was explicitly set to true.

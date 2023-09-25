@@ -14,7 +14,7 @@ export class LayoutHelper {
     hashMapBeta = {};
     adoptedStyleSheets = {};
     state: PlaybackState = null;
-    eventsToRetry: { [id: string] : string[] } = {};
+    stylesToApply: { [id: string] : string[] } = {};
     styleSheetMap: { [id: number] : string[]; } = {};
 
     constructor(state: PlaybackState) {
@@ -90,11 +90,11 @@ export class LayoutHelper {
                         break;
                     case StyleSheetOperation.Replace:
                         styleSheet.replace(event.data.cssRules);
-                        // TODO (samart): we need to actually update the style at this point - just changing the sheet isn't sufficient as we no longer rely on the brower for that part
+                        // Just changing the sheet isn't sufficient as we cannot rely on adoptedStyleSheets in visualiation
+                        // when an underlying style sheet changes, we reset the styles on the element
                         for (var documentIdAsString of Object.keys(this.styleSheetMap)) {
                             var documentId = parseInt(documentIdAsString, 10);
                             if (this.styleSheetMap[documentId].indexOf(event.data.id as string) > -1) {
-                                // update this document
                                 this.setDocumentStyles(documentId, this.styleSheetMap[documentId]);
                             }
                         }
@@ -111,30 +111,16 @@ export class LayoutHelper {
     }
 
     private setDocumentStyles(documentId: number, styleIds: string[]) {
-        // TODO (samart): hacky but I think the main document isn't in our element list
         let targetDocument = documentId === -1 ? this.state.window.document : this.element(documentId) as Document;
 
-        if (documentId === -1) {
-            // TODO (samart)
-            console.log(`changing main doc to ${styleIds}`);
-        }
-
         if (!targetDocument) {
-            // todo (samart)
-            console.log(`trying to set element ${documentId} to ${styleIds} but we didn't know the element`);
-            if (!this.eventsToRetry[documentId]) {
-                this.eventsToRetry[documentId] = [];
+            if (!this.stylesToApply[documentId]) {
+                this.stylesToApply[documentId] = [];
             }
-            // TODO (samart): rename eventsToRetry
-            this.eventsToRetry[documentId] = styleIds;
-            for (var missedEventKey of Object.keys(this.eventsToRetry)) {
-                var maybeFound = this.element(parseInt(missedEventKey, 10));
-                console.log(`${missedEventKey} is currently ${maybeFound}`);
-            }
+            this.stylesToApply[documentId] = styleIds;
             return;
         }
 
-        // todo (samart): keeping a note of which style sheets belong to which documents
         this.styleSheetMap[documentId] = styleIds;
         let newSheets = styleIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
 
@@ -143,29 +129,13 @@ export class LayoutHelper {
         let ruleLengths = [];
         styleNode.textContent = newSheets.map(x => { let newRule = this.getCssRules(x); ruleLengths.push(newRule.length); return newRule; }).join('\n');
         styleNode.setAttribute('data-parentid', `${documentId}`);
-        //console.log(`${styleNode.textContent.length} should equal ${ruleLengths.reduce((a, b) => a + b, 0) + ruleLengths.length}`);
-        // console.log(`understanding ${event.data.id} to have ${newSheets.length} style sheets`);
-        //if (documentId === 1) {
-          //  console.log('here is the style we are adding to the main document');
-            //console.log(styleNode.textContent)
-        //}
         if (targetDocument.head) {
             targetDocument.head.appendChild(styleNode);
         } else {
-            // todo (samart): fix this
-            /*
-            if (!targetDocument.getElementById('styleHead')) {
-                const styleHead = rootDoc.createElement("head");
-                styleHead.id = "styleHead";
-                targetDocument.appendChild(styleHead);
-            }
-            targetDocument.getElementById('styleHead').appendChild(styleNode);
-            */
            targetDocument.appendChild(styleNode);
         }
     }
 
-    // todo (samart): I think we can avoid building the style sheets and just store the rules instead
     private getCssRules(sheet: CSSStyleSheet): string {
         let value = Constant.Empty as string;
         let cssRules = null;
@@ -178,10 +148,6 @@ export class LayoutHelper {
                 value += cssRules[i].cssText;
             }
         }
-    
-        // todo (samart)
-        // console.log(sheet);
-        // console.log(`became ${value}`);
         return value;
     }
 
@@ -233,20 +199,6 @@ export class LayoutHelper {
                     if (parent) {
                         let shadowRoot = this.element(node.id);
                         shadowRoot = shadowRoot ? shadowRoot : (parent as HTMLElement).attachShadow({ mode: "open" });
-                        /* todo (samart): i removed the need for this hopefully
-                        if ("style" in node.attributes) {
-                            let shadowStyle = doc.createElement("style");
-                            // Support for adoptedStyleSheet is limited and not available in all browsers.
-                            // To ensure that we can replay session in any browser, we turn adoptedStyleSheets from recording
-                            // into classic style tags at the playback time.
-                            if (shadowRoot.firstChild && (shadowRoot.firstChild as HTMLElement).id === Constant.AdoptedStyleSheet) {
-                                shadowStyle = shadowRoot.firstChild as HTMLStyleElement;
-                            }
-                            shadowStyle.id = Constant.AdoptedStyleSheet;
-                            shadowStyle.textContent = node.attributes["style"];
-                            shadowRoot.appendChild(shadowStyle);
-                        }
-                        */
                         this.nodes[node.id] = shadowRoot;
                         this.addToHashMap(node, shadowRoot);
                         this.addStyles(node.id);
@@ -391,11 +343,10 @@ export class LayoutHelper {
     }
 
     private addStyles = (id: number): void => {
-        let adoptedStylesToAdd = this.eventsToRetry[id];
+        let adoptedStylesToAdd = this.stylesToApply[id];
         if (adoptedStylesToAdd && adoptedStylesToAdd.length > 0) {
-            console.log(`calling style change on ${id} because we just created it`)
-            this.setDocumentStyles(id, this.eventsToRetry[id]);
-            delete this.eventsToRetry[id];
+            this.setDocumentStyles(id, this.stylesToApply[id]);
+            delete this.stylesToApply[id];
         }
     }
 

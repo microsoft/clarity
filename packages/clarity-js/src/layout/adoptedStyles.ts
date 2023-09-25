@@ -76,23 +76,15 @@ export function checkDocumentStyles(documentNode: Document): void {
     let documentId = getId(documentNode, true);
     if (!styleSheetMap[documentId]) {
         styleSheetMap[documentId] = [];
-        // TODO (samart) remove
-        // console.log(`saw ${documentId} for the first time`);
-        // const debugTag = document.createElement("meta");
-        // debugTag.innerText = `${documentId}`;
-        // documentNode.head ? documentNode.head.appendChild(debugTag) : documentNode.appendChild(debugTag); 
     }
     if (!arraysEqual(currentStyleSheets, styleSheetMap[documentId])) {
-        // TODO (samart) remove
-        // console.log(`setting ${documentId} to have ${currentStyleSheets.length} style sheets`);
-        // TODO (samart): using -1 to signify the root document node rather than relying on 1, seems like it isn't always 1
+        // Using -1 to signify the root document node as we don't track that as part of our nodeMap
         trackStyleAdoption(time(), documentNode == document ? -1 : getId(documentNode), StyleSheetOperation.SetAdoptedStyles, currentStyleSheets);
         styleSheetMap[documentId] = currentStyleSheets;
     }
 }
 
 export function compute(): void {
-    // TODO (samart): hacky but we aren't tracking document as a node it seems
     checkDocumentStyles(document);
     Object.keys(styleSheetMap).forEach((x) => checkDocumentStyles(getNode(parseInt(x, 10)) as Document));
 }
@@ -117,9 +109,6 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
 }
 
 function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: string[]): void {
-    if (id === -1) {
-        console.log(`logging we had a document styles change on page ${metadata.data.pageNum}`);
-    }
     state.push({
         time,
         event: Event.StyleSheetAdoption,
@@ -135,6 +124,5 @@ function trackStyleAdoption(time: number, id: number, operation: StyleSheetOpera
 
 export function stop(): void {
     styleSheetMap = {};
-    // TODO (samart): I may need to refresh all the style sheets on SPA navigation - but I think its ok
     reset();
 }
