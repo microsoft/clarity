@@ -237,5 +237,5 @@ export interface StyleSheetData {
     id: number | string;
     operation: StyleSheetOperation;
     cssRules?: string;
-    newIds?: number[]
+    newIds?: string[]
 }
