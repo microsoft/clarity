@@ -2,6 +2,7 @@ import { Data, Layout } from "clarity-js";
 import type { Layout as DecodedLayout } from "clarity-decode";
 import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
 import { StyleSheetOperation } from "clarity-js/types/layout";
+import { AnimationOperation } from "clarity-js/types/layout";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
@@ -13,6 +14,7 @@ export class LayoutHelper {
     hashMapAlpha = {};
     hashMapBeta = {};
     adoptedStyleSheets = {};
+    animations = {};
     state: PlaybackState = null;
     stylesToApply: { [id: string] : string[] } = {};
     styleSheetMap: { [id: number] : string[]; } = {};
@@ -55,6 +57,33 @@ export class LayoutHelper {
 
     public element = (nodeId: number): Node => {
         return nodeId !== null && nodeId > 0 && nodeId in this.nodes ? this.nodes[nodeId] : null;
+    }
+
+    public animateChange = (event: DecodedLayout.AnimationEvent): void => {
+        let animation: Animation = this.animations[event.data.id];
+        if (!animation && event.data.operation !== AnimationOperation.Create) {
+            // We didn't have a reference to this animation. This shouldn't happen, but returning here
+            // to ensure we don't throw any errors.
+            return;
+        }
+        switch(event.data.operation) {
+            case AnimationOperation.Create:
+                let target = this.element(event.data.targetId);
+                this.animations[event.data.id] = (target as HTMLElement).animate(JSON.parse(event.data.keyFrames), JSON.parse(event.data.timing));
+                break;
+            case AnimationOperation.Cancel:
+                animation.cancel();
+                break;
+            case AnimationOperation.Finish:
+                animation.finish();
+                break;
+            case AnimationOperation.Pause:
+                animation.pause();
+                break;
+            case AnimationOperation.Play:
+                animation.play();
+                break;
+        }
     }
 
     public dom = async (event: DecodedLayout.DomEvent, useproxy?: LinkHandler): Promise<void> => {

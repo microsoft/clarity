@@ -20,6 +20,7 @@ export function start(): void {
 
 async function discover(): Promise<void> {
     let ts = time();
+    
     let timer: Timer = { id: id(), cost: Metric.LayoutCost };
     task.start(timer);
     await traverse(document, timer, Source.Discover);

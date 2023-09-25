@@ -58,6 +58,16 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                 cssRules: tokens[4] as string
             }
             return { time, event, data: styleSheetUpdateData };
+        case Data.Event.Animation:
+            let animationData: Layout.AnimationData = {
+                id: tokens[2] as string,
+                operation: tokens[3] as number,
+                keyFrames: tokens[4] as string,
+                timing: tokens[5] as string,
+                timeline: tokens[6] as string,
+                targetId: tokens[7] as number
+            }
+            return { time, event, data: animationData};
         case Data.Event.Discover:
         case Data.Event.Mutation:
         case Data.Event.Snapshot:

@@ -4,6 +4,7 @@ import * as dom from "@src/layout/dom";
 import * as mutation from "@src/layout/mutation";
 import * as region from "@src/layout/region";
 import * as adoptedStyles from "@src/layout/adoptedStyles";
+import * as animation from "@src/layout/animation";
 
 export { hashText } from "@src/layout/dom";
 
@@ -16,6 +17,7 @@ export function start(): void {
     mutation.start();
     discover.start();
     adoptedStyles.start();
+    animation.start();
 }
 
 export function stop(): void {
@@ -24,4 +26,5 @@ export function stop(): void {
     mutation.stop();
     doc.stop();
     adoptedStyles.stop();
+    animation.stop();
 }

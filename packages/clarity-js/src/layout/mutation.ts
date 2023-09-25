@@ -28,7 +28,6 @@ let timeout: number = null;
 let activePeriod = null;
 let history: MutationHistory = {};
 
-
 export function start(): void {
     observers = [];
     queue = [];

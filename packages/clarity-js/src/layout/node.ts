@@ -58,8 +58,8 @@ export default function (node: Node, source: Source): Node {
                     // In future we may decide to proxy "attachShadow" call to gain access, but at the moment, we don't want to
                     // cause any unintended side effect to the page. We will re-evaluate after we gather more real world data on this.
                     let style = Constant.Empty as string;
-                    let fragementData = { tag: Constant.ShadowDomTag, attributes: { style } };
-                    dom[call](node, shadowRoot.host, fragementData, source);
+                    let fragmentData = { tag: Constant.ShadowDomTag, attributes: { style } };
+                    dom[call](node, shadowRoot.host, fragmentData, source);
                 } else {
                     // If the browser doesn't support shadow DOM natively, we detect that, and send appropriate tag back.
                     // The differentiation is important because we don't have to observe pollyfill shadow DOM nodes,
