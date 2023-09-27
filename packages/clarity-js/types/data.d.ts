@@ -407,7 +407,7 @@ export interface VariableData {
 // The way it's different from variable is that Custom Event has a notion of time
 // Whereas variables have no timing element and eventually will turn into custom dimensions
 export interface CustomData {
-    key: string;
+    key?: string;
     value: string;
 }
 
