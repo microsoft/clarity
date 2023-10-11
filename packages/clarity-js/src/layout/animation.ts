@@ -16,11 +16,13 @@ const operationCount = 'clarityOperationCount';
 const maxOperations = 20;
 
 export function start(): void {
-    reset();
-    overrideAnimationHelper(animationPlay, "play");
-    overrideAnimationHelper(animationPause, "pause");
-    overrideAnimationHelper(animationCancel, "cancel");
-    overrideAnimationHelper(animationFinish, "finish");
+    if (window["Animation"]) {
+        reset();
+        overrideAnimationHelper(animationPlay, "play");
+        overrideAnimationHelper(animationPause, "pause");
+        overrideAnimationHelper(animationCancel, "cancel");
+        overrideAnimationHelper(animationFinish, "finish");
+    }    
 }
 
 export function reset(): void {
