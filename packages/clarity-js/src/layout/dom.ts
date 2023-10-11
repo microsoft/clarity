@@ -7,7 +7,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
 let index: number = 1;
-let nodes: Node[] = [];
+let nodesMap: Map<Number, Node> = null; // Maps id => node.
 let values: NodeValue[] = [];
 let updateMap: number[] = [];
 let hashMap: { [hash: string]: number } = {};
@@ -35,7 +35,6 @@ export function stop(): void {
 
 function reset(): void {
     index = 1;
-    nodes = [];
     values = [];
     updateMap = [];
     hashMap = {};
@@ -45,6 +44,7 @@ function reset(): void {
     maskExclude = Mask.Exclude.split(Constant.Comma);
     maskDisable = Mask.Disable.split(Constant.Comma);
     maskTags = Mask.Tags.split(Constant.Comma);
+    nodesMap = new Map();
     idMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
@@ -105,7 +105,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         regionId = id;
     }
 
-    nodes[id] = node;
+    nodesMap.set(id, node);
     values[id] = {
         id,
         parent: parentId,
@@ -297,10 +297,11 @@ export function hashText(hash: string): string {
 }
 
 export function getNode(id: number): Node {
-    if (id in nodes) {
-        return nodes[id];
+    var node = nodesMap.get(id);
+    if (!node) {
+        return null;
     }
-    return null;
+    return node;
 }
 
 export function getValue(id: number): NodeValue {
@@ -320,7 +321,7 @@ export function lookup(hash: string): number {
 }
 
 export function has(node: Node): boolean {
-    return getId(node) in nodes;
+    return nodesMap.has(getId(node));
 }
 
 export function updates(): NodeValue[] {
@@ -339,6 +340,12 @@ function remove(id: number, source: Source): void {
         value.metadata.active = false;
         value.parent = null;
         track(id, source);
+
+        // Clean up node references for removed nodes
+        nodesMap.delete(id);
+        for (let childId of value.children){
+            nodesMap.delete(childId);
+        }
     }
 }
 
