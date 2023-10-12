@@ -16,7 +16,12 @@ const operationCount = 'clarityOperationCount';
 const maxOperations = 20;
 
 export function start(): void {
-    if (window["Animation"]) {
+    if (
+        window["Animation"] && 
+        window["KeyframeEffect"] && 
+        window["KeyframeEffect"].prototype.getKeyframes &&
+        window["KeyframeEffect"].prototype.getTiming
+    ) {
         reset();
         overrideAnimationHelper(animationPlay, "play");
         overrideAnimationHelper(animationPause, "pause");
