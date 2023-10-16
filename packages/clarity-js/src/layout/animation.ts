@@ -60,34 +60,38 @@ function overrideAnimationHelper(functionToOverride: () => void, name: string) {
       functionToOverride = Animation.prototype[name];
       Animation.prototype[name] = function(): void {
         if (core.active()) {
-            if (!this[animationId]) {
-                this[animationId] = shortid();
-                this[operationCount] = 0;
-                let keyframes = (<KeyframeEffect>this.effect).getKeyframes();
-                let timing = (<KeyframeEffect>this.effect).getTiming();
-                track(time(), this[animationId], AnimationOperation.Create, JSON.stringify(keyframes), JSON.stringify(timing), getId(this.effect.target));
-            }
-
-            if (this[operationCount]++ < maxOperations)  {
-                let operation: AnimationOperation = null;
-                switch (name) {
-                    case "play":
-                        operation = AnimationOperation.Play;
-                        break;
-                    case "pause":
-                        operation = AnimationOperation.Pause;
-                        break;
-                    case "cancel":
-                        operation = AnimationOperation.Cancel;
-                        break;
-                    case "finish":
-                        operation = AnimationOperation.Finish;
-                        break;
+            let effect = <KeyframeEffect>this.effect;
+            if (effect.getKeyframes && effect.getTiming) {
+                if (!this[animationId]) {
+                    this[animationId] = shortid();
+                    this[operationCount] = 0;
+                    
+                    let keyframes = effect.getKeyframes();
+                    let timing = effect.getTiming();
+                    track(time(), this[animationId], AnimationOperation.Create, JSON.stringify(keyframes), JSON.stringify(timing), getId(this.effect.target));
                 }
-                if (operation) {
-                    track(time(), this[animationId], operation);
+    
+                if (this[operationCount]++ < maxOperations)  {
+                    let operation: AnimationOperation = null;
+                    switch (name) {
+                        case "play":
+                            operation = AnimationOperation.Play;
+                            break;
+                        case "pause":
+                            operation = AnimationOperation.Pause;
+                            break;
+                        case "cancel":
+                            operation = AnimationOperation.Cancel;
+                            break;
+                        case "finish":
+                            operation = AnimationOperation.Finish;
+                            break;
+                    }
+                    if (operation) {
+                        track(time(), this[animationId], operation);
+                    }
                 }
-            }
+            }            
         }
         
         return functionToOverride.apply(this, arguments);
