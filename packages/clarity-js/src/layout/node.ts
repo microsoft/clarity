@@ -6,6 +6,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
+import { electron } from "@src/data/metadata";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
 const newlineRegex = /[\r\n]+/g;
@@ -157,6 +158,21 @@ export default function (node: Node, source: Source): Node {
                     }
                     dom[call](node, parent, frameData, source);
                     break;
+                case "LINK":
+                    // electron stylesheets reference the local file system - translating those
+                    // to inline styles so playback can work
+                    if (electron && attributes['rel'] === 'stylesheet') {
+                        for (var styleSheetIndex in Object.keys(document.styleSheets)) {
+                            var currentStyleSheet = document.styleSheets[styleSheetIndex];
+                            if (currentStyleSheet.ownerNode == element) {
+                                let syntheticStyleData = { tag: "STYLE", attributes, value: getCssRules(currentStyleSheet) };
+                                dom[call](node, parent, syntheticStyleData, source);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    // intentionally not breaking here so we can fall through to default behavior when not dealing with electron
                 default:
                     let data = { tag, attributes };
                     if (element.shadowRoot) { child = element.shadowRoot; }
