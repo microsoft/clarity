@@ -11,14 +11,15 @@ import { set } from "@src/data/variable";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
+export let electron = BooleanFlag.False;
 let rootDomain = null;
 
 export function start(): void {
   rootDomain = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const title = document && document.title ? document.title : Constant.Empty;
-  const electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
-
+  electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
+  
   // Populate ids for this page
   let s = session();
   let u = user();
