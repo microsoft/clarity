@@ -161,7 +161,7 @@ export default function (node: Node, source: Source): Node {
                 case "LINK":
                     // electron stylesheets reference the local file system - translating those
                     // to inline styles so playback can work
-                    if (electron && attributes['rel'] === 'stylesheet') {
+                    if (electron && attributes['rel'] === Constant.StyleSheet) {
                         for (var styleSheetIndex in Object.keys(document.styleSheets)) {
                             var currentStyleSheet = document.styleSheets[styleSheetIndex];
                             if (currentStyleSheet.ownerNode == element) {
@@ -172,7 +172,10 @@ export default function (node: Node, source: Source): Node {
                         }
                         break;
                     }
-                    // intentionally not breaking here so we can fall through to default behavior when not dealing with electron
+                    // for links that aren't electron style sheets we can process them normally
+                    let linkData = { tag, attributes };
+                    dom[call](node, parent, linkData, source);
+                    break;
                 default:
                     let data = { tag, attributes };
                     if (element.shadowRoot) { child = element.shadowRoot; }

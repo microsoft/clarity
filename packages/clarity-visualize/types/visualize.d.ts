@@ -173,7 +173,8 @@ export const enum Constant {
     FormTag = "form",
     InputTag = "input",
     AutoComplete = "autocomplete",
-    NewPassword = "new-password"
+    NewPassword = "new-password",
+    StyleSheet = "stylesheet"
 }
 
 export const enum Setting {

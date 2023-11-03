@@ -221,7 +221,7 @@ export class LayoutHelper {
                     if (!node.attributes) { node.attributes = {}; }
                     this.setAttributes(linkElement as HTMLElement, node);
                     if ("rel" in node.attributes) {
-                        if (node.attributes["rel"] === "stylesheet") {
+                        if (node.attributes["rel"] === Constant.StyleSheet) {
                             this.stylesheets.push(new Promise((resolve: () => void): void => {
                                 const proxy = useproxy ?? this.state.options.useproxy;
                                 if (proxy) {
@@ -229,7 +229,7 @@ export class LayoutHelper {
                                         linkElement.removeAttribute('integrity');
                                     }
 
-                                    linkElement.href = proxy(linkElement.href, linkElement.id, "stylesheet");
+                                    linkElement.href = proxy(linkElement.href, linkElement.id, Constant.StyleSheet);
                                 } 
                                 linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
                                 setTimeout(resolve, LayoutHelper.TIMEOUT);
