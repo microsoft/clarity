@@ -272,7 +272,7 @@ function decodeCookieValue(value: string): string {
 
 function valueIsEncoded(value: string): [boolean, string] {
   try {
-    let decodedValue = decodeURI(value);
+    let decodedValue = decodeURIComponent(value);
     return [decodedValue != value, decodedValue];
   }
   catch {
@@ -282,7 +282,7 @@ function valueIsEncoded(value: string): [boolean, string] {
 }
 
 function encodeCookieValue(value: string): string {
-  return encodeURI(value);
+  return encodeURIComponent(value);
 }
 
 function setCookie(key: string, value: string, time: number): void {
