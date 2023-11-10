@@ -53,7 +53,8 @@ export default function(event: Event): void {
             queue(tokens, false);
             break;
         case Event.Custom:
-            tokens.push(custom.data.key);
+            // not all custom events have a key - if it wasn't passed server handles just value
+            custom.data.key && tokens.push(custom.data.key);
             tokens.push(custom.data.value);
             queue(tokens);
             break;

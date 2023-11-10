@@ -1,5 +1,6 @@
 import { Time } from "@clarity-types/core";
 import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting } from "@clarity-types/data";
+import * as clarity from "@src/clarity";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -10,14 +11,15 @@ import { set } from "@src/data/variable";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
+export let electron = BooleanFlag.False;
 let rootDomain = null;
 
 export function start(): void {
   rootDomain = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const title = document && document.title ? document.title : Constant.Empty;
-  const electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
-
+  electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
+  
   // Populate ids for this page
   let s = session();
   let u = user();
@@ -105,7 +107,15 @@ export function id(): string {
   return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
 }
 
-export function consent(): void {
+export function consent(status: boolean = true): void {
+  if (!status) {
+    setCookie(Constant.SessionKey, Constant.Empty, 0);
+    setCookie(Constant.CookieKey, Constant.Empty, 0);
+    clarity.stop();
+    window.setTimeout(clarity.start, Setting.RestartDelay);
+    return;
+  }
+
   if (core.active()) {
     config.track = true;
     track(user(), BooleanFlag.True);

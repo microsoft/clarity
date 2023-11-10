@@ -7,7 +7,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
 let index: number = 1;
-let nodes: Node[] = [];
+let nodesMap: Map<Number, Node> = null; // Maps id => node to retrieve further node details using id.
 let values: NodeValue[] = [];
 let updateMap: number[] = [];
 let hashMap: { [hash: string]: number } = {};
@@ -35,7 +35,6 @@ export function stop(): void {
 
 function reset(): void {
     index = 1;
-    nodes = [];
     values = [];
     updateMap = [];
     hashMap = {};
@@ -45,6 +44,7 @@ function reset(): void {
     maskExclude = Mask.Exclude.split(Constant.Comma);
     maskDisable = Mask.Disable.split(Constant.Comma);
     maskTags = Mask.Tags.split(Constant.Comma);
+    nodesMap = new Map();
     idMap = new WeakMap();
     iframeMap = new WeakMap();
     privacyMap = new WeakMap();
@@ -59,7 +59,7 @@ export function parse(root: ParentNode, init: boolean = false): void {
     // It's possible for script to receive invalid selectors, e.g. "'#id'" with extra quotes, and cause the code below to fail
     try {
         // Parse unmask configuration into separate query selectors and override tokens as part of initialization
-        if (init) { config.unmask.forEach(x => x.indexOf(Constant.Bang) < 0 ? unmask.push(x) : override.push(x.substr(1))); }   
+        if (init) { config.unmask.forEach(x => x.indexOf(Constant.Bang) < 0 ? unmask.push(x) : override.push(x.substr(1))); }
 
         // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
         // We ensure that the root note supports querySelectorAll API before executing the code below to identify new regions.
@@ -105,7 +105,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
         regionId = id;
     }
 
-    nodes[id] = node;
+    nodesMap.set(id, node);
     values[id] = {
         id,
         parent: parentId,
@@ -240,7 +240,7 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             // If it's a text node belonging to a STYLE or TITLE tag or one of scrub exceptions, then capture content
             let pTag = parent && parent.data ? parent.data.tag : Constant.Empty;
             let pSelector = parent && parent.selector ? parent.selector[Selector.Default] : Constant.Empty;
-            let tags : string[] = [Constant.StyleTag, Constant.TitleTag, Constant.SvgStyle];
+            let tags: string[] = [Constant.StyleTag, Constant.TitleTag, Constant.SvgStyle];
             metadata.privacy = tags.includes(pTag) || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current;
             break;
         case current === Privacy.Sensitive:
@@ -297,10 +297,7 @@ export function hashText(hash: string): string {
 }
 
 export function getNode(id: number): Node {
-    if (id in nodes) {
-        return nodes[id];
-    }
-    return null;
+    return nodesMap.has(id) ? nodesMap.get(id) : null;
 }
 
 export function getValue(id: number): NodeValue {
@@ -320,7 +317,7 @@ export function lookup(hash: string): number {
 }
 
 export function has(node: Node): boolean {
-    return getId(node) in nodes;
+    return nodesMap.has(getId(node));
 }
 
 export function updates(): NodeValue[] {
@@ -329,7 +326,7 @@ export function updates(): NodeValue[] {
         if (id in values) { output.push(values[id]); }
     }
     updateMap = [];
-   
+
     return output;
 }
 
@@ -339,6 +336,20 @@ function remove(id: number, source: Source): void {
         value.metadata.active = false;
         value.parent = null;
         track(id, source);
+
+        // Clean up node references for removed nodes
+        removeNodeFromNodesMap(id);
+    }
+}
+
+function removeNodeFromNodesMap(id: number) {
+    nodesMap.delete(id);
+
+    let value = id in values ? values[id] : null;
+    if (value && value.children) {
+        for (let childId of value.children) {
+            removeNodeFromNodesMap(childId);
+        }
     }
 }
 
