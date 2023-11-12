@@ -282,12 +282,12 @@ function setCookie(key: string, value: string, time: number): void {
   if (config.track && ((navigator && navigator.cookieEnabled) || supported(document, Constant.Cookie))) {
     // Some browsers automatically url encode cookie values if they are not url encoded.
     // We therefore encode and decode cookie values ourselves.
-    value = encodeCookieValue(value);
+    let encodedValue = encodeCookieValue(value);
 
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + time);
     let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
-    let cookie = `${key}=${value}${Constant.Semicolon}${expires}${Constant.Path}`;
+    let cookie = `${key}=${encodedValue}${Constant.Semicolon}${expires}${Constant.Path}`;
     try {
       // Attempt to get the root domain only once and fall back to writing cookie on the current domain.
       if (rootDomain === null) {
