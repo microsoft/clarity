@@ -245,7 +245,17 @@ function getCookie(key: string): string {
         if (pair.length > 1 && pair[0] && pair[0].trim() === key) {
           // Some browsers automatically url encode cookie values if they are not url encoded.
           // We therefore encode and decode cookie values ourselves.
-          return decodeCookieValue(pair[1]);
+          // For backwards compatability we need to consider 3 cases:
+          // * Cookie was previously not encoded by Clarity and browser did not encode it
+          // * Cookie was previously not encoded by Clarity and browser encoded it once or more
+          // * Cookie was previously encoded by Clarity and browser did not encode it
+          let [isEncoded, decodedValue] = decodeCookieValue(pair[1]);
+          
+          while (isEncoded) {
+            [isEncoded, decodedValue] = decodeCookieValue(decodedValue);
+          }
+        
+          return decodedValue;
         }
       }
     }
@@ -253,24 +263,7 @@ function getCookie(key: string): string {
   return null;
 }
 
-function decodeCookieValue(value: string): string {
-  // For backwards compatability we need to consider 3 cases:
-  // * Cookie was previously not encoded by Clarity and browser did not encode it
-  // * Cookie was previously not encoded by Clarity and browser encoded it once or more
-  // * Cookie was previously encoded by Clarity and browser did not encode it
-  let [isEncoded, decodedValue] = valueIsEncoded(value);
-  if (!isEncoded) {
-    return value;
-  }
-
-  while (isEncoded) {
-    [isEncoded, decodedValue] = valueIsEncoded(decodedValue);
-  }
-
-  return decodedValue;
-}
-
-function valueIsEncoded(value: string): [boolean, string] {
+function decodeCookieValue(value: string): [boolean, string] {
   try {
     let decodedValue = decodeURIComponent(value);
     return [decodedValue != value, decodedValue];
