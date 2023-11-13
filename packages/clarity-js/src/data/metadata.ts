@@ -19,7 +19,7 @@ export function start(): void {
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const title = document && document.title ? document.title : Constant.Empty;
   electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
-  
+
   // Populate ids for this page
   let s = session();
   let u = user();
@@ -75,7 +75,7 @@ export function start(): void {
 function userAgentData(): void {
   let uaData = navigator["userAgentData"];
   if (uaData && uaData.getHighEntropyValues) {
-    uaData.getHighEntropyValues(["model","platform","platformVersion","uaFullVersion"]).then(ua => {
+    uaData.getHighEntropyValues(["model", "platform", "platformVersion", "uaFullVersion"]).then(ua => {
       dimension.log(Dimension.Platform, ua.platform);
       dimension.log(Dimension.PlatformVersion, ua.platformVersion);
       ua.brands?.forEach(brand => { dimension.log(Dimension.Brand, brand.name + Constant.Tilde + brand.version); });
@@ -99,7 +99,7 @@ export function metadata(cb: MetadataCallback, wait: boolean = true): void {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
     cb(data, !config.lean);
   } else {
-    callbacks.push({callback: cb, wait: wait });
+    callbacks.push({ callback: cb, wait: wait });
   }
 }
 
@@ -162,7 +162,7 @@ function track(u: User, consent: BooleanFlag = null): void {
   consent = consent === null ? u.consent : consent;
   // Convert time precision into days to reduce number of bytes we have to write in a cookie
   // E.g. Math.ceil(1628735962643 / (24*60*60*1000)) => 18852 (days) => ejo in base36 (13 bytes => 3 bytes)
-  let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day))/Time.Day);
+  let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day)) / Time.Day);
   // If DOB is not set in the user object, use the date set in the config as a DOB
   let dob = u.dob === 0 ? (config.dob === null ? 0 : config.dob) : u.dob;
 
@@ -205,7 +205,7 @@ function num(string: string, base: number = 10): number {
 function user(): User {
   let output: User = { id: shortid(), version: 0, expiry: null, consent: BooleanFlag.False, dob: 0 };
   let cookie = getCookie(Constant.CookieKey);
-  if(cookie && cookie.length > 0) {
+  if (cookie && cookie.length > 0) {
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
     let parts = cookie.split(Constant.Pipe);
     // For backward compatibility introduced in v0.6.18; following code can be removed with future iterations
@@ -243,7 +243,19 @@ function getCookie(key: string): string {
       for (let i = 0; i < cookies.length; i++) {
         let pair: string[] = cookies[i].split(Constant.Equals);
         if (pair.length > 1 && pair[0] && pair[0].trim() === key) {
-          return pair[1];
+          // Some browsers automatically url encode cookie values if they are not url encoded.
+          // We therefore encode and decode cookie values ourselves.
+          // For backwards compatability we need to consider 3 cases:
+          // * Cookie was previously not encoded by Clarity and browser did not encode it
+          // * Cookie was previously not encoded by Clarity and browser encoded it once or more
+          // * Cookie was previously encoded by Clarity and browser did not encode it
+          let [isEncoded, decodedValue] = decodeCookieValue(pair[1]);
+          
+          while (isEncoded) {
+            [isEncoded, decodedValue] = decodeCookieValue(decodedValue);
+          }
+        
+          return decodedValue;
         }
       }
     }
@@ -251,12 +263,31 @@ function getCookie(key: string): string {
   return null;
 }
 
+function decodeCookieValue(value: string): [boolean, string] {
+  try {
+    let decodedValue = decodeURIComponent(value);
+    return [decodedValue != value, decodedValue];
+  }
+  catch {
+  }
+
+  return [false, value];
+}
+
+function encodeCookieValue(value: string): string {
+  return encodeURIComponent(value);
+}
+
 function setCookie(key: string, value: string, time: number): void {
-  if (config.track && ((navigator && navigator.cookieEnabled) ||  supported(document, Constant.Cookie))) {
+  if (config.track && ((navigator && navigator.cookieEnabled) || supported(document, Constant.Cookie))) {
+    // Some browsers automatically url encode cookie values if they are not url encoded.
+    // We therefore encode and decode cookie values ourselves.
+    let encodedValue = encodeCookieValue(value);
+
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + time);
     let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
-    let cookie = `${key}=${value}${Constant.Semicolon}${expires}${Constant.Path}`;
+    let cookie = `${key}=${encodedValue}${Constant.Semicolon}${expires}${Constant.Path}`;
     try {
       // Attempt to get the root domain only once and fall back to writing cookie on the current domain.
       if (rootDomain === null) {
