@@ -69,7 +69,10 @@ export class LayoutHelper {
         switch(event.data.operation) {
             case AnimationOperation.Create:
                 let target = this.element(event.data.targetId);
-                this.animations[event.data.id] = (target as HTMLElement).animate(JSON.parse(event.data.keyFrames), JSON.parse(event.data.timing));
+                // only create the animation if we successfully found the target, an animation without a target will throw an error
+                if (target) {
+                    this.animations[event.data.id] = (target as HTMLElement).animate(JSON.parse(event.data.keyFrames), JSON.parse(event.data.timing));
+                }
                 break;
             case AnimationOperation.Cancel:
                 animation.cancel();
