@@ -61,14 +61,15 @@ function overrideAnimationHelper(functionToOverride: () => void, name: string) {
       Animation.prototype[name] = function(): void {
         if (core.active()) {
             let effect = <KeyframeEffect>this.effect;
-            if (effect.getKeyframes && effect.getTiming) {
+            let target = getId(this.effect.target);
+            if (target !== null && effect.getKeyframes && effect.getTiming) {
                 if (!this[animationId]) {
                     this[animationId] = shortid();
                     this[operationCount] = 0;
                     
                     let keyframes = effect.getKeyframes();
                     let timing = effect.getTiming();
-                    track(time(), this[animationId], AnimationOperation.Create, JSON.stringify(keyframes), JSON.stringify(timing), getId(this.effect.target));
+                    track(time(), this[animationId], AnimationOperation.Create, JSON.stringify(keyframes), JSON.stringify(timing), target);
                 }
     
                 if (this[operationCount]++ < maxOperations)  {
