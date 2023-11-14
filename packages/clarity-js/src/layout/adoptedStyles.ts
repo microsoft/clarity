@@ -6,7 +6,6 @@ import encode from "@src/layout/encode";
 import { getId, getNode } from "@src/layout/dom";
 import * as core from "@src/core";
 import { getCssRules } from "./node";
-import * as metadata from "@src/data/metadata";
 
 export let state: StyleSheetState[] = [];
 let replace: (text?: string) => Promise<CSSStyleSheet> = null;
@@ -49,14 +48,6 @@ export function start(): void {
     }
 }
 
-function arraysEqual(a: string[], b: string[]): boolean {
-    if (a.length !== b.length) {
-        return false;
-    }
-
-    return a.every((value, index) => value === b[index]);
-}
-
 export function checkDocumentStyles(documentNode: Document): void {
     if (!documentNode?.adoptedStyleSheets) {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
@@ -94,6 +85,11 @@ export function reset(): void {
     
 }
 
+export function stop(): void {
+    styleSheetMap = {};
+    reset();
+}
+
 function trackStyleChange(time: number, id: string, operation: StyleSheetOperation, cssRules?: string): void {
     state.push({
         time,
@@ -122,7 +118,10 @@ function trackStyleAdoption(time: number, id: number, operation: StyleSheetOpera
     encode(Event.StyleSheetAdoption);
 }
 
-export function stop(): void {
-    styleSheetMap = {};
-    reset();
+function arraysEqual(a: string[], b: string[]): boolean {
+    if (a.length !== b.length) {
+        return false;
+    }
+
+    return a.every((value, index) => value === b[index]);
 }

@@ -9,10 +9,10 @@ import tokenize from "@src/data/token";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
 import * as fraud from "@src/diagnostic/fraud";
-import * as doc from "./document";
-import * as dom from "./dom";
-import * as region from "./region";
-import * as adoptedStyles from "./adoptedStyles";
+import * as doc from "@src/layout/document";
+import * as dom from "@src/layout/dom";
+import * as region from "@src/layout/region";
+import * as adoptedStyles from "@src/layout/adoptedStyles";
 import * as animation from "@src/layout/animation";
 
 export default async function (type: Event, timer: Timer = null, ts: number = null): Promise<void> {

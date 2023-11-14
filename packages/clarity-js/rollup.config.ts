@@ -15,7 +15,7 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: '@src/layout/adoptedStyles', replacement: '@src/core/blank' }
+          { find: '@src/layout/adoptedStyles', replacement: '@src/insight/blank' }
         ]
       }),
       resolve(),
@@ -37,7 +37,7 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: '@src/layout/adoptedStyles', replacement: '@src/core/blank' }
+          { find: '@src/layout/adoptedStyles', replacement: '@src/insight/blank' }
         ]
       }),
       resolve(),
@@ -70,7 +70,7 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: '@src/layout/adoptedStyles', replacement: '@src/core/blank' },
+          { find: '@src/layout/adoptedStyles', replacement: '@src/insight/blank' },
           { find: '@src/layout/document', replacement: '@src/layout/document' },
           { find: '@src/layout/encode', replacement: '@src/insight/encode' },
           { find: /@src\/interaction\/(change|clipboard|input|pointer|selection)/, replacement: '@src/insight/blank' },

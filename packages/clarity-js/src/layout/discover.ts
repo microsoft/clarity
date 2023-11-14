@@ -9,7 +9,7 @@ import * as doc from "@src/layout/document";
 import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
-import { checkDocumentStyles } from "./adoptedStyles";
+import { checkDocumentStyles } from "@src/layout/adoptedStyles";
 
 export function start(): void {
     task.schedule(discover, Priority.High).then((): void => {
