@@ -13,6 +13,11 @@ export default [
       { file: pkg.module, format: "es", exports: "named" }
     ],
     plugins: [
+      alias({
+        entries: [
+          { find: '@src/layout/adoptedStyles', replacement: '@src/insight/blank' }
+        ]
+      }),
       resolve(),
       typescript(),
       commonjs({ include: ["node_modules/**"] })
@@ -25,6 +30,25 @@ export default [
   {
     input: "src/global.ts",
     output: [ { file: pkg.unpkg, format: "iife", exports: "named" } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: '@src/layout/adoptedStyles', replacement: '@src/insight/blank' }
+        ]
+      }),
+      resolve(),
+      typescript(),
+      terser({output: {comments: false}}),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/global.ts",
+    output: [ { file: pkg.extended, format: "iife", exports: "named" } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -46,6 +70,7 @@ export default [
     plugins: [
       alias({
         entries: [
+          { find: '@src/layout/adoptedStyles', replacement: '@src/insight/blank' },
           { find: '@src/layout/document', replacement: '@src/layout/document' },
           { find: '@src/layout/encode', replacement: '@src/insight/encode' },
           { find: /@src\/interaction\/(change|clipboard|input|pointer|selection)/, replacement: '@src/insight/blank' },

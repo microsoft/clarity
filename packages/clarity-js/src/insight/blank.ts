@@ -9,3 +9,4 @@ export function stop(): void {}
 export function log(): void {}
 export function observe(): void {}
 export function compute(): void {}
+export function checkDocumentStyles(_d: Document): void {}

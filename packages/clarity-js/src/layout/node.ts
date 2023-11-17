@@ -6,6 +6,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
+import { checkDocumentStyles } from "@src/layout/style";
 import { electron } from "@src/data/metadata";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
@@ -42,6 +43,7 @@ export default function (node: Node, source: Source): Node {
             // We check for regions in the beginning when discovering document and
             // later whenever there are new additions or modifications to DOM (mutations)
             if (node === document) dom.parse(document);
+            checkDocumentStyles(node as Document);
             observe(node);
             break;
         case Node.DOCUMENT_FRAGMENT_NODE:
@@ -51,13 +53,12 @@ export default function (node: Node, source: Source): Node {
                 let type = typeof (shadowRoot.constructor);
                 if (type === Constant.Function && shadowRoot.constructor.toString().indexOf(Constant.NativeCode) >= 0) {
                     observe(shadowRoot);
+                    
                     // See: https://wicg.github.io/construct-stylesheets/ for more details on adoptedStyleSheets.
                     // At the moment, we are only able to capture "open" shadow DOM nodes. If they are closed, they are not accessible.
                     // In future we may decide to proxy "attachShadow" call to gain access, but at the moment, we don't want to
                     // cause any unintended side effect to the page. We will re-evaluate after we gather more real world data on this.
                     let style = Constant.Empty as string;
-                    let adoptedStyleSheets: CSSStyleSheet[] = "adoptedStyleSheets" in shadowRoot ? shadowRoot["adoptedStyleSheets"] : [];
-                    for (let styleSheet of adoptedStyleSheets) { style += getCssRules(styleSheet); }
                     let fragmentData = { tag: Constant.ShadowDomTag, attributes: { style } };
                     dom[call](node, shadowRoot.host, fragmentData, source);
                 } else {
@@ -66,6 +67,7 @@ export default function (node: Node, source: Source): Node {
                     // the same way we observe real shadow DOM nodes (encapsulation provided by the browser).
                     dom[call](node, shadowRoot.host, { tag: Constant.PolyfillShadowDomTag, attributes: {} }, source);
                 }
+                checkDocumentStyles(node as Document);
             }
             break;
         case Node.TEXT_NODE:
@@ -206,7 +208,7 @@ function getStyleValue(style: HTMLStyleElement): string {
     return value;
 }
 
-function getCssRules(sheet: CSSStyleSheet): string {
+export function getCssRules(sheet: CSSStyleSheet): string {
     let value = Constant.Empty as string;
     let cssRules = null;
     // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain

@@ -1,6 +1,7 @@
 import { Data, Layout } from "clarity-js";
 import type { Layout as DecodedLayout } from "clarity-decode";
 import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
+import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 
 export class LayoutHelper {
@@ -12,8 +13,11 @@ export class LayoutHelper {
     events = {};
     hashMapAlpha = {};
     hashMapBeta = {};
+    adoptedStyleSheets = {};
     animations = {};
     state: PlaybackState = null;
+    stylesToApply: { [id: string] : string[] } = {};
+    styleSheetMap: { [id: number] : string[]; } = {};
 
     constructor(state: PlaybackState) {
         this.state = state;
@@ -105,6 +109,80 @@ export class LayoutHelper {
         }
     }
 
+    public styleChange = (event: DecodedLayout.StyleSheetEvent): void => {
+        switch (event.event) {
+            case Data.Event.StyleSheetUpdate:
+                let styleSheet: CSSStyleSheet = this.adoptedStyleSheets[event.data.id];
+                if (!styleSheet && event.data.operation !== StyleSheetOperation.Create) {
+                    return;
+                }
+                switch (event.data.operation) {
+                    case StyleSheetOperation.Create:
+                        this.adoptedStyleSheets[event.data.id] = new CSSStyleSheet();
+                        break;
+                    case StyleSheetOperation.Replace:
+                        styleSheet.replace(event.data.cssRules);
+                        // Just changing the sheet isn't sufficient as we cannot rely on adoptedStyleSheets in visualiation
+                        // when an underlying style sheet changes, we reset the styles on the element
+                        for (var documentIdAsString of Object.keys(this.styleSheetMap)) {
+                            var documentId = parseInt(documentIdAsString, 10);
+                            if (this.styleSheetMap[documentId].indexOf(event.data.id as string) > -1) {
+                                this.setDocumentStyles(documentId, this.styleSheetMap[documentId]);
+                            }
+                        }
+                        break;
+                    case StyleSheetOperation.ReplaceSync:
+                        styleSheet.replaceSync(event.data.cssRules);
+                        break;
+                }
+                break;
+            case Data.Event.StyleSheetAdoption:
+                this.setDocumentStyles(event.data.id as number, event.data.newIds);
+                break;
+        }
+    }
+
+    private setDocumentStyles(documentId: number, styleIds: string[]) {
+        let targetDocument = documentId === -1 ? this.state.window.document : this.element(documentId) as Document;
+
+        if (!targetDocument) {
+            if (!this.stylesToApply[documentId]) {
+                this.stylesToApply[documentId] = [];
+            }
+            this.stylesToApply[documentId] = styleIds;
+            return;
+        }
+
+        this.styleSheetMap[documentId] = styleIds;
+        let newSheets = styleIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
+
+        let styleNode = targetDocument.getElementById(Constant.AdoptedStyleSheet) ?? this.state.window.document.createElement("style");
+        styleNode.id = Constant.AdoptedStyleSheet;
+        let ruleLengths = [];
+        styleNode.textContent = newSheets.map(x => { let newRule = this.getCssRules(x); ruleLengths.push(newRule.length); return newRule; }).join('\n');
+        styleNode.setAttribute('data-parentid', `${documentId}`);
+        if (targetDocument.head) {
+            targetDocument.head.appendChild(styleNode);
+        } else {
+           targetDocument.appendChild(styleNode);
+        }
+    }
+
+    private getCssRules(sheet: CSSStyleSheet): string {
+        let value = Constant.Empty as string;
+        let cssRules = null;
+        try { cssRules = sheet ? sheet.cssRules : []; } catch (e) {
+            if (e && e.name !== "SecurityError") { throw e; }
+        }
+    
+        if (cssRules !== null) {
+            for (let i = 0; i < cssRules.length; i++) {
+                value += cssRules[i].cssText;
+            }
+        }
+        return value;
+    }
+
     public exists = (hash: string): boolean => {
         if (hash) {
             let match = this.get(hash);
@@ -153,20 +231,9 @@ export class LayoutHelper {
                     if (parent) {
                         let shadowRoot = this.element(node.id);
                         shadowRoot = shadowRoot ? shadowRoot : (parent as HTMLElement).attachShadow({ mode: "open" });
-                        if ("style" in node.attributes) {
-                            let shadowStyle = doc.createElement("style");
-                            // Support for adoptedStyleSheet is limited and not available in all browsers.
-                            // To ensure that we can replay session in any browser, we turn adoptedStyleSheets from recording
-                            // into classic style tags at the playback time.
-                            if (shadowRoot.firstChild && (shadowRoot.firstChild as HTMLElement).id === Constant.AdoptedStyleSheet) {
-                                shadowStyle = shadowRoot.firstChild as HTMLStyleElement;
-                            }
-                            shadowStyle.id = Constant.AdoptedStyleSheet;
-                            shadowStyle.textContent = node.attributes["style"];
-                            shadowRoot.appendChild(shadowStyle);
-                        }
                         this.nodes[node.id] = shadowRoot;
                         this.addToHashMap(node, shadowRoot);
+                        this.addStyles(node.id);
                     }
                     break;
                 case Layout.Constant.TextTag:
@@ -307,11 +374,21 @@ export class LayoutHelper {
         if (resolve) { resolve(); }
     }
 
+    private addStyles = (id: number): void => {
+        let adoptedStylesToAdd = this.stylesToApply[id];
+        if (adoptedStylesToAdd && adoptedStylesToAdd.length > 0) {
+            this.setDocumentStyles(id, this.stylesToApply[id]);
+            delete this.stylesToApply[id];
+        }
+    }
+
     private createElement = (doc: Document, tag: string): HTMLElement => {
         if (tag && tag.indexOf(Layout.Constant.SvgPrefix) === 0) {
             return doc.createElementNS(Layout.Constant.SvgNamespace as string, tag.substr(Layout.Constant.SvgPrefix.length)) as HTMLElement;
         }
-        try { return doc.createElement(tag); } catch (ex) {
+        try { 
+            return doc.createElement(tag);
+        } catch (ex) {
             // We log the warning on non-standard markup but continue with the visualization
             console.warn(`Exception encountered while creating element ${tag}: ${ex}`);
             return doc.createElement(Constant.UnknownTag);

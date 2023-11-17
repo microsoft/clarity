@@ -44,6 +44,20 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                 regionData.push(region);
             }
             return { time, event, data: regionData };
+        case Data.Event.StyleSheetAdoption:
+            let styleSheetAdoptionData: Layout.StyleSheetData = {
+                id: tokens[2] as number,
+                operation: tokens[3] as number,
+                newIds: tokens[4] as string[]
+            };
+            return { time, event, data: styleSheetAdoptionData };
+        case Data.Event.StyleSheetUpdate:
+            let styleSheetUpdateData: Layout.StyleSheetData = {
+                id: tokens[2] as string,
+                operation: tokens[3] as number,
+                cssRules: tokens[4] as string
+            }
+            return { time, event, data: styleSheetUpdateData };
         case Data.Event.Animation:
             let animationData: Layout.AnimationData = {
                 id: tokens[2] as string,

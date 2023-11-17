@@ -9,6 +9,7 @@ import * as doc from "@src/layout/document";
 import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
+import { checkDocumentStyles } from "@src/layout/style";
 
 export function start(): void {
     task.schedule(discover, Priority.High).then((): void => {
@@ -23,6 +24,7 @@ async function discover(): Promise<void> {
     let timer: Timer = { id: id(), cost: Metric.LayoutCost };
     task.start(timer);
     await traverse(document, timer, Source.Discover);
+    checkDocumentStyles(document);
     await encode(Event.Discover, timer, ts);
     task.stop(timer);
 }

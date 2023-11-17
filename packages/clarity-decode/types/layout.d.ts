@@ -4,9 +4,10 @@ import { PartialEvent } from "./core";
 export interface RegionEvent extends PartialEvent { data: Layout.RegionData[]; }
 export interface DocumentEvent extends PartialEvent { data: Layout.DocumentData; }
 export interface DomEvent extends PartialEvent { data: DomData[]; }
+export interface StyleSheetEvent extends PartialEvent { data: Layout.StyleSheetData }
 export interface AnimationEvent extends PartialEvent { data: Layout.AnimationData; }
 export interface LayoutEvent extends PartialEvent {
-    data: Layout.RegionData[] | Layout.DocumentData | DomData[] | Layout.AnimationData;
+    data: Layout.RegionData[] | Layout.DocumentData | DomData[] | Layout.StyleSheetData | Layout.AnimationData;
 }
 
 /* Redeclare enums */
