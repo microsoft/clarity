@@ -12,7 +12,7 @@ import * as fraud from "@src/diagnostic/fraud";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
 import * as region from "@src/layout/region";
-import * as adoptedStyles from "@src/layout/adoptedStyles";
+import * as style from "@src/layout/style";
 import * as animation from "@src/layout/animation";
 
 export default async function (type: Event, timer: Timer = null, ts: number = null): Promise<void> {
@@ -38,24 +38,24 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             region.reset();
             break;
         case Event.StyleSheetAdoption:
-            for (let entry of adoptedStyles.state) {
+            for (let entry of style.state) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.newIds);
                 queue(tokens);
             }
-            adoptedStyles.reset();
+            style.reset();
             break;
         case Event.StyleSheetUpdate:
-            for (let entry of adoptedStyles.state) {
+            for (let entry of style.state) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.cssRules);
                 queue(tokens);
             }
-            adoptedStyles.reset();
+            style.reset();
         case Event.Animation:
             for (let entry of animation.state) {
                 tokens = [entry.time, entry.event];

@@ -48,7 +48,7 @@ export default [
   },
   {
     input: "src/global.ts",
-    output: [ { file: pkg.special, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.extended, format: "iife", exports: "named" } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);

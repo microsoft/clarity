@@ -7,7 +7,7 @@
   "main": "build/clarity.js",
   "module": "build/clarity.module.js",
   "unpkg": "build/clarity.min.js",
-  "special": "build/clarity.special.js",
+  "extended": "build/clarity.extended.js",
   "insight": "build/clarity.insight.js",
   "performance": "build/clarity.performance.js",
   "types": "types/index.d.ts",
