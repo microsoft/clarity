@@ -107,12 +107,14 @@ export function id(): string {
   return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
 }
 
-export function consent(status: boolean = true): void {
+export function consent(status: boolean = true, isNewSessionRequired: boolean = true): void {
   if (!status) {
     setCookie(Constant.SessionKey, Constant.Empty, 0);
     setCookie(Constant.CookieKey, Constant.Empty, 0);
     clarity.stop();
-    window.setTimeout(clarity.start, Setting.RestartDelay);
+    if (isNewSessionRequired)  {
+      window.setTimeout(clarity.start, Setting.RestartDelay);
+    }
     return;
   }
 
