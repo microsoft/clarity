@@ -142,7 +142,8 @@ export const enum Dimension {
     DevicePixelRatio = 26,
     ConnectionType = 27,
     Dob = 28,
-    CookieVersion = 29
+    CookieVersion = 29,
+    DeviceFamily = 30
 }
 
 export const enum Check {
