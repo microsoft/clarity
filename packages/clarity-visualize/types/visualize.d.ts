@@ -26,7 +26,7 @@ export class Visualizer {
     scrollmap: (data?: ScrollMapInfo[], averageFold?: number, addMarkers?: boolean) => void;
     merge: (decoded: Data.DecodedPayload[]) => MergedPayload;
     render: (events: Data.DecodedEvent[]) =>  Promise<void>;
-    setup: (target: Window, options: Options) => Visualizer;
+    setup: (target: Window, options: Options) => Promise<Visualizer>;
     time: () => number;
     get: (hash: string) => HTMLElement;
 }

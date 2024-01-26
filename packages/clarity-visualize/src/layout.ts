@@ -99,10 +99,7 @@ export class LayoutHelper {
                 // Render all DOM events to reconstruct the page
                 this.markup(event, useproxy);
                 // Wait on all stylesheets and fonts to finish loading
-                await Promise.all([
-                    Promise.all(this.stylesheets),
-                    Promise.all(this.fonts)
-                ]);
+                await Promise.all(this.stylesheets.concat(this.fonts));
                 // Toggle back the visibility of target window
                 doc.documentElement.style.visibility = Constant.Visible;
             }
