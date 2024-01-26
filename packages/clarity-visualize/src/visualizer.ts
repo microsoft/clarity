@@ -34,9 +34,7 @@ export class Visualizer implements VisualizerType {
             try {
                 // Flatten the payload and parse all events out of them, sorted by time
                 let merged = this.merge(decoded);
-
-                this.setup(target, { version: decoded[0].envelope.version, dom: merged.dom, useproxy });
-
+                await this.setup(target, { version: decoded[0].envelope.version, dom: merged.dom, useproxy });
                 // Render all mutations on top of the initial markup
                 while (merged.events.length > 0 && this.layout.exists(hash) === false) {
                     let entry = merged.events.shift();
@@ -117,7 +115,7 @@ export class Visualizer implements VisualizerType {
         return merged;
     }
 
-    public setup = (target: Window, options: Options): Visualizer => {
+    public setup = async (target: Window, options: Options): Promise<Visualizer> => {
         this.reset();
         // Infer options
         options.canvas = "canvas" in options ? options.canvas : true;
@@ -134,7 +132,9 @@ export class Visualizer implements VisualizerType {
         this.interaction = new InteractionHelper(this.state, this.layout);
 
         // If discover event was passed, render it now
-        if (options.dom) { this.layout.dom(options.dom, options.useproxy); }
+        if (options.dom) { 
+            await this.layout.dom(options.dom, options.useproxy);
+        }
 
         return this;
     }
