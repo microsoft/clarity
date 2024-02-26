@@ -108,6 +108,11 @@ export default function (node: Node, source: Source): Node {
                     }
                     break;
                 case "NOSCRIPT":
+                    // keeping the noscript tag but removing all of its contents. Some HTML markup relies on having these tags
+                    // to maintain parity with the original css view, but we don't want to execute any noscript in Clarity
+                    element.innerHTML = '';
+                    let noscriptData = { tag, attributes: {} };
+                    dom[call](node, parent, noscriptData, source);
                     break;
                 case "META":
                     var key = (Constant.Property in attributes ?
