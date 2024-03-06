@@ -222,7 +222,7 @@ export interface MutationHistory {
 
 export interface RegionQueue {
     node: Node;
-    data: RegionData;
+    state: RegionState;
 }
 
 export interface RegionState {
