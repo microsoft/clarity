@@ -78,7 +78,7 @@ export default function (node: Node, source: Source): Node {
             // Also, we do not track text nodes for STYLE tags
             // The only exception is when we receive a mutation to remove the text node, in that case
             // parent will be null, but we can still process the node by checking it's an update call.
-            if (call === "update" || (parent && dom.has(parent) && parent.tagName !== "STYLE")) {
+            if (call === "update" || (parent && dom.has(parent) && parent.tagName !== "STYLE" && parent.tagName !== "NOSCRIPT")) {
                 let textData = { tag: Constant.TextTag, value: node.nodeValue };
                 dom[call](node, parent, textData, source);
             }
@@ -108,10 +108,9 @@ export default function (node: Node, source: Source): Node {
                     }
                     break;
                 case "NOSCRIPT":
-                    // keeping the noscript tag but removing all of its contents. Some HTML markup relies on having these tags
+                    // keeping the noscript tag but ignoring its contents. Some HTML markup relies on having these tags
                     // to maintain parity with the original css view, but we don't want to execute any noscript in Clarity
-                    element.innerHTML = '';
-                    let noscriptData = { tag, attributes: {} };
+                    let noscriptData = { tag, attributes: {}, value: '' };
                     dom[call](node, parent, noscriptData, source);
                     break;
                 case "META":
