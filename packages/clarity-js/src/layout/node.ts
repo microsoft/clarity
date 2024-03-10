@@ -6,6 +6,8 @@ import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
+import { checkDocumentStyles } from "@src/layout/style";
+import { electron } from "@src/data/metadata";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
 const newlineRegex = /[\r\n]+/g;
@@ -41,6 +43,7 @@ export default function (node: Node, source: Source): Node {
             // We check for regions in the beginning when discovering document and
             // later whenever there are new additions or modifications to DOM (mutations)
             if (node === document) dom.parse(document);
+            checkDocumentStyles(node as Document);
             observe(node);
             break;
         case Node.DOCUMENT_FRAGMENT_NODE:
@@ -50,21 +53,21 @@ export default function (node: Node, source: Source): Node {
                 let type = typeof (shadowRoot.constructor);
                 if (type === Constant.Function && shadowRoot.constructor.toString().indexOf(Constant.NativeCode) >= 0) {
                     observe(shadowRoot);
+                    
                     // See: https://wicg.github.io/construct-stylesheets/ for more details on adoptedStyleSheets.
                     // At the moment, we are only able to capture "open" shadow DOM nodes. If they are closed, they are not accessible.
                     // In future we may decide to proxy "attachShadow" call to gain access, but at the moment, we don't want to
                     // cause any unintended side effect to the page. We will re-evaluate after we gather more real world data on this.
                     let style = Constant.Empty as string;
-                    let adoptedStyleSheets: CSSStyleSheet[] = "adoptedStyleSheets" in shadowRoot ? shadowRoot["adoptedStyleSheets"] : [];
-                    for (let styleSheet of adoptedStyleSheets) { style += getCssRules(styleSheet); }
-                    let fragementData = { tag: Constant.ShadowDomTag, attributes: { style } };
-                    dom[call](node, shadowRoot.host, fragementData, source);
+                    let fragmentData = { tag: Constant.ShadowDomTag, attributes: { style } };
+                    dom[call](node, shadowRoot.host, fragmentData, source);
                 } else {
                     // If the browser doesn't support shadow DOM natively, we detect that, and send appropriate tag back.
                     // The differentiation is important because we don't have to observe pollyfill shadow DOM nodes,
                     // the same way we observe real shadow DOM nodes (encapsulation provided by the browser).
                     dom[call](node, shadowRoot.host, { tag: Constant.PolyfillShadowDomTag, attributes: {} }, source);
                 }
+                checkDocumentStyles(node as Document);
             }
             break;
         case Node.TEXT_NODE:
@@ -75,7 +78,7 @@ export default function (node: Node, source: Source): Node {
             // Also, we do not track text nodes for STYLE tags
             // The only exception is when we receive a mutation to remove the text node, in that case
             // parent will be null, but we can still process the node by checking it's an update call.
-            if (call === "update" || (parent && dom.has(parent) && parent.tagName !== "STYLE")) {
+            if (call === "update" || (parent && dom.has(parent) && parent.tagName !== "STYLE" && parent.tagName !== "NOSCRIPT")) {
                 let textData = { tag: Constant.TextTag, value: node.nodeValue };
                 dom[call](node, parent, textData, source);
             }
@@ -105,6 +108,10 @@ export default function (node: Node, source: Source): Node {
                     }
                     break;
                 case "NOSCRIPT":
+                    // keeping the noscript tag but ignoring its contents. Some HTML markup relies on having these tags
+                    // to maintain parity with the original css view, but we don't want to execute any noscript in Clarity
+                    let noscriptData = { tag, attributes: {}, value: '' };
+                    dom[call](node, parent, noscriptData, source);
                     break;
                 case "META":
                     var key = (Constant.Property in attributes ?
@@ -157,6 +164,24 @@ export default function (node: Node, source: Source): Node {
                     }
                     dom[call](node, parent, frameData, source);
                     break;
+                case "LINK":
+                    // electron stylesheets reference the local file system - translating those
+                    // to inline styles so playback can work
+                    if (electron && attributes['rel'] === Constant.StyleSheet) {
+                        for (var styleSheetIndex in Object.keys(document.styleSheets)) {
+                            var currentStyleSheet = document.styleSheets[styleSheetIndex];
+                            if (currentStyleSheet.ownerNode == element) {
+                                let syntheticStyleData = { tag: "STYLE", attributes, value: getCssRules(currentStyleSheet) };
+                                dom[call](node, parent, syntheticStyleData, source);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    // for links that aren't electron style sheets we can process them normally
+                    let linkData = { tag, attributes };
+                    dom[call](node, parent, linkData, source);
+                    break;
                 default:
                     let data = { tag, attributes };
                     if (element.shadowRoot) { child = element.shadowRoot; }
@@ -187,7 +212,7 @@ function getStyleValue(style: HTMLStyleElement): string {
     return value;
 }
 
-function getCssRules(sheet: CSSStyleSheet): string {
+export function getCssRules(sheet: CSSStyleSheet): string {
     let value = Constant.Empty as string;
     let cssRules = null;
     // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain

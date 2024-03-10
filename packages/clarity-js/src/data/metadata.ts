@@ -1,5 +1,6 @@
 import { Time } from "@clarity-types/core";
 import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting } from "@clarity-types/data";
+import * as clarity from "@src/clarity";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -10,12 +11,14 @@ import { set } from "@src/data/variable";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
+export let electron = BooleanFlag.False;
 let rootDomain = null;
 
 export function start(): void {
   rootDomain = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const title = document && document.title ? document.title : Constant.Empty;
+  electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
 
   // Populate ids for this page
   let s = session();
@@ -26,20 +29,23 @@ export function start(): void {
   // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
   config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;
-  
+
   // Log page metadata as dimensions
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);
-  dimension.log(Dimension.Url, scrub.url(location.href));
+  dimension.log(Dimension.Url, scrub.url(location.href, !!electron));
   dimension.log(Dimension.Referrer, document.referrer);
   dimension.log(Dimension.TabId, tab());
   dimension.log(Dimension.PageLanguage, document.documentElement.lang);
   dimension.log(Dimension.DocumentDirection, document.dir);
   dimension.log(Dimension.DevicePixelRatio, `${window.devicePixelRatio}`);
-  
+  dimension.log(Dimension.Dob, u.dob.toString());
+  dimension.log(Dimension.CookieVersion, u.version.toString());
+
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);
-  metric.max(Metric.Playback, BooleanFlag.False); 
+  metric.max(Metric.Playback, BooleanFlag.False);
+  metric.max(Metric.Electron, electron);
 
   // Capture navigator specific dimensions
   if (navigator) {
@@ -48,7 +54,7 @@ export function start(): void {
     metric.max(Metric.MaxTouchPoints, navigator.maxTouchPoints);
     metric.max(Metric.DeviceMemory, Math.round((<any>navigator).deviceMemory));
     userAgentData();
-  } 
+  }
 
   if (screen) {
     metric.max(Metric.ScreenWidth, Math.round(screen.width));
@@ -69,12 +75,12 @@ export function start(): void {
 function userAgentData(): void {
   let uaData = navigator["userAgentData"];
   if (uaData && uaData.getHighEntropyValues) {
-    uaData.getHighEntropyValues(["model","platform","platformVersion","uaFullVersion"]).then(ua => { 
-      dimension.log(Dimension.Platform, ua.platform); 
-      dimension.log(Dimension.PlatformVersion, ua.platformVersion); 
+    uaData.getHighEntropyValues(["model", "platform", "platformVersion", "uaFullVersion"]).then(ua => {
+      dimension.log(Dimension.Platform, ua.platform);
+      dimension.log(Dimension.PlatformVersion, ua.platformVersion);
       ua.brands?.forEach(brand => { dimension.log(Dimension.Brand, brand.name + Constant.Tilde + brand.version); });
-      dimension.log(Dimension.Model, ua.model); 
-      metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False); 
+      dimension.log(Dimension.Model, ua.model);
+      metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False);
     });
   } else { dimension.log(Dimension.Platform, navigator.platform); }
 }
@@ -93,7 +99,7 @@ export function metadata(cb: MetadataCallback, wait: boolean = true): void {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
     cb(data, !config.lean);
   } else {
-    callbacks.push({callback: cb, wait: wait });
+    callbacks.push({ callback: cb, wait: wait });
   }
 }
 
@@ -101,7 +107,15 @@ export function id(): string {
   return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
 }
 
-export function consent(): void {
+export function consent(status: boolean = true): void {
+  if (!status) {
+    setCookie(Constant.SessionKey, Constant.Empty, 0);
+    setCookie(Constant.CookieKey, Constant.Empty, 0);
+    clarity.stop();
+    window.setTimeout(clarity.start, Setting.RestartDelay);
+    return;
+  }
+
   if (core.active()) {
     config.track = true;
     track(user(), BooleanFlag.True);
@@ -148,14 +162,18 @@ function track(u: User, consent: BooleanFlag = null): void {
   consent = consent === null ? u.consent : consent;
   // Convert time precision into days to reduce number of bytes we have to write in a cookie
   // E.g. Math.ceil(1628735962643 / (24*60*60*1000)) => 18852 (days) => ejo in base36 (13 bytes => 3 bytes)
-  let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day))/Time.Day);
+  let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day)) / Time.Day);
+  // If DOB is not set in the user object, use the date set in the config as a DOB
+  let dob = u.dob === 0 ? (config.dob === null ? 0 : config.dob) : u.dob;
+
   // To avoid cookie churn, write user id cookie only once every day
-  if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent) {
-    setCookie(Constant.CookieKey, [data.userId, Setting.CookieVersion, end.toString(36), consent].join(Constant.Pipe), Setting.Expire);
+  if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent || u.dob !== dob) {
+    let cookieParts = [data.userId, Setting.CookieVersion, end.toString(36), consent, dob];
+    setCookie(Constant.CookieKey, cookieParts.join(Constant.Pipe), Setting.Expire);
   }
 }
 
-function shortid(): string {
+export function shortid(): string {
   let id = Math.floor(Math.random() * Math.pow(2, 32));
   if (window && window.crypto && window.crypto.getRandomValues && Uint32Array) {
     id = window.crypto.getRandomValues(new Uint32Array(1))[0];
@@ -185,9 +203,9 @@ function num(string: string, base: number = 10): number {
 }
 
 function user(): User {
-  let output: User = { id: shortid(), expiry: null, consent: BooleanFlag.False };
+  let output: User = { id: shortid(), version: 0, expiry: null, consent: BooleanFlag.False, dob: 0 };
   let cookie = getCookie(Constant.CookieKey);
-  if(cookie && cookie.length > 0) {
+  if (cookie && cookie.length > 0) {
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
     let parts = cookie.split(Constant.Pipe);
     // For backward compatibility introduced in v0.6.18; following code can be removed with future iterations
@@ -205,9 +223,11 @@ function user(): User {
     }
     // End code for backward compatibility
     // Read version information and timestamp from cookie, if available
+    if (parts.length > 1) { output.version = num(parts[1]); }
     if (parts.length > 2) { output.expiry = num(parts[2], 36); }
     // Check if we have explicit consent to track this user
     if (parts.length > 3 && num(parts[3]) === 1) { output.consent = BooleanFlag.True; }
+    if (parts.length > 4 && num(parts[1]) > 1) { output.dob = num(parts[4]); }
     // Set track configuration to true for this user if we have explicit consent, regardless of project setting
     config.track = config.track || output.consent === BooleanFlag.True;
     // Get user id from cookie only if we tracking is enabled, otherwise fallback to a random id
@@ -223,7 +243,19 @@ function getCookie(key: string): string {
       for (let i = 0; i < cookies.length; i++) {
         let pair: string[] = cookies[i].split(Constant.Equals);
         if (pair.length > 1 && pair[0] && pair[0].trim() === key) {
-          return pair[1];
+          // Some browsers automatically url encode cookie values if they are not url encoded.
+          // We therefore encode and decode cookie values ourselves.
+          // For backwards compatability we need to consider 3 cases:
+          // * Cookie was previously not encoded by Clarity and browser did not encode it
+          // * Cookie was previously not encoded by Clarity and browser encoded it once or more
+          // * Cookie was previously encoded by Clarity and browser did not encode it
+          let [isEncoded, decodedValue] = decodeCookieValue(pair[1]);
+          
+          while (isEncoded) {
+            [isEncoded, decodedValue] = decodeCookieValue(decodedValue);
+          }
+        
+          return decodedValue;
         }
       }
     }
@@ -231,12 +263,31 @@ function getCookie(key: string): string {
   return null;
 }
 
+function decodeCookieValue(value: string): [boolean, string] {
+  try {
+    let decodedValue = decodeURIComponent(value);
+    return [decodedValue != value, decodedValue];
+  }
+  catch {
+  }
+
+  return [false, value];
+}
+
+function encodeCookieValue(value: string): string {
+  return encodeURIComponent(value);
+}
+
 function setCookie(key: string, value: string, time: number): void {
-  if (config.track && ((navigator && navigator.cookieEnabled) ||  supported(document, Constant.Cookie))) {
+  if (config.track && ((navigator && navigator.cookieEnabled) || supported(document, Constant.Cookie))) {
+    // Some browsers automatically url encode cookie values if they are not url encoded.
+    // We therefore encode and decode cookie values ourselves.
+    let encodedValue = encodeCookieValue(value);
+
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + time);
     let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
-    let cookie = `${key}=${value}${Constant.Semicolon}${expires}${Constant.Path}`;
+    let cookie = `${key}=${encodedValue}${Constant.Semicolon}${expires}${Constant.Path}`;
     try {
       // Attempt to get the root domain only once and fall back to writing cookie on the current domain.
       if (rootDomain === null) {
@@ -246,7 +297,7 @@ function setCookie(key: string, value: string, time: number): void {
           rootDomain = `.${hostname[i]}${rootDomain ? rootDomain : Constant.Empty}`;
           // We do not wish to attempt writing a cookie on the absolute last part of the domain, e.g. .com or .net.
           // So we start attempting after second-last part, e.g. .domain.com (PASS) or .co.uk (FAIL)
-          if (i < hostname.length - 1) { 
+          if (i < hostname.length - 1) {
             // Write the cookie on the current computed top level domain
             document.cookie = `${cookie}${Constant.Semicolon}${Constant.Domain}${rootDomain}`;
             // Once written, check if the cookie exists and its value matches exactly with what we intended to set

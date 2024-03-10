@@ -1,5 +1,5 @@
 import { Time } from "./core";
-import { BooleanFlag, Event, Target } from "./data";
+import { Event, Target } from "./data";
 
 /* Enum */
 

@@ -26,14 +26,14 @@ export class Visualizer {
     scrollmap: (data?: ScrollMapInfo[], averageFold?: number, addMarkers?: boolean) => void;
     merge: (decoded: Data.DecodedPayload[]) => MergedPayload;
     render: (events: Data.DecodedEvent[]) =>  Promise<void>;
-    setup: (target: Window, options: Options) => Visualizer;
+    setup: (target: Window, options: Options) => Promise<Visualizer>;
     time: () => number;
     get: (hash: string) => HTMLElement;
 }
 
 export type ResizeHandler  = (width: number, height: number) => void;
 export type ErrorLogger = (error: Error) => void;
-export type LinkHandler = (link: string) => string;
+export type LinkHandler = (link: string, id: string, linkType: string) => string;
 
 export interface MergedPayload {
     timestamp: number;
@@ -173,7 +173,8 @@ export const enum Constant {
     FormTag = "form",
     InputTag = "input",
     AutoComplete = "autocomplete",
-    NewPassword = "new-password"
+    NewPassword = "new-password",
+    StyleSheet = "stylesheet"
 }
 
 export const enum Setting {

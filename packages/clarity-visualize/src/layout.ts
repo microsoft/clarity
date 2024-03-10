@@ -1,6 +1,8 @@
 import { Data, Layout } from "clarity-js";
 import type { Layout as DecodedLayout } from "clarity-decode";
 import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
+import { StyleSheetOperation } from "clarity-js/types/layout";
+import { AnimationOperation } from "clarity-js/types/layout";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
@@ -11,7 +13,11 @@ export class LayoutHelper {
     events = {};
     hashMapAlpha = {};
     hashMapBeta = {};
+    adoptedStyleSheets = {};
+    animations = {};
     state: PlaybackState = null;
+    stylesToApply: { [id: string] : string[] } = {};
+    styleSheetMap: { [id: number] : string[]; } = {};
 
     constructor(state: PlaybackState) {
         this.state = state;
@@ -53,6 +59,36 @@ export class LayoutHelper {
         return nodeId !== null && nodeId > 0 && nodeId in this.nodes ? this.nodes[nodeId] : null;
     }
 
+    public animateChange = (event: DecodedLayout.AnimationEvent): void => {
+        let animation: Animation = this.animations[event.data.id];
+        if (!animation && event.data.operation !== AnimationOperation.Create) {
+            // We didn't have a reference to this animation. This shouldn't happen, but returning here
+            // to ensure we don't throw any errors.
+            return;
+        }
+        switch(event.data.operation) {
+            case AnimationOperation.Create:
+                let target = this.element(event.data.targetId);
+                // only create the animation if we successfully found the target, an animation without a target will throw an error
+                if (target) {
+                    this.animations[event.data.id] = (target as HTMLElement).animate(JSON.parse(event.data.keyFrames), JSON.parse(event.data.timing));
+                }
+                break;
+            case AnimationOperation.Cancel:
+                animation.cancel();
+                break;
+            case AnimationOperation.Finish:
+                animation.finish();
+                break;
+            case AnimationOperation.Pause:
+                animation.pause();
+                break;
+            case AnimationOperation.Play:
+                animation.play();
+                break;
+        }
+    }
+
     public dom = async (event: DecodedLayout.DomEvent, useproxy?: LinkHandler): Promise<void> => {
         if (event) {
             // When setting up rendering for the first time, start off with hidden target window
@@ -61,11 +97,87 @@ export class LayoutHelper {
             if (doc && doc.documentElement) {
                 doc.documentElement.style.visibility = Constant.Hidden;
                 // Render all DOM events to reconstruct the page
-                await this.markup(event, useproxy);
+                this.markup(event, useproxy);
+                // Wait on all stylesheets and fonts to finish loading
+                await Promise.all(this.stylesheets.concat(this.fonts));
                 // Toggle back the visibility of target window
                 doc.documentElement.style.visibility = Constant.Visible;
             }
         }
+    }
+
+    public styleChange = (event: DecodedLayout.StyleSheetEvent): void => {
+        switch (event.event) {
+            case Data.Event.StyleSheetUpdate:
+                let styleSheet: CSSStyleSheet = this.adoptedStyleSheets[event.data.id];
+                if (!styleSheet && event.data.operation !== StyleSheetOperation.Create) {
+                    return;
+                }
+                switch (event.data.operation) {
+                    case StyleSheetOperation.Create:
+                        this.adoptedStyleSheets[event.data.id] = new CSSStyleSheet();
+                        break;
+                    case StyleSheetOperation.Replace:
+                        styleSheet.replace(event.data.cssRules);
+                        // Just changing the sheet isn't sufficient as we cannot rely on adoptedStyleSheets in visualiation
+                        // when an underlying style sheet changes, we reset the styles on the element
+                        for (var documentIdAsString of Object.keys(this.styleSheetMap)) {
+                            var documentId = parseInt(documentIdAsString, 10);
+                            if (this.styleSheetMap[documentId].indexOf(event.data.id as string) > -1) {
+                                this.setDocumentStyles(documentId, this.styleSheetMap[documentId]);
+                            }
+                        }
+                        break;
+                    case StyleSheetOperation.ReplaceSync:
+                        styleSheet.replaceSync(event.data.cssRules);
+                        break;
+                }
+                break;
+            case Data.Event.StyleSheetAdoption:
+                this.setDocumentStyles(event.data.id as number, event.data.newIds);
+                break;
+        }
+    }
+
+    private setDocumentStyles(documentId: number, styleIds: string[]) {
+        let targetDocument = documentId === -1 ? this.state.window.document : this.element(documentId) as Document;
+
+        if (!targetDocument) {
+            if (!this.stylesToApply[documentId]) {
+                this.stylesToApply[documentId] = [];
+            }
+            this.stylesToApply[documentId] = styleIds;
+            return;
+        }
+
+        this.styleSheetMap[documentId] = styleIds;
+        let newSheets = styleIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
+
+        let styleNode = targetDocument.getElementById(Constant.AdoptedStyleSheet) ?? this.state.window.document.createElement("style");
+        styleNode.id = Constant.AdoptedStyleSheet;
+        let ruleLengths = [];
+        styleNode.textContent = newSheets.map(x => { let newRule = this.getCssRules(x); ruleLengths.push(newRule.length); return newRule; }).join('\n');
+        styleNode.setAttribute('data-parentid', `${documentId}`);
+        if (targetDocument.head) {
+            targetDocument.head.appendChild(styleNode);
+        } else {
+           targetDocument.appendChild(styleNode);
+        }
+    }
+
+    private getCssRules(sheet: CSSStyleSheet): string {
+        let value = Constant.Empty as string;
+        let cssRules = null;
+        try { cssRules = sheet ? sheet.cssRules : []; } catch (e) {
+            if (e && e.name !== "SecurityError") { throw e; }
+        }
+    
+        if (cssRules !== null) {
+            for (let i = 0; i < cssRules.length; i++) {
+                value += cssRules[i].cssText;
+            }
+        }
+        return value;
     }
 
     public exists = (hash: string): boolean => {
@@ -79,7 +191,7 @@ export class LayoutHelper {
         return false;
     }
 
-    public markup = async (event: DecodedLayout.DomEvent, useproxy?: LinkHandler): Promise<void> => {
+    public markup = (event: DecodedLayout.DomEvent, useproxy?: LinkHandler): void => {
         let data = event.data;
         let type = event.event;
         let doc = this.state.window.document;
@@ -116,20 +228,9 @@ export class LayoutHelper {
                     if (parent) {
                         let shadowRoot = this.element(node.id);
                         shadowRoot = shadowRoot ? shadowRoot : (parent as HTMLElement).attachShadow({ mode: "open" });
-                        if ("style" in node.attributes) {
-                            let shadowStyle = doc.createElement("style");
-                            // Support for adoptedStyleSheet is limited and not available in all browsers.
-                            // To ensure that we can replay session in any browser, we turn adoptedStyleSheets from recording
-                            // into classic style tags at the playback time.
-                            if (shadowRoot.firstChild && (shadowRoot.firstChild as HTMLElement).id === Constant.AdoptedStyleSheet) {
-                                shadowStyle = shadowRoot.firstChild as HTMLStyleElement;
-                            }
-                            shadowStyle.id = Constant.AdoptedStyleSheet;
-                            shadowStyle.textContent = node.attributes["style"];
-                            shadowRoot.appendChild(shadowStyle);
-                        }
                         this.nodes[node.id] = shadowRoot;
                         this.addToHashMap(node, shadowRoot);
+                        this.addStyles(node.id);
                     }
                     break;
                 case Layout.Constant.TextTag:
@@ -187,7 +288,7 @@ export class LayoutHelper {
                     if (!node.attributes) { node.attributes = {}; }
                     this.setAttributes(linkElement as HTMLElement, node);
                     if ("rel" in node.attributes) {
-                        if (node.attributes["rel"] === "stylesheet") {
+                        if (node.attributes["rel"] === Constant.StyleSheet) {
                             this.stylesheets.push(new Promise((resolve: () => void): void => {
                                 const proxy = useproxy ?? this.state.options.useproxy;
                                 if (proxy) {
@@ -195,7 +296,7 @@ export class LayoutHelper {
                                         linkElement.removeAttribute('integrity');
                                     }
 
-                                    linkElement.href = proxy(linkElement.href);
+                                    linkElement.href = proxy(linkElement.href, linkElement.id, Constant.StyleSheet);
                                 } 
                                 linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
                                 setTimeout(resolve, LayoutHelper.TIMEOUT);
@@ -204,13 +305,23 @@ export class LayoutHelper {
                             && (node.attributes?.as === "style" || node.attributes?.as === "font")) {
                                 this.fonts.push(new Promise((resolve: () => void): void => {
                                     const proxy = useproxy ?? this.state.options.useproxy;
-                                    linkElement.href = proxy ? proxy(linkElement.href) : linkElement.href;
+                                    linkElement.href = proxy ? proxy(linkElement.href, linkElement.id, node.attributes.as) : linkElement.href;
                                     linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
                                     setTimeout(resolve, LayoutHelper.TIMEOUT);
                                 }));
                             }
                     }
                     insert(node, parent, linkElement, pivot);
+                    break;
+                case Layout.Constant.ImageTag:
+                    let imgElement = this.element(node.id) as HTMLImageElement ?? this.createElement(doc, node.tag) as HTMLImageElement;
+                    const proxy = useproxy ?? this.state.options.useproxy;
+                    if (proxy && !!node.attributes?.src) {
+                        node.attributes.src = proxy(node.attributes.src, node.attributes.id, Layout.Constant.ImageTag);
+                    }
+                    this.setAttributes(imgElement as HTMLElement, node);
+                    this.resize(imgElement, node.width, node.height);
+                    insert(node, parent, imgElement, pivot);
                     break;
                 case "STYLE":
                     let styleElement = this.element(node.id) as HTMLStyleElement ?? doc.createElement(node.tag) as HTMLStyleElement;
@@ -237,10 +348,6 @@ export class LayoutHelper {
             // Track state for this node
             if (node.id) { this.events[node.id] = node; }
         }
-        // Wait on all stylesheets and fonts to finish loading
-        await Promise.all([this.stylesheets, this.fonts]);
-        this.stylesheets = [];
-        this.fonts = [];
     }
 
     private style = (node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void => {
@@ -264,11 +371,21 @@ export class LayoutHelper {
         if (resolve) { resolve(); }
     }
 
+    private addStyles = (id: number): void => {
+        let adoptedStylesToAdd = this.stylesToApply[id];
+        if (adoptedStylesToAdd && adoptedStylesToAdd.length > 0) {
+            this.setDocumentStyles(id, this.stylesToApply[id]);
+            delete this.stylesToApply[id];
+        }
+    }
+
     private createElement = (doc: Document, tag: string): HTMLElement => {
         if (tag && tag.indexOf(Layout.Constant.SvgPrefix) === 0) {
             return doc.createElementNS(Layout.Constant.SvgNamespace as string, tag.substr(Layout.Constant.SvgPrefix.length)) as HTMLElement;
         }
-        try { return doc.createElement(tag); } catch (ex) {
+        try { 
+            return doc.createElement(tag);
+        } catch (ex) {
             // We log the warning on non-standard markup but continue with the visualization
             console.warn(`Exception encountered while creating element ${tag}: ${ex}`);
             return doc.createElement(Constant.UnknownTag);

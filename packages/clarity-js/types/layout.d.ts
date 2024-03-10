@@ -2,6 +2,14 @@ import { Privacy } from "@clarity-types/core";
 
 /* Enum */
 
+export const enum AnimationOperation {
+    Create = 0,
+    Play = 1,
+    Pause = 2,
+    Cancel = 3,
+    Finish = 4
+}
+
 export const enum Source {
     Discover,
     ChildListAdd,
@@ -20,6 +28,21 @@ export const enum InteractionState {
     None = 16,
     Clicked = 20,
     Input = 30
+}
+
+export interface AnimationState {
+    time: number;
+    event: number;
+    data: AnimationData;
+}
+
+export interface AnimationData {
+    id: string;
+    operation: AnimationOperation;
+    keyFrames?: string;
+    timing?: string;
+    timeline?: string;
+    targetId?: number;
 }
 
 export const enum RegionVisibility {
@@ -98,7 +121,8 @@ export const enum Constant {
     ogType = "og:type",
     ogTitle = "og:title",
     SvgStyle = "svg:style",
-    ExcludeClassNames = "load,active,fixed,visible,focus,show,collaps,animat"
+    ExcludeClassNames = "load,active,fixed,visible,focus,show,collaps,animat",
+    StyleSheet = "stylesheet"
 }
 
 export const enum JsonLD { 
@@ -131,6 +155,13 @@ export const enum Setting {
     LookAhead = 33, // 33ms
     MutationSuspendThreshold = 10, // Stop listening for mutations after hitting a threshold count
     MutationActivePeriod = 3000 // Unit: milliseconds. Let mutations continue as normal during active periods of user interactions
+}
+
+export const enum StyleSheetOperation {
+    Create = 0,
+    Replace = 1,
+    ReplaceSync = 2,
+    SetAdoptedStyles = 3
 }
 
 /* Helper Interfaces */
@@ -191,12 +222,18 @@ export interface MutationHistory {
 
 export interface RegionQueue {
     node: Node;
-    data: RegionData;
+    state: RegionState;
 }
 
 export interface RegionState {
     time: number;
     data: RegionData;
+}
+
+export interface StyleSheetState {
+    time: number;
+    event: number,
+    data: StyleSheetData
 }
 
 /* Event Data */
@@ -218,4 +255,11 @@ export interface TargetMetadata {
     hash: [string, string];
     privacy: Privacy;
     node: Node;
+}
+
+export interface StyleSheetData {
+    id: number | string;
+    operation: StyleSheetOperation;
+    cssRules?: string;
+    newIds?: string[]
 }

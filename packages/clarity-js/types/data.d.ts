@@ -5,7 +5,7 @@ export type DecodedToken = (any | any[]);
 
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
 export interface MetadataCallbackOptions {
-    callback: MetadataCallback, 
+    callback: MetadataCallback,
     wait: boolean
 }
 export type SignalCallback = (data: ClaritySignal) => void
@@ -65,7 +65,10 @@ export const enum Event {
     Extract = 40,
     Fraud = 41,
     Change = 42,
-    Snapshot = 43
+    Snapshot = 43,
+    Animation = 44,
+    StyleSheetAdoption = 45,
+    StyleSheetUpdate = 46
 }
 
 export const enum Metric {
@@ -106,7 +109,8 @@ export const enum Metric {
     Iframed = 31,
     MaxTouchPoints = 32,
     HardwareConcurrency = 33,
-    DeviceMemory = 34
+    DeviceMemory = 34,
+    Electron = 35
 }
 
 export const enum Dimension {
@@ -137,7 +141,10 @@ export const enum Dimension {
     Brand = 24,
     Model = 25,
     DevicePixelRatio = 26,
-    ConnectionType = 27
+    ConnectionType = 27,
+    Dob = 28,
+    CookieVersion = 29,
+    DeviceFamily = 30 // Allows iOS SDK to override the DeviceFamily value parsed from UserAgent.
 }
 
 export const enum Check {
@@ -147,7 +154,8 @@ export const enum Check {
     Retry = 3,
     Bytes = 4,
     Collection = 5,
-    Server = 6
+    Server = 6,
+    Page = 7
 }
 
 export const enum Code {
@@ -191,7 +199,7 @@ export const enum IframeStatus {
 export const enum Setting {
     Expire = 365, // 1 Year
     SessionExpire = 1, // 1 Day
-    CookieVersion = 1, // Increment this version every time there's a cookie schema change
+    CookieVersion = 2, // Increment this version every time there's a cookie schema change
     SessionTimeout = 30 * Time.Minute, // 30 minutes
     CookieInterval = 1, // 1 Day
     PingInterval = 1 * Time.Minute, // 1 Minute
@@ -199,6 +207,7 @@ export const enum Setting {
     SummaryInterval = 100, // Same events within 100ms will be collapsed into single summary
     ClickText = 25, // Maximum number of characters to send as part of Click event's text field
     PayloadLimit = 128, // Do not allow more than specified payloads per page
+    PageLimit = 128, // Do not allow more than 128 pages in a session
     ShutdownLimit = 2 * Time.Hour, // Shutdown instrumentation after specified time
     RetryLimit = 1, // Maximum number of attempts to upload a payload before giving up
     PlaybackBytesLimit = 10 * 1024 * 1024, // 10MB
@@ -219,7 +228,7 @@ export const enum Setting {
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
     ExtractLimit = 10000, // Do not extract more than 10000 characters
-    ChecksumPrecision = 24, // n-bit integer to represent token hash 
+    ChecksumPrecision = 24, // n-bit integer to represent token hash
     UploadTimeout = 15000 // Timeout in ms for XHR requests
 }
 
@@ -250,6 +259,8 @@ export const enum Constant {
     Dropped = "*na*",
     Comma = ",",
     Dot = ".",
+    At = "@",
+    Asterix = "*",
     Semicolon = ";",
     Equals = "=",
     Path = ";path=/",
@@ -259,6 +270,7 @@ export const enum Constant {
     Top = "_top",
     String = "string",
     Number = "number",
+    Email = "email",
     CookieKey = "_clck", // Clarity Cookie Key
     SessionKey = "_clsk", // Clarity Session Key
     TabKey = "_cltk", // Clarity Tab Key
@@ -268,6 +280,8 @@ export const enum Constant {
     Action = "ACTION",
     Signal = "SIGNAL",
     Extract = "EXTRACT",
+    UserHint = "userHint",
+    UserType = "userType",
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
@@ -292,7 +306,9 @@ export const enum Constant {
     ConditionEnd = "}",
     Seperator = "<SEP>",
     Timeout = "Timeout",
-    Bang = "!"
+    Bang = "!",
+    SHA256 = "SHA-256",
+    Electron = "Electron"
 }
 
 export const enum XMLReadyState {
@@ -334,8 +350,10 @@ export interface Session {
 
 export interface User {
     id: string;
+    version: number;
     expiry: number;
     consent: BooleanFlag;
+    dob: number;
 }
 
 export interface Envelope extends Metadata {
@@ -374,6 +392,13 @@ export interface BaselineData {
     activityTime: number;
 }
 
+export interface IdentityData {
+    userId: string;
+    userHint: string;
+    sessionId?: string;
+    pageId?: string;
+}
+
 export interface DimensionData {
     [key: number]: string[];
 }
@@ -387,7 +412,7 @@ export interface VariableData {
 // The way it's different from variable is that Custom Event has a notion of time
 // Whereas variables have no timing element and eventually will turn into custom dimensions
 export interface CustomData {
-    key: string;
+    key?: string;
     value: string;
 }
 

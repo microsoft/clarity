@@ -65,13 +65,11 @@ export function compute(): void {
     let q = [];
     for (let r of queue) {
         let id = dom.getId(r.node);
-        if (!(id in regions)) {
-            if (id) {
-                r.data.id = id;
-                regions[id] = r.data;
-                state.push(clone(r.data));
-            } else { q.push(r); }
-        }
+        if (id) {
+            r.state.data.id = id;
+            regions[id] = r.state.data;
+            state.push(r.state);
+        } else { q.push(r); }
     }
     queue = q;
 
@@ -126,7 +124,10 @@ function process(n: Node, d: RegionData, s: InteractionState, v: RegionVisibilit
             regions[d.id] = d;
             state.push(clone(d));
         }
-    } else { queue.push({node: n, data: d}); }
+    } else {
+        // Get the time before adding to queue to ensure accurate event time
+        queue.push({node: n, state: clone(d)}); 
+    }
 }
 
 function clone(r: RegionData): RegionState {

@@ -150,8 +150,8 @@ async function wait(): Promise<RequestIdleCallbackDeadline> {
 // While it's not possible to build a perfect polyfill given the nature of this API, the following code attempts to get close.
 // Background context: requestAnimationFrame invokes the js code right before: style, layout and paint computation within the frame.
 // This means, that any code that runs as part of requestAnimationFrame will by default be blocking in nature. Not what we want.
-// For non-blocking behavior, We need to know when browser has finished painiting. This can be accomplished in two different ways (hacks):
-//   (1) Use MessageChannel to pass the message, and browser will receive the message right after pain event has occured.
+// For non-blocking behavior, We need to know when browser has finished painting. This can be accomplished in two different ways (hacks):
+//   (1) Use MessageChannel to pass the message, and browser will receive the message right after paint event has occured.
 //   (2) Use setTimeout call within requestAnimationFrame. This also works, but there's a risk that browser may throttle setTimeout calls.
 // Given this information, we are currently using (1) from above. More information on (2) as well as some additional context is below:
 // https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Performance_best_practices_for_Firefox_fe_engineers

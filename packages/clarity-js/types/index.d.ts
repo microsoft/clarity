@@ -14,7 +14,7 @@ interface Clarity {
   consent: () => void;
   event: (name: string, value: string) => void;
   set: (variable: string, value: string | string[]) => void;
-  identify: (userId: string, sessionId?: string, pageId?: string) => void;
+  identify: (userId: string, sessionId?: string, pageId?: string, userHint?: string) => void;
   metadata: (callback: Data.MetadataCallback, wait?: boolean) => void;
   signal: (callback: Data.SignalCallback) => void;
 }

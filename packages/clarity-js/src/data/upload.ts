@@ -17,6 +17,7 @@ import * as ping from "@src/data/ping";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
 import * as extract from "@src/data/extract";
+import * as style from "@src/layout/style";
 import { report } from "@src/core/report";
 
 let discoverBytes: number = 0;
@@ -52,6 +53,8 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             case Event.Box:
             case Event.Mutation:                
             case Event.Snapshot:
+            case Event.StyleSheetAdoption:
+            case Event.StyleSheetUpdate:
                 playbackBytes += event.length;
                 playback.push(event);
                 break;
@@ -111,6 +114,7 @@ async function upload(final: boolean = false): Promise<void> {
     region.compute();
     timeline.compute();
     data.compute();
+    style.compute();
 
     // Treat this as the last payload only if final boolean was explicitly set to true.
     // In real world tests, we noticed that certain third party scripts (e.g. https://www.npmjs.com/package/raven-js)
