@@ -182,6 +182,16 @@ export default function (node: Node, source: Source): Node {
                     let linkData = { tag, attributes };
                     dom[call](node, parent, linkData, source);
                     break;
+                case "VIDEO":
+                case "AUDIO":
+                case "SOURCE":
+                    // Ignoring any src attribute for media elements
+                    if(Constant.Src in attributes){
+                        delete attributes[Constant.Src]
+                    }
+                    let mediaTag = { tag, attributes };
+                    dom[call](node, parent, mediaTag, source);
+                    break;
                 default:
                     let data = { tag, attributes };
                     if (element.shadowRoot) { child = element.shadowRoot; }
