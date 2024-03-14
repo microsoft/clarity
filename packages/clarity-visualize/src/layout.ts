@@ -426,6 +426,7 @@ export class LayoutHelper {
         } else if (parent === null && node.parentNode !== null) {
             node.parentNode.removeChild(node);
         }
+        
         this.nodes[data.id] = node;
         this.addToHashMap(data, node);
     }
