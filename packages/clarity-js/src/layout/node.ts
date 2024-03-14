@@ -185,8 +185,8 @@ export default function (node: Node, source: Source): Node {
                 case "VIDEO":
                 case "AUDIO":
                 case "SOURCE":
-                    // Ignoring any src attribute for media elements
-                    if(Constant.Src in attributes){
+                    // Ignoring any base64 src attribute for media elements to prevent big unused tokens to be sent and shock the network 
+                    if(Constant.Src in attributes && isBase64(attributes[Constant.Src])){
                         delete attributes[Constant.Src]
                     }
                     let mediaTag = { tag, attributes };
@@ -258,4 +258,12 @@ function getAttributes(element: HTMLElement): { [key: string]: string } {
     }
 
     return output;
+}
+
+function isBase64(base64Str: string) {
+    try {
+        return window.btoa?.(window.atob?.(base64Str)) === base64Str;
+    } catch (err) {
+        return false;
+    }
 }
