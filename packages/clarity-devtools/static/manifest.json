@@ -2,8 +2,8 @@
   "manifest_version": 2,
   "name": "Microsoft Clarity Developer Tools",
   "description": "Clarity helps you understand how users are interacting with your website.",
-  "version": "0.7.23",
-  "version_name": "0.7.23",
+  "version": "0.7.24",
+  "version_name": "0.7.24",
   "minimum_chrome_version": "50",
   "devtools_page": "devtools.html",
   "icons": {
