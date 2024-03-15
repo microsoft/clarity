@@ -186,7 +186,7 @@ export default function (node: Node, source: Source): Node {
                 case "AUDIO":
                 case "SOURCE":
                     // Ignoring any base64 src attribute for media elements to prevent big unused tokens to be sent and shock the network 
-                    if(Constant.Src in attributes && attributes[Constant.Src].startsWith("data:")){
+                    if (Constant.Src in attributes && attributes[Constant.Src].startsWith("data:")) {
                         delete attributes[Constant.Src]
                     }
                     let mediaTag = { tag, attributes };
