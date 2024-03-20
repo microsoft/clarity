@@ -13,11 +13,6 @@ export default [
       { file: pkg.module, format: "es", exports: "named" }
     ],
     plugins: [
-      alias({
-        entries: [
-          { find: '@src/layout/style', replacement: '@src/insight/blank' }
-        ]
-      }),
       resolve(),
       typescript(),
       commonjs({ include: ["node_modules/**"] })
