@@ -236,6 +236,15 @@ export interface StyleSheetState {
     data: StyleSheetData
 }
 
+// TODO (samart): maybe also have a slotchanged event listener and use event as a switch for that
+export interface SlotState {
+    time: number;
+    assignedSlot: number,
+    // TODO (samart): I think we can use the actual node in the state and only go to id before transmission
+    //element: number
+    node: Node
+}
+
 /* Event Data */
 
 export interface DocumentData {

@@ -42,19 +42,10 @@ export function start(): void {
 
 function bootStrapStyleSheet(styleSheet: CSSStyleSheet): void {
     const pageNum = metadataFields.pageNum;
-    let styleSheetNewForThisPage = false;
     console.log(`calling bootstrap on a stylesheet. Currently it has id ${styleSheet[styleSheetId]} and pageNum ${styleSheet[styleSheetPageNum]} while we are at pageNum ${pageNum}`);
     if (!styleSheet[styleSheetPageNum]) {
         styleSheet[styleSheetPageNum] = pageNum;
-        styleSheetNewForThisPage = true;
-    }
-
-    if (!styleSheet[styleSheetId]) {
         styleSheet[styleSheetId] = shortid();
-        styleSheetNewForThisPage = true;
-    }
-
-    if (styleSheetNewForThisPage) {
         // need to pass a create style sheet event (don't add it to any nodes, but do create it)
         trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.Create);
     }
@@ -118,7 +109,7 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
 }
 
 function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: string[]): void {
-    console.log(`found a new style sheet ${id} operation ${operation}`);
+    console.log(`found a new style sheet for element ${id} operation: ${operation} newIds: ${newIds}`);
     state.push({
         time,
         event: Event.StyleSheetAdoption,

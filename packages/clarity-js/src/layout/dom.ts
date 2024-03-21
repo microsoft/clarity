@@ -72,7 +72,7 @@ export function parse(root: ParentNode, init: boolean = false): void {
     } catch (e) { internal.log(Code.Selector, Severity.Warning, e ? e.name : null); }
 }
 
-export function getId(node: Node, autogen: boolean = false): number {
+export function getId(node: Node, autogen: boolean = false): number | null {
     if (node === null) { return null; }
     let id = idMap.get(node);
     if (!id && autogen) {

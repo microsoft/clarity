@@ -6,8 +6,10 @@ import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
+import * as slot from "@src/layout/slot";
 import { checkDocumentStyles } from "@src/layout/style";
 import { electron } from "@src/data/metadata";
+import { time } from "@src/core/time";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
 const newlineRegex = /[\r\n]+/g;
@@ -94,7 +96,13 @@ export default function (node: Node, source: Source): Node {
             // as the parent to ensure our visualizations match the browser behavior for end users.
             var slottedParent = (node as HTMLElement).assignedSlot;
             if (slottedParent) {
-                parent = slottedParent;
+                // TODO (samart): we aren't patching the parent anymore, do that in visualization
+                // parent = slottedParent;
+                slot.state.push({
+                    time: time(),
+                    assignedSlot: null,
+                    node
+                })
             }
             // If we encounter a node that is part of SVG namespace, prefix the tag with SVG_PREFIX
             if (element.namespaceURI === Constant.SvgNamespace) { tag = Constant.SvgPrefix + tag; }

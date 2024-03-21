@@ -14,6 +14,7 @@ import * as dom from "@src/layout/dom";
 import * as region from "@src/layout/region";
 import * as style from "@src/layout/style";
 import * as animation from "@src/layout/animation";
+import * as slot from "@src/layout/slot";
 
 export default async function (type: Event, timer: Timer = null, ts: number = null): Promise<void> {
     let eventTime = ts || time()
@@ -68,6 +69,17 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 queue(tokens);
             }
             animation.reset();
+            break;
+        case Event.Slot:
+            console.log('processing slot events');
+            for (let entry of slot.state) {
+                tokens = [entry.time, Event.Slot];
+                tokens.push(dom.getId(entry.node));
+                tokens.push(entry.assignedSlot);
+                queue(tokens);
+                // TODO (samart): check that the data coming through looks reasonable then take a stab at visualization side
+            }
+            slot.reset();
             break;
         case Event.Discover:
         case Event.Mutation:
