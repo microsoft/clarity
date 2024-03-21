@@ -45,6 +45,11 @@ export interface AnimationData {
     targetId?: number;
 }
 
+export interface SlotData {
+    elementId: number;
+    assignedSlotId: number;
+}
+
 export const enum RegionVisibility {
     Rendered = 0,
     Visible = 10,

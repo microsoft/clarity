@@ -98,6 +98,7 @@ export default function (node: Node, source: Source): Node {
             if (slottedParent) {
                 // TODO (samart): we aren't patching the parent anymore, do that in visualization
                 // parent = slottedParent;
+                console.log(`adding an element to the slot state: ${node}`);
                 slot.state.push({
                     time: time(),
                     assignedSlot: null,

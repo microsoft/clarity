@@ -157,6 +157,7 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.StyleSheetAdoption:
             case Data.Event.StyleSheetUpdate:
             case Data.Event.Animation:
+            case Data.Event.Slot:
                 if (payload.dom === undefined) { payload.dom = []; }
                 payload.dom.push(layout.decode(entry) as DomEvent);
                 break;

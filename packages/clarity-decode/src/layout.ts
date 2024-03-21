@@ -68,6 +68,12 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                 targetId: tokens[7] as number
             }
             return { time, event, data: animationData};
+        case Data.Event.Slot:
+            let slotData: Layout.SlotData = {
+                elementId: tokens[2] as number,
+                assignedSlotId: tokens[3] as number
+            }
+            return { time, event, data: slotData};
         case Data.Event.Discover:
         case Data.Event.Mutation:
         case Data.Event.Snapshot:
