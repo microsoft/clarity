@@ -120,7 +120,6 @@ export function consent(status: boolean = true): void {
   if (core.active()) {
     config.track = true;
     track(user(), BooleanFlag.True);
-    save();
   }
 }
 
