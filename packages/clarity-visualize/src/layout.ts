@@ -17,7 +17,6 @@ export class LayoutHelper {
     animations = {};
     state: PlaybackState = null;
     stylesToApply: { [id: string] : string[] } = {};
-    styleSheetMap: { [id: number] : string[]; } = {};
 
     constructor(state: PlaybackState) {
         this.state = state;
@@ -142,14 +141,16 @@ export class LayoutHelper {
             return;
         }
 
-        this.styleSheetMap[documentId] = styleIds;
-        let newSheets = styleIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
-        try {
-            targetDocument.adoptedStyleSheets = newSheets;
-        } catch (e) {
-            console.log('todo (samart): had an issue with adding adopted styles');
-            console.log(e);
+        let newSheets: CSSStyleSheet[] = [];
+        for (var styleId of styleIds) {
+            let styleSheet = this.adoptedStyleSheets[styleId];
+            if (styleSheet) {
+                newSheets.push(styleSheet);
+            } else {
+                console.log(`todo (samart): couldn't find style ${styleId}, missed its creation somehow`);
+            }
         }
+        targetDocument.adoptedStyleSheets = newSheets
     }
 
     public exists = (hash: string): boolean => {

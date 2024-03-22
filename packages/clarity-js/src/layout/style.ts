@@ -14,6 +14,9 @@ const styleSheetId = 'claritySheetId';
 const styleSheetPageNum = 'claritySheetId';
 let styleSheetMap = {};
 
+// TODO (samart): for some reason we seem to be getting a lot of duplicate style sheets here, 10s of thousands
+// might need to do something to hash the contents of a style sheet and reference that
+// or could be that my pagenum logic doesnt work right
 export function start(): void {
     reset();
 
@@ -41,8 +44,11 @@ export function start(): void {
 }
 
 function bootStrapStyleSheet(styleSheet: CSSStyleSheet): void {
+    // If we haven't seen this style sheet on this page yet, we create a reference to it for the visualizer.
+    // For SPA or times in which Clarity restarts on a given page, our visualizer would lose context
+    // on the previously created style sheet for page N-1.
     const pageNum = metadataFields.pageNum;
-    if (!styleSheet[styleSheetPageNum]) {
+    if (styleSheet[styleSheetPageNum] !== pageNum) {
         styleSheet[styleSheetPageNum] = pageNum;
         styleSheet[styleSheetId] = shortid();
         // need to pass a create style sheet event (don't add it to any nodes, but do create it)
@@ -57,8 +63,10 @@ export function checkDocumentStyles(documentNode: Document): void {
     }   
     let currentStyleSheets: string[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
+        const pageNum = metadataFields.pageNum;
         // if we haven't seen this style sheet, create it and pass a replaceSync with its contents
-        if (!styleSheet[styleSheetId]) {
+        if (styleSheet[styleSheetPageNum] !== pageNum) {
+            styleSheet[styleSheetPageNum] = pageNum;
             styleSheet[styleSheetId] = shortid();
             trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.Create);
             trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.ReplaceSync, getCssRules(styleSheet));
