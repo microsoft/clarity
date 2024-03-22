@@ -115,7 +115,7 @@ export class LayoutHelper {
                 }
                 switch (event.data.operation) {
                     case StyleSheetOperation.Create:
-                        this.adoptedStyleSheets[event.data.id] = new CSSStyleSheet();
+                        this.adoptedStyleSheets[event.data.id] = new (this.state.window as any).CSSStyleSheet();
                         break;
                     case StyleSheetOperation.Replace:
                         styleSheet.replace(event.data.cssRules);
@@ -152,32 +152,7 @@ export class LayoutHelper {
 
         this.styleSheetMap[documentId] = styleIds;
         let newSheets = styleIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
-
-        let styleNode = targetDocument.getElementById(Constant.AdoptedStyleSheet) ?? this.state.window.document.createElement("style");
-        styleNode.id = Constant.AdoptedStyleSheet;
-        let ruleLengths = [];
-        styleNode.textContent = newSheets.map(x => { let newRule = this.getCssRules(x); ruleLengths.push(newRule.length); return newRule; }).join('\n');
-        styleNode.setAttribute('data-parentid', `${documentId}`);
-        if (targetDocument.head) {
-            targetDocument.head.appendChild(styleNode);
-        } else {
-           targetDocument.appendChild(styleNode);
-        }
-    }
-
-    private getCssRules(sheet: CSSStyleSheet): string {
-        let value = Constant.Empty as string;
-        let cssRules = null;
-        try { cssRules = sheet ? sheet.cssRules : []; } catch (e) {
-            if (e && e.name !== "SecurityError") { throw e; }
-        }
-    
-        if (cssRules !== null) {
-            for (let i = 0; i < cssRules.length; i++) {
-                value += cssRules[i].cssText;
-            }
-        }
-        return value;
+        targetDocument.adoptedStyleSheets = newSheets;
     }
 
     public exists = (hash: string): boolean => {

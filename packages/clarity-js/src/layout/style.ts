@@ -1,7 +1,7 @@
 import { Event } from "@clarity-types/data";
 import { StyleSheetOperation, StyleSheetState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
-import { shortid } from "@src/data/metadata";
+import { shortid, data as metadataFields } from "@src/data/metadata";
 import encode from "@src/layout/encode";
 import { getId, getNode } from "@src/layout/dom";
 import * as core from "@src/core";
@@ -11,6 +11,7 @@ export let state: StyleSheetState[] = [];
 let replace: (text?: string) => Promise<CSSStyleSheet> = null;
 let replaceSync: (text?: string) => void = null;
 const styleSheetId = 'claritySheetId';
+const styleSheetPageNum = 'claritySheetId';
 let styleSheetMap = {};
 
 export function start(): void {
@@ -20,12 +21,7 @@ export function start(): void {
         replace = CSSStyleSheet.prototype.replace; 
         CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
             if (core.active()) {
-                if (!this[styleSheetId]) {
-                    this[styleSheetId] = shortid();
-                    // need to pass a create style sheet event (don't add it to any nodes, but do create it)
-                    trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Create);
-                }
-
+                bootStrapStyleSheet(this);
                 trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
             }
             return replace.apply(this, arguments);
@@ -36,11 +32,7 @@ export function start(): void {
         replaceSync = CSSStyleSheet.prototype.replaceSync; 
         CSSStyleSheet.prototype.replaceSync = function(): void {
             if (core.active()) {
-                if (!this[styleSheetId]) {
-                    this[styleSheetId] = shortid();
-                    // need to pass a create style sheet event (don't add it to any nodes, but do create it)
-                    trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Create);
-                }
+                bootStrapStyleSheet(this);
                 trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
             }
             return replaceSync.apply(this, arguments);
@@ -48,11 +40,21 @@ export function start(): void {
     }
 }
 
+function bootStrapStyleSheet(styleSheet: CSSStyleSheet): void {
+    const pageNum = metadataFields.pageNum;
+    if (!styleSheet[styleSheetPageNum]) {
+        styleSheet[styleSheetPageNum] = pageNum;
+        styleSheet[styleSheetId] = shortid();
+        // need to pass a create style sheet event (don't add it to any nodes, but do create it)
+        trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.Create);
+    }
+}
+
 export function checkDocumentStyles(documentNode: Document): void {
     if (!documentNode?.adoptedStyleSheets) {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
         return;
-    }
+    }   
     let currentStyleSheets: string[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
         // if we haven't seen this style sheet, create it and pass a replaceSync with its contents
