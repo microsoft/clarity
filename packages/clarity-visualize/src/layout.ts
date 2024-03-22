@@ -119,14 +119,6 @@ export class LayoutHelper {
                         break;
                     case StyleSheetOperation.Replace:
                         styleSheet.replace(event.data.cssRules);
-                        // Just changing the sheet isn't sufficient as we cannot rely on adoptedStyleSheets in visualiation
-                        // when an underlying style sheet changes, we reset the styles on the element
-                        for (var documentIdAsString of Object.keys(this.styleSheetMap)) {
-                            var documentId = parseInt(documentIdAsString, 10);
-                            if (this.styleSheetMap[documentId].indexOf(event.data.id as string) > -1) {
-                                this.setDocumentStyles(documentId, this.styleSheetMap[documentId]);
-                            }
-                        }
                         break;
                     case StyleSheetOperation.ReplaceSync:
                         styleSheet.replaceSync(event.data.cssRules);
@@ -152,7 +144,12 @@ export class LayoutHelper {
 
         this.styleSheetMap[documentId] = styleIds;
         let newSheets = styleIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
-        targetDocument.adoptedStyleSheets = newSheets;
+        try {
+            targetDocument.adoptedStyleSheets = newSheets;
+        } catch (e) {
+            console.log('todo (samart): had an issue with adding adopted styles');
+            console.log(e);
+        }
     }
 
     public exists = (hash: string): boolean => {
