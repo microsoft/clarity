@@ -1,6 +1,6 @@
 import { BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
 import { BrowsingContext, ClickState } from "@clarity-types/interaction";
-import { Box } from "@clarity-types/layout";
+import { Box, Constant as LayoutConstant } from "@clarity-types/layout";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -89,8 +89,9 @@ function link(node: Node): HTMLAnchorElement {
 function text(element: Node): string {
     let output = null;
     if (element) {
-        // Grab text using "textContent" for most HTMLElements, however, use "value" for HTMLInputElements and "alt" for HTMLImageElement.
-        let t = element.textContent || (element as HTMLInputElement).value || (element as HTMLImageElement).alt;
+        let customText = (element as HTMLElement).getAttribute(LayoutConstant.EventData);
+        // Grab text using "EventData" attribute, or "textContent" for most HTMLElements, however, use "value" for HTMLInputElements and "alt" for HTMLImageElement.
+        let t = customText  || element.textContent || (element as HTMLInputElement).value || (element as HTMLImageElement).alt;
         if (t) {
             // Replace multiple occurrence of space characters with a single white space
             // Also, trim any spaces at the beginning or at the end of string
