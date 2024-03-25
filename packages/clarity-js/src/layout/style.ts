@@ -1,4 +1,4 @@
-import { Event } from "@clarity-types/data";
+import { Event, Metric } from "@clarity-types/data";
 import { StyleSheetOperation, StyleSheetState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import { shortid, data as metadataFields } from "@src/data/metadata";
@@ -6,17 +6,15 @@ import encode from "@src/layout/encode";
 import { getId, getNode } from "@src/layout/dom";
 import * as core from "@src/core";
 import { getCssRules } from "./node";
+import * as metric from "@src/data/metric";
 
 export let state: StyleSheetState[] = [];
 let replace: (text?: string) => Promise<CSSStyleSheet> = null;
 let replaceSync: (text?: string) => void = null;
 const styleSheetId = 'claritySheetId';
-const styleSheetPageNum = 'claritySheetId';
+const styleSheetPageNum = 'claritySheetNum';
 let styleSheetMap = {};
 
-// TODO (samart): for some reason we seem to be getting a lot of duplicate style sheets here, 10s of thousands
-// might need to do something to hash the contents of a style sheet and reference that
-// or could be that my pagenum logic doesnt work right
 export function start(): void {
     reset();
 
@@ -24,6 +22,7 @@ export function start(): void {
         replace = CSSStyleSheet.prototype.replace; 
         CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
             if (core.active()) {
+                metric.max(Metric.ConstructedStyles, 1);
                 bootStrapStyleSheet(this);
                 trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
             }
@@ -35,6 +34,7 @@ export function start(): void {
         replaceSync = CSSStyleSheet.prototype.replaceSync; 
         CSSStyleSheet.prototype.replaceSync = function(): void {
             if (core.active()) {
+                metric.max(Metric.ConstructedStyles, 1);
                 bootStrapStyleSheet(this);
                 trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
             }
@@ -60,11 +60,12 @@ export function checkDocumentStyles(documentNode: Document): void {
     if (!documentNode?.adoptedStyleSheets) {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
         return;
-    }   
+    }
+    metric.max(Metric.ConstructedStyles, 1);
     let currentStyleSheets: string[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
         const pageNum = metadataFields.pageNum;
-        // if we haven't seen this style sheet, create it and pass a replaceSync with its contents
+        // if we haven't seen this style sheet, create it and call replaceSync with its contents to bootstrap it
         if (styleSheet[styleSheetPageNum] !== pageNum) {
             styleSheet[styleSheetPageNum] = pageNum;
             styleSheet[styleSheetId] = shortid();
@@ -92,7 +93,6 @@ export function compute(): void {
 
 export function reset(): void {
     state = [];
-    
 }
 
 export function stop(): void {

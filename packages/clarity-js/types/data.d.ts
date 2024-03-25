@@ -109,7 +109,8 @@ export const enum Metric {
     MaxTouchPoints = 32,
     HardwareConcurrency = 33,
     DeviceMemory = 34,
-    Electron = 35
+    Electron = 35,
+    ConstructedStyles = 36
 }
 
 export const enum Dimension {
