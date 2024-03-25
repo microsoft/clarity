@@ -27,7 +27,6 @@ export function check(bytes: number): void {
 export function trigger(reason: Check): void {
     data.check = reason;
     metadata.clear();
-    console.log('stopping because we had too much data');
     clarity.stop();
 }
 

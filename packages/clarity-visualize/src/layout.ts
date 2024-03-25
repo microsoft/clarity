@@ -146,8 +146,6 @@ export class LayoutHelper {
             let styleSheet = this.adoptedStyleSheets[styleId];
             if (styleSheet) {
                 newSheets.push(styleSheet);
-            } else {
-                console.log(`todo (samart): couldn't find style ${styleId}, missed its creation somehow`);
             }
         }
         targetDocument.adoptedStyleSheets = newSheets
