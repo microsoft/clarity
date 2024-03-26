@@ -3,7 +3,6 @@ import { BooleanFlag, Check, Constant, EncodedPayload, Event, Metric, Setting, T
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
-import { signalEvent } from "@src/core/signal";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import compress from "@src/data/compress";
@@ -19,6 +18,7 @@ import * as region from "@src/layout/region";
 import * as extract from "@src/data/extract";
 import * as style from "@src/layout/style";
 import { report } from "@src/core/report";
+import { signalEvent } from "@src/data/signal";
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -273,7 +273,7 @@ function response(payload: string): void {
                 if (parts.length > 1) { extract.trigger(parts[1]); }
                 break;
             case Constant.Signal:
-                if (parts.length > 1) { signalEvent(parts[1]) }
+                if (parts.length > 1) { signalEvent(parts[1]); }
                 break;
         }
     }
