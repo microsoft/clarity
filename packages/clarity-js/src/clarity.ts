@@ -13,6 +13,7 @@ import * as performance from "@src/performance";
 export { version };
 export { consent, event, identify, set, upgrade, metadata } from "@src/data";
 export { hashText } from "@src/layout";
+import { bind } from "@src/core/event";
 
 const modules: Module[] = [diagnostic, layout, interaction, performance];
 
@@ -22,7 +23,16 @@ export function start(config: Config = null): void {
     core.config(config);
     core.start();
     data.start();
-    modules.forEach(x => measure(x.start)());
+    modules.forEach((x) => {
+      if (config.delayDom && x === layout) {
+        // Lazy load layout module as part of page load time performance improvements experiment 
+        bind(window, 'load', () => {
+          measure(x.start)();
+        });
+      } else {
+          measure(x.start)();
+      }
+    });
 
     // If it's an internal call to start, without explicit configuration,
     // re-process any newly accumulated items in the queue
