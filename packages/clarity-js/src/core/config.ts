@@ -18,7 +18,8 @@ let config: Config = {
     fallback: null,
     upgrade: null,
     action: null,
-    dob: null
+    dob: null,
+    delayDom: false
 };
 
 export default config;
