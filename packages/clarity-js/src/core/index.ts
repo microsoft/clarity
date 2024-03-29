@@ -35,6 +35,7 @@ export function active(): boolean {
 
 export function check(): boolean {
     try {
+        let globalPrivacyControlSet = navigator && "globalPrivacyControl" in navigator && navigator['globalPrivacyControl'] == true;
         return status === false &&
             typeof Promise !== "undefined" &&
             window["MutationObserver"] &&
@@ -42,7 +43,7 @@ export function check(): boolean {
             "now" in Date &&
             "now" in performance &&
             typeof WeakMap !== "undefined" &&
-            navigator['globalPrivacyControl'] !== true
+            !globalPrivacyControlSet
     } catch (ex) {
         return false;
     }
