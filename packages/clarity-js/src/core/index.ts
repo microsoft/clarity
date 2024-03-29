@@ -41,7 +41,8 @@ export function check(): boolean {
             document["createTreeWalker"] &&
             "now" in Date &&
             "now" in performance &&
-            typeof WeakMap !== "undefined";
+            typeof WeakMap !== "undefined" &&
+            navigator['globalPrivacyControl'] !== true
     } catch (ex) {
         return false;
     }
