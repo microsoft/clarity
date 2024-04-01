@@ -448,6 +448,5 @@ export interface UploadData {
 
 export interface ClaritySignal {
     type: string
-    timestamp?: number
     value?: number
 }
