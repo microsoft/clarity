@@ -109,8 +109,9 @@ export function id(): string {
 
 export function consent(status: boolean = true): void {
   if (!status) {
-    setCookie(Constant.SessionKey, Constant.Empty, 0);
-    setCookie(Constant.CookieKey, Constant.Empty, 0);
+    config.track = false;
+    setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
+    setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
     clarity.stop();
     window.setTimeout(clarity.start, Setting.RestartDelay);
     return;
@@ -279,7 +280,9 @@ function encodeCookieValue(value: string): string {
 }
 
 function setCookie(key: string, value: string, time: number): void {
-  if (config.track && ((navigator && navigator.cookieEnabled) || supported(document, Constant.Cookie))) {
+  // only write cookies if we are currently in a cookie writing mode (and they are supported)
+  // OR if we are trying to write an empty cookie (i.e. clear the cookie value out)
+  if ((config.track || value == Constant.Empty) && ((navigator && navigator.cookieEnabled) || supported(document, Constant.Cookie))) {
     // Some browsers automatically url encode cookie values if they are not url encoded.
     // We therefore encode and decode cookie values ourselves.
     let encodedValue = encodeCookieValue(value);
