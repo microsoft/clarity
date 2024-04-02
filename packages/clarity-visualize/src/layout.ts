@@ -17,7 +17,6 @@ export class LayoutHelper {
     animations = {};
     state: PlaybackState = null;
     stylesToApply: { [id: string] : string[] } = {};
-    styleSheetMap: { [id: number] : string[]; } = {};
 
     constructor(state: PlaybackState) {
         this.state = state;
@@ -115,18 +114,10 @@ export class LayoutHelper {
                 }
                 switch (event.data.operation) {
                     case StyleSheetOperation.Create:
-                        this.adoptedStyleSheets[event.data.id] = new CSSStyleSheet();
+                        this.adoptedStyleSheets[event.data.id] = new (this.state.window as any).CSSStyleSheet();
                         break;
                     case StyleSheetOperation.Replace:
                         styleSheet.replace(event.data.cssRules);
-                        // Just changing the sheet isn't sufficient as we cannot rely on adoptedStyleSheets in visualiation
-                        // when an underlying style sheet changes, we reset the styles on the element
-                        for (var documentIdAsString of Object.keys(this.styleSheetMap)) {
-                            var documentId = parseInt(documentIdAsString, 10);
-                            if (this.styleSheetMap[documentId].indexOf(event.data.id as string) > -1) {
-                                this.setDocumentStyles(documentId, this.styleSheetMap[documentId]);
-                            }
-                        }
                         break;
                     case StyleSheetOperation.ReplaceSync:
                         styleSheet.replaceSync(event.data.cssRules);
@@ -150,34 +141,14 @@ export class LayoutHelper {
             return;
         }
 
-        this.styleSheetMap[documentId] = styleIds;
-        let newSheets = styleIds.map(x => this.adoptedStyleSheets[x] as CSSStyleSheet);
-
-        let styleNode = targetDocument.getElementById(Constant.AdoptedStyleSheet) ?? this.state.window.document.createElement("style");
-        styleNode.id = Constant.AdoptedStyleSheet;
-        let ruleLengths = [];
-        styleNode.textContent = newSheets.map(x => { let newRule = this.getCssRules(x); ruleLengths.push(newRule.length); return newRule; }).join('\n');
-        styleNode.setAttribute('data-parentid', `${documentId}`);
-        if (targetDocument.head) {
-            targetDocument.head.appendChild(styleNode);
-        } else {
-           targetDocument.appendChild(styleNode);
-        }
-    }
-
-    private getCssRules(sheet: CSSStyleSheet): string {
-        let value = Constant.Empty as string;
-        let cssRules = null;
-        try { cssRules = sheet ? sheet.cssRules : []; } catch (e) {
-            if (e && e.name !== "SecurityError") { throw e; }
-        }
-    
-        if (cssRules !== null) {
-            for (let i = 0; i < cssRules.length; i++) {
-                value += cssRules[i].cssText;
+        let newSheets: CSSStyleSheet[] = [];
+        for (var styleId of styleIds) {
+            let styleSheet = this.adoptedStyleSheets[styleId];
+            if (styleSheet) {
+                newSheets.push(styleSheet);
             }
         }
-        return value;
+        targetDocument.adoptedStyleSheets = newSheets
     }
 
     public exists = (hash: string): boolean => {
