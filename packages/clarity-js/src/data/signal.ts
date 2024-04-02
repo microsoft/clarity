@@ -6,17 +6,21 @@ export function signal(cb: SignalCallback): void {
   signalCallback = cb;
 }
 
-function parseSignals(signalsString: string): ClaritySignal[] {
-  const signalsJson: ClaritySignal[] = JSON.parse(signalsString);
-  return signalsJson;
+function parseSignals(signalsPayload: string): ClaritySignal[] {
+  try{
+    const parsedSignals: ClaritySignal[] = JSON.parse(signalsPayload);
+    return parsedSignals;
+  }catch{
+    return []
+  }
 }
 
-export function signalEvent(signalsString: string) {
+export function triggerSignalsEvent(signalsPayload: string) {
   try {
     if (!signalCallback) {
       return;
     }
-    const signals = parseSignals(signalsString);
+    const signals = parseSignals(signalsPayload);
     signals.forEach((signal) => {
       signalCallback(signal);
     });
