@@ -1,2 +1,2 @@
-let version = "0.7.27";
+let version = "0.7.28";
 export default version;

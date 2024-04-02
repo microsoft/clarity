@@ -137,6 +137,7 @@ export interface Config {
     upgrade?: (key: string) => void;
     action?: (key: string) => void;
     dob?: number;
+    delayDom?: boolean;
 }
 
 export const enum Constant {
