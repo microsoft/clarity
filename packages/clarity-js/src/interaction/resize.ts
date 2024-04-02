@@ -7,7 +7,7 @@ export let data: ResizeData;
 let debounceTimeoutId: number;
 
 export function start(): void {
-  bind(window, 'resize', debounce(recompute, 500));
+  bind(window, "resize", debounce(recompute, 500));
   recompute();
 }
 
