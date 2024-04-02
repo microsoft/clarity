@@ -15,7 +15,7 @@ function parseSignals(signalsPayload: string): ClaritySignal[] {
   }
 }
 
-export function triggerSignalsEvent(signalsPayload: string) {
+export function signalsEvent(signalsPayload: string) {
   try {
     if (!signalCallback) {
       return;

@@ -18,7 +18,7 @@ import * as region from "@src/layout/region";
 import * as extract from "@src/data/extract";
 import * as style from "@src/layout/style";
 import { report } from "@src/core/report";
-import { triggerSignalsEvent } from "@src/data/signal";
+import { signalsEvent } from "@src/data/signal";
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -273,7 +273,7 @@ function response(payload: string): void {
                 if (parts.length > 1) { extract.trigger(parts[1]); }
                 break;
             case Constant.Signal:
-                if (parts.length > 1) { triggerSignalsEvent(parts[1]); }
+                if (parts.length > 1) { signalsEvent(parts[1]); }
                 break;
         }
     }
