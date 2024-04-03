@@ -72,7 +72,9 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let scrollData: Interaction.ScrollData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
-                y: tokens[4] as number
+                y: tokens[4] as number,
+                startElement: tokens[5] as string,
+                endElement: tokens[6] as string
             };
             return { time, event, data: scrollData };
         case Data.Event.Timeline:
