@@ -110,8 +110,8 @@ export function id(): string {
 export function consent(status: boolean = true): void {
   if (!status) {
     config.track = false;
-    setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
-    setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
+    removeCookie(Constant.SessionKey);
+    removeCookie(Constant.CookieKey);
     clarity.stop();
     window.setTimeout(clarity.start, Setting.RestartDelay);
     return;
@@ -277,6 +277,20 @@ function decodeCookieValue(value: string): [boolean, string] {
 
 function encodeCookieValue(value: string): string {
   return encodeURIComponent(value);
+}
+
+function removeCookie(key: string): void{
+  // only erase cookies if we are currently in a cookie writing mode (and they are supported)
+  // OR if we are trying to write an empty cookie (i.e. clear the cookie value out)
+  if ((config.track || value == Constant.Empty) && ((navigator && navigator.cookieEnabled) || supported(document, Constant.Cookie))) {
+    let expirationDate = new Date("1970-01-01T00:00:000Z");
+
+    let expires = Constant.Expires + expirationDate.toUTCString();
+    let encodedValue = encodeCookieValue("");
+    let cookie = `${key}=${encodedValue}${Constant.Semicolon}${expires}${Constant.Path}`;
+
+    document.cookie = cookie;
+  }
 }
 
 function setCookie(key: string, value: string, time: number): void {
