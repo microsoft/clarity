@@ -73,8 +73,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
                 y: tokens[4] as number,
-                startElement: tokens[5] as string,
-                endElement: tokens[6] as string
+                topElement: tokens[5] as string,
+                bottomElement: tokens[6] as string
             };
             return { time, event, data: scrollData };
         case Data.Event.Timeline:
