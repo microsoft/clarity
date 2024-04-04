@@ -46,10 +46,10 @@ function recompute(event: UIEvent = null): void {
     const yOffset = width > height ? height * 0.15 : height * 0.2;
     const startYPosition = yOffset;
     const endYPosition = height - yOffset;
-    const startElement = getPositionHash(xPosition, startYPosition);
-    const endElement = getPositionHash(xPosition, endYPosition);
+    const topElement = getPositionHash(xPosition, startYPosition);
+    const bottomElement = getPositionHash(xPosition, endYPosition);
 
-    let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y, startElement, endElement} };
+    let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y, topElement, bottomElement} };
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
     if ((event === null && x === 0 && y === 0) || (x === null || y === null)) { return; }
@@ -77,7 +77,7 @@ function getPositionHash(x: number, y: number): string {
         node = node.parentNode;
     }
 
-    return dom.get((node))?.hash?.[1];
+    return dom.get(node)?.hash?.[1];
 }
 
 export function reset(): void {
