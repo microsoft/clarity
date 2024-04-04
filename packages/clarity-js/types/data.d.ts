@@ -8,6 +8,7 @@ export interface MetadataCallbackOptions {
     callback: MetadataCallback,
     wait: boolean
 }
+export type SignalCallback = (data: ClaritySignal) => void
 
 /* Enum */
 export const enum Event {
@@ -109,7 +110,8 @@ export const enum Metric {
     MaxTouchPoints = 32,
     HardwareConcurrency = 33,
     DeviceMemory = 34,
-    Electron = 35
+    Electron = 35,
+    ConstructedStyles = 36
 }
 
 export const enum Dimension {
@@ -277,6 +279,7 @@ export const enum Constant {
     End = "END",
     Upgrade = "UPGRADE",
     Action = "ACTION",
+    Signal = "SIGNAL",
     Extract = "EXTRACT",
     UserHint = "userHint",
     UserType = "userType",
@@ -442,4 +445,9 @@ export interface UploadData {
     sequence: number;
     attempts: number;
     status: number;
+}
+
+export interface ClaritySignal {
+    type: string
+    value?: number
 }

@@ -1,16 +1,18 @@
-import { Event } from "@clarity-types/data";
+import { Event, Metric } from "@clarity-types/data";
 import { StyleSheetOperation, StyleSheetState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
-import { shortid } from "@src/data/metadata";
+import { shortid, data as metadataFields } from "@src/data/metadata";
 import encode from "@src/layout/encode";
 import { getId, getNode } from "@src/layout/dom";
 import * as core from "@src/core";
 import { getCssRules } from "./node";
+import * as metric from "@src/data/metric";
 
 export let state: StyleSheetState[] = [];
 let replace: (text?: string) => Promise<CSSStyleSheet> = null;
 let replaceSync: (text?: string) => void = null;
 const styleSheetId = 'claritySheetId';
+const styleSheetPageNum = 'claritySheetNum';
 let styleSheetMap = {};
 
 export function start(): void {
@@ -20,12 +22,8 @@ export function start(): void {
         replace = CSSStyleSheet.prototype.replace; 
         CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
             if (core.active()) {
-                if (!this[styleSheetId]) {
-                    this[styleSheetId] = shortid();
-                    // need to pass a create style sheet event (don't add it to any nodes, but do create it)
-                    trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Create);
-                }
-
+                metric.max(Metric.ConstructedStyles, 1);
+                bootStrapStyleSheet(this);
                 trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
             }
             return replace.apply(this, arguments);
@@ -36,15 +34,25 @@ export function start(): void {
         replaceSync = CSSStyleSheet.prototype.replaceSync; 
         CSSStyleSheet.prototype.replaceSync = function(): void {
             if (core.active()) {
-                if (!this[styleSheetId]) {
-                    this[styleSheetId] = shortid();
-                    // need to pass a create style sheet event (don't add it to any nodes, but do create it)
-                    trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Create);
-                }
+                metric.max(Metric.ConstructedStyles, 1);
+                bootStrapStyleSheet(this);
                 trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
             }
             return replaceSync.apply(this, arguments);
         };
+    }
+}
+
+function bootStrapStyleSheet(styleSheet: CSSStyleSheet): void {
+    // If we haven't seen this style sheet on this page yet, we create a reference to it for the visualizer.
+    // For SPA or times in which Clarity restarts on a given page, our visualizer would lose context
+    // on the previously created style sheet for page N-1.
+    const pageNum = metadataFields.pageNum;
+    if (styleSheet[styleSheetPageNum] !== pageNum) {
+        styleSheet[styleSheetPageNum] = pageNum;
+        styleSheet[styleSheetId] = shortid();
+        // need to pass a create style sheet event (don't add it to any nodes, but do create it)
+        trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.Create);
     }
 }
 
@@ -53,10 +61,13 @@ export function checkDocumentStyles(documentNode: Document): void {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
         return;
     }
+    metric.max(Metric.ConstructedStyles, 1);
     let currentStyleSheets: string[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
-        // if we haven't seen this style sheet, create it and pass a replaceSync with its contents
-        if (!styleSheet[styleSheetId]) {
+        const pageNum = metadataFields.pageNum;
+        // if we haven't seen this style sheet, create it and call replaceSync with its contents to bootstrap it
+        if (styleSheet[styleSheetPageNum] !== pageNum) {
+            styleSheet[styleSheetPageNum] = pageNum;
             styleSheet[styleSheetId] = shortid();
             trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.Create);
             trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.ReplaceSync, getCssRules(styleSheet));
@@ -82,7 +93,6 @@ export function compute(): void {
 
 export function reset(): void {
     state = [];
-    
 }
 
 export function stop(): void {

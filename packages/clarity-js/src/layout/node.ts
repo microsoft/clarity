@@ -90,12 +90,6 @@ export default function (node: Node, source: Source): Node {
             // In some cases, external libraries like vue-fragment, can modify parentNode property to not be in sync with the DOM
             // For correctness, we first look at parentElement and if it not present then fall back to using parentNode
             parent = node.parentElement ? node.parentElement : (node.parentNode ? node.parentNode as HTMLElement : null);
-            // For HTML slots, the parentElement doesn't actually match what is rendered. If we have an assignedSlot, we use that
-            // as the parent to ensure our visualizations match the browser behavior for end users.
-            var slottedParent = (node as HTMLElement).assignedSlot;
-            if (slottedParent) {
-                parent = slottedParent;
-            }
             // If we encounter a node that is part of SVG namespace, prefix the tag with SVG_PREFIX
             if (element.namespaceURI === Constant.SvgNamespace) { tag = Constant.SvgPrefix + tag; }
 
@@ -193,7 +187,7 @@ export default function (node: Node, source: Source): Node {
                 case "SOURCE":
                     // Ignoring any base64 src attribute for media elements to prevent big unused tokens to be sent and shock the network 
                     if (Constant.Src in attributes && attributes[Constant.Src].startsWith("data:")) {
-                        delete attributes[Constant.Src]
+                        attributes[Constant.Src] = "";
                     }
                     let mediaTag = { tag, attributes };
                     dom[call](node, parent, mediaTag, source);
