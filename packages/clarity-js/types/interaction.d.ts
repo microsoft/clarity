@@ -134,8 +134,8 @@ export interface ScrollData {
     target: Target;
     x: number;
     y: number;
-    topElement: string;
-    bottomElement: string;
+    top: string;
+    bottom: string;
 }
 
 export interface SelectionData {
