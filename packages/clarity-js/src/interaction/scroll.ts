@@ -5,6 +5,7 @@ import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { iframe } from "@src/layout/dom";
+import * as dom from "../layout/dom";
 import { target } from "@src/layout/target";
 import encode from "./encode";
 
@@ -39,7 +40,16 @@ function recompute(event: UIEvent = null): void {
     // And, if for some reason that is not available, fall back to looking up scrollTop on document.documentElement.
     let x = element === de && "pageXOffset" in w ? Math.round(w.pageXOffset) : Math.round((element as HTMLElement).scrollLeft);
     let y = element === de && "pageYOffset" in w ? Math.round(w.pageYOffset) : Math.round((element as HTMLElement).scrollTop);
-    let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y} };
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const xPosition = width / 3;
+    const yOffset = width > height ? height * 0.15 : height * 0.2;
+    const startYPosition = yOffset;
+    const endYPosition = height - yOffset;
+    const top = getPositionHash(xPosition, startYPosition);
+    const bottom = getPositionHash(xPosition, endYPosition);
+
+    let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y, top, bottom} };
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
     if ((event === null && x === 0 && y === 0) || (x === null || y === null)) { return; }
@@ -51,6 +61,23 @@ function recompute(event: UIEvent = null): void {
 
     clearTimeout(timeout);
     timeout = setTimeout(process, Setting.LookAhead, Event.Scroll);
+}
+
+function getPositionHash(x: number, y: number): string {
+    let node: Node;
+    if ("caretPositionFromPoint" in document) {
+        node = (document as any).caretPositionFromPoint(x, y)?.offsetNode;
+    } else if ("caretRangeFromPoint" in document) {
+        node = document.caretRangeFromPoint(x, y)?.startContainer;
+    }
+    if (!node) {
+        node = document.elementFromPoint(x, y) as Node;
+    }
+    if (node && node.nodeType === Node.TEXT_NODE) {
+        node = node.parentNode;
+    }
+
+    return dom.get(node)?.hash?.[1];
 }
 
 export function reset(): void {
