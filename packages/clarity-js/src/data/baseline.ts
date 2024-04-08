@@ -46,7 +46,7 @@ export function reset(): void {
     };
 }
 
-export function track(event: Event, x: number, y: number, scrollTime?: number): void {
+export function track(event: Event, x: number, y: number, time?: number): void {
     switch (event) {
         case Event.Document:
             buffer.docWidth = x;
@@ -59,7 +59,7 @@ export function track(event: Event, x: number, y: number, scrollTime?: number): 
         case Event.Scroll:
             buffer.scrollX = x;
             buffer.scrollY = y;
-            buffer.scrollTime = scrollTime;
+            buffer.scrollTime = time;
             break;
         default:
             buffer.pointerX = x;
