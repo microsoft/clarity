@@ -50,6 +50,10 @@ function recompute(event: UIEvent = null): void {
     const bottom = getPositionHash(xPosition, endYPosition);
 
     let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y, top, bottom} };
+
+    // We don't send any scroll events if this is the first event and the current position is top (0,0)
+    if ((event === null && x === 0 && y === 0) || (x === null || y === null)) { return; }
+
     let length = state.length;
     let last = length > 1 ? state[length - 2] : null;
     if (last && similar(last, current)) { state.pop(); }
