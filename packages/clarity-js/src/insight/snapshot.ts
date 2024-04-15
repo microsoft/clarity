@@ -110,3 +110,5 @@ function add(node: Node, parent: Node, data: NodeInfo): void {
         values.push({ id, parent: parentId, previous, children: [], data, selector: null, hash: null, region: null, metadata });
     }
 }
+
+export function get(_node: Node): NodeValue {return null;}

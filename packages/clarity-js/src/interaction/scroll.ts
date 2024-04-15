@@ -4,8 +4,7 @@ import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
-import { iframe } from "@src/layout/dom";
-import * as dom from "../layout/dom";
+import { iframe, get } from "@src/layout/dom";
 import { target } from "@src/layout/target";
 import encode from "./encode";
 
@@ -77,7 +76,7 @@ function getPositionHash(x: number, y: number): string {
         node = node.parentNode;
     }
 
-    return dom.get(node)?.hash?.[1];
+    return get(node)?.hash?.[1];
 }
 
 export function reset(): void {
