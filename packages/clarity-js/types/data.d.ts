@@ -391,7 +391,6 @@ export interface BaselineData {
     pointerX: number;
     pointerY: number;
     activityTime: number;
-    scrollTime: number;
 }
 
 export interface IdentityData {
