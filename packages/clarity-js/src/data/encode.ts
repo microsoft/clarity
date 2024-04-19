@@ -30,6 +30,7 @@ export default function(event: Event): void {
                 tokens.push(b.data.pointerX);
                 tokens.push(b.data.pointerY);
                 tokens.push(b.data.activityTime);
+                tokens.push(b.data.scrollTime);
                 queue(tokens, false);
             }
             baseline.reset();
