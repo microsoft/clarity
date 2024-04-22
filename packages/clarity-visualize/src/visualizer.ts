@@ -39,6 +39,10 @@ export class Visualizer implements VisualizerType {
                 while (merged.events.length > 0 && this.layout.exists(hash) === false) {
                     let entry = merged.events.shift();
                     switch (entry.event) {
+                        case Data.Event.StyleSheetAdoption:
+                        case Data.Event.StyleSheetUpdate:
+                            this.layout.styleChange(entry as Layout.StyleSheetEvent);
+                            break;
                         case Data.Event.Mutation:
                             let domEvent = entry as Layout.DomEvent;
                             this.renderTime = domEvent.time;
