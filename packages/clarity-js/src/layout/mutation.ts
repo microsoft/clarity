@@ -129,19 +129,19 @@ async function process(): Promise<void> {
       if (state === Task.Wait) { state = await task.suspend(timer); }
       if (state === Task.Stop) { break; }      
       let target = mutation.target;
-      let type = track(mutation, timer, instance);
+      let type = track(mutation, timer, instance, record.time);
       if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
       if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) { dom.parse(target as ShadowRoot); }
       switch (type) {
         case Constant.Attributes:
-            processNode(target, Source.Attributes);
+            processNode(target, Source.Attributes, record.time);
             break;
         case Constant.CharacterData:
-            processNode(target, Source.CharacterData);
+            processNode(target, Source.CharacterData, record.time);
             break;
         case Constant.ChildList:
-          processNodeList(mutation.addedNodes, Source.ChildListAdd, timer);
-          processNodeList(mutation.removedNodes, Source.ChildListRemove, timer);
+          processNodeList(mutation.addedNodes, Source.ChildListAdd, timer, record.time);
+          processNodeList(mutation.removedNodes, Source.ChildListRemove, timer, record.time);
           break;
         case Constant.Suspend:
           let value = dom.get(target);
@@ -156,7 +156,7 @@ async function process(): Promise<void> {
   task.stop(timer);
 }
 
-function track(m: MutationRecord, timer: Timer, instance: number): string {
+function track(m: MutationRecord, timer: Timer, instance: number, timestamp: number): string {
   let value = m.target ? dom.get(m.target.parentNode) : null;
   // Check if the parent is already discovered and that the parent is not the document root
   if (value && value.data.tag !== Constant.HTML) {
@@ -172,7 +172,7 @@ function track(m: MutationRecord, timer: Timer, instance: number): string {
     history[key] = key in history ? history[key] : [0, instance];
     let h = history[key];
     // Lookup any pending nodes queued up for removal, and process them now if we suspended a mutation before
-    if (inactive === false && h[0] >= Setting.MutationSuspendThreshold) { processNodeList(h[2], Source.ChildListRemove, timer); }
+    if (inactive === false && h[0] >= Setting.MutationSuspendThreshold) { processNodeList(h[2], Source.ChildListRemove, timer, timestamp); }
     // Update the counter
     h[0] = inactive ? (h[1] === instance ? h[0] : h[0] + 1) : 1;
     h[1] = instance;
@@ -195,16 +195,16 @@ function names(nodes: NodeList): string {
   return output.join();
 }
 
-async function processNodeList(list: NodeList, source: Source, timer: Timer): Promise<void> {
+async function processNodeList(list: NodeList, source: Source, timer: Timer, timestamp: number): Promise<void> {
   let length = list ? list.length : 0;
   for (let i = 0; i < length; i++) {
     if (source === Source.ChildListAdd) {
-      traverse(list[i], timer, source);
+      traverse(list[i], timer, source, timestamp);
     } else {
       let state = task.state(timer);
       if (state === Task.Wait) { state = await task.suspend(timer); }
       if (state === Task.Stop) { break; }
-      processNode(list[i], source);
+      processNode(list[i], source, timestamp);
     }
   }
 }

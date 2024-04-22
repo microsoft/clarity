@@ -12,7 +12,7 @@ import { electron } from "@src/data/metadata";
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
 const newlineRegex = /[\r\n]+/g;
 
-export default function (node: Node, source: Source): Node {
+export default function (node: Node, source: Source, timestamp: number): Node {
     let child: Node = null;
 
     // Do not track this change if we are attempting to remove a node before discovering it
@@ -43,7 +43,7 @@ export default function (node: Node, source: Source): Node {
             // We check for regions in the beginning when discovering document and
             // later whenever there are new additions or modifications to DOM (mutations)
             if (node === document) dom.parse(document);
-            checkDocumentStyles(node as Document);
+            checkDocumentStyles(node as Document, timestamp);
             observe(node);
             break;
         case Node.DOCUMENT_FRAGMENT_NODE:
@@ -67,7 +67,7 @@ export default function (node: Node, source: Source): Node {
                     // the same way we observe real shadow DOM nodes (encapsulation provided by the browser).
                     dom[call](node, shadowRoot.host, { tag: Constant.PolyfillShadowDomTag, attributes: {} }, source);
                 }
-                checkDocumentStyles(node as Document);
+                checkDocumentStyles(node as Document, timestamp);
             }
             break;
         case Node.TEXT_NODE:

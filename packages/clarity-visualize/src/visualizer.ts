@@ -189,6 +189,7 @@ export class Visualizer implements VisualizerType {
                 case Data.Event.StyleSheetAdoption:
                 case Data.Event.StyleSheetUpdate:
                     this.layout.styleChange(entry as Layout.StyleSheetEvent);
+                    break;                
                 case Data.Event.Animation:
                     this.layout.animateChange(entry as Layout.AnimationEvent);
                     break;

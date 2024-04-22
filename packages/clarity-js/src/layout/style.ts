@@ -14,6 +14,7 @@ let replaceSync: (text?: string) => void = null;
 const styleSheetId = 'claritySheetId';
 const styleSheetPageNum = 'claritySheetNum';
 let styleSheetMap = {};
+let styleTimeMap: {[key: string]: number} = {};
 
 export function start(): void {
     reset();
@@ -56,7 +57,8 @@ function bootStrapStyleSheet(styleSheet: CSSStyleSheet): void {
     }
 }
 
-export function checkDocumentStyles(documentNode: Document): void {
+export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
+    timestamp = timestamp || time();
     if (!documentNode?.adoptedStyleSheets) {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
         return;
@@ -69,8 +71,8 @@ export function checkDocumentStyles(documentNode: Document): void {
         if (styleSheet[styleSheetPageNum] !== pageNum) {
             styleSheet[styleSheetPageNum] = pageNum;
             styleSheet[styleSheetId] = shortid();
-            trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.Create);
-            trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.ReplaceSync, getCssRules(styleSheet));
+            trackStyleChange(timestamp, styleSheet[styleSheetId], StyleSheetOperation.Create);
+            trackStyleChange(timestamp, styleSheet[styleSheetId], StyleSheetOperation.ReplaceSync, getCssRules(styleSheet));
         }
         currentStyleSheets.push(styleSheet[styleSheetId]);
     }
@@ -81,14 +83,16 @@ export function checkDocumentStyles(documentNode: Document): void {
     }
     if (!arraysEqual(currentStyleSheets, styleSheetMap[documentId])) {
         // Using -1 to signify the root document node as we don't track that as part of our nodeMap
-        trackStyleAdoption(time(), documentNode == document ? -1 : getId(documentNode), StyleSheetOperation.SetAdoptedStyles, currentStyleSheets);
+        trackStyleAdoption(timestamp, documentNode == document ? -1 : getId(documentNode), StyleSheetOperation.SetAdoptedStyles, currentStyleSheets);
         styleSheetMap[documentId] = currentStyleSheets;
+        styleTimeMap[documentId] = timestamp;
     }
 }
 
 export function compute(): void {
-    checkDocumentStyles(document);
-    Object.keys(styleSheetMap).forEach((x) => checkDocumentStyles(getNode(parseInt(x, 10)) as Document));
+    let ts = -1 in styleTimeMap ? styleTimeMap[-1] : null;
+    checkDocumentStyles(document, ts);
+    Object.keys(styleSheetMap).forEach((x) => checkDocumentStyles(getNode(parseInt(x, 10)) as Document, styleTimeMap[x]));
 }
 
 export function reset(): void {
@@ -97,6 +101,7 @@ export function reset(): void {
 
 export function stop(): void {
     styleSheetMap = {};
+    styleTimeMap = {};
     reset();
 }
 
