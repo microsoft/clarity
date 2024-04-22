@@ -21,6 +21,8 @@ export function start(): void {
         bind(window, 'load', () => {
             mutation.start();
         });
+    } else {
+        mutation.start();
     }
     discover.start();
     style.start();
