@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { ScrollData, ScrollState, Setting } from "@clarity-types/interaction";
+import { ScrollState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -9,7 +9,6 @@ import { target } from "@src/layout/target";
 import encode from "./encode";
 
 export let state: ScrollState[] = [];
-export let initElement: ScrollData;
 let timeout: number = null;
 
 export function start(): void {
@@ -40,23 +39,12 @@ function recompute(event: UIEvent = null): void {
     // And, if for some reason that is not available, fall back to looking up scrollTop on document.documentElement.
     let x = element === de && "pageXOffset" in w ? Math.round(w.pageXOffset) : Math.round((element as HTMLElement).scrollLeft);
     let y = element === de && "pageYOffset" in w ? Math.round(w.pageYOffset) : Math.round((element as HTMLElement).scrollTop);
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const xPosition = width / 3;
-    const yOffset = width > height ? height * 0.15 : height * 0.2;
-    const startYPosition = yOffset;
-    const endYPosition = height - yOffset;
-    const topNode = getPositionNode(xPosition, startYPosition);
-    const bottomNode = getPositionNode(xPosition, endYPosition);
+    const nodes = getTopAndBottomNodes();
 
-    let current: ScrollState =
-        { time: time(event), event: Event.Scroll, data: {target: element, x, y, topNode, bottomNode, top: null, bottom: null} };
+    let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y, top: nodes[0], bottom: nodes[1]} };
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
-    if ((event === null && x === 0 && y === 0) || (x === null || y === null)) {
-        initElement = {target: element, x, y, topNode, bottomNode, top: null, bottom: null};
-        return;
-    }
+    if ((event === null && x === 0 && y === 0) || (x === null || y === null)) { return; }
 
     let length = state.length;
     let last = length > 1 ? state[length - 2] : null;
@@ -65,6 +53,18 @@ function recompute(event: UIEvent = null): void {
 
     clearTimeout(timeout);
     timeout = setTimeout(process, Setting.LookAhead, Event.Scroll);
+}
+
+export function getTopAndBottomNodes(): Node[] {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const xPosition = width / 3;
+    const yOffset = width > height ? height * 0.15 : height * 0.2;
+    const startYPosition = yOffset;
+    const endYPosition = height - yOffset;
+    const top = getPositionNode(xPosition, startYPosition);
+    const bottom = getPositionNode(xPosition, endYPosition);
+    return [top, bottom];
 }
 
 function getPositionNode(x: number, y: number): Node {
