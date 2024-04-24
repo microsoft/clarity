@@ -1,4 +1,4 @@
-import { Dimension, Event } from "@clarity-types/data";
+import { Constant, Dimension, Event } from "@clarity-types/data";
 import { ScrollState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
@@ -10,8 +10,8 @@ import encode from "./encode";
 import * as dimension from "@src/data/dimension";
 
 export let state: ScrollState[] = [];
-let initTopNode: Node;
-let initBottomNode: Node;
+let initialTop: Node;
+let initialBottom: Node;
 let timeout: number = null;
 
 export function start(): void {
@@ -55,8 +55,8 @@ function recompute(event: UIEvent = null): void {
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
     if ((event === null && x === 0 && y === 0) || (x === null || y === null)) {
-        initTopNode = top;
-        initBottomNode = bottom;
+        initialTop = top;
+        initialBottom = bottom;
         return;
     }
 
@@ -101,11 +101,13 @@ function similar(last: ScrollState, current: ScrollState): boolean {
 }
 
 export function compute(): void {
-    if (initTopNode || initBottomNode) {
-        const sTopTarget = metadata(initTopNode, null);
-        const sBottomTarget = metadata(initBottomNode, null);
-        dimension.log(Dimension.InitialTop, sTopTarget?.hash?.[1]);
-        dimension.log(Dimension.InitialBottom, sBottomTarget?.hash?.[1]);
+    if (initialTop) {
+        const top = metadata(initialTop, null);
+        dimension.log(Dimension.InitialScrollTop, top?.hash?.join(Constant.Dot));
+    }
+    if (initialBottom) {
+        const bottom = metadata(initialBottom, null);
+        dimension.log(Dimension.InitialScrollBottom, bottom?.hash?.join(Constant.Dot));
     }
 }
 

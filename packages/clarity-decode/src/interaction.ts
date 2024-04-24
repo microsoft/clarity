@@ -69,14 +69,12 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             };
             return { time, event, data: submitData };
         case Data.Event.Scroll:
-            const topHash = tokens.length > 5 ? (tokens[5] as string).split(Data.Constant.Dot) : null;
-            const bottomHash = tokens.length > 6 ? (tokens[6] as string).split(Data.Constant.Dot) : null;
             let scrollData: Interaction.ScrollData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
                 y: tokens[4] as number,
-                top: topHash?.length > 1 ? topHash[1] : null,
-                bottom: bottomHash?.length > 1 ? bottomHash[1] : null,
+                top: tokens.length > 5 ? (tokens[5] as string) : null,
+                bottom: tokens.length > 6 ? (tokens[6] as string) : null
             };
             return { time, event, data: scrollData };
         case Data.Event.Timeline:
