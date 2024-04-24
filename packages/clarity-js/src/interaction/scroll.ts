@@ -101,10 +101,12 @@ function similar(last: ScrollState, current: ScrollState): boolean {
 }
 
 export function compute(): void {
-    const sTopTarget = metadata(initTopNode, null);
-    const sBottomTarget = metadata(initBottomNode, null);
-    dimension.log(Dimension.InitialTop, sTopTarget?.hash?.[1]);
-    dimension.log(Dimension.InitialBottom, sBottomTarget?.hash?.[1]);
+    if (initTopNode || initBottomNode) {
+        const sTopTarget = metadata(initTopNode, null);
+        const sBottomTarget = metadata(initBottomNode, null);
+        dimension.log(Dimension.InitialTop, sTopTarget?.hash?.[1]);
+        dimension.log(Dimension.InitialBottom, sBottomTarget?.hash?.[1]);
+    }
 }
 
 export function stop(): void {
