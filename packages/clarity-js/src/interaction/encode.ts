@@ -1,4 +1,4 @@
-import { Constant, Event, Token } from "@clarity-types/data";
+import { Constant, Dimension, Event, Token } from "@clarity-types/data";
 import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
@@ -16,6 +16,7 @@ import * as submit from "@src/interaction/submit";
 import * as timeline from "@src/interaction/timeline";
 import * as unload from "@src/interaction/unload";
 import * as visibility from "@src/interaction/visibility";
+import * as dimension from "@src/data/dimension";
 
 export default async function (type: Event, ts: number = null): Promise<void> {
     let t = ts || time();
@@ -117,17 +118,23 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.Scroll:
             for (let entry of scroll.state) {
                 let sTarget = metadata(entry.data.target as Node, entry.event);
+                const top = metadata(entry.data.topNode, entry.event);
+                const bottom = metadata(entry.data.bottomNode, entry.event);
                 if (sTarget.id > 0) {
                     tokens = [entry.time, entry.event];
                     tokens.push(sTarget.id);
                     tokens.push(entry.data.x);
                     tokens.push(entry.data.y);
-                    tokens.push(entry.data.top);
-                    tokens.push(entry.data.bottom);
+                    tokens.push(top?.hash?.[1]);
+                    tokens.push(bottom?.hash?.[1]);
                     queue(tokens);
                     baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
                 }
             }
+            const initTop = metadata(scroll.initElement?.topNode, null);
+            const initBottom = metadata(scroll.initElement?.bottomNode, null);
+            dimension.log(Dimension.InitialTop, initTop?.hash?.[1]);
+            dimension.log(Dimension.InitialBottom, initBottom?.hash?.[1]);
             scroll.reset();
             break;
         case Event.Change:
