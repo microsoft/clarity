@@ -119,8 +119,8 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 let sTarget = metadata(entry.data.target as Node, entry.event);
                 const top = metadata(entry.data.top as Node, entry.event);
                 const bottom = metadata(entry.data.bottom as Node, entry.event);
-                const sTopHash = top.hash ? top.hash.join(Constant.Dot) : Constant.Empty;
-                const sBottomHash = bottom.hash ? bottom.hash.join(Constant.Dot) : Constant.Empty;
+                const sTopHash = top?.hash ? top.hash.join(Constant.Dot) : Constant.Empty;
+                const sBottomHash = bottom?.hash ? bottom.hash.join(Constant.Dot) : Constant.Empty;
                 if (sTarget.id > 0) {
                     tokens = [entry.time, entry.event];
                     tokens.push(sTarget.id);

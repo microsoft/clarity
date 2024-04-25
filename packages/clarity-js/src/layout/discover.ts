@@ -10,7 +10,7 @@ import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
 import { checkDocumentStyles } from "@src/layout/style";
-import * as scroll from "src/interaction/scroll";
+import * as scroll from "@src/interaction/scroll";
 
 export function start(): void {
     task.schedule(discover, Priority.High).then((): void => {

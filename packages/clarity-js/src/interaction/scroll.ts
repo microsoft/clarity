@@ -10,8 +10,8 @@ import encode from "./encode";
 import * as dimension from "@src/data/dimension";
 
 export let state: ScrollState[] = [];
-let initialTop: Node;
-let initialBottom: Node;
+let initialTop: Node = null;
+let initialBottom: Node = null;
 let timeout: number = null;
 
 export function start(): void {
@@ -114,4 +114,6 @@ export function compute(): void {
 export function stop(): void {
     clearTimeout(timeout);
     state = [];
+    initialTop = null;
+    initialBottom = null;
 }
