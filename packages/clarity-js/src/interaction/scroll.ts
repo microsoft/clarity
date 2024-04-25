@@ -88,6 +88,8 @@ function getPositionNode(x: number, y: number): Node {
 
 export function reset(): void {
     state = [];
+    initialTop = null;
+    initialBottom = null;
 }
 
 function process(event: Event): void {
