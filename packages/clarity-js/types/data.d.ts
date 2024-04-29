@@ -111,7 +111,8 @@ export const enum Metric {
     HardwareConcurrency = 33,
     DeviceMemory = 34,
     Electron = 35,
-    ConstructedStyles = 36
+    ConstructedStyles = 36,
+    InteractionNextPaint = 37,
 }
 
 export const enum Dimension {
@@ -299,6 +300,7 @@ export const enum Constant {
     FID = "first-input",
     CLS = "layout-shift",
     LCP = "largest-contentful-paint",
+    PerformanceEventTiming = "event",
     HTTPS = "https://",
     CompressionStream = "CompressionStream",
     Accept = "Accept",
