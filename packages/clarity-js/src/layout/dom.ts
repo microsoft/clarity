@@ -338,17 +338,17 @@ function remove(id: number, source: Source): void {
         track(id, source);
 
         // Clean up node references for removed nodes
-        removeNodeFromNodesMap(id);
+        removeNodeFromNodesMap(id, source);
     }
 }
 
-function removeNodeFromNodesMap(id: number) {
+function removeNodeFromNodesMap(id: number, source: Source) {
     nodesMap.delete(id);
 
     let value = id in values ? values[id] : null;
     if (value && value.children) {
         for (let childId of value.children) {
-            removeNodeFromNodesMap(childId);
+            remove(childId, source);
         }
     }
 }
