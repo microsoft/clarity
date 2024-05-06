@@ -160,7 +160,8 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
   let value = m.target ? dom.get(m.target.parentNode) : null;
   // Check if the parent is already discovered and that the parent is not the document root
   if (value && value.data.tag !== Constant.HTML) {
-    let inactive = time() > activePeriod;
+    // calculate inactive period based on the timestamp of the mutation not when the mutation is processed
+    let inactive = timestamp > activePeriod;
     let target = dom.get(m.target);
     let element = target && target.selector ? target.selector.join() : m.target.nodeName;
     let parent = value.selector ? value.selector.join() : Constant.Empty;
