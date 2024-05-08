@@ -117,13 +117,17 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.Scroll:
             for (let entry of scroll.state) {
                 let sTarget = metadata(entry.data.target as Node, entry.event);
+                const top = metadata(entry.data.top as Node, entry.event);
+                const bottom = metadata(entry.data.bottom as Node, entry.event);
+                const sTopHash = top?.hash ? top.hash.join(Constant.Dot) : Constant.Empty;
+                const sBottomHash = bottom?.hash ? bottom.hash.join(Constant.Dot) : Constant.Empty;
                 if (sTarget.id > 0) {
                     tokens = [entry.time, entry.event];
                     tokens.push(sTarget.id);
                     tokens.push(entry.data.x);
                     tokens.push(entry.data.y);
-                    tokens.push(entry.data.top);
-                    tokens.push(entry.data.bottom);
+                    tokens.push(sTopHash);
+                    tokens.push(sBottomHash);
                     queue(tokens);
                     baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
                 }

@@ -1,14 +1,17 @@
-import { Event } from "@clarity-types/data";
+import { Constant, Dimension, Event } from "@clarity-types/data";
 import { ScrollState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
-import { iframe, get } from "@src/layout/dom";
-import { target } from "@src/layout/target";
+import { iframe } from "@src/layout/dom";
+import { target, metadata } from "@src/layout/target";
 import encode from "./encode";
+import * as dimension from "@src/data/dimension";
 
 export let state: ScrollState[] = [];
+let initialTop: Node = null;
+let initialBottom: Node = null;
 let timeout: number = null;
 
 export function start(): void {
@@ -45,13 +48,17 @@ function recompute(event: UIEvent = null): void {
     const yOffset = width > height ? height * 0.15 : height * 0.2;
     const startYPosition = yOffset;
     const endYPosition = height - yOffset;
-    const top = getPositionHash(xPosition, startYPosition);
-    const bottom = getPositionHash(xPosition, endYPosition);
+    const top = getPositionNode(xPosition, startYPosition);
+    const bottom = getPositionNode(xPosition, endYPosition);
 
     let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y, top, bottom} };
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
-    if ((event === null && x === 0 && y === 0) || (x === null || y === null)) { return; }
+    if ((event === null && x === 0 && y === 0) || (x === null || y === null)) {
+        initialTop = top;
+        initialBottom = bottom;
+        return;
+    }
 
     let length = state.length;
     let last = length > 1 ? state[length - 2] : null;
@@ -62,7 +69,7 @@ function recompute(event: UIEvent = null): void {
     timeout = setTimeout(process, Setting.LookAhead, Event.Scroll);
 }
 
-function getPositionHash(x: number, y: number): string {
+function getPositionNode(x: number, y: number): Node {
     let node: Node;
     if ("caretPositionFromPoint" in document) {
         node = (document as any).caretPositionFromPoint(x, y)?.offsetNode;
@@ -76,11 +83,13 @@ function getPositionHash(x: number, y: number): string {
         node = node.parentNode;
     }
 
-    return get(node)?.hash?.[1];
+    return node;
 }
 
 export function reset(): void {
     state = [];
+    initialTop = null;
+    initialBottom = null;
 }
 
 function process(event: Event): void {
@@ -93,7 +102,20 @@ function similar(last: ScrollState, current: ScrollState): boolean {
     return (dx * dx + dy * dy < Setting.Distance * Setting.Distance) && (current.time - last.time < Setting.Interval);
 }
 
+export function compute(): void {
+    if (initialTop) {
+        const top = metadata(initialTop, null);
+        dimension.log(Dimension.InitialScrollTop, top?.hash?.join(Constant.Dot));
+    }
+    if (initialBottom) {
+        const bottom = metadata(initialBottom, null);
+        dimension.log(Dimension.InitialScrollBottom, bottom?.hash?.join(Constant.Dot));
+    }
+}
+
 export function stop(): void {
     clearTimeout(timeout);
     state = [];
+    initialTop = null;
+    initialBottom = null;
 }

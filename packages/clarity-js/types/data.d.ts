@@ -145,7 +145,9 @@ export const enum Dimension {
     ConnectionType = 27,
     Dob = 28,
     CookieVersion = 29,
-    DeviceFamily = 30 // Allows iOS SDK to override the DeviceFamily value parsed from UserAgent.
+    DeviceFamily = 30, // Allows iOS SDK to override the DeviceFamily value parsed from UserAgent.
+    InitialScrollTop = 31,
+    InitialScrollBottom = 32
 }
 
 export const enum Check {
