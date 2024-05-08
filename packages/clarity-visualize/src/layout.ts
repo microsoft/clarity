@@ -197,6 +197,8 @@ export class LayoutHelper {
                     break;
                 case Layout.Constant.ShadowDomTag:
                     if (parent) {
+                        // ShadowRoot should be treated as Document tag and shouldn't being cached in this.element.
+                        // All the mutations under it should be recorded as the document tag.
                         let shadowRoot = (parent as HTMLElement).attachShadow({ mode: "open" });
                         this.nodes[node.id] = shadowRoot;
                         this.addToHashMap(node, shadowRoot);
