@@ -197,8 +197,7 @@ export class LayoutHelper {
                     break;
                 case Layout.Constant.ShadowDomTag:
                     if (parent) {
-                        let shadowRoot = this.element(node.id);
-                        shadowRoot = shadowRoot ? shadowRoot : (parent as HTMLElement).attachShadow({ mode: "open" });
+                        let shadowRoot = (parent as HTMLElement).attachShadow({ mode: "open" });
                         this.nodes[node.id] = shadowRoot;
                         this.addToHashMap(node, shadowRoot);
                         this.addStyles(node.id);
