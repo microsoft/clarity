@@ -9,7 +9,7 @@ import * as schema from "@src/layout/schema";
 import { checkDocumentStyles } from "@src/layout/style";
 import { electron } from "@src/data/metadata";
 
-const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
+const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last", "aria-label"];
 const newlineRegex = /[\r\n]+/g;
 
 export default function (node: Node, source: Source, timestamp: number): Node {
