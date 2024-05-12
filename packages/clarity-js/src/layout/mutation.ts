@@ -17,6 +17,7 @@ import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
 import processNode from "./node";
+import config from "@src/core/config";
 
 let observers: MutationObserver[] = [];
 let mutations: MutationQueue[] = [];
@@ -129,7 +130,7 @@ async function process(): Promise<void> {
       if (state === Task.Wait) { state = await task.suspend(timer); }
       if (state === Task.Stop) { break; }      
       let target = mutation.target;
-      let type = track(mutation, timer, instance, record.time);
+      let type = config.throttleDom ? track(mutation, timer, instance, record.time) : mutation.type;
       if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
       if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) { dom.parse(target as ShadowRoot); }
       switch (type) {
