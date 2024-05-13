@@ -1,6 +1,6 @@
 {
   "name": "clarity-devtools",
-  "version": "0.7.33",
+  "version": "0.7.34",
   "private": true,
   "description": "Adds Clarity debugging support to browser devtools",
   "author": "Microsoft Corp.",
