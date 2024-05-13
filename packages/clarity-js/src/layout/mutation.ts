@@ -17,6 +17,7 @@ import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
 import processNode from "./node";
+import config from "@src/core/config";
 
 let observers: MutationObserver[] = [];
 let mutations: MutationQueue[] = [];
@@ -129,7 +130,7 @@ async function process(): Promise<void> {
       if (state === Task.Wait) { state = await task.suspend(timer); }
       if (state === Task.Stop) { break; }      
       let target = mutation.target;
-      let type = track(mutation, timer, instance, record.time);
+      let type = config.throttleDom ? track(mutation, timer, instance, record.time) : mutation.type;
       if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
       if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) { dom.parse(target as ShadowRoot); }
       switch (type) {
@@ -160,7 +161,8 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
   let value = m.target ? dom.get(m.target.parentNode) : null;
   // Check if the parent is already discovered and that the parent is not the document root
   if (value && value.data.tag !== Constant.HTML) {
-    let inactive = time() > activePeriod;
+    // calculate inactive period based on the timestamp of the mutation not when the mutation is processed
+    let inactive = timestamp > activePeriod;
     let target = dom.get(m.target);
     let element = target && target.selector ? target.selector.join() : m.target.nodeName;
     let parent = value.selector ? value.selector.join() : Constant.Empty;

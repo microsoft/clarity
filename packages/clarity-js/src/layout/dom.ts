@@ -343,6 +343,11 @@ function remove(id: number, source: Source): void {
 }
 
 function removeNodeFromNodesMap(id: number) {
+    // Shadow dom roots shouldn't be deleted, 
+    // we should keep listening to the mutations there even they're not rendered in the DOM.
+    if(nodesMap.get(id).nodeType === Node.DOCUMENT_FRAGMENT_NODE){
+        return;
+    }
     nodesMap.delete(id);
 
     let value = id in values ? values[id] : null;
