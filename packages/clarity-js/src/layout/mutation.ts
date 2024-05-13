@@ -130,7 +130,7 @@ async function process(): Promise<void> {
       if (state === Task.Wait) { state = await task.suspend(timer); }
       if (state === Task.Stop) { break; }      
       let target = mutation.target;
-      let type = config.throttleDom ? track(mutation, timer, instance, record.time) : mutation.type;
+      let type = config.disableThrottleMutation ?  mutation.type : track(mutation, timer, instance, record.time);
       if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
       if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) { dom.parse(target as ShadowRoot); }
       switch (type) {

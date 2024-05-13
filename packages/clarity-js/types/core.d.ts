@@ -138,7 +138,7 @@ export interface Config {
     action?: (key: string) => void;
     dob?: number;
     delayDom?: boolean;
-    throttleDom?: boolean;
+    disableThrottleMutation?: boolean;
 }
 
 export const enum Constant {
