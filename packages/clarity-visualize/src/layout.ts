@@ -127,6 +127,13 @@ export class LayoutHelper {
             case Data.Event.StyleSheetAdoption:
                 this.setDocumentStyles(event.data.id as number, event.data.newIds);
                 break;
+            case Data.Event.StyleSheetRuleChange:
+                let styleSheetToUpdate: CSSStyleSheet = this.adoptedStyleSheets[event.data.id];
+                if (!styleSheetToUpdate || styleSheetToUpdate.cssRules.length <= event.data.indexOfRule) {
+                    return;
+                }
+                (styleSheetToUpdate.cssRules[event.data.indexOfRule] as CSSStyleRule).style.setProperty(event.data.propertyName, event.data.value, event.data.priority);
+                break;
         }
     }
 

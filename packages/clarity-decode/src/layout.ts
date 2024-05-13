@@ -58,6 +58,16 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
                 cssRules: tokens[4] as string
             }
             return { time, event, data: styleSheetUpdateData };
+        case Data.Event.StyleSheetRuleChange:
+            let styleSheetRuleChangeData: Layout.StyleSheetData = {
+                id: tokens[2] as string,
+                operation: tokens[3] as number,
+                indexOfRule: tokens[4] as number,
+                propertyName: tokens[5] as string,
+                value: tokens[6] as string,
+                priority: tokens[7] as string, // TODO (samart): make sure this doesn't crash when priority isn't supplied
+            }
+            return { time, event, data: styleSheetRuleChangeData };
         case Data.Event.Animation:
             let animationData: Layout.AnimationData = {
                 id: tokens[2] as string,

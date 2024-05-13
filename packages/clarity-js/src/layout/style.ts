@@ -7,18 +7,21 @@ import { getId, getNode } from "@src/layout/dom";
 import * as core from "@src/core";
 import { getCssRules } from "./node";
 import * as metric from "@src/data/metric";
+import { schedule } from "@src/core/task";
 
-export let state: StyleSheetState[] = [];
+export let adoptionState: StyleSheetState[] = [];
+export let styleRuleState: StyleSheetState[] = [];
+export let updateState: StyleSheetState[] = [];
 let replace: (text?: string) => Promise<CSSStyleSheet> = null;
 let replaceSync: (text?: string) => void = null;
+let declarationSetProperty: (property: string, value: string, priority?: string) => void = null;
 const styleSheetId = 'claritySheetId';
 const styleSheetPageNum = 'claritySheetNum';
 let styleSheetMap = {};
 let styleTimeMap: {[key: string]: number} = {};
+let documentCache: Document[] = [];
 
 export function start(): void {
-    reset();
-
     if (replace === null) { 
         replace = CSSStyleSheet.prototype.replace; 
         CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
@@ -42,6 +45,31 @@ export function start(): void {
             return replaceSync.apply(this, arguments);
         };
     }
+
+    if (declarationSetProperty === null) {
+        declarationSetProperty = CSSStyleDeclaration.prototype.setProperty;
+        CSSStyleDeclaration.prototype.setProperty = function () {
+            if (core.active()) {
+                let timeOfCall = time();
+                if (this?.parentRule?.parentStyleSheet?.[styleSheetId]) {
+                    const owningStyleSheet: CSSStyleSheet = this.parentRule.parentStyleSheet;
+                    var indexOfRule = -1;
+                    for (var i = 0; i < owningStyleSheet.cssRules.length; i++) {
+                        if (owningStyleSheet.cssRules.item(i) === this.parentRule) {
+                            indexOfRule = i;
+                            break;
+                        }
+                    }
+                    console.log(`sam you found the styleSheetId for this update: ${owningStyleSheet[styleSheetId]} at index ${indexOfRule}`);
+                    trackRuleChange(timeOfCall, owningStyleSheet[styleSheetId], indexOfRule, arguments[0], arguments[1], arguments[2]);
+                } else {
+                    console.log('sorry no stylesheet to update');
+                }
+            }
+            return declarationSetProperty.apply(this, arguments);
+        }
+    }
+    
 }
 
 function bootStrapStyleSheet(styleSheet: CSSStyleSheet): void {
@@ -58,6 +86,9 @@ function bootStrapStyleSheet(styleSheet: CSSStyleSheet): void {
 }
 
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
+    if (documentCache.indexOf(documentNode) == -1) {
+        documentCache.push(documentNode);
+    }    
     timestamp = timestamp || time();
     if (!documentNode?.adoptedStyleSheets) {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
@@ -92,21 +123,46 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
 export function compute(): void {
     let ts = -1 in styleTimeMap ? styleTimeMap[-1] : null;
     checkDocumentStyles(document, ts);
+    // documentCache.forEach((x) => checkDocumentStyles(x, styleTimeMap[getId(x)]));
     Object.keys(styleSheetMap).forEach((x) => checkDocumentStyles(getNode(parseInt(x, 10)) as Document, styleTimeMap[x]));
 }
 
 export function reset(): void {
-    state = [];
+    adoptionState = [];
+    updateState = [];
+    styleRuleState = [];
 }
 
 export function stop(): void {
     styleSheetMap = {};
     styleTimeMap = {};
+    documentCache = [];
     reset();
 }
 
+function trackRuleChange(time: number, styleSheetId: string, indexOfRule: number, propertyName: string, value: string, priority?: string): void {
+    styleRuleState.push({
+        time,
+        event: Event.StyleSheetRuleChange,
+        data: {
+            id: styleSheetId,
+            operation: StyleSheetOperation.SetProperty,
+            indexOfRule,
+            propertyName,
+            value,
+            priority
+        }
+    });
+
+    console.log(`adding a new rule: ${styleRuleState.length}`);
+    console.log(styleRuleState);
+
+
+    schedule(encode.bind(this, Event.StyleSheetRuleChange));
+}
+
 function trackStyleChange(time: number, id: string, operation: StyleSheetOperation, cssRules?: string): void {
-    state.push({
+    updateState.push({
         time,
         event: Event.StyleSheetUpdate,
         data: {
@@ -116,11 +172,14 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
         }
     });
 
-    encode(Event.StyleSheetUpdate);
+    console.log(`style change: id: ${id} operation: ${operation} on page: ${metadataFields.pageNum} and length: ${updateState.length} `);
+    // console.log(updateState);
+
+    schedule(encode.bind(this, Event.StyleSheetUpdate));
 }
 
 function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: string[]): void {
-    state.push({
+    adoptionState.push({
         time,
         event: Event.StyleSheetAdoption,
         data: {
@@ -130,7 +189,10 @@ function trackStyleAdoption(time: number, id: number, operation: StyleSheetOpera
         }
     });
 
-    encode(Event.StyleSheetAdoption);
+    //console.log(`adoption change: id: ${id} operation: ${operation} on page: ${metadataFields.pageNum} and length: ${adoptionState.length} `);
+    //console.log(adoptionState);
+
+    schedule(encode.bind(this, Event.StyleSheetAdoption));
 }
 
 function arraysEqual(a: string[], b: string[]): boolean {

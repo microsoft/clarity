@@ -161,7 +161,8 @@ export const enum StyleSheetOperation {
     Create = 0,
     Replace = 1,
     ReplaceSync = 2,
-    SetAdoptedStyles = 3
+    SetAdoptedStyles = 3,
+    SetProperty = 4,
 }
 
 /* Helper Interfaces */
@@ -261,5 +262,11 @@ export interface StyleSheetData {
     id: number | string;
     operation: StyleSheetOperation;
     cssRules?: string;
-    newIds?: string[]
+    // newIds is only set for entire style sheet adoptions
+    newIds?: string[];
+    // propertyName, value and priority are only set for capturing CSSStyleDeclaration setProperty calls
+    indexOfRule?: number;
+    propertyName?: string;
+    value?: string;
+    priority?: string;
 }

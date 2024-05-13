@@ -37,25 +37,39 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             }
             region.reset();
             break;
-        case Event.StyleSheetAdoption:
-            for (let entry of style.state) {
-                tokens = [entry.time, entry.event];
-                tokens.push(entry.data.id);
-                tokens.push(entry.data.operation);
-                tokens.push(entry.data.newIds);
-                queue(tokens);
-            }
-            style.reset();
-            break;
+        case Event.StyleSheetRuleChange:
         case Event.StyleSheetUpdate:
-            for (let entry of style.state) {
+        case Event.StyleSheetAdoption:
+            for (let entry of style.updateState) {
+                console.log(`update ${entry.data.id} operation ${entry.data.operation}`);
+                // console.log(entry);
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.cssRules);
                 queue(tokens);
             }
+            for (let entry of style.adoptionState) {
+                console.log(`adoption ${entry.data.id} operation ${entry.data.operation}`);
+                tokens = [entry.time, entry.event];
+                tokens.push(entry.data.id);
+                tokens.push(entry.data.operation);
+                tokens.push(entry.data.newIds);
+                queue(tokens);
+            }            
+            for (let entry of style.styleRuleState) {
+                console.log(`rulechange ${entry.data.id} operation ${entry.data.operation}`);
+                tokens = [entry.time, entry.event];
+                tokens.push(entry.data.id);
+                tokens.push(entry.data.operation);
+                tokens.push(entry.data.indexOfRule);
+                tokens.push(entry.data.propertyName);
+                tokens.push(entry.data.value);
+                tokens.push(entry.data.priority);
+                queue(tokens);
+            }
             style.reset();
+            break;
         case Event.Animation:
             for (let entry of animation.state) {
                 tokens = [entry.time, entry.event];

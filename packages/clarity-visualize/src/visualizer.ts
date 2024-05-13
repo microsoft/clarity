@@ -41,6 +41,7 @@ export class Visualizer implements VisualizerType {
                     switch (entry.event) {
                         case Data.Event.StyleSheetAdoption:
                         case Data.Event.StyleSheetUpdate:
+                        case Data.Event.StyleSheetRuleChange:
                             this.layout.styleChange(entry as Layout.StyleSheetEvent);
                             break;
                         case Data.Event.Mutation:
@@ -188,6 +189,7 @@ export class Visualizer implements VisualizerType {
                     break;
                 case Data.Event.StyleSheetAdoption:
                 case Data.Event.StyleSheetUpdate:
+                case Data.Event.StyleSheetRuleChange:
                     this.layout.styleChange(entry as Layout.StyleSheetEvent);
                     break;                
                 case Data.Event.Animation:

@@ -68,7 +68,8 @@ export const enum Event {
     Snapshot = 43,
     Animation = 44,
     StyleSheetAdoption = 45,
-    StyleSheetUpdate = 46
+    StyleSheetUpdate = 46,
+    StyleSheetRuleChange = 47,
 }
 
 export const enum Metric {
