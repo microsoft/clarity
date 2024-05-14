@@ -20,6 +20,7 @@ const styleSheetPageNum = 'claritySheetNum';
 let styleSheetMap = {};
 let styleTimeMap: {[key: string]: number} = {};
 let documentCache: Document[] = [];
+let styleEventsSoFar = 0;
 
 export function start(): void {
     if (replace === null) { 
@@ -49,7 +50,7 @@ export function start(): void {
     if (declarationSetProperty === null) {
         declarationSetProperty = CSSStyleDeclaration.prototype.setProperty;
         CSSStyleDeclaration.prototype.setProperty = function () {
-            if (core.active()) {
+            if (core.active() && styleEventsSoFar++ < 1000) {
                 let timeOfCall = time();
                 if (this?.parentRule?.parentStyleSheet?.[styleSheetId]) {
                     const owningStyleSheet: CSSStyleSheet = this.parentRule.parentStyleSheet;
@@ -60,7 +61,7 @@ export function start(): void {
                             break;
                         }
                     }
-                    console.log(`sam you found the styleSheetId for this update: ${owningStyleSheet[styleSheetId]} at index ${indexOfRule}`);
+                    // console.log(`sam you found the styleSheetId for this update: ${owningStyleSheet[styleSheetId]} at index ${indexOfRule}`);
                     trackRuleChange(timeOfCall, owningStyleSheet[styleSheetId], indexOfRule, arguments[0], arguments[1], arguments[2]);
                 } else {
                     console.log('sorry no stylesheet to update');
@@ -131,6 +132,7 @@ export function reset(): void {
     adoptionState = [];
     updateState = [];
     styleRuleState = [];
+    styleEventsSoFar = 0;
 }
 
 export function stop(): void {
@@ -141,6 +143,8 @@ export function stop(): void {
 }
 
 function trackRuleChange(time: number, styleSheetId: string, indexOfRule: number, propertyName: string, value: string, priority?: string): void {
+    // TODO (samart): If I comment this push out then the responsiveness is fine, so the problem isn't with the parsing of the sheet ids or anything
+    // if I change it to a console.log everything also seems fine - so I'm very confident that capturing the data + writing it somewhere is not a problem
     styleRuleState.push({
         time,
         event: Event.StyleSheetRuleChange,
@@ -154,11 +158,16 @@ function trackRuleChange(time: number, styleSheetId: string, indexOfRule: number
         }
     });
 
-    console.log(`adding a new rule: ${styleRuleState.length}`);
-    console.log(styleRuleState);
+    // console.log(styleSheetId);
 
+    // console.log(`adding a new rule: ${styleRuleState.length}`);
+    // console.log(styleRuleState);
 
+    // console.log(`would have done a style rule push at ${time}`);
     schedule(encode.bind(this, Event.StyleSheetRuleChange));
+    // TODO (samart: trying to not schedule these and instead run them right away to see what changes
+    // doesnt make a difference
+    // encode(Event.StyleSheetRuleChange);
 }
 
 function trackStyleChange(time: number, id: string, operation: StyleSheetOperation, cssRules?: string): void {
@@ -172,7 +181,7 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
         }
     });
 
-    console.log(`style change: id: ${id} operation: ${operation} on page: ${metadataFields.pageNum} and length: ${updateState.length} `);
+    // console.log(`style change: id: ${id} operation: ${operation} on page: ${metadataFields.pageNum} and length: ${updateState.length} `);
     // console.log(updateState);
 
     schedule(encode.bind(this, Event.StyleSheetUpdate));

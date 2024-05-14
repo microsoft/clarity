@@ -43,6 +43,7 @@ export function start(): void {
 
 export function queue(tokens: Token[], transmit: boolean = true): void {
     if (active) {
+        // console.log(`queue at ${time()}`);
         let now = time();
         let type = tokens.length > 1 ? tokens[1] : null;
         let event = JSON.stringify(tokens);
@@ -55,6 +56,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             case Event.Snapshot:
             case Event.StyleSheetAdoption:
             case Event.StyleSheetUpdate:
+            case Event.StyleSheetRuleChange:
                 playbackBytes += event.length;
                 playback.push(event);
                 break;
@@ -71,6 +73,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         // reset the timer. This allows Clarity to attempt an upload again.
         let gap = delay();
         if (now - queuedTime > (gap * 2)) {
+            // console.log(`clearing the timeout because gap was too long  ${gap} : ${now - queuedTime}`);
             clearTimeout(timeout);
             timeout = null;
         }
@@ -101,6 +104,7 @@ export function stop(): void {
 }
 
 async function upload(final: boolean = false): Promise<void> {
+    // console.log(`upload at ${time()}`);
     timeout = null;
 
     // Check if we can send playback bytes over the wire or not
@@ -130,10 +134,14 @@ async function upload(final: boolean = false): Promise<void> {
     // Get the payload ready for sending over the wire
     // We also attempt to compress the payload if it is not the last payload and the browser supports it
     // In all other cases, we continue to send back string value
+    // console.log(`payload zipping ${time()}`);
     let payload = stringify(encoded);
     let zipped = last ? null : await compress(payload)
+    // console.log(`payload zipped ${time()}`);
     metric.sum(Metric.TotalBytes, zipped ? zipped.length : payload.length);
+    // console.log(`send start: ${time()}, playbackBytes: ${sendPlaybackBytes}, p length: ${p.length}`);
     send(payload, zipped, envelope.data.sequence, last);
+    // console.log(`send end: ${time()}`);
 
     // Clear out events now that payload has been dispatched
     analysis = [];
@@ -149,6 +157,7 @@ function stringify(encoded: EncodedPayload): string {
 }
 
 function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boolean = false): void {
+    // console.log(`send at ${time()}`);
     // Upload data if a valid URL is defined in the config
     if (typeof config.upload === Constant.String) {
         const url = config.upload as string;
@@ -191,9 +200,11 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             }
         }
     } else if (config.upload) {
+        console.log(`upload ${sequence} start ${performance.now()}`);
         const callback = config.upload as UploadCallback;
         callback(payload);
         done(sequence);
+        console.log(`upload ${sequence} end ${performance.now()}`);
     }
 }
 

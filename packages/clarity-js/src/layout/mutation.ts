@@ -111,6 +111,7 @@ export function active(): void {
 function handle(m: MutationRecord[]): void {
   // Queue up mutation records for asynchronous processing
   let now = time();
+  // console.log(`handling mutation at ${now}`);
   summary.track(Event.Mutation, now);
   mutations.push({ time: now, mutations: m});
   task.schedule(process, Priority.High).then((): void => {
@@ -122,6 +123,7 @@ function handle(m: MutationRecord[]): void {
 async function process(): Promise<void> {
   let timer: Timer = { id: id(), cost: Metric.LayoutCost };
   task.start(timer);
+  // console.log(`starting mutation process at ${time()}`);
   while (mutations.length > 0) {
     let record = mutations.shift();
     let instance = time();
@@ -152,6 +154,7 @@ async function process(): Promise<void> {
           break;
       }
     }
+    // console.log(`starting mutation encode at ${time()}`);
     await encode(Event.Mutation, timer, record.time);
   }
   task.stop(timer);

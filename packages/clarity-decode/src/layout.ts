@@ -59,13 +59,20 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             }
             return { time, event, data: styleSheetUpdateData };
         case Data.Event.StyleSheetRuleChange:
+            // todo (samart): trying to pipe everything through but have the decode not actually use any of it
+            // doing this doesnt seem to help the perf, we still get the hanging state
             let styleSheetRuleChangeData: Layout.StyleSheetData = {
                 id: tokens[2] as string,
-                operation: tokens[3] as number,
+                operation: 4,
+                indexOfRule: 0,
+                propertyName: "--fakeProperty",
+                value: "fakeValue",
+                priority: "", // TODO (samart): make sure this doesn't crash when priority isn't supplied
+                /*operation: tokens[3] as number,
                 indexOfRule: tokens[4] as number,
                 propertyName: tokens[5] as string,
                 value: tokens[6] as string,
-                priority: tokens[7] as string, // TODO (samart): make sure this doesn't crash when priority isn't supplied
+                priority: tokens[7] as string, // TODO (samart): make sure this doesn't crash when priority isn't supplied*/
             }
             return { time, event, data: styleSheetRuleChangeData };
         case Data.Event.Animation:

@@ -107,6 +107,7 @@ function restart(timer: Timer): void {
 }
 
 export function stop(timer: Timer): void {
+    // console.log(`stopping timer ${timer.id} at ${time()}`);
     let end = performance.now();
     let id = key(timer);
     let duration = end - tracker[id].start;
@@ -119,6 +120,7 @@ export function stop(timer: Timer): void {
 }
 
 export async function suspend(timer: Timer): Promise<Task> {
+    // console.log(`suspending timer ${timer.id} at ${time()}`);
     // Suspend and yield the thread only if the task is still being tracked
     // It's possible that Clarity is wrapping up instrumentation on a page and we are still in the middle of an async task.
     // In that case, we do not wish to continue yielding thread.

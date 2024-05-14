@@ -29,6 +29,8 @@ export function observe(root: Node): void {
 }
 
 function mouse(event: Event, root: Node, evt: MouseEvent): void {
+    // console.log(`found a mouse event at ${time()}`);
+    // TODO (samart): even while frozen we do get thse mouse evenst
     let frame = iframe(root);
     let d = frame ? frame.contentDocument.documentElement : document.documentElement;
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
@@ -85,6 +87,8 @@ function handler(current: PointerState): void {
 }
 
 function process(event: Event): void {
+    // todo (samart): while we are frozen we ARENT calling process
+    // console.log(`processing a mouse event at ${time()}`);
     schedule(encode.bind(this, event));
 }
 

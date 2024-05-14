@@ -54,13 +54,21 @@ function save(mode: Mode): void {
 background.onMessage.addListener(function(message: any): void {
     // Handle responses from the background page, if any
     if (message && message.payload) {
+        // TODO (samart): high confidence that these things aren't taking a long time - seems like it is just taking a long time
+        // for the message to be sent
+        console.log(`decoding message at ${performance.now()}`);
         let decoded = decode(message.payload);
         if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
+        console.log(`parsing message ${decoded.envelope.sequence} at ${performance.now()}`);
         pJson.push(JSON.parse(message.payload));
+        console.log(`copying message ${decoded.envelope.sequence} at ${performance.now()}`);
         dJson.push(copy(decoded)); // Save a copy of JSON
+        console.log(`merging message ${decoded.envelope.sequence} at ${performance.now()}`);
         let merged = visualize.merge([decoded]);
         events = events.concat(merged.events).sort(sort);
+        console.log(`visualizing message ${decoded.envelope.sequence} at ${performance.now()}`);
         visualize.dom(merged.dom);
+        console.log(`done ${decoded.envelope.sequence} at ${performance.now()}`);
     }
 });
 

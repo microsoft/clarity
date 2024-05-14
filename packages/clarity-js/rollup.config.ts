@@ -1,7 +1,7 @@
 import alias from "@rollup/plugin-alias";
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
-import terser from "@rollup/plugin-terser";
+// import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import pkg from "./package.json" assert { type: 'json' };
 
@@ -15,7 +15,7 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: '@src/layout/style', replacement: '@src/insight/style' }
+          { find: '@src/layout/style', replacement: '@src/layout/style' }
         ]
       }),
       resolve(),
@@ -37,12 +37,12 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: '@src/layout/style', replacement: '@src/insight/blank' }
+          { find: '@src/layout/style', replacement: '@src/layout/style' }
         ]
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      // terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
@@ -56,7 +56,7 @@ export default [
     plugins: [
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      // terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
@@ -80,7 +80,7 @@ export default [
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      // terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
@@ -102,7 +102,7 @@ export default [
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      // terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
   }

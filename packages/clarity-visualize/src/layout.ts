@@ -128,8 +128,12 @@ export class LayoutHelper {
                 this.setDocumentStyles(event.data.id as number, event.data.newIds);
                 break;
             case Data.Event.StyleSheetRuleChange:
+                // TODO (samart): even if I break here, the delay happens. so the hanging is not due to setProperty taking a long time or something
+                // still seems like the timestamps are getting fucked up?
+                // console.log('skipping set property to see if that helps');
+                // break;
                 let styleSheetToUpdate: CSSStyleSheet = this.adoptedStyleSheets[event.data.id];
-                if (!styleSheetToUpdate || styleSheetToUpdate.cssRules.length <= event.data.indexOfRule) {
+                if (!styleSheetToUpdate || event.data.indexOfRule == -1 || styleSheetToUpdate.cssRules.length <= event.data.indexOfRule) {
                     return;
                 }
                 (styleSheetToUpdate.cssRules[event.data.indexOfRule] as CSSStyleRule).style.setProperty(event.data.propertyName, event.data.value, event.data.priority);

@@ -40,8 +40,9 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
         case Event.StyleSheetRuleChange:
         case Event.StyleSheetUpdate:
         case Event.StyleSheetAdoption:
+            let styleStartTime = time();
             for (let entry of style.updateState) {
-                console.log(`update ${entry.data.id} operation ${entry.data.operation}`);
+                // console.log(`update ${entry.data.id} operation ${entry.data.operation}`);
                 // console.log(entry);
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
@@ -49,16 +50,23 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 tokens.push(entry.data.cssRules);
                 queue(tokens);
             }
+            let adoptStyleStartTime = time();
             for (let entry of style.adoptionState) {
-                console.log(`adoption ${entry.data.id} operation ${entry.data.operation}`);
+                // console.log(`adoption ${entry.data.id} operation ${entry.data.operation}`);
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.newIds);
                 queue(tokens);
             }            
+            let ruleStyleStartTime = time();
+            // TODO (samart): if I don't queue all of these entries then the perf is fine again
+            // so something about pushing all of these tokens is what causes the problem
+            // I think maybe something is happening with our delay queueing - maybe the payload is getting
+            // big enough that we are adding a delay?
+            
             for (let entry of style.styleRuleState) {
-                console.log(`rulechange ${entry.data.id} operation ${entry.data.operation}`);
+                // console.log(`rulechange ${entry.data.id} operation ${entry.data.operation}`);
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
@@ -69,6 +77,10 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 queue(tokens);
             }
             style.reset();
+            let doneStyleStartTime = time();
+            if (doneStyleStartTime - styleStartTime > 100) {
+                console.log(`start: ${styleStartTime}\nadopt:${adoptStyleStartTime}\nrule:${ruleStyleStartTime}\ndone:${doneStyleStartTime}`);
+            }
             break;
         case Event.Animation:
             for (let entry of animation.state) {
@@ -85,6 +97,8 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             break;
         case Event.Discover:
         case Event.Mutation:
+            // TODO (samart): I've verified that these mutation encodings keep happening during the visualization hanging
+            // console.log(`starting mutation encode ${time()}`);
             // Check if we are operating within the context of the current page
             if (task.state(timer) === Task.Stop) { break; }
             let values = dom.updates();
@@ -129,6 +143,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                         }
                     }
                 }
+                // console.log(`ending mutation encode ${time()}`);
                 if (type === Event.Mutation) { baseline.activity(eventTime); }
                 queue(tokenize(tokens), !config.lean);
             }
