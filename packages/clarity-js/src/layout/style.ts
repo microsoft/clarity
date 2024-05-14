@@ -7,8 +7,10 @@ import { getId, getNode } from "@src/layout/dom";
 import * as core from "@src/core";
 import { getCssRules } from "./node";
 import * as metric from "@src/data/metric";
+import { schedule } from "@src/core/task";
 
-export let state: StyleSheetState[] = [];
+export let sheetUpdateState: StyleSheetState[] = [];
+export let sheetAdoptionState: StyleSheetState[] = [];
 let replace: (text?: string) => Promise<CSSStyleSheet> = null;
 let replaceSync: (text?: string) => void = null;
 const styleSheetId = 'claritySheetId';
@@ -17,8 +19,6 @@ let styleSheetMap = {};
 let styleTimeMap: {[key: string]: number} = {};
 
 export function start(): void {
-    reset();
-
     if (replace === null) { 
         replace = CSSStyleSheet.prototype.replace; 
         CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
@@ -96,7 +96,8 @@ export function compute(): void {
 }
 
 export function reset(): void {
-    state = [];
+    sheetAdoptionState = [];
+    sheetUpdateState = [];
 }
 
 export function stop(): void {
@@ -106,7 +107,7 @@ export function stop(): void {
 }
 
 function trackStyleChange(time: number, id: string, operation: StyleSheetOperation, cssRules?: string): void {
-    state.push({
+    sheetUpdateState.push({
         time,
         event: Event.StyleSheetUpdate,
         data: {
@@ -120,7 +121,7 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
 }
 
 function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: string[]): void {
-    state.push({
+    sheetAdoptionState.push({
         time,
         event: Event.StyleSheetAdoption,
         data: {

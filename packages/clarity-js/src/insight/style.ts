@@ -3,13 +3,12 @@ import { StyleSheetState } from "@clarity-types/layout";
 import * as core from "@src/core";
 import * as metric from "@src/data/metric";
 
-export let state: StyleSheetState[] = [];
+export let sheetAdoptionState: StyleSheetState[] = [];
+export let sheetUpdateState: StyleSheetState[] = [];
 let replace: (text?: string) => Promise<CSSStyleSheet> = null;
 let replaceSync: (text?: string) => void = null;
 
 export function start(): void {
-    reset();
-
     if (replace === null) { 
         replace = CSSStyleSheet.prototype.replace; 
         CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
@@ -44,7 +43,8 @@ export function compute(): void {
 }
 
 export function reset(): void {
-    state = [];
+    sheetAdoptionState = [];
+    sheetUpdateState = [];
 }
 
 export function stop(): void {
