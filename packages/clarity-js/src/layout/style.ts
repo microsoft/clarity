@@ -7,7 +7,6 @@ import { getId, getNode } from "@src/layout/dom";
 import * as core from "@src/core";
 import { getCssRules } from "./node";
 import * as metric from "@src/data/metric";
-import { schedule } from "@src/core/task";
 
 export let sheetUpdateState: StyleSheetState[] = [];
 export let sheetAdoptionState: StyleSheetState[] = [];
