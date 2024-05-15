@@ -23,8 +23,12 @@ export function start(): void {
         CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
             if (core.active()) {
                 metric.max(Metric.ConstructedStyles, 1);
-                bootStrapStyleSheet(this);
-                trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
+                // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
+                // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
+                // to when it is used in the document rather than potentially being misaligned during the traverse process.
+                if (this[styleSheetPageNum] === metadataFields.pageNum) {
+                    trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
+                }
             }
             return replace.apply(this, arguments);
         };
@@ -35,24 +39,15 @@ export function start(): void {
         CSSStyleSheet.prototype.replaceSync = function(): void {
             if (core.active()) {
                 metric.max(Metric.ConstructedStyles, 1);
-                bootStrapStyleSheet(this);
-                trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
+                // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
+                // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
+                // to when it is used in the document rather than potentially being misaligned during the traverse process.
+                if (this[styleSheetPageNum] === metadataFields.pageNum) {
+                    trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
+                }                
             }
             return replaceSync.apply(this, arguments);
         };
-    }
-}
-
-function bootStrapStyleSheet(styleSheet: CSSStyleSheet): void {
-    // If we haven't seen this style sheet on this page yet, we create a reference to it for the visualizer.
-    // For SPA or times in which Clarity restarts on a given page, our visualizer would lose context
-    // on the previously created style sheet for page N-1.
-    const pageNum = metadataFields.pageNum;
-    if (styleSheet[styleSheetPageNum] !== pageNum) {
-        styleSheet[styleSheetPageNum] = pageNum;
-        styleSheet[styleSheetId] = shortid();
-        // need to pass a create style sheet event (don't add it to any nodes, but do create it)
-        trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.Create);
     }
 }
 
@@ -66,7 +61,10 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
     let currentStyleSheets: string[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
         const pageNum = metadataFields.pageNum;
-        // if we haven't seen this style sheet, create it and call replaceSync with its contents to bootstrap it
+        // If we haven't seen this style sheet on this page yet, we create a reference to it for the visualizer.
+        // For SPA or times in which Clarity restarts on a given page, our visualizer would lose context
+        // on the previously created style sheet for page N-1.
+        // Then we synthetically call replaceSync with its contents to bootstrap it
         if (styleSheet[styleSheetPageNum] !== pageNum) {
             styleSheet[styleSheetPageNum] = pageNum;
             styleSheet[styleSheetId] = shortid();
