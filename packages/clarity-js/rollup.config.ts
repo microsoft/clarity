@@ -15,7 +15,7 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: '@src/layout/style', replacement: '@src/layout/style' }
+          { find: '@src/layout/style', replacement: '@src/insight/style' }
         ]
       }),
       resolve(),
@@ -37,7 +37,7 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: '@src/layout/style', replacement: '@src/layout/style' }
+          { find: '@src/layout/style', replacement: '@src/insight/blank' }
         ]
       }),
       resolve(),
