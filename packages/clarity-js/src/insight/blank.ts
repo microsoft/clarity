@@ -1,4 +1,6 @@
 export let state = [];
+export let sheetAdoptionState = [];
+export let sheetUpdateState = [];
 export let data = null;
 
 /* Intentionally blank module with empty code */
