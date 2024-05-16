@@ -3,7 +3,7 @@ import { StyleSheetOperation, StyleSheetState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import { shortid, data as metadataFields } from "@src/data/metadata";
 import encode from "@src/layout/encode";
-import { getId, getNode } from "@src/layout/dom";
+import { getId } from "@src/layout/dom";
 import * as core from "@src/core";
 import { getCssRules } from "./node";
 import * as metric from "@src/data/metric";
@@ -16,6 +16,7 @@ const styleSheetId = 'claritySheetId';
 const styleSheetPageNum = 'claritySheetNum';
 let styleSheetMap = {};
 let styleTimeMap: {[key: string]: number} = {};
+let documentNodes = [];
 
 export function start(): void {
     if (replace === null) { 
@@ -52,6 +53,9 @@ export function start(): void {
 }
 
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
+    if (documentNodes.indexOf(documentNode) === -1) {
+        documentNodes.push(documentNode);
+    }
     timestamp = timestamp || time();
     if (!documentNode?.adoptedStyleSheets) {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
@@ -87,9 +91,11 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
 }
 
 export function compute(): void {
-    let ts = -1 in styleTimeMap ? styleTimeMap[-1] : null;
-    checkDocumentStyles(document, ts);
-    Object.keys(styleSheetMap).forEach((x) => checkDocumentStyles(getNode(parseInt(x, 10)) as Document, styleTimeMap[x]));
+    for (var documentNode of documentNodes) {
+        var docId = documentNode == document ? -1 : getId(documentNode);
+        let ts = docId in styleTimeMap ? styleTimeMap[docId] : null;
+        checkDocumentStyles(document, ts);
+    }
 }
 
 export function reset(): void {
@@ -100,6 +106,7 @@ export function reset(): void {
 export function stop(): void {
     styleSheetMap = {};
     styleTimeMap = {};
+    documentNodes = [];
     reset();
 }
 
