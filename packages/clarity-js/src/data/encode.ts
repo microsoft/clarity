@@ -12,7 +12,7 @@ import * as variable from "@src/data/variable";
 import * as extract from "@src/data/extract";
 import { queue, track } from "./upload";
 
-export default function(event: Event): void {
+export default function(event: Event, target?: number): void {
     let t = time();
     let tokens: Token[] = [t, event]; 
     switch (event) {
@@ -81,6 +81,13 @@ export default function(event: Event): void {
                     tokens.push(Math.round(metric.updates[m]));
                 }
                 metric.reset();
+                queue(tokens, false);
+            }
+            break;
+        case Event.LargestPaint:
+            if(target){
+                // Log the id of the largest paint element
+                tokens.push(target);
                 queue(tokens, false);
             }
             break;

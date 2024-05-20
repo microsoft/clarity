@@ -42,6 +42,12 @@ export function max(metric: Metric, value: number): void {
     }
 }
 
+export function logTarget(event: Event, target: number): void {
+    if(event == Event.LargestPaint){
+        encode(Event.LargestPaint, target);
+    }
+}
+
 export function compute(): void {
     encode(Event.Metric);
 }
