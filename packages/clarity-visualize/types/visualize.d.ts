@@ -134,6 +134,7 @@ export const enum Constant {
     CustomHover = "clarity-hover",
     Region = "clarity-region",
     AdoptedStyleSheet = "clarity-adopted-style",
+    CustomStyleTag = "clarity-custom-styles",
     Id = "data-clarity-id", 
     HashAlpha = "data-clarity-hashalpha",
     HashBeta = "data-clarity-hashbeta",

@@ -247,6 +247,7 @@ export class LayoutHelper {
 
                         // Add custom styles to assist with visualization
                         let custom = doc.createElement("style");
+                        custom.setAttribute(Constant.CustomStyleTag, "true");
                         custom.innerText = this.getCustomStyle();
                         headElement.appendChild(custom);
                     }
@@ -296,9 +297,19 @@ export class LayoutHelper {
                     break;
                 case "STYLE":
                     let styleElement = this.element(node.id) as HTMLStyleElement ?? doc.createElement(node.tag) as HTMLStyleElement;
+                    const customStyleTag = doc.querySelector(`[${Constant.CustomStyleTag}="true"]`);
+
+                    // Set attributes and content
                     this.setAttributes(styleElement as HTMLElement, node);
                     styleElement.textContent = node.value;
                     insert(node, parent, styleElement, pivot);
+                    if (customStyleTag) {
+                        // Move the custom style tag to be the first child of the head element 
+                        // to be overridden by the incoming style values
+                        if (customStyleTag.parentNode.firstChild !== customStyleTag) {
+                            customStyleTag.parentNode.insertBefore(customStyleTag, customStyleTag.parentNode.firstChild);
+                        }
+                    }
                     this.style(styleElement);
                     break;
                 case "IFRAME":
@@ -477,6 +488,7 @@ export class LayoutHelper {
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
             `${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
-            `*[${Constant.Suspend}] { filter: grayscale(100%); }`;
+            `*[${Constant.Suspend}] { filter: grayscale(100%); }` + 
+            `body { font-size: initial; }`;
     }
 }
