@@ -139,6 +139,7 @@ export interface Config {
     dob?: number;
     delayDom?: boolean;
     throttleDom?: boolean;
+    clickText?: boolean;
 }
 
 export const enum Constant {
