@@ -297,7 +297,6 @@ export class LayoutHelper {
                     break;
                 case "STYLE":
                     let styleElement = this.element(node.id) as HTMLStyleElement ?? doc.createElement(node.tag) as HTMLStyleElement;
-                    // Set attributes and content
                     this.setAttributes(styleElement as HTMLElement, node);
                     styleElement.textContent = node.value;
                     insert(node, parent, styleElement, pivot);
