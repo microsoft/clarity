@@ -297,19 +297,10 @@ export class LayoutHelper {
                     break;
                 case "STYLE":
                     let styleElement = this.element(node.id) as HTMLStyleElement ?? doc.createElement(node.tag) as HTMLStyleElement;
-                    const customStyleTag = doc.querySelector(`[${Constant.CustomStyleTag}="true"]`);
-
                     // Set attributes and content
                     this.setAttributes(styleElement as HTMLElement, node);
                     styleElement.textContent = node.value;
                     insert(node, parent, styleElement, pivot);
-                    if (customStyleTag) {
-                        // Move the custom style tag to be the first child of the head element 
-                        // to be overridden by the incoming style values
-                        if (customStyleTag.parentNode.firstChild !== customStyleTag) {
-                            customStyleTag.parentNode.insertBefore(customStyleTag, customStyleTag.parentNode.firstChild);
-                        }
-                    }
                     this.style(styleElement);
                     break;
                 case "IFRAME":
@@ -388,6 +379,10 @@ export class LayoutHelper {
         let child = node.firstChild;
         // BASE tag should always be the first child to ensure resources with relative URLs are loaded correctly
         if (child && child.nodeType === NodeType.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BaseTag) {
+            if((child.nextSibling as HTMLElement)?.hasAttribute('clarity-custom-styles')){
+                // Keep the custom style tag on top of the head to let client tags override its values.
+                return child.nextSibling.nextSibling;
+            }
             return child.nextSibling;
         }
         return child;
