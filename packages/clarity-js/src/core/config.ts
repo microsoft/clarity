@@ -21,7 +21,7 @@ let config: Config = {
     dob: null,
     delayDom: false,
     throttleDom: true,
-    conversions: false
+    conversions: false,
 };
 
 export default config;
