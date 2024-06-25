@@ -247,6 +247,7 @@ export class LayoutHelper {
 
                         // Add custom styles to assist with visualization
                         let custom = doc.createElement("style");
+                        custom.setAttribute(Constant.CustomStyleTag, "true");
                         custom.innerText = this.getCustomStyle();
                         headElement.appendChild(custom);
                     }
@@ -377,6 +378,10 @@ export class LayoutHelper {
         let child = node.firstChild;
         // BASE tag should always be the first child to ensure resources with relative URLs are loaded correctly
         if (child && child.nodeType === NodeType.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BaseTag) {
+            if((child.nextSibling as HTMLElement)?.hasAttribute('clarity-custom-styles')){
+                // Keep the custom style tag on top of the head to let client tags override its values.
+                return child.nextSibling.nextSibling;
+            }
             return child.nextSibling;
         }
         return child;
@@ -477,6 +482,7 @@ export class LayoutHelper {
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
             `${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
-            `*[${Constant.Suspend}] { filter: grayscale(100%); }`;
+            `*[${Constant.Suspend}] { filter: grayscale(100%); }` + 
+            `body { font-size: initial; }`;
     }
 }
