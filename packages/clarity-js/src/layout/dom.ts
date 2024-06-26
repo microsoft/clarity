@@ -345,10 +345,14 @@ function remove(id: number, source: Source): void {
 function removeNodeFromNodesMap(id: number) {
     // Shadow dom roots shouldn't be deleted, 
     // we should keep listening to the mutations there even they're not rendered in the DOM.
-    if(nodesMap.get(id).nodeType === Node.DOCUMENT_FRAGMENT_NODE){
+    var node = nodesMap.get(id);
+    if(node.nodeType === Node.DOCUMENT_FRAGMENT_NODE){
         return;
     }
+    // need to ensure we delete references in our id map as well as nodes map, otherwise we can end
+    // up with inconsistent state which causes orphaned nodes to be dropped from visualization
     nodesMap.delete(id);
+    idMap.delete(node);
 
     let value = id in values ? values[id] : null;
     if (value && value.children) {
@@ -382,5 +386,7 @@ function track(id: number, source: Source, changed: boolean = true, parentChange
     if (uIndex >= 0 && source === Source.ChildListAdd && parentChanged) {
         updateMap.splice(uIndex, 1);
         updateMap.push(id);
-    } else if (uIndex === -1 && changed) { updateMap.push(id); }
+    } else if (uIndex === -1 && changed) {
+         updateMap.push(id);
+    }
 }
