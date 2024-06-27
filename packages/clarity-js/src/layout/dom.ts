@@ -121,7 +121,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     privacy(node, values[id], parentValue);
     updateSelector(values[id]);
     size(values[id]);
-    track(id, source);
+    track(id, source, true, true);
 }
 
 export function update(node: Node, parent: Node, data: NodeInfo, source: Source): void {
@@ -345,14 +345,10 @@ function remove(id: number, source: Source): void {
 function removeNodeFromNodesMap(id: number) {
     // Shadow dom roots shouldn't be deleted, 
     // we should keep listening to the mutations there even they're not rendered in the DOM.
-    var node = nodesMap.get(id);
-    if(node.nodeType === Node.DOCUMENT_FRAGMENT_NODE){
+    if(nodesMap.get(id).nodeType === Node.DOCUMENT_FRAGMENT_NODE){
         return;
     }
-    // need to ensure we delete references in our id map as well as nodes map, otherwise we can end
-    // up with inconsistent state which causes orphaned nodes to be dropped from visualization
     nodesMap.delete(id);
-    idMap.delete(node);
 
     let value = id in values ? values[id] : null;
     if (value && value.children) {
@@ -387,6 +383,6 @@ function track(id: number, source: Source, changed: boolean = true, parentChange
         updateMap.splice(uIndex, 1);
         updateMap.push(id);
     } else if (uIndex === -1 && changed) {
-         updateMap.push(id);
+        updateMap.push(id);
     }
 }
