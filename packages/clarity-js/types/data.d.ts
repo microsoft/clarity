@@ -68,7 +68,11 @@ export const enum Event {
     Snapshot = 43,
     Animation = 44,
     StyleSheetAdoption = 45,
-    StyleSheetUpdate = 46
+    StyleSheetUpdate = 46,
+/**
+ * Metric related event data
+ */
+    LargestPaint = 47
 }
 
 export const enum Metric {

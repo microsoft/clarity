@@ -1,4 +1,4 @@
-import { Code, Constant, Dimension, Metric, Severity } from "@clarity-types/data";
+import { Code, Constant, Dimension, Event, Metric, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -7,6 +7,8 @@ import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as internal from "@src/diagnostic/internal";
 import * as navigation from "@src/performance/navigation";
+import * as dom from "@src/layout/dom";
+
 
 let observer: PerformanceObserver;
 const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTask, Constant.FID, Constant.CLS, Constant.LCP];
@@ -78,6 +80,10 @@ function process(entries: PerformanceEntryList): void {
                 break;
             case Constant.LCP:
                 if (visible) { metric.max(Metric.LargestPaint, entry.startTime); }
+                const targetNode = dom.get((entry as any).element)?.id 
+                if(targetNode){
+                    metric.logTarget(Event.LargestPaint, targetNode)
+                }
                 break;
         }
     }
