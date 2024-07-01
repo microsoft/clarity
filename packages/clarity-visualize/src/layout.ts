@@ -166,8 +166,19 @@ export class LayoutHelper {
         let data = event.data;
         let type = event.event;
         let doc = this.state.window.document;
+        let retryEvent: DecodedLayout.DomEvent = {
+            data: [],
+            time: event.time,
+            event: event.event
+        }
         for (let node of data) {
             let parent = this.element(node.parent);
+            if (parent === null && node.parent !== null && node.parent > -1) {
+                // We are referencing a parent for this node that hasn't been created yet. Push it to a list of nodes to 
+                // try once we are finished with other nodes within this event. 
+                retryEvent.data.push(node);
+                continue;
+            }
             let pivot = this.element(node.previous);
             let insert = this.insertAfter;
 
@@ -319,6 +330,11 @@ export class LayoutHelper {
             }
             // Track state for this node
             if (node.id) { this.events[node.id] = node; }
+        }
+        // only retry failed nodes if we are still making positive progress. If we have the same number of
+        // nodes we started with, then we would just be spinning on an orphaned subtree.
+        if (retryEvent.data.length > 0 && retryEvent.data.length !== event.data.length) {
+            this.markup(retryEvent, useproxy);
         }
     }
 
