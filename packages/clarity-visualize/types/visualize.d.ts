@@ -59,6 +59,12 @@ export interface Options {
     keyframes?: boolean;
 }
 
+export interface RenderOptions {
+    renderMouse?: boolean;
+    renderClick?: boolean;
+    renderMovement?: boolean;
+}
+
 export interface NodeData {
     tag: string;
     parent: number;

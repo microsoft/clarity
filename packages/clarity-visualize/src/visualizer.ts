@@ -1,4 +1,4 @@
-import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
+import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, RenderOptions, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
 import { Data } from "clarity-js";
 import type { Data as DecodedData, Interaction, Layout } from "clarity-decode";
 import { DataHelper } from "./data";
@@ -143,7 +143,7 @@ export class Visualizer implements VisualizerType {
         return this;
     }
 
-    public render = async (events: DecodedData.DecodedEvent[]): Promise<void> => {
+    public render = async (events: DecodedData.DecodedEvent[], options?:RenderOptions): Promise<void> => {
         if (this.state === null) { throw new Error(`Initialize visualization by calling "setup" prior to making this call.`); }
         let time = 0;
         for (let entry of events) {
@@ -169,7 +169,7 @@ export class Visualizer implements VisualizerType {
                 case Data.Event.TouchCancel:
                 case Data.Event.TouchEnd:
                 case Data.Event.TouchMove:
-                    this.interaction.pointer(entry as Interaction.PointerEvent);
+                    this.interaction.pointer(entry as Interaction.PointerEvent, options);
                     break;
                 case Data.Event.Visibility:
                     this.interaction.visibility(entry as Interaction.VisibilityEvent);
@@ -198,7 +198,7 @@ export class Visualizer implements VisualizerType {
 
         if (events.length > 0) {
             // Update pointer trail at the end of every frame
-            this.interaction.trail(time);
+            this.interaction.trail(time, options);
         }
     }
 

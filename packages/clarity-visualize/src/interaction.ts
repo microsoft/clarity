@@ -1,4 +1,4 @@
-import { Asset, Constant, PlaybackState, Point, Setting } from "@clarity-types/visualize";
+import { Asset, Constant, PlaybackState, Point, RenderOptions, Setting } from "@clarity-types/visualize";
 import { Data, Layout } from "clarity-js";
 import type { Interaction } from "clarity-decode"
 import { LayoutHelper } from "./layout";
@@ -105,7 +105,7 @@ export class InteractionHelper {
         }
     };
 
-    public pointer = (event: Interaction.PointerEvent): void => {
+    public pointer = (event: Interaction.PointerEvent, options?:RenderOptions): void => {
         let data = event.data;
         let type = event.event;
         let doc = this.state.window.document;
@@ -142,27 +142,40 @@ export class InteractionHelper {
         p.style.left = (data.x - Setting.PointerOffset) + Constant.Pixel;
         p.style.top = (data.y - Setting.PointerOffset) + Constant.Pixel;
         let title = "Pointer"
+
         switch (type) {
             case Data.Event.Click:
-                title = "Click";
-                this.drawClick(doc, data.x, data.y, title);
+                if(options==null || options.renderClick)
+                {  
+                    title = "Click";
+                    this.drawClick(doc, data.x, data.y, title);
+                }
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.DoubleClick:
-                title = "Click";
-                this.drawClick(doc, data.x, data.y, title);
+                if(options==null || options.renderClick)
+                {  
+                    title = "Click";
+                    this.drawClick(doc, data.x, data.y, title);
+                }
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.TouchStart:
             case Data.Event.TouchEnd:
             case Data.Event.TouchCancel:
-                title = "Touch";
-                this.drawTouch(doc, data.x, data.y, title);
+                if(options==null || options.renderClick)
+                {  
+                    title = "Touch";
+                    this.drawTouch(doc, data.x, data.y, title);
+                }
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.TouchMove:
-                title = "Touch Move";
-                p.className = Constant.PointerNone;
+                if(options==null || options.renderClick)
+                {  
+                    title = "Touch Move";
+                    p.className = Constant.PointerNone;
+                }
                 break;
             case Data.Event.MouseMove:
                 title = "Mouse Move";
@@ -294,7 +307,7 @@ export class InteractionHelper {
         return p.slice(0, Setting.MaxTrailPoints);
     };
 
-    public trail = (now: number): void => {
+    public trail = (now: number, options?:RenderOptions): void => {
         const canvas = this.overlay();
         if (this.state.options.canvas && canvas) {
             const ctx = canvas.getContext('2d');
@@ -302,7 +315,7 @@ export class InteractionHelper {
             // Update hovered elements
             this.hover();
             // We need at least two points to create a line
-            if (path.length > 1) {
+            if (path.length > 1 && (options == null || options.renderMovement)) {
                 let last = path[0];
                 // Start off by clearing whatever was on the canvas before
                 // The current implementation is inefficient. We have to redraw canvas all over again for every point.
