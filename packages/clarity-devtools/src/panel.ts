@@ -126,7 +126,8 @@ function reset(envelope: Data.Envelope, userAgent: string): void {
     for (let i = 0; i < links.length; i++) {
         (links[i] as HTMLElement).onclick = function(): void { save(i); };
     }
-    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata, userAgent});
+    const mobile = isMobileDevice(userAgent);
+    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata, mobile});
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
@@ -139,3 +140,9 @@ function copy(input: any): any {
 
 // Call replay on every animation frame to emulate near real-time playback
 requestAnimationFrame(replay);
+
+function isMobileDevice(userAgent: string): boolean {
+    if(!userAgent) { return false; }
+
+    return /android|webos|iphone|ipad|ipod|blackberry|windows phone|opera mini|iemobile|mobile|silk|fennec|bada|tizen|symbian|nokia|palmsource|meego|sailfish|kindle|playbook|bb10|rim/i.test(userAgent);
+}

@@ -57,7 +57,7 @@ export interface Options {
     metadata?: HTMLElement;
     canvas?: boolean;
     keyframes?: boolean;
-    userAgent?: string;
+    mobile?: boolean;
 }
 
 export interface NodeData {
