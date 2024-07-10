@@ -55,7 +55,7 @@ background.onMessage.addListener(function(message: any): void {
     // Handle responses from the background page, if any
     if (message && message.payload) {
         let decoded = decode(message.payload);
-        if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
+        if (decoded.envelope.sequence === 1) { reset(decoded.envelope, decoded.dimension?.[0].data[0][0]); }
         pJson.push(JSON.parse(message.payload));
         dJson.push(copy(decoded)); // Save a copy of JSON
         let merged = visualize.merge([decoded]);
@@ -97,7 +97,7 @@ function resize(width: number, height: number): void {
     iframe.style.left = ((container.clientWidth - (width * scale)) / 2) + px;
 }
 
-function reset(envelope: Data.Envelope): void {
+function reset(envelope: Data.Envelope, userAgent: string): void {
     if (console) { console.clear(); }
     let info = document.getElementById("info");
     let metadata = document.getElementById("header") as HTMLDivElement;
@@ -126,7 +126,7 @@ function reset(envelope: Data.Envelope): void {
     for (let i = 0; i < links.length; i++) {
         (links[i] as HTMLElement).onclick = function(): void { save(i); };
     }
-    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata });
+    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata, userAgent});
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {

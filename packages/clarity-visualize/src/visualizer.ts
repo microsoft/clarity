@@ -131,7 +131,7 @@ export class Visualizer implements VisualizerType {
         // Initialize helpers
         this.enrich = new EnrichHelper();
         this.data = new DataHelper(this.state);
-        this.layout = new LayoutHelper(this.state);
+        this.layout = new LayoutHelper(this.state, this.isMobileDevice(options.userAgent));
         this.heatmap = new HeatmapHelper(this.state, this.layout);
         this.interaction = new InteractionHelper(this.state, this.layout);
 
@@ -219,5 +219,11 @@ export class Visualizer implements VisualizerType {
 
     private sortPayloads = (a: DecodedData.DecodedPayload, b: DecodedData.DecodedPayload): number => {
         return a.envelope.sequence - b.envelope.sequence;
+    }
+
+    private isMobileDevice = (userAgent: string): boolean => {
+        if(!userAgent) { return false; }
+
+        return /android|webos|iphone|ipad|ipod|blackberry|windows phone|opera mini|iemobile|mobile|silk|fennec|bada|tizen|symbian|nokia|palmsource|meego|sailfish|kindle|playbook|bb10|rim/i.test(userAgent);
     }
 }
