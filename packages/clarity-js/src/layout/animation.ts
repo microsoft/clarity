@@ -31,9 +31,9 @@ export function start(): void {
         if (elementAnimate === null) {
             elementAnimate = Element.prototype.animate;
             Element.prototype.animate = function(): Animation {
-                var retVal = elementAnimate.apply(this, arguments);
-                animateWorker(retVal, "play");
-                return retVal;
+                var createdAnimation = elementAnimate.apply(this, arguments);
+                trackAnimationOperation(createdAnimation, "play");
+                return createdAnimation;
             }
         }
     }    
@@ -68,16 +68,16 @@ function overrideAnimationHelper(functionToOverride: () => void, name: string) {
     if (functionToOverride === null) {
       functionToOverride = Animation.prototype[name];
       Animation.prototype[name] = function(): void {
-        animateWorker(this, name);
+        trackAnimationOperation(this, name);
         return functionToOverride.apply(this, arguments);
       }
     }
   }
 
-function animateWorker(animation: Animation, name: string) {
+function trackAnimationOperation(animation: Animation, name: string) {
     if (core.active()) {
         let effect = <KeyframeEffect>animation.effect;
-        let target = getId((<any>animation.effect).target);
+        let target = getId(effect.target);
         if (target !== null && effect.getKeyframes && effect.getTiming) {
             if (!animation[animationId]) {
                 animation[animationId] = shortid();
