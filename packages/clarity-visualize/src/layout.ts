@@ -173,17 +173,18 @@ export class LayoutHelper {
         }
         for (let node of data) {
             let parent = this.element(node.parent);
-            if (parent === null && node.parent !== null && node.parent > -1) {
-                // We are referencing a parent for this node that hasn't been created yet. Push it to a list of nodes to 
-                // try once we are finished with other nodes within this event. 
-                retryEvent.data.push(node);
-                continue;
-            }
             let pivot = this.element(node.previous);
             let insert = this.insertAfter;
 
             let tag = node.tag;
             if (tag && tag.indexOf(Layout.Constant.IFramePrefix) === 0) { tag = node.tag.substr(Layout.Constant.IFramePrefix.length); }
+            if (parent === null && node.parent !== null && node.parent > -1 && tag !== "HTML") {
+                // We are referencing a parent for this node that hasn't been created yet. Push it to a list of nodes to 
+                // try once we are finished with other nodes within this event. Though we don't require HTML tags to
+                // have a parent as they are typically the root.
+                retryEvent.data.push(node);
+                continue;
+            }
             switch (tag) {
                 case Layout.Constant.DocumentTag:
                     let tagDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
