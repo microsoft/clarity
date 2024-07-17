@@ -7,6 +7,7 @@ import { AnimationOperation } from "clarity-js/types/layout";
 export class LayoutHelper {
     static TIMEOUT = 3000;
 
+    isMobile: boolean;
     stylesheets: Promise<void>[] = [];
     fonts: Promise<void>[] = [];
     nodes = {};
@@ -18,8 +19,9 @@ export class LayoutHelper {
     state: PlaybackState = null;
     stylesToApply: { [id: string] : string[] } = {};
 
-    constructor(state: PlaybackState) {
+    constructor(state: PlaybackState, isMobile: boolean = false) {
         this.state = state;
+        this.isMobile = isMobile
     }
 
     public reset = (): void => {
@@ -491,6 +493,14 @@ export class LayoutHelper {
             node.setAttribute(Constant.AutoComplete, Constant.NewPassword); 
         }
     }
+    
+    private getMobileCustomStyle = (): string => {
+        if(this.isMobile){
+            return `*{scrollbar-width: none; scrollbar-gutter: unset;};`
+        }
+
+        return '';
+    }
 
     private getCustomStyle = (): string => {
         // tslint:disable-next-line: max-line-length
@@ -500,6 +510,7 @@ export class LayoutHelper {
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
             `${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
             `*[${Constant.Suspend}] { filter: grayscale(100%); }` + 
-            `body { font-size: initial; }`;
+            `body { font-size: initial; }
+            ${this.getMobileCustomStyle()}`;
     }
 }
