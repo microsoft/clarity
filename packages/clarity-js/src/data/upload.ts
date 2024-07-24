@@ -51,7 +51,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             case Event.Discover:
                 discoverBytes += event.length;
             case Event.Box:
-            case Event.Mutation:                
+            case Event.Mutation:
             case Event.Snapshot:
             case Event.StyleSheetAdoption:
             case Event.StyleSheetUpdate:
@@ -125,7 +125,7 @@ async function upload(final: boolean = false): Promise<void> {
     let a = `[${analysis.join()}]`;
 
     let p = sendPlaybackBytes ? `[${playback.join()}]` : Constant.Empty;
-    let encoded: EncodedPayload = {e, a, p};
+    let encoded: EncodedPayload = { e, a, p };
 
     // Get the payload ready for sending over the wire
     // We also attempt to compress the payload if it is not the last payload and the browser supports it
@@ -241,7 +241,10 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
 
 function done(sequence: number): void {
     // If we everything went successfully, and it is the first sequence, save this session for future reference
-    if (sequence === 1) { metadata.save(); }
+    if (sequence === 1) {
+        metadata.callback();
+        metadata.save();
+    }
 }
 
 function delay(): number {
@@ -253,8 +256,7 @@ function delay(): number {
 
 function response(payload: string): void {
     let lines = payload && payload.length > 0 ? payload.split("\n") : [];
-    for (var line of lines)
-    {
+    for (var line of lines) {
         let parts = line && line.length > 0 ? line.split(/ (.*)/) : [Constant.Empty];
         switch (parts[0]) {
             case Constant.End:
@@ -274,6 +276,12 @@ function response(payload: string): void {
                 break;
             case Constant.Signal:
                 if (parts.length > 1) { signalsEvent(parts[1]); }
+                break;
+            case Constant.Sync:
+                let sync = window['sync'];
+                if (sync) {
+                    sync();
+                }
                 break;
         }
     }

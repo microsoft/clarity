@@ -1,5 +1,5 @@
 import { Time } from "@clarity-types/core";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Event } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import * as core from "@src/core";
 import config from "@src/core/config";
@@ -8,6 +8,7 @@ import * as scrub from "@src/core/scrub";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
+import encode from "@src/data/encode";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
@@ -62,10 +63,12 @@ export function start(): void {
     metric.max(Metric.ColorDepth, Math.round(screen.colorDepth));
   }
 
-  // Read cookies specified in configuration
-  for (let key of config.cookies) {
-    let value = getCookie(key);
-    if (value) { set(key, value); }
+  if (config.track) {
+    let sync = window['sync'];
+    if (sync) {
+      sync();
+    }
+    read();
   }
 
   // Track ids using a cookie if configuration allows it
@@ -120,12 +123,23 @@ export function consent(status: boolean = true): void {
   if (core.active()) {
     config.track = true;
     track(user(), BooleanFlag.True);
+    save();
+    read();
+    encode(Event.Consent);
   }
 }
 
 export function clear(): void {
   // Clear any stored information in the cookie that tracks session information so we can restart fresh the next time
   setCookie(Constant.SessionKey, Constant.Empty, 0);
+}
+
+function read(): void {
+  // Read cookies specified in configuration
+  for (let key of config.cookies) {
+    let value = getCookie(key);
+    if (value) { set(key, value); }
+  }
 }
 
 function tab(): string {
@@ -142,8 +156,12 @@ export function save(): void {
   let ts = Math.round(Date.now());
   let upload = config.upload && typeof config.upload === Constant.String ? (config.upload as string).replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-  processCallback(upgrade);
   setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
+}
+
+export function callback(): void {
+  let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  processCallback(upgrade);
 }
 
 function processCallback(upgrade: BooleanFlag) {
@@ -251,11 +269,11 @@ function getCookie(key: string): string {
           // * Cookie was previously not encoded by Clarity and browser encoded it once or more
           // * Cookie was previously encoded by Clarity and browser did not encode it
           let [isEncoded, decodedValue] = decodeCookieValue(pair[1]);
-          
+
           while (isEncoded) {
             [isEncoded, decodedValue] = decodeCookieValue(decodedValue);
           }
-        
+
           return decodedValue;
         }
       }

@@ -68,7 +68,8 @@ export const enum Event {
     Snapshot = 43,
     Animation = 44,
     StyleSheetAdoption = 45,
-    StyleSheetUpdate = 46
+    StyleSheetUpdate = 46,
+    Consent = 47
 }
 
 export const enum Metric {
@@ -283,6 +284,7 @@ export const enum Constant {
     Action = "ACTION",
     Signal = "SIGNAL",
     Extract = "EXTRACT",
+    Sync = "SYNC",
     UserHint = "userHint",
     UserType = "userType",
     UserId = "userId",
