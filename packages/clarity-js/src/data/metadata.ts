@@ -17,9 +17,9 @@ let rootDomain = null;
 export function start(): void {
   rootDomain = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
-  const timezone = Intl?.DateTimeFormat().resolvedOptions().timeZone ?? '';
+  const timezone = Intl?.DateTimeFormat()?.resolvedOptions()?.timeZone ?? '';
   const timezoneOffset = new Date().getTimezoneOffset().toString();
-  const ancestorOrigins = Array.from(window.location.ancestorOrigins).toString();
+  const ancestorOrigins = window.location.ancestorOrigins ? Array.from(window.location.ancestorOrigins).toString() : '';
   const title = document && document.title ? document.title : Constant.Empty;
   electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
 
