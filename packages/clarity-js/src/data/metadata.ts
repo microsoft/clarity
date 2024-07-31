@@ -44,9 +44,9 @@ export function start(): void {
   dimension.log(Dimension.DevicePixelRatio, `${window.devicePixelRatio}`);
   dimension.log(Dimension.Dob, u.dob.toString());
   dimension.log(Dimension.CookieVersion, u.version.toString());
-  dimension.log(Dimension.ancestorOrigins, ancestorOrigins);
-  dimension.log(Dimension.timezone, timezone);
-  dimension.log(Dimension.timezoneOffset, timezoneOffset);
+  dimension.log(Dimension.AncestorOrigins, ancestorOrigins);
+  dimension.log(Dimension.Timezone, timezone);
+  dimension.log(Dimension.TimezoneOffset, timezoneOffset);
 
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);

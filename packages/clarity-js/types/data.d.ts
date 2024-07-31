@@ -148,9 +148,9 @@ export const enum Dimension {
     DeviceFamily = 30, // Allows iOS SDK to override the DeviceFamily value parsed from UserAgent.
     InitialScrollTop = 31,
     InitialScrollBottom = 32,
-    ancestorOrigins = 33,
-    timezone = 34,
-    timezoneOffset = 35
+    AncestorOrigins = 33,
+    Timezone = 34,
+    TimezoneOffset = 35
 }
 
 export const enum Check {
