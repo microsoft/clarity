@@ -55,7 +55,7 @@ background.onMessage.addListener(function(message: any): void {
     // Handle responses from the background page, if any
     if (message && message.payload) {
         let decoded = decode(message.payload);
-        if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
+        if (decoded.envelope.sequence === 1) { reset(decoded.envelope, decoded.dimension?.[0].data[0][0]); }
         pJson.push(JSON.parse(message.payload));
         dJson.push(copy(decoded)); // Save a copy of JSON
         let merged = visualize.merge([decoded]);
@@ -97,7 +97,7 @@ function resize(width: number, height: number): void {
     iframe.style.left = ((container.clientWidth - (width * scale)) / 2) + px;
 }
 
-function reset(envelope: Data.Envelope): void {
+function reset(envelope: Data.Envelope, userAgent: string): void {
     if (console) { console.clear(); }
     let info = document.getElementById("info");
     let metadata = document.getElementById("header") as HTMLDivElement;
@@ -126,7 +126,8 @@ function reset(envelope: Data.Envelope): void {
     for (let i = 0; i < links.length; i++) {
         (links[i] as HTMLElement).onclick = function(): void { save(i); };
     }
-    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata });
+    const mobile = isMobileDevice(userAgent);
+    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata, mobile});
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
@@ -139,3 +140,9 @@ function copy(input: any): any {
 
 // Call replay on every animation frame to emulate near real-time playback
 requestAnimationFrame(replay);
+
+function isMobileDevice(userAgent: string): boolean {
+    if(!userAgent) { return false; }
+
+    return /android|webos|iphone|ipad|ipod|blackberry|windows phone|opera mini|iemobile|mobile|silk|fennec|bada|tizen|symbian|nokia|palmsource|meego|sailfish|kindle|playbook|bb10|rim/i.test(userAgent);
+}

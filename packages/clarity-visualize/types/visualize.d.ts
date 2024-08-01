@@ -57,6 +57,7 @@ export interface Options {
     metadata?: HTMLElement;
     canvas?: boolean;
     keyframes?: boolean;
+    mobile?: boolean;
 }
 
 export interface NodeData {
@@ -134,6 +135,7 @@ export const enum Constant {
     CustomHover = "clarity-hover",
     Region = "clarity-region",
     AdoptedStyleSheet = "clarity-adopted-style",
+    CustomStyleTag = "clarity-custom-styles",
     Id = "data-clarity-id", 
     HashAlpha = "data-clarity-hashalpha",
     HashBeta = "data-clarity-hashbeta",
@@ -203,5 +205,5 @@ export const enum Setting {
     MarkerColor = "white",
     CanvasTextColor = "#323130",
     CanvasTextFont = "500 12px Segoe UI",
-    ScrollCanvasMaxHeight = 40000
+    ScrollCanvasMaxHeight = 65535
 }
