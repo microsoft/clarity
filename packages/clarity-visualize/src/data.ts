@@ -22,7 +22,8 @@ export class DataHelper {
         [Data.Metric.LongTaskCount]: { name: "Long Tasks" },
         [Data.Metric.CartTotal]: { name: "Cart Total", unit: "html-price" },
         [Data.Metric.ProductPrice]: { name: "Product Price", unit: "ld-price" },
-        [Data.Metric.ThreadBlockedTime]: { name: "Thread Blocked", unit: "ms" }
+        [Data.Metric.ThreadBlockedTime]: { name: "Thread Blocked", unit: "ms" },
+        [Data.Metric.InteractionNextPaint]: { name: "INP", unit: "ms" }
     };
 
     public reset = (): void => {
