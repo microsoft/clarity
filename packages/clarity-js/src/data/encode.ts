@@ -10,6 +10,7 @@ import * as summary from "@src/data/summary";
 import * as upgrade from "@src/data/upgrade";
 import * as variable from "@src/data/variable";
 import * as extract from "@src/data/extract";
+import * as consent from "@src/data/consent";
 import { queue, track } from "./upload";
 
 export default function(event: Event): void {
@@ -123,5 +124,10 @@ export default function(event: Event): void {
             
             extract.reset();
             queue(tokens, false);
+        case Event.Consent:
+            tokens.push(consent.data.source);
+            tokens.push(consent.data.value);
+            queue(tokens);
+            break;
     }
 }

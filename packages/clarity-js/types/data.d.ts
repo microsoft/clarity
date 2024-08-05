@@ -284,7 +284,6 @@ export const enum Constant {
     Action = "ACTION",
     Signal = "SIGNAL",
     Extract = "EXTRACT",
-    Sync = "SYNC",
     UserHint = "userHint",
     UserType = "userType",
     UserId = "userId",
@@ -450,6 +449,11 @@ export interface UploadData {
     sequence: number;
     attempts: number;
     status: number;
+}
+
+export interface ConsentData {
+    source: number;
+    value: string;
 }
 
 export interface ClaritySignal {

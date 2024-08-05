@@ -277,12 +277,6 @@ function response(payload: string): void {
             case Constant.Signal:
                 if (parts.length > 1) { signalsEvent(parts[1]); }
                 break;
-            case Constant.Sync:
-                let sync = window['sync'];
-                if (sync) {
-                    sync();
-                }
-                break;
         }
     }
 }

@@ -8,7 +8,7 @@ import * as scrub from "@src/core/scrub";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
-import encode from "@src/data/encode";
+import * as trackConsent from "@src/data/consent";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
@@ -63,15 +63,7 @@ export function start(): void {
     metric.max(Metric.ColorDepth, Math.round(screen.colorDepth));
   }
 
-  if (config.track) {
-    let sync = window['sync'];
-    if (sync) {
-      sync();
-    }
-    read();
-  }
-
-  // Track ids using a cookie if configuration allows it
+  read();
   track(u);
 }
 
@@ -124,8 +116,10 @@ export function consent(status: boolean = true): void {
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
+
+    // Read cookie data again to mark as consented
     read();
-    encode(Event.Consent);
+    trackConsent.consent(status);
   }
 }
 
