@@ -68,7 +68,8 @@ export const enum Event {
     Snapshot = 43,
     Animation = 44,
     StyleSheetAdoption = 45,
-    StyleSheetUpdate = 46
+    StyleSheetUpdate = 46,
+    Consent = 47
 }
 
 export const enum Metric {
@@ -453,6 +454,11 @@ export interface UploadData {
     sequence: number;
     attempts: number;
     status: number;
+}
+
+export interface ConsentData {
+    source: number;
+    value: string;
 }
 
 export interface ClaritySignal {
