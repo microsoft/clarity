@@ -96,7 +96,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 let iTarget = metadata(entry.data.target as Node, entry.event, entry.data.value);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
-                tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy));
+                tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy, false, entry.data.type));
                 queue(tokens);
             }
             input.reset();

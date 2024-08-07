@@ -24,6 +24,7 @@ function recompute(evt: UIEvent): void {
     let value = get(input);
     if (input && input.type && value) {
         let v = input.value;
+        let t = input.type;
         switch (input.type) {
             case "radio":
             case "checkbox":
@@ -31,7 +32,7 @@ function recompute(evt: UIEvent): void {
                 break;
         }
 
-        let data: InputData = { target: input, value: v };
+        let data: InputData = { target: input, value: v, type: t };
 
         // If last entry in the queue is for the same target node as the current one, remove it so we can later swap it with current data.
         if (state.length > 0 && (state[state.length - 1].data.target === data.target)) { state.pop(); }

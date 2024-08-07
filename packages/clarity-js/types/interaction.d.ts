@@ -93,6 +93,7 @@ export interface ChangeData {
 export interface InputData {
     target: Target;
     value: string;
+    type?: string;
 }
 
 export interface SubmitData {
