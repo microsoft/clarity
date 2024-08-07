@@ -128,6 +128,7 @@ export class InteractionHelper {
                 "@keyframes disappear { 90% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(1.3, 1.3); opacity: 0; } }" +
                 `#${Constant.InteractionCanvas} { position: absolute; left: 0; top: 0; z-index: ${Setting.ZIndex}; background: none; }` +
                 `#${Constant.PointerLayer} { position: absolute; z-index: ${Setting.ZIndex}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
+                `.${Constant.ClickBetaLayer} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(90,0,0,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
                 `.${Constant.ClickLayer}, .${Constant.ClickRing}, .${Constant.TouchLayer}, .${Constant.TouchRing} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
                 `.${Constant.ClickRing} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
                 `.${Constant.TouchLayer} { background: radial-gradient(rgba(242,97,12,1), transparent); }` +
@@ -146,6 +147,17 @@ export class InteractionHelper {
             case Data.Event.Click:
                 title = "Click";
                 this.drawClick(doc, data.x, data.y, title);
+                var asClickEvent = event as Interaction.ClickEvent;
+                var elementClicked = this.layout.get(asClickEvent.data.hashBeta) || this.layout.get(asClickEvent.data.hash);
+                if (elementClicked && typeof elementClicked.getBoundingClientRect === "function") {
+                    let r = elementClicked.getBoundingClientRect();
+                    let x = Math.round(r.left + (asClickEvent.data.eX / Data.Setting.ClickPrecision) * r.width);
+                    let y = Math.round(r.top + (asClickEvent.data.eY / Data.Setting.ClickPrecision) * r.height);
+                    this.drawClick(doc, x, y, title, Constant.ClickBetaLayer);
+                } else {
+                    // would just do the fallback click here
+                }
+               
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.DoubleClick:
@@ -228,10 +240,10 @@ export class InteractionHelper {
         touch.appendChild(ringOne);
     };
 
-    private drawClick = (doc: Document, x: number, y: number, title: string): void => {
+    private drawClick = (doc: Document, x: number, y: number, title: string, className?: string): void => {
         let de = doc.documentElement;
         let click = doc.createElement("DIV");
-        click.className = Constant.ClickLayer;
+        click.className = className ?? Constant.ClickLayer;
         click.setAttribute(Constant.Title, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
         click.style.left = (x - Setting.ClickRadius / 2) + Constant.Pixel;
         click.style.top = (y - Setting.ClickRadius / 2) + Constant.Pixel

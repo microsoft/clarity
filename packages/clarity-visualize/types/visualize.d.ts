@@ -158,6 +158,7 @@ export const enum Constant {
     HiddenOpacity = "0.4",
     VisibleOpacity = "1",
     ClickLayer = "clarity-click",
+    ClickBetaLayer = "clarity-click-beta",
     PointerLayer = "clarity-pointer",
     TouchLayer = "clarity-touch",
     HoverAttribute = "clarity-hover",
