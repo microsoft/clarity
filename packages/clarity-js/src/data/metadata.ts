@@ -116,9 +116,6 @@ export function consent(status: boolean = true): void {
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-
-    // Read cookie data again to mark as consented
-    read();
     trackConsent.consent(status);
   }
 }

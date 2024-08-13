@@ -6,7 +6,7 @@ export let data: ConsentData = null;
 
 export function consent(value: boolean): void {
     if (core.active) {
-        data = { source: 1, value: value.toString() };
+        data = { source: 2, value: value.toString() };
 
         encode(Event.Consent);
     }
