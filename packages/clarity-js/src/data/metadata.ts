@@ -94,19 +94,21 @@ function userAgentData(): void {
 export function stop(): void {
   rootDomain = null;
   data = null;
+  callbacks.forEach(cb => { cb.called = false; });
 }
 
 export function metadata(cb: MetadataCallback, wait: boolean = true): void {
   let upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  let called = false;
   // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
-  // directly execute the callback rather than adding to our list as we only process callbacks at the moment
+  // directly execute the callback in addition to adding to our list as we only process callbacks at the moment
   // we go through the upgrading flow.
   if (data && (upgraded || wait === false)) {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
     cb(data, !config.lean);
-  } else {
-    callbacks.push({ callback: cb, wait: wait });
+    called = true;
   }
+  callbacks.push({ callback: cb, wait, called });
 }
 
 export function id(): string {
@@ -155,7 +157,10 @@ export function save(): void {
 function processCallback(upgrade: BooleanFlag) {
   if (callbacks.length > 0) {
     callbacks.forEach(x => {
-      if (x.callback && (!x.wait || upgrade)) { x.callback(data, !config.lean); }
+      if (x.callback && !x.called && (!x.wait || upgrade)) {
+        x.callback(data, !config.lean);
+        x.called = true;
+      }
     })
   }
 }
@@ -257,11 +262,11 @@ function getCookie(key: string): string {
           // * Cookie was previously not encoded by Clarity and browser encoded it once or more
           // * Cookie was previously encoded by Clarity and browser did not encode it
           let [isEncoded, decodedValue] = decodeCookieValue(pair[1]);
-          
+
           while (isEncoded) {
             [isEncoded, decodedValue] = decodeCookieValue(decodedValue);
           }
-        
+
           return decodedValue;
         }
       }
