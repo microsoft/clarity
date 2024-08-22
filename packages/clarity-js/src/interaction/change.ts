@@ -22,7 +22,9 @@ export function observe(root: Node): void {
 function recompute(evt: UIEvent): void {
     let element = target(evt) as HTMLInputElement;
     if (element) {
-        let value = element.value;
+        // forcing value to be string in case websites have any custom firing of the change event on
+        // atypical elements which can have other typed input
+        let value = `${element.value}`;
         let checksum = value && value.length >= Setting.WordLength && config.fraud && Mask.Exclude.indexOf(element.type) === -1 ? hash(value, Setting.ChecksumPrecision) : Constant.Empty;
         state.push({ time: time(evt), event: Event.Change, data: { target: target(evt), type: element.type, value, checksum } });
         schedule(encode.bind(this, Event.Change));
