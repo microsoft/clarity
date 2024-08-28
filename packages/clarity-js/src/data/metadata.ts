@@ -97,7 +97,7 @@ export function stop(): void {
   callbacks.forEach(cb => { cb.called = false; });
 }
 
-export function metadata(cb: MetadataCallback, wait: boolean = true): void {
+export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boolean = false): void {
   let upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let called = false;
   // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
@@ -108,7 +108,9 @@ export function metadata(cb: MetadataCallback, wait: boolean = true): void {
     cb(data, !config.lean);
     called = true;
   }
-  callbacks.push({ callback: cb, wait, called });
+  if (recall || !called) {
+    callbacks.push({ callback: cb, wait, recall, called });
+  }
 }
 
 export function id(): string {
@@ -156,12 +158,17 @@ export function save(): void {
 
 function processCallback(upgrade: BooleanFlag) {
   if (callbacks.length > 0) {
-    callbacks.forEach(x => {
-      if (x.callback && !x.called && (!x.wait || upgrade)) {
-        x.callback(data, !config.lean);
-        x.called = true;
+    for (let i = 0; i < callbacks.length; i++) {
+      const cb = callbacks[i];
+      if (cb.callback && !cb.called && (!cb.wait || upgrade)) {
+        cb.callback(data, !config.lean);
+        cb.called = true;
+        if (!cb.recall) {
+          callbacks.splice(i, 1);
+          i--;
+        }
       }
-    })
+    }
   }
 }
 
