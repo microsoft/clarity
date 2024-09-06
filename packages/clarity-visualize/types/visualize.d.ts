@@ -34,6 +34,7 @@ export class Visualizer {
 export type ResizeHandler  = (width: number, height: number) => void;
 export type ErrorLogger = (error: Error) => void;
 export type LinkHandler = (link: string, id: string, linkType: string) => string;
+export type ClickLogger = (time: number, x: number, y: number, nodeId: number) => void;
 
 export interface MergedPayload {
     timestamp: number;
@@ -54,6 +55,7 @@ export interface Options {
     onresize?: ResizeHandler;
     logerror?: ErrorLogger;
     useproxy?: LinkHandler;
+    onclickMismatch?: ClickLogger;
     metadata?: HTMLElement;
     canvas?: boolean;
     keyframes?: boolean;

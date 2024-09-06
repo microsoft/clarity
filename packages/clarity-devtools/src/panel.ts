@@ -127,7 +127,7 @@ function reset(envelope: Data.Envelope, userAgent: string): void {
         (links[i] as HTMLElement).onclick = function(): void { save(i); };
     }
     const mobile = isMobileDevice(userAgent);
-    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata, mobile});
+    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata, mobile, onclickMismatch: (time, x, y, nodeId) => console.log(`${time}|${x}|${y}|${nodeId}`) });
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
