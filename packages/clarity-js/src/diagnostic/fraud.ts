@@ -12,7 +12,8 @@ export function start(): void {
     history = [];
     metric.max(Metric.Automation, navigator.webdriver ? BooleanFlag.True : BooleanFlag.False);
     try {
-        metric.max(Metric.Iframed, window.top == window.self ? IframeStatus.TopFrame : IframeStatus.Iframe);
+        // some sites (unintentionally) overwrite the window.self property, so we also check for the main window object
+        metric.max(Metric.Iframed, window.top == window.self || window.top == window ? IframeStatus.TopFrame : IframeStatus.Iframe);
     } catch (ex) {
         metric.max(Metric.Iframed, IframeStatus.Unknown);
     }
