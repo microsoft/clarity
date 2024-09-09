@@ -6,7 +6,9 @@ export type DecodedToken = (any | any[]);
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
 export interface MetadataCallbackOptions {
     callback: MetadataCallback,
-    wait: boolean
+    wait: boolean,
+    recall: boolean,
+    called: boolean
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
