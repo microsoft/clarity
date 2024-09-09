@@ -145,6 +145,7 @@ function tab(): string {
 }
 
 export function save(): void {
+  if (!data) return;
   let ts = Math.round(Date.now());
   let upload = config.upload && typeof config.upload === Constant.String ? (config.upload as string).replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
