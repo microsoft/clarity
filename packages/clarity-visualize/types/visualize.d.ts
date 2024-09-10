@@ -34,8 +34,14 @@ export class Visualizer {
 export type ResizeHandler  = (width: number, height: number) => void;
 export type ErrorLogger = (error: Error) => void;
 export type LinkHandler = (link: string, id: string, linkType: string) => string;
-export type ClickLogger = (time: number, x: number, y: number, nodeId: number) => void;
+export type ClickLogger = (args: IClickLoggerArgs) => void;
 
+export interface IClickLoggerArgs {
+    time: number;
+    x: number;
+    y: number;
+    nodeId: number;
+}
 export interface MergedPayload {
     timestamp: number;
     envelope: Data.Envelope;

@@ -156,7 +156,11 @@ export class InteractionHelper {
                         }
                     }
                     if (!correctTargetHit) {
-                        this.state.options.onclickMismatch(event.time, data.x, data.y, data.target as number);
+                        this.state.options.onclickMismatch({
+                            time: event.time,
+                            x: data.x,
+                            y: data.y, 
+                            nodeId: data.target as number});
                     }
                 }
                 
