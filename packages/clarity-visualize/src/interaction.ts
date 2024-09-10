@@ -146,6 +146,24 @@ export class InteractionHelper {
             case Data.Event.Click:
                 title = "Click";
                 this.drawClick(doc, data.x, data.y, title);
+                if (this.state.options.onclickMismatch) {
+                    const originalTarget = this.layout.element(data.target as number);
+                    let correctTargetHit = false;
+                    const elementsUnderClick = doc.elementsFromPoint(data.x, data.y);
+                    for (const elementUnderClick of elementsUnderClick) {
+                        if (originalTarget === elementUnderClick) {
+                            correctTargetHit = true;
+                        }
+                    }
+                    if (!correctTargetHit) {
+                        this.state.options.onclickMismatch({
+                            time: event.time,
+                            x: data.x,
+                            y: data.y, 
+                            nodeId: data.target as number});
+                    }
+                }
+                
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.DoubleClick:
