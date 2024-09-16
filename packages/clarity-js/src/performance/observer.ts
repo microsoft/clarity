@@ -9,7 +9,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as navigation from "@src/performance/navigation";
 
 let observer: PerformanceObserver;
-const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTask, Constant.FID, Constant.CLS, Constant.LCP];
+const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTask, Constant.FID, Constant.CLS, Constant.LCP, Constant.PerformanceEventTiming];
 
 export function start(): void {
     // Capture connection properties, if available
@@ -71,6 +71,9 @@ function process(entries: PerformanceEntryList): void {
                 break;
             case Constant.FID:
                 if (visible) { metric.max(Metric.FirstInputDelay, entry["processingStart"] - entry.startTime); }
+                break;
+            case Constant.PerformanceEventTiming:
+                if (visible) { metric.max(Metric.InteractionNextPaint, entry.duration); }
                 break;
             case Constant.CLS:
                 // Scale the value to avoid sending back floating point number

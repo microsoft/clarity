@@ -6,7 +6,9 @@ export type DecodedToken = (any | any[]);
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
 export interface MetadataCallbackOptions {
     callback: MetadataCallback,
-    wait: boolean
+    wait: boolean,
+    recall: boolean,
+    called: boolean
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
@@ -111,7 +113,8 @@ export const enum Metric {
     HardwareConcurrency = 33,
     DeviceMemory = 34,
     Electron = 35,
-    ConstructedStyles = 36
+    ConstructedStyles = 36,
+    InteractionNextPaint = 37,
 }
 
 export const enum Dimension {
@@ -147,7 +150,10 @@ export const enum Dimension {
     CookieVersion = 29,
     DeviceFamily = 30, // Allows iOS SDK to override the DeviceFamily value parsed from UserAgent.
     InitialScrollTop = 31,
-    InitialScrollBottom = 32
+    InitialScrollBottom = 32,
+    AncestorOrigins = 33,
+    Timezone = 34,
+    TimezoneOffset = 35
 }
 
 export const enum Check {
@@ -299,6 +305,7 @@ export const enum Constant {
     FID = "first-input",
     CLS = "layout-shift",
     LCP = "largest-contentful-paint",
+    PerformanceEventTiming = "event",
     HTTPS = "https://",
     CompressionStream = "CompressionStream",
     Accept = "Accept",

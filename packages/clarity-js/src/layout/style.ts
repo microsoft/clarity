@@ -3,29 +3,33 @@ import { StyleSheetOperation, StyleSheetState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import { shortid, data as metadataFields } from "@src/data/metadata";
 import encode from "@src/layout/encode";
-import { getId, getNode } from "@src/layout/dom";
+import { getId } from "@src/layout/dom";
 import * as core from "@src/core";
 import { getCssRules } from "./node";
 import * as metric from "@src/data/metric";
 
-export let state: StyleSheetState[] = [];
+export let sheetUpdateState: StyleSheetState[] = [];
+export let sheetAdoptionState: StyleSheetState[] = [];
 let replace: (text?: string) => Promise<CSSStyleSheet> = null;
 let replaceSync: (text?: string) => void = null;
 const styleSheetId = 'claritySheetId';
 const styleSheetPageNum = 'claritySheetNum';
 let styleSheetMap = {};
 let styleTimeMap: {[key: string]: number} = {};
+let documentNodes = [];
 
 export function start(): void {
-    reset();
-
     if (replace === null) { 
         replace = CSSStyleSheet.prototype.replace; 
         CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
             if (core.active()) {
                 metric.max(Metric.ConstructedStyles, 1);
-                bootStrapStyleSheet(this);
-                trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
+                // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
+                // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
+                // to when it is used in the document rather than potentially being misaligned during the traverse process.
+                if (this[styleSheetPageNum] === metadataFields.pageNum) {
+                    trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
+                }
             }
             return replace.apply(this, arguments);
         };
@@ -36,28 +40,22 @@ export function start(): void {
         CSSStyleSheet.prototype.replaceSync = function(): void {
             if (core.active()) {
                 metric.max(Metric.ConstructedStyles, 1);
-                bootStrapStyleSheet(this);
-                trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
+                // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
+                // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
+                // to when it is used in the document rather than potentially being misaligned during the traverse process.
+                if (this[styleSheetPageNum] === metadataFields.pageNum) {
+                    trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
+                }                
             }
             return replaceSync.apply(this, arguments);
         };
     }
 }
 
-function bootStrapStyleSheet(styleSheet: CSSStyleSheet): void {
-    // If we haven't seen this style sheet on this page yet, we create a reference to it for the visualizer.
-    // For SPA or times in which Clarity restarts on a given page, our visualizer would lose context
-    // on the previously created style sheet for page N-1.
-    const pageNum = metadataFields.pageNum;
-    if (styleSheet[styleSheetPageNum] !== pageNum) {
-        styleSheet[styleSheetPageNum] = pageNum;
-        styleSheet[styleSheetId] = shortid();
-        // need to pass a create style sheet event (don't add it to any nodes, but do create it)
-        trackStyleChange(time(), styleSheet[styleSheetId], StyleSheetOperation.Create);
-    }
-}
-
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
+    if (documentNodes.indexOf(documentNode) === -1) {
+        documentNodes.push(documentNode);
+    }
     timestamp = timestamp || time();
     if (!documentNode?.adoptedStyleSheets) {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
@@ -67,7 +65,10 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
     let currentStyleSheets: string[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
         const pageNum = metadataFields.pageNum;
-        // if we haven't seen this style sheet, create it and call replaceSync with its contents to bootstrap it
+        // If we haven't seen this style sheet on this page yet, we create a reference to it for the visualizer.
+        // For SPA or times in which Clarity restarts on a given page, our visualizer would lose context
+        // on the previously created style sheet for page N-1.
+        // Then we synthetically call replaceSync with its contents to bootstrap it
         if (styleSheet[styleSheetPageNum] !== pageNum) {
             styleSheet[styleSheetPageNum] = pageNum;
             styleSheet[styleSheetId] = shortid();
@@ -90,23 +91,27 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
 }
 
 export function compute(): void {
-    let ts = -1 in styleTimeMap ? styleTimeMap[-1] : null;
-    checkDocumentStyles(document, ts);
-    Object.keys(styleSheetMap).forEach((x) => checkDocumentStyles(getNode(parseInt(x, 10)) as Document, styleTimeMap[x]));
+    for (var documentNode of documentNodes) {
+        var docId = documentNode == document ? -1 : getId(documentNode);
+        let ts = docId in styleTimeMap ? styleTimeMap[docId] : null;
+        checkDocumentStyles(document, ts);
+    }
 }
 
 export function reset(): void {
-    state = [];
+    sheetAdoptionState = [];
+    sheetUpdateState = [];
 }
 
 export function stop(): void {
     styleSheetMap = {};
     styleTimeMap = {};
+    documentNodes = [];
     reset();
 }
 
 function trackStyleChange(time: number, id: string, operation: StyleSheetOperation, cssRules?: string): void {
-    state.push({
+    sheetUpdateState.push({
         time,
         event: Event.StyleSheetUpdate,
         data: {
@@ -120,7 +125,7 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
 }
 
 function trackStyleAdoption(time: number, id: number, operation: StyleSheetOperation, newIds: string[]): void {
-    state.push({
+    sheetAdoptionState.push({
         time,
         event: Event.StyleSheetAdoption,
         data: {

@@ -17,12 +17,15 @@ import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
 import processNode from "./node";
+import config from "@src/core/config";
 
 let observers: MutationObserver[] = [];
 let mutations: MutationQueue[] = [];
 let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
 let attachShadow: (init: ShadowRootInit)  => ShadowRoot = null;
+let mediaInsertRule: (rule: string, index?: number) => number = null;
+let mediaDeleteRule: (index?: number) => void = null;
 let queue: Node[] = [];
 let timeout: number = null;
 let activePeriod = null;
@@ -47,13 +50,29 @@ export function start(): void {
       };
     }
 
+    if ("CSSMediaRule" in window && mediaInsertRule === null) { 
+      mediaInsertRule = CSSMediaRule.prototype.insertRule; 
+      CSSMediaRule.prototype.insertRule = function(): number {
+        if (core.active()) { schedule(this.parentStyleSheet.ownerNode); }
+        return mediaInsertRule.apply(this, arguments);
+      };
+    }
+
     if (deleteRule === null) { 
       deleteRule = CSSStyleSheet.prototype.deleteRule;
       CSSStyleSheet.prototype.deleteRule = function(): void {
         if (core.active()) { schedule(this.ownerNode); }
         return deleteRule.apply(this, arguments);
       };
-   }
+    }
+
+    if ("CSSMediaRule" in window && mediaDeleteRule === null) { 
+      mediaDeleteRule = CSSMediaRule.prototype.deleteRule;
+      CSSMediaRule.prototype.deleteRule = function(): void {
+        if (core.active()) { schedule(this.parentStyleSheet.ownerNode); }
+        return mediaDeleteRule.apply(this, arguments);
+      };
+    }
 
    // Add a hook to attachShadow API calls
    // In case we are unable to add a hook and browser throws an exception,
@@ -129,7 +148,7 @@ async function process(): Promise<void> {
       if (state === Task.Wait) { state = await task.suspend(timer); }
       if (state === Task.Stop) { break; }      
       let target = mutation.target;
-      let type = track(mutation, timer, instance, record.time);
+      let type = config.throttleDom ? track(mutation, timer, instance, record.time) : mutation.type;
       if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
       if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) { dom.parse(target as ShadowRoot); }
       switch (type) {

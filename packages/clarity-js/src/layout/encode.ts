@@ -38,17 +38,15 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             region.reset();
             break;
         case Event.StyleSheetAdoption:
-            for (let entry of style.state) {
+        case Event.StyleSheetUpdate:
+            for (let entry of style.sheetAdoptionState) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.newIds);
                 queue(tokens);
             }
-            style.reset();
-            break;
-        case Event.StyleSheetUpdate:
-            for (let entry of style.state) {
+            for (let entry of style.sheetUpdateState) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
@@ -56,6 +54,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 queue(tokens);
             }
             style.reset();
+            break;
         case Event.Animation:
             for (let entry of animation.state) {
                 tokens = [entry.time, entry.event];

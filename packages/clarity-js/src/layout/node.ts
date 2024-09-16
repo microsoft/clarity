@@ -9,7 +9,7 @@ import * as schema from "@src/layout/schema";
 import { checkDocumentStyles } from "@src/layout/style";
 import { electron } from "@src/data/metadata";
 
-const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
+const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last", "aria-label"];
 const newlineRegex = /[\r\n]+/g;
 
 export default function (node: Node, source: Source, timestamp: number): Node {
@@ -35,7 +35,8 @@ export default function (node: Node, source: Source, timestamp: number): Node {
             parent = insideFrame && node.parentNode ? dom.iframe(node.parentNode) : parent;
             let docTypePrefix = insideFrame ? Constant.IFramePrefix : Constant.Empty;
             let doctype = node as DocumentType;
-            let docAttributes = { name: doctype.name, publicId: doctype.publicId, systemId: doctype.systemId };
+            let docName = doctype.name ? doctype.name : Constant.HTML; 
+            let docAttributes = { name: docName, publicId: doctype.publicId, systemId: doctype.systemId };
             let docData = { tag: docTypePrefix + Constant.DocumentTag, attributes: docAttributes };
             dom[call](node, parent, docData, source);
             break;
@@ -214,9 +215,11 @@ function observe(root: Node): void {
 function getStyleValue(style: HTMLStyleElement): string {
     // Call trim on the text content to ensure we do not process white spaces ( , \n, \r\n, \t, etc.)
     // Also, check if stylesheet has any data-* attribute, if so process rules instead of looking up text
+    // Additionally, check if style node has an id - if so it's at a high risk to have experienced dynamic
+    // style updates which would make the textContent out of date with its true style contribution.
     let value = style.textContent ? style.textContent.trim() : Constant.Empty;
     let dataset = style.dataset ? Object.keys(style.dataset).length : 0;
-    if (value.length === 0 || dataset > 0) {
+    if (value.length === 0 || dataset > 0 || style.id.length > 0) {
         value = getCssRules(style.sheet as CSSStyleSheet);
     }
     return value;

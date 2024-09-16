@@ -138,6 +138,8 @@ export interface Config {
     action?: (key: string) => void;
     dob?: number;
     delayDom?: boolean;
+    throttleDom?: boolean;
+    conversions?: boolean;
 }
 
 export const enum Constant {
