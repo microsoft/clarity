@@ -24,6 +24,8 @@ let mutations: MutationQueue[] = [];
 let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
 let attachShadow: (init: ShadowRootInit)  => ShadowRoot = null;
+let mediaInsertRule: (rule: string, index?: number) => number = null;
+let mediaDeleteRule: (index?: number) => void = null;
 let queue: Node[] = [];
 let timeout: number = null;
 let activePeriod = null;
@@ -48,13 +50,29 @@ export function start(): void {
       };
     }
 
+    if ("CSSMediaRule" in window && mediaInsertRule === null) { 
+      mediaInsertRule = CSSMediaRule.prototype.insertRule; 
+      CSSMediaRule.prototype.insertRule = function(): number {
+        if (core.active()) { schedule(this.parentStyleSheet.ownerNode); }
+        return mediaInsertRule.apply(this, arguments);
+      };
+    }
+
     if (deleteRule === null) { 
       deleteRule = CSSStyleSheet.prototype.deleteRule;
       CSSStyleSheet.prototype.deleteRule = function(): void {
         if (core.active()) { schedule(this.ownerNode); }
         return deleteRule.apply(this, arguments);
       };
-   }
+    }
+
+    if ("CSSMediaRule" in window && mediaDeleteRule === null) { 
+      mediaDeleteRule = CSSMediaRule.prototype.deleteRule;
+      CSSMediaRule.prototype.deleteRule = function(): void {
+        if (core.active()) { schedule(this.parentStyleSheet.ownerNode); }
+        return mediaDeleteRule.apply(this, arguments);
+      };
+    }
 
    // Add a hook to attachShadow API calls
    // In case we are unable to add a hook and browser throws an exception,

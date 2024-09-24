@@ -7,6 +7,7 @@ import { AnimationOperation } from "clarity-js/types/layout";
 export class LayoutHelper {
     static TIMEOUT = 3000;
 
+    isMobile: boolean;
     stylesheets: Promise<void>[] = [];
     fonts: Promise<void>[] = [];
     nodes = {};
@@ -18,8 +19,9 @@ export class LayoutHelper {
     state: PlaybackState = null;
     stylesToApply: { [id: string] : string[] } = {};
 
-    constructor(state: PlaybackState) {
+    constructor(state: PlaybackState, isMobile: boolean = false) {
         this.state = state;
+        this.isMobile = isMobile
     }
 
     public reset = (): void => {
@@ -166,6 +168,11 @@ export class LayoutHelper {
         let data = event.data;
         let type = event.event;
         let doc = this.state.window.document;
+        let retryEvent: DecodedLayout.DomEvent = {
+            data: [],
+            time: event.time,
+            event: event.event
+        }
         for (let node of data) {
             let parent = this.element(node.parent);
             let pivot = this.element(node.previous);
@@ -173,6 +180,13 @@ export class LayoutHelper {
 
             let tag = node.tag;
             if (tag && tag.indexOf(Layout.Constant.IFramePrefix) === 0) { tag = node.tag.substr(Layout.Constant.IFramePrefix.length); }
+            if (parent === null && node.parent !== null && node.parent > -1 && tag !== "HTML") {
+                // We are referencing a parent for this node that hasn't been created yet. Push it to a list of nodes to 
+                // try once we are finished with other nodes within this event. Though we don't require HTML tags to
+                // have a parent as they are typically the root.
+                retryEvent.data.push(node);
+                continue;
+            }
             switch (tag) {
                 case Layout.Constant.DocumentTag:
                     let tagDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
@@ -247,6 +261,7 @@ export class LayoutHelper {
 
                         // Add custom styles to assist with visualization
                         let custom = doc.createElement("style");
+                        custom.setAttribute(Constant.CustomStyleTag, "true");
                         custom.innerText = this.getCustomStyle();
                         headElement.appendChild(custom);
                     }
@@ -319,6 +334,11 @@ export class LayoutHelper {
             // Track state for this node
             if (node.id) { this.events[node.id] = node; }
         }
+        // only retry failed nodes if we are still making positive progress. If we have the same number of
+        // nodes we started with, then we would just be spinning on an orphaned subtree.
+        if (retryEvent.data.length > 0 && retryEvent.data.length !== event.data.length) {
+            this.markup(retryEvent, useproxy);
+        }
     }
 
     private style = (node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void => {
@@ -377,6 +397,10 @@ export class LayoutHelper {
         let child = node.firstChild;
         // BASE tag should always be the first child to ensure resources with relative URLs are loaded correctly
         if (child && child.nodeType === NodeType.ELEMENT_NODE && (child as HTMLElement).tagName === Layout.Constant.BaseTag) {
+            if((child.nextSibling as HTMLElement)?.hasAttribute('clarity-custom-styles')){
+                // Keep the custom style tag on top of the head to let client tags override its values.
+                return child.nextSibling.nextSibling;
+            }
             return child.nextSibling;
         }
         return child;
@@ -469,6 +493,14 @@ export class LayoutHelper {
             node.setAttribute(Constant.AutoComplete, Constant.NewPassword); 
         }
     }
+    
+    private getMobileCustomStyle = (): string => {
+        if(this.isMobile){
+            return `*{scrollbar-width: none; scrollbar-gutter: unset;};`
+        }
+
+        return '';
+    }
 
     private getCustomStyle = (): string => {
         // tslint:disable-next-line: max-line-length
@@ -477,6 +509,8 @@ export class LayoutHelper {
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
             `${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
-            `*[${Constant.Suspend}] { filter: grayscale(100%); }`;
+            `*[${Constant.Suspend}] { filter: grayscale(100%); }` + 
+            `body { font-size: initial; }
+            ${this.getMobileCustomStyle()}`;
     }
 }
