@@ -84,7 +84,7 @@ export default function(event: Event, target?: number): void {
                 queue(tokens, false);
             }
             break;
-        case Event.LargestPaint:
+        case Event.LargestPaintTarget:
             if(target){
                 // Log the id of the largest paint element
                 tokens.push(target);

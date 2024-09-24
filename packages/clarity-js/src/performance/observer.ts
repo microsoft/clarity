@@ -85,7 +85,7 @@ function process(entries: PerformanceEntryList): void {
                 if (visible) { metric.max(Metric.LargestPaint, entry.startTime); }
                 const targetNode = dom.get((entry as any).element)?.id 
                 if(targetNode){
-                    metric.logTarget(Event.LargestPaint, targetNode)
+                    metric.logTarget(Event.LargestPaintTarget, targetNode)
                 }
                 break;
         }

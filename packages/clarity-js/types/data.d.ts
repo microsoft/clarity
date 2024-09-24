@@ -74,7 +74,7 @@ export const enum Event {
 /**
  * Metric related event data
  */
-    LargestPaint = 47
+    LargestPaintTarget = 47
 }
 
 export const enum Metric {
