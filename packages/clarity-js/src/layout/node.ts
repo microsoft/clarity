@@ -35,7 +35,8 @@ export default function (node: Node, source: Source, timestamp: number): Node {
             parent = insideFrame && node.parentNode ? dom.iframe(node.parentNode) : parent;
             let docTypePrefix = insideFrame ? Constant.IFramePrefix : Constant.Empty;
             let doctype = node as DocumentType;
-            let docAttributes = { name: doctype.name, publicId: doctype.publicId, systemId: doctype.systemId };
+            let docName = doctype.name ? doctype.name : Constant.HTML; 
+            let docAttributes = { name: docName, publicId: doctype.publicId, systemId: doctype.systemId };
             let docData = { tag: docTypePrefix + Constant.DocumentTag, attributes: docAttributes };
             dom[call](node, parent, docData, source);
             break;
