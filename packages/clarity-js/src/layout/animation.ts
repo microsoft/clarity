@@ -36,6 +36,19 @@ export function start(): void {
                 return createdAnimation;
             }
         }
+        if (document.getAnimations) {
+            for (var animation of document.getAnimations()) {
+                if (animation.playState === "finished") {
+                    trackAnimationOperation(animation, "finish");
+                }
+                else if (animation.playState === "paused" || animation.playState === "idle") {
+                    trackAnimationOperation(animation, "pause");
+                }
+                else if (animation.playState === "running") {
+                    trackAnimationOperation(animation, "play");
+                }
+            }
+        }
     }    
 }
 
