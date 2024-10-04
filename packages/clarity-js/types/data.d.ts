@@ -212,14 +212,14 @@ export const enum Setting {
     SessionTimeout = 30 * Time.Minute, // 30 minutes
     CookieInterval = 1, // 1 Day
     PingInterval = 1 * Time.Minute, // 1 Minute
-    PingTimeout = 1, // 5 Minutes
+    PingTimeout = 5 * Time.Minute, // 5 Minutes
     SummaryInterval = 100, // Same events within 100ms will be collapsed into single summary
     ClickText = 25, // Maximum number of characters to send as part of Click event's text field
     PayloadLimit = 128, // Do not allow more than specified payloads per page
     PageLimit = 128, // Do not allow more than 128 pages in a session
     ShutdownLimit = 2 * Time.Hour, // Shutdown instrumentation after specified time
     RetryLimit = 1, // Maximum number of attempts to upload a payload before giving up
-    PlaybackBytesLimit = 1024, // 10MB
+    PlaybackBytesLimit = 10 * 1024 * 1024, // 10MB
     CollectionLimit = 128, // Number of unique entries for dimensions
     ClickPrecision = 32767, // 2^15 - 1
     BoxPrecision = 100, // Up to 2 decimal points (e.g. 34.56)
