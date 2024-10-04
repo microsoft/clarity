@@ -26,8 +26,7 @@ function ping(): void {
     encode(Event.Ping);
     if (data.gap < Setting.PingTimeout) {
         timeout = setTimeout(ping, interval);
-    } else { 
-        console.log('calling suspend from ping');suspend(); }
+    } else { suspend(); }
 }
 
 export function stop(): void {
