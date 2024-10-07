@@ -96,7 +96,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
 
             switch (tag) {
                 case "HTML":
-                    parent = insideFrame && parent ? dom.iframe(parent) : null;
+                    parent = insideFrame && parent ? dom.iframe(parent) : parent;
                     let htmlPrefix = insideFrame ? Constant.IFramePrefix : Constant.Empty;
                     let htmlData = { tag: htmlPrefix + tag, attributes };
                     dom[call](node, parent, htmlData, source);

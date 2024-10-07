@@ -7,6 +7,7 @@ import { AnimationOperation } from "clarity-js/types/layout";
 export class LayoutHelper {
     static TIMEOUT = 3000;
 
+    primaryHtmlNodeId: number | null = null;
     isMobile: boolean;
     stylesheets: Promise<void>[] = [];
     fonts: Promise<void>[] = [];
@@ -31,6 +32,7 @@ export class LayoutHelper {
         this.events = {};
         this.hashMapAlpha = {};
         this.hashMapBeta = {};
+        this.primaryHtmlNodeId = null;
     }
 
     public get = (hash) => {
@@ -231,6 +233,16 @@ export class LayoutHelper {
                     }
                     break;
                 case "HTML":
+                    if (this.primaryHtmlNodeId === null) {
+                        this.primaryHtmlNodeId = node.id;
+                    }
+                    // when we see multiple HTML nodes in the same document we should treat subsequent ones as child elements
+                    // rather than redefining our visualization base on them. It's technically illegal HTML but enough sites have
+                    // this structure that we are robust against it.
+                    if (this.primaryHtmlNodeId !== node.id) {
+                        this.insertDefaultElement(node, parent, pivot, doc, insert);
+                        break;
+                    }
                     let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
                     if (htmlDoc !== null) {
                         let docElement = this.element(node.id) as HTMLElement;
@@ -324,11 +336,7 @@ export class LayoutHelper {
                     insert(node, parent, iframeElement, pivot);
                     break;
                 default:
-                    let domElement = this.element(node.id) as HTMLElement;
-                    domElement = domElement ? domElement : this.createElement(doc, node.tag);
-                    this.setAttributes(domElement as HTMLElement, node);
-                    this.resize(domElement, node.width, node.height);
-                    insert(node, parent, domElement, pivot);
+                    this.insertDefaultElement(node, parent, pivot, doc, insert);
                     break;
             }
             // Track state for this node
@@ -339,6 +347,14 @@ export class LayoutHelper {
         if (retryEvent.data.length > 0 && retryEvent.data.length !== event.data.length) {
             this.markup(retryEvent, useproxy);
         }
+    }
+
+    private insertDefaultElement = (node: DecodedLayout.DomData, parent: Node, pivot: Node, doc: Document, insert: (data: DecodedLayout.DomData, parent: Node, node: Node, previous: Node) => void): void => {
+        let domElement = this.element(node.id) as HTMLElement;
+        domElement = domElement ? domElement : this.createElement(doc, node.tag);
+        this.setAttributes(domElement as HTMLElement, node);
+        this.resize(domElement, node.width, node.height);
+        insert(node, parent, domElement, pivot);
     }
 
     private style = (node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void => {
