@@ -8,6 +8,7 @@ import * as scrub from "@src/core/scrub";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
+import * as trackConsent from "@src/data/consent";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
@@ -74,6 +75,9 @@ export function start(): void {
     if (value) { set(key, value); }
   }
 
+  // Track consent config
+  trackConsent.config(config.track);
+
   // Track ids using a cookie if configuration allows it
   track(u);
 }
@@ -127,9 +131,11 @@ export function consent(status: boolean = true): void {
     return;
   }
 
+  trackConsent.consent(status);
   if (core.active()) {
     config.track = true;
     track(user(), BooleanFlag.True);
+    save();
   }
 }
 
