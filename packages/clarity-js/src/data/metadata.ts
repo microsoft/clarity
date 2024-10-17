@@ -131,12 +131,12 @@ export function consent(status: boolean = true): void {
     return;
   }
 
-  trackConsent.consent(status);
   if (core.active()) {
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-  }
+    trackConsent.consent(status);
+}
 }
 
 export function clear(): void {
@@ -154,12 +154,16 @@ function tab(): string {
   return id;
 }
 
+export function callback(): void {
+  let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  processCallback(upgrade);
+}
+
 export function save(): void {
   if (!data) return;
   let ts = Math.round(Date.now());
   let upload = config.upload && typeof config.upload === Constant.String ? (config.upload as string).replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-  processCallback(upgrade);
   setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
 }
 
