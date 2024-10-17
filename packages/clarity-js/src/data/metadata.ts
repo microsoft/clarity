@@ -127,6 +127,9 @@ export function consent(status: boolean = true): void {
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
     clarity.stop();
+
+    // Set track to false if consent is denied, before restarting
+    config.track = false;
     window.setTimeout(clarity.start, Setting.RestartDelay);
     return;
   }
@@ -135,7 +138,7 @@ export function consent(status: boolean = true): void {
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    trackConsent.consent(status);
+    trackConsent.consent();
 }
 }
 
