@@ -104,6 +104,7 @@ export interface PointerData {
     target: Target;
     x: number;
     y: number;
+    id?: number;
 }
 
 export interface ClickData {
