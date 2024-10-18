@@ -1,4 +1,4 @@
-import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
+import { Activity, Constant, ErrorLogger, IExistanceTime, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
 import { Data } from "clarity-js";
 import type { Data as DecodedData, Interaction, Layout } from "clarity-decode";
 import { DataHelper } from "./data";
@@ -27,6 +27,44 @@ export class Visualizer implements VisualizerType {
 
     public get = (hash: string): HTMLElement => {
         return this.layout?.get(hash);
+    }
+
+    public getElementExistenceTimes = (decoded: DecodedData.DecodedPayload[], hash: string): IExistanceTime[] => {
+        var retVal: IExistanceTime[] = [];
+        var currentExistence: IExistanceTime = null;
+        if (decoded && decoded.length > 0 && hash.length > 0) {
+            let merged = this.merge(decoded);
+            for (let node of merged.dom.data) {
+                currentExistence = this.processDomData(node, merged.dom.time, hash, currentExistence, retVal);
+            }
+            while (merged.events.length > 0) {
+                let entry = merged.events.shift();
+                if (entry.event === Data.Event.Mutation) {
+                    let domEvent = entry as Layout.DomEvent;
+                    for (let node of domEvent.data) {
+                        currentExistence = this.processDomData(node, domEvent.time, hash, currentExistence, retVal);
+                    }
+                }
+            }
+        }
+        return currentExistence ? retVal.concat(currentExistence) : retVal;
+    }
+
+    private processDomData = (node: Layout.DomData, time: number, hash: string, currentExistence: IExistanceTime, retVal: IExistanceTime[]): IExistanceTime => {
+        this.layout = this.layout || new LayoutHelper(this.state);
+        this.layout.addToIdMap(node);
+        if (node.hashAlpha === hash || node.hashBeta === hash || this.layout.getHashFromId(node.id) === hash) {
+            if (node.parent !== null) {
+                if (currentExistence === null) {
+                    currentExistence = { begin: time };
+                }
+            } else {
+                currentExistence.end = time;
+                retVal.push(currentExistence);
+                currentExistence = null;
+            }
+        }
+        return currentExistence;
     }
 
     public html = async (decoded: DecodedData.DecodedPayload[], target: Window, hash: string = null, time : number, useproxy?: LinkHandler, logerror?: ErrorLogger): Promise<Visualizer> => {
@@ -130,8 +168,8 @@ export class Visualizer implements VisualizerType {
 
         // Initialize helpers
         this.enrich = new EnrichHelper();
-        this.data = new DataHelper(this.state);
-        this.layout = new LayoutHelper(this.state, options.mobile);
+        this.data = new DataHelper(this.state);this.layout = new LayoutHelper(this.state, options.mobile);
+        
         this.heatmap = new HeatmapHelper(this.state, this.layout);
         this.interaction = new InteractionHelper(this.state, this.layout);
 

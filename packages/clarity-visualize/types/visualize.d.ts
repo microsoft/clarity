@@ -29,6 +29,7 @@ export class Visualizer {
     setup: (target: Window, options: Options) => Promise<Visualizer>;
     time: () => number;
     get: (hash: string) => HTMLElement;
+    getElementExistenceTimes: (decoded: Data.DecodedPayload[], hash: string) => IExistanceTime[];
 }
 
 export type ResizeHandler  = (width: number, height: number) => void;
@@ -41,6 +42,10 @@ export interface IClickLoggerArgs {
     x: number;
     y: number;
     nodeId: number;
+}
+export interface IExistanceTime {
+    begin: number,
+    end?: number
 }
 export interface MergedPayload {
     timestamp: number;

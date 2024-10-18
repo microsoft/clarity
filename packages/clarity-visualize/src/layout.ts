@@ -15,6 +15,8 @@ export class LayoutHelper {
     events = {};
     hashMapAlpha = {};
     hashMapBeta = {};
+    idMapAlpha = {};
+    idMapBeta = {};
     adoptedStyleSheets = {};
     animations = {};
     state: PlaybackState = null;
@@ -42,6 +44,20 @@ export class LayoutHelper {
             return this.hashMapAlpha[hash];
         }
         return null;
+    }
+
+    public getHashFromId = (id: number): string | undefined => {
+        return this.idMapAlpha[id] || this.idMapBeta[id] || undefined;
+    }
+
+    public addToIdMap = (data: DecodedLayout.DomData) => {
+        if (data.hashAlpha) {
+            this.idMapAlpha[data.id] = data.hashAlpha;
+        }
+
+        if (data.hashBeta) {
+            this.idMapBeta[data.id] = data.hashBeta;
+        }
     }
 
     private addToHashMap = (data: DecodedLayout.DomData, parent: Node) => {
