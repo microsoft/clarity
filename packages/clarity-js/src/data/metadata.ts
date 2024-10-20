@@ -139,7 +139,7 @@ export function consent(status: boolean = true): void {
     track(user(), BooleanFlag.True);
     save();
     trackConsent.consent();
-}
+  }
 }
 
 export function clear(): void {
