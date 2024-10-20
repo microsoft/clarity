@@ -18,11 +18,14 @@ const longestInteractionMap: Map<number, Interaction> = new Map();
 
 /**
  * Update the approx number of interactions estimate count if the interactionCount is not supported.
- * The difference between `maxKnownInteractionId` and `minKnownInteractionId` gives us a rough range of how many interactions have occurred. 
- * Dividing by 7 helps approximate the interaction count more accurately, since interaction IDs may not always increase sequentially.
+ * The difference between `maxKnownInteractionId` and `minKnownInteractionId` gives us a rough range of how many interactions have occurred.
+ * Dividing by 7 helps approximate the interaction count more accurately, since interaction IDs are spread out across a large range.
  */
 const countInteractions = (entry: PerformanceEventTiming) => {
-  if ('interactionCount' in Performance) return;
+  if ('interactionCount' in performance) {
+    interactionCountEstimate = performance.interactionCount as number;
+    return;
+  }
 
   if (entry.interactionId) {
     minKnownInteractionId = Math.min(
@@ -34,7 +37,6 @@ const countInteractions = (entry: PerformanceEventTiming) => {
       entry.interactionId
     );
 
-
     interactionCountEstimate = maxKnownInteractionId
       ? (maxKnownInteractionId - minKnownInteractionId) / 7 + 1
       : 0;
@@ -42,11 +44,7 @@ const countInteractions = (entry: PerformanceEventTiming) => {
 };
 
 const getInteractionCount = () => {
-  return (
-    'interactionCount' in performance
-      ? performance.interactionCount
-      : interactionCountEstimate || 0
-  ) as number;
+  return interactionCountEstimate || 0;
 };
 
 const getInteractionCountForNavigation = () => {
@@ -56,6 +54,10 @@ const getInteractionCountForNavigation = () => {
 /**
  * Estimates the 98th percentile (P98) of the longest interactions by selecting
  * the candidate interaction based on the current interaction count.
+ * Dividing by 50 is a heuristic to estimate the 98th percentile (P98) interaction.
+ * This assumes one out of every 50 interactions represents the P98 interaction.
+ * By dividing the total interaction count by 50, we get an index to approximate 
+ * the slowest 2% of interactions, helping identify a likely P98 candidate.
  */
 export const estimateP98LongestInteraction = () => {
   const candidateInteractionIndex = Math.min(
@@ -98,7 +100,7 @@ export const processInteractionEntry = (entry: PerformanceEventTiming) => {
   if (
     existingInteraction ||
     longestInteractionList.length < MAX_INTERACTIONS_TO_CONSIDER ||
-    entry.duration > minLongestInteraction.latency
+    entry.duration > minLongestInteraction?.latency
   ) {
     if (!existingInteraction) {
       const interaction = {
