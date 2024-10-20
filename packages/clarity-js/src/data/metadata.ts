@@ -8,6 +8,7 @@ import * as scrub from "@src/core/scrub";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
+import * as trackConsent from "@src/data/consent";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
@@ -74,6 +75,9 @@ export function start(): void {
     if (value) { set(key, value); }
   }
 
+  // Track consent config
+  trackConsent.config(config.track);
+
   // Track ids using a cookie if configuration allows it
   track(u);
 }
@@ -123,6 +127,9 @@ export function consent(status: boolean = true): void {
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
     clarity.stop();
+
+    // Set track to false if consent is denied, before restarting
+    config.track = false;
     window.setTimeout(clarity.start, Setting.RestartDelay);
     return;
   }
@@ -130,6 +137,8 @@ export function consent(status: boolean = true): void {
   if (core.active()) {
     config.track = true;
     track(user(), BooleanFlag.True);
+    save();
+    trackConsent.consent();
   }
 }
 
@@ -148,12 +157,16 @@ function tab(): string {
   return id;
 }
 
+export function callback(): void {
+  let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  processCallback(upgrade);
+}
+
 export function save(): void {
   if (!data) return;
   let ts = Math.round(Date.now());
   let upload = config.upload && typeof config.upload === Constant.String ? (config.upload as string).replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-  processCallback(upgrade);
   setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
 }
 

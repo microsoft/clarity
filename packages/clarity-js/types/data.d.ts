@@ -153,7 +153,8 @@ export const enum Dimension {
     InitialScrollBottom = 32,
     AncestorOrigins = 33,
     Timezone = 34,
-    TimezoneOffset = 35
+    TimezoneOffset = 35,
+    Consent = 36
 }
 
 export const enum Check {

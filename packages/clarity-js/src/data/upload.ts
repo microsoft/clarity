@@ -241,7 +241,10 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
 
 function done(sequence: number): void {
     // If we everything went successfully, and it is the first sequence, save this session for future reference
-    if (sequence === 1) { metadata.save(); }
+    if (sequence === 1) { 
+        metadata.save();
+        metadata.callback();
+    }
 }
 
 function delay(): number {
