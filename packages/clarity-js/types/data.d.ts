@@ -461,3 +461,12 @@ export interface ClaritySignal {
     type: string
     value?: number
 }
+
+export interface PerformanceEventTiming extends PerformanceEntry {
+    duration: DOMHighResTimeStamp;
+    interactionId: number;
+}
+export interface Interaction {
+    id: number;
+    latency: number;
+}
