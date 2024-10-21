@@ -20,7 +20,7 @@ export interface Visualize {
 export class Visualizer {
     readonly state: PlaybackState;
     dom: (event: Layout.DomEvent) => Promise<void>;
-    html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number, useproxy?: LinkHandler, logerror?: ErrorLogger) => Promise<Visualizer>;
+    html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, useproxy?: LinkHandler, logerror?: ErrorLogger, shortCircuitStrategy?: ShortCircuitStrategy) => Promise<Visualizer>;
     clickmap: (activity?: Activity) => void;
     clearmap: () => void;
     scrollmap: (data?: ScrollMapInfo[], averageFold?: number, addMarkers?: boolean) => void;
@@ -109,6 +109,13 @@ export interface Heatmap {
     x: number; /* X Coordinate */
     y: number; /* Y Coordinate */
     a: number; /* Alpha */
+}
+
+export const enum ShortCircuitStrategy {
+    None = 0,
+    HashFirstTimestamp = 1,
+    HashFirstTimestampPlusBuffer = 2,
+    HashBeforeDeleted = 3
 }
 
 export const enum NodeType {
@@ -213,5 +220,6 @@ export const enum Setting {
     MarkerColor = "white",
     CanvasTextColor = "#323130",
     CanvasTextFont = "500 12px Segoe UI",
-    ScrollCanvasMaxHeight = 65535
+    ScrollCanvasMaxHeight = 65535,
+    VisualizationSettleBuffer = 100,
 }
