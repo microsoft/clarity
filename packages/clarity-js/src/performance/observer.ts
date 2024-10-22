@@ -77,7 +77,8 @@ function process(entries: PerformanceEntryList): void {
                 if (visible && 'PerformanceEventTiming' in window &&  'interactionId' in PerformanceEventTiming.prototype)
                 {
                     interaction.processInteractionEntry(entry as PerformanceEventTiming); 
-                    metric.last(Metric.InteractionNextPaint, interaction.estimateP98LongestInteraction()); 
+                    // Logging it as dimension because we're always looking for the last value.
+                    dimension.log(Dimension.InteractionNextPaint, interaction.estimateP98LongestInteraction().toString()); 
                 }
                 break;
             case Constant.CLS:

@@ -114,7 +114,10 @@ export const enum Metric {
     DeviceMemory = 34,
     Electron = 35,
     ConstructedStyles = 36,
-    InteractionNextPaint = 37,
+/**
+ * @deprecated Move it to dimension as it'll report only last value
+ */
+    InteractionNextPaint = 37
 }
 
 export const enum Dimension {
@@ -153,7 +156,8 @@ export const enum Dimension {
     InitialScrollBottom = 32,
     AncestorOrigins = 33,
     Timezone = 34,
-    TimezoneOffset = 35
+    TimezoneOffset = 35,
+    InteractionNextPaint = 37
 }
 
 export const enum Check {

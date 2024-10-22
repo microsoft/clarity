@@ -23,7 +23,7 @@ export class DataHelper {
         [Data.Metric.CartTotal]: { name: "Cart Total", unit: "html-price" },
         [Data.Metric.ProductPrice]: { name: "Product Price", unit: "ld-price" },
         [Data.Metric.ThreadBlockedTime]: { name: "Thread Blocked", unit: "ms" },
-        [Data.Metric.InteractionNextPaint]: { name: "INP", unit: "ms" }
+        [Data.Dimension.InteractionNextPaint]: { name: "INP", unit: "ms" }
     };
 
     public reset = (): void => {
@@ -39,13 +39,15 @@ export class DataHelper {
             let regionMarkup = [];
             // Copy over metrics for future reference
             for (let m in event.data) {
-                if (typeof event.data[m] === "number") {
+                const eventType = typeof event.data[m]; 
+                if (eventType === "number" || (event.event === Data.Event.Dimension && m === Data.Dimension.InteractionNextPaint.toString())) {
                     if (!(m in this.metrics)) { this.metrics[m] = 0; }
                     let key = parseInt(m, 10);
+                    let value =  eventType === "object" ? Number(event.data[m]?.[0]) : event.data[m];
                     if (m in DataHelper.METRIC_MAP && (DataHelper.METRIC_MAP[m].unit === "html-price" ||DataHelper.METRIC_MAP[m].unit === "ld-price")) { 
-                        this.metrics[m] = event.data[m];
-                    } else { this.metrics[m] += event.data[m]; }
-                    this.lean = key === Data.Metric.Playback && event.data[m] === 0 ? true : this.lean;
+                        this.metrics[m] = value;
+                    } else { this.metrics[m] += value; }
+                    this.lean = key === Data.Metric.Playback && value === 0 ? true : this.lean;
                 }
             }
 

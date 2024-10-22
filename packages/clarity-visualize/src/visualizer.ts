@@ -6,6 +6,7 @@ import { EnrichHelper } from "./enrich";
 import { HeatmapHelper } from "./heatmap";
 import { InteractionHelper } from "./interaction";
 import { LayoutHelper } from "./layout";
+import { Dimension } from "clarity-js/types/data";
 
 export class Visualizer implements VisualizerType {
     _state: PlaybackState = null;
@@ -151,6 +152,11 @@ export class Visualizer implements VisualizerType {
             switch (entry.event) {
                 case Data.Event.Metric:
                     this.data.metric(entry as DecodedData.MetricEvent);
+                    break;
+                case Data.Event.Dimension:
+                    if(entry.data[Dimension.InteractionNextPaint]){
+                        this.data.metric(entry as DecodedData.MetricEvent);
+                    }
                     break;
                 case Data.Event.Region:
                     this.data.region(entry as Layout.RegionEvent);

@@ -42,14 +42,6 @@ export function max(metric: Metric, value: number): void {
     }
 }
 
-export function last(metric: Metric, value: number): void {
-    // Ensure that we do not process null or NaN values
-    if (value !== null && isNaN(value) === false) { 
-        updates[metric] = value;
-        data[metric] = value;
-    }
-}
-
 export function compute(): void {
     encode(Event.Metric);
 }
