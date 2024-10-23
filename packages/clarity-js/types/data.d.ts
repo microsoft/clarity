@@ -70,7 +70,17 @@ export const enum Event {
     Snapshot = 43,
     Animation = 44,
     StyleSheetAdoption = 45,
-    StyleSheetUpdate = 46
+    StyleSheetUpdate = 46,
+
+    // Apps specific events
+    WebViewDiscover = 100,
+    WebViewMutation = 101,
+    MutationError = 102,
+    FragmentVisibility = 103,
+    Keystrokes = 104,
+    BackGesture = 105,
+    WebViewStatus = 106,
+    AppInstallReferrer = 107
 }
 
 export const enum Metric {
