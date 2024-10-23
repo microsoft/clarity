@@ -236,14 +236,15 @@ export class LayoutHelper {
                     if (this.primaryHtmlNodeId === null) {
                         this.primaryHtmlNodeId = node.id;
                     }
+                    let isIframe = tag !== node.tag;
                     // when we see multiple HTML nodes in the same document we should treat subsequent ones as child elements
                     // rather than redefining our visualization base on them. It's technically illegal HTML but enough sites have
                     // this structure that we are robust against it.
-                    if (this.primaryHtmlNodeId !== node.id) {
+                    if (this.primaryHtmlNodeId !== node.id && !isIframe) {
                         this.insertDefaultElement(node, parent, pivot, doc, insert);
                         break;
                     }
-                    let htmlDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
+                    let htmlDoc = isIframe ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
                     if (htmlDoc !== null) {
                         let docElement = this.element(node.id) as HTMLElement;
                         if (docElement === null) {
