@@ -38,7 +38,7 @@ export class Visualizer implements VisualizerType {
                 if (this.hashFoundTime === -1 && this.layout.exists(hash)) {
                     this.hashFoundTime = domEvent.time;
                 }
-                return domEvent.time > this.hashFoundTime + Setting.VisualizationSettleBuffer;
+                return (this.hashFoundTime > -1) && (domEvent.time > this.hashFoundTime + Setting.VisualizationSettleBuffer);
             case ShortCircuitStrategy.HashBeforeDeleted:
                 for (let node of domEvent.data) {
                     if ((node.hashAlpha === hash || node.hashBeta === hash) && node.parent === null) {

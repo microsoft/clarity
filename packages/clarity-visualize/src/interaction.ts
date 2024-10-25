@@ -47,7 +47,9 @@ export class InteractionHelper {
 
         // Position canvas relative to scroll events on the parent page
         if (scrollTarget === de || scrollTarget === doc.body) {
-            if (!scrollable) { this.state.window.scrollTo(data.x, data.y); }
+            if (!scrollable) { 
+                this.state.window.scrollTo(data.x, data.y); 
+            }
             let canvas = this.overlay();
             if (canvas) {
                 canvas.style.left = data.x + Constant.Pixel;
