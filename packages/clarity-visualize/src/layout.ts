@@ -3,6 +3,7 @@ import type { Layout as DecodedLayout } from "clarity-decode";
 import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
+import { Constant as LayoutConstants } from "clarity-js/types/layout";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
@@ -19,6 +20,9 @@ export class LayoutHelper {
     animations = {};
     state: PlaybackState = null;
     stylesToApply: { [id: string] : string[] } = {};
+    BackgroundImageEligibleElements = ['DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'ASIDE', 'NAV', 'SPAN', 'P', 'MAIN'];
+    MaskedBackgroundImageStyle = `#CCC no-repeat center url("${Asset.Hide}")`;
+
 
     constructor(state: PlaybackState, isMobile: boolean = false) {
         this.state = state;
@@ -422,6 +426,21 @@ export class LayoutHelper {
         }
         return child;
     }
+    
+
+    // Mask images within a masked ancestor element in the node has a background image.
+    private mask = (node: HTMLElement) => {
+        if (node && this.BackgroundImageEligibleElements.includes(node.nodeName) && 'getComputedStyle' in window && 'closest' in node) {
+            const urlPattern = /url\(['"]?([^'")]+)['"]?\)/; 
+            const computedStyles = window.getComputedStyle(node);
+            const hasBackgroundImage = computedStyles.backgroundImage?.match(urlPattern) || computedStyles.background?.match(urlPattern);
+            const masked = node.closest?.(`[${LayoutConstants.MaskData}]`);
+
+            if (hasBackgroundImage && masked) {
+                node.style.background = this.MaskedBackgroundImageStyle;
+            }
+        }
+    };
 
     private insertBefore = (data: DecodedLayout.DomData, parent: Node, node: Node, next: Node): void => {
         if (parent !== null) {
@@ -429,6 +448,7 @@ export class LayoutHelper {
             next = next && (next.parentElement !== parent && next.parentNode !== parent) ? null : next;
             try {
                 parent.insertBefore(node, next);
+                this.mask(node as HTMLElement);
             } catch (ex) {
                 console.warn("Node: " + node + " | Parent: " + parent + " | Data: " + JSON.stringify(data));
                 console.warn("Exception encountered while inserting node: " + ex);
