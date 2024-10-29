@@ -1,4 +1,16 @@
-// This calculations is inspired by the web-vitals implementation, for more details: https://github.com/GoogleChrome/web-vitals
+// Copyright 2023 Google LLC
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { PerformanceEventTiming, Interaction } from '@clarity-types/data';
 
 // Estimate variables to keep track of interactions
@@ -79,8 +91,6 @@ export const resetInteractions = () => {
 
 /**
  * Processes a PerformanceEventTiming entry by updating the longest interaction list.
- *
- * @param entry - A new PerformanceEventTiming entry for an interaction
  */
 export const processInteractionEntry = (entry: PerformanceEventTiming) => {
   // Ignore entries with 0 interactionId or very short durations
@@ -88,7 +98,6 @@ export const processInteractionEntry = (entry: PerformanceEventTiming) => {
     return;
   }
 
-  // Count the interactions if manual counting is necessary
   countInteractions(entry);
 
   const minLongestInteraction =
@@ -113,7 +122,6 @@ export const processInteractionEntry = (entry: PerformanceEventTiming) => {
       existingInteraction.latency = entry.duration;
     }
 
-    // Sort interactions by latency in descending order
     longestInteractionList.sort((a, b) => b.latency - a.latency);
 
     // Trim the list to the maximum number of interactions to consider

@@ -24,3 +24,12 @@ If you haven't already done so, start contributing by following instructions **[
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 Happy coding!
+
+## License
+
+This project is primarily licensed under the MIT License. However, it includes code from the [`web-vitals`](https://github.com/GoogleChrome/web-vitals) project, which is licensed under the Apache License, Version 2.0.
+
+### Attribution
+
+This project includes files derived from the `web-vitals` project by Google LLC, which is licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). You may obtain a copy of the license in the file [`LICENSE-APACHE`](./LICENSE-APACHE) or at the URL above. The original source code can be found [here](https://github.com/GoogleChrome/web-vitals).
+
