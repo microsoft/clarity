@@ -7,4 +7,21 @@ It's the same code that powers Microsoft's hosted behavioral analytics solution:
 
 We encourage the community to join us in building the best behavioral analytics library, that puts privacy first and prioritizes performance. 
 
+## Project Structure
+1. **[clarity-js](https://github.com/microsoft/clarity/tree/master/packages/clarity-js)**: Instrumentation code that goes on the website and tracks user interactions as well as layout changes.
+
+2. **[clarity-decode](https://github.com/microsoft/clarity/tree/master/packages/clarity-decode)**: Code, which usually runs on the server, decodes incoming data back into its original format.
+
+3. **[clarity-visualize](https://github.com/microsoft/clarity/tree/master/packages/clarity-visualize)**: It takes the decoded data from clarity-decode and turns it back into pixel-perfect session replay.
+
+4. **[clarity-devtools](https://github.com/microsoft/clarity/tree/master/packages/clarity-devtools)**: Devtools extension for chromium based browsers to generate live captures against any website.
+
+## Examples
+Here are some example sessions on popular websites visualized to demonstrate the telemetry captured:
+1. CNN (Web)
+</br><a href="https://thumbs.gfycat.com/AggressiveLankyAbyssiniangroundhornbill-size_restricted.gif"><img src="https://thumbs.gfycat.com/AggressiveLankyAbyssiniangroundhornbill-size_restricted.gif" title="Clarity - CNN Example"/></a>
+
+2. Cook with Manali (Mobile)
+</br><a href="https://thumbs.gfycat.com/CoolDependableAdamsstaghornedbeetle-size_restricted.gif"><img src="https://thumbs.gfycat.com/CoolDependableAdamsstaghornedbeetle-size_restricted.gif" title="Clarity - Cook With Manali Example"/></a> 
+
 Happy coding!
