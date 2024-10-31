@@ -1,4 +1,4 @@
-import { Code, Constant, Dimension, Metric, Severity } from "@clarity-types/data";
+import { Code, Constant, Dimension, Metric, Severity, PerformanceEventTiming } from "@clarity-types/data";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -7,6 +7,7 @@ import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as internal from "@src/diagnostic/internal";
 import * as navigation from "@src/performance/navigation";
+import * as interaction from "@src/performance/interaction";
 
 let observer: PerformanceObserver;
 const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTask, Constant.FID, Constant.CLS, Constant.LCP, Constant.PerformanceEventTiming];
@@ -73,7 +74,12 @@ function process(entries: PerformanceEntryList): void {
                 if (visible) { metric.max(Metric.FirstInputDelay, entry["processingStart"] - entry.startTime); }
                 break;
             case Constant.PerformanceEventTiming:
-                if (visible) { metric.max(Metric.InteractionNextPaint, entry.duration); }
+                if (visible && 'PerformanceEventTiming' in window &&  'interactionId' in PerformanceEventTiming.prototype)
+                {
+                    interaction.processInteractionEntry(entry as PerformanceEventTiming); 
+                    // Logging it as dimension because we're always looking for the last value.
+                    dimension.log(Dimension.InteractionNextPaint, interaction.estimateP98LongestInteraction().toString()); 
+                }
                 break;
             case Constant.CLS:
                 // Scale the value to avoid sending back floating point number
@@ -89,6 +95,7 @@ function process(entries: PerformanceEntryList): void {
 export function stop(): void {
     if (observer) { observer.disconnect(); }
     observer = null;
+    interaction.resetInteractions();
 }
 
 function host(url: string): string {
