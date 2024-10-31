@@ -1,4 +1,4 @@
-import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
+import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Setting, ShortCircuitStrategy, Visualizer as VisualizerType } from "@clarity-types/visualize";
 import { Data } from "clarity-js";
 import type { Data as DecodedData, Interaction, Layout } from "clarity-decode";
 import { DataHelper } from "./data";
@@ -11,6 +11,7 @@ import { Dimension } from "clarity-js/types/data";
 export class Visualizer implements VisualizerType {
     _state: PlaybackState = null;
     renderTime = 0;
+    hashFoundTime = -1;
 
     enrich: EnrichHelper;
     layout: LayoutHelper;
@@ -30,14 +31,36 @@ export class Visualizer implements VisualizerType {
         return this.layout?.get(hash);
     }
 
-    public html = async (decoded: DecodedData.DecodedPayload[], target: Window, hash: string = null, time : number, useproxy?: LinkHandler, logerror?: ErrorLogger): Promise<Visualizer> => {
+    private shortCircuitRendering = (strategy: ShortCircuitStrategy, domEvent: Layout.DomEvent, hash: string) => {
+        switch (strategy) {
+            case ShortCircuitStrategy.HashFirstTimestamp:
+                return this.layout.exists(hash);
+            case ShortCircuitStrategy.HashFirstTimestampPlusBuffer:
+                if (this.hashFoundTime === -1 && this.layout.exists(hash)) {
+                    this.hashFoundTime = domEvent.time;
+                }
+                return (this.hashFoundTime > -1) && (domEvent.time > this.hashFoundTime + Setting.VisualizationSettleBuffer);
+            case ShortCircuitStrategy.HashBeforeDeleted:
+                for (let node of domEvent.data) {
+                    if ((node.hashAlpha === hash || node.hashBeta === hash) && node.parent === null) {
+                        return true;
+                    }
+                }
+                return false;
+            case ShortCircuitStrategy.None:
+            default:
+                return false;
+        }
+    }
+
+    public html = async (decoded: DecodedData.DecodedPayload[], target: Window, hash: string = null, useproxy?: LinkHandler, logerror?: ErrorLogger, shortCircuitStrategy: ShortCircuitStrategy = ShortCircuitStrategy.None): Promise<Visualizer> => {
         if (decoded && decoded.length > 0 && target) {
             try {
                 // Flatten the payload and parse all events out of them, sorted by time
                 let merged = this.merge(decoded);
                 await this.setup(target, { version: decoded[0].envelope.version, dom: merged.dom, useproxy });
                 // Render all mutations on top of the initial markup
-                while (merged.events.length > 0 && this.layout.exists(hash) === false) {
+                while (merged.events.length > 0) {
                     let entry = merged.events.shift();
                     switch (entry.event) {
                         case Data.Event.StyleSheetAdoption:
@@ -47,7 +70,7 @@ export class Visualizer implements VisualizerType {
                         case Data.Event.Mutation:
                             let domEvent = entry as Layout.DomEvent;
                             this.renderTime = domEvent.time;
-                            if (time && this.renderTime > time) {
+                            if (this.shortCircuitRendering(shortCircuitStrategy, domEvent, hash)) {
                                 break;
                             }
                             await this.layout.markup(domEvent, useproxy);
