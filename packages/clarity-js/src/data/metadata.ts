@@ -8,6 +8,7 @@ import * as scrub from "@src/core/scrub";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
+import * as trackConsent from "@src/data/consent";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
@@ -17,6 +18,9 @@ let rootDomain = null;
 export function start(): void {
   rootDomain = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
+  const timezone = Intl?.DateTimeFormat()?.resolvedOptions()?.timeZone ?? '';
+  const timezoneOffset = new Date().getTimezoneOffset().toString();
+  const ancestorOrigins = window.location.ancestorOrigins ? Array.from(window.location.ancestorOrigins).toString() : '';
   const title = document && document.title ? document.title : Constant.Empty;
   electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
 
@@ -41,6 +45,9 @@ export function start(): void {
   dimension.log(Dimension.DevicePixelRatio, `${window.devicePixelRatio}`);
   dimension.log(Dimension.Dob, u.dob.toString());
   dimension.log(Dimension.CookieVersion, u.version.toString());
+  dimension.log(Dimension.AncestorOrigins, ancestorOrigins);
+  dimension.log(Dimension.Timezone, timezone);
+  dimension.log(Dimension.TimezoneOffset, timezoneOffset);
 
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);
@@ -68,6 +75,9 @@ export function start(): void {
     if (value) { set(key, value); }
   }
 
+  // Track consent config
+  trackConsent.config(config.track);
+
   // Track ids using a cookie if configuration allows it
   track(u);
 }
@@ -88,18 +98,22 @@ function userAgentData(): void {
 export function stop(): void {
   rootDomain = null;
   data = null;
+  callbacks.forEach(cb => { cb.called = false; });
 }
 
-export function metadata(cb: MetadataCallback, wait: boolean = true): void {
+export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boolean = false): void {
   let upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  let called = false;
   // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
-  // directly execute the callback rather than adding to our list as we only process callbacks at the moment
+  // directly execute the callback in addition to adding to our list as we only process callbacks at the moment
   // we go through the upgrading flow.
   if (data && (upgraded || wait === false)) {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
     cb(data, !config.lean);
-  } else {
-    callbacks.push({ callback: cb, wait: wait });
+    called = true;
+  }
+  if (recall || !called) {
+    callbacks.push({ callback: cb, wait, recall, called });
   }
 }
 
@@ -120,6 +134,8 @@ export function consent(status: boolean = true): void {
   if (core.active()) {
     config.track = true;
     track(user(), BooleanFlag.True);
+    save();
+    trackConsent.consent();
   }
 }
 
@@ -138,19 +154,32 @@ function tab(): string {
   return id;
 }
 
+export function callback(): void {
+  let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  processCallback(upgrade);
+}
+
 export function save(): void {
+  if (!data) return;
   let ts = Math.round(Date.now());
   let upload = config.upload && typeof config.upload === Constant.String ? (config.upload as string).replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-  processCallback(upgrade);
   setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
 }
 
 function processCallback(upgrade: BooleanFlag) {
   if (callbacks.length > 0) {
-    callbacks.forEach(x => {
-      if (x.callback && (!x.wait || upgrade)) { x.callback(data, !config.lean); }
-    })
+    for (let i = 0; i < callbacks.length; i++) {
+      const cb = callbacks[i];
+      if (cb.callback && !cb.called && (!cb.wait || upgrade)) {
+        cb.callback(data, !config.lean);
+        cb.called = true;
+        if (!cb.recall) {
+          callbacks.splice(i, 1);
+          i--;
+        }
+      }
+    }
   }
 }
 
@@ -251,11 +280,11 @@ function getCookie(key: string): string {
           // * Cookie was previously not encoded by Clarity and browser encoded it once or more
           // * Cookie was previously encoded by Clarity and browser did not encode it
           let [isEncoded, decodedValue] = decodeCookieValue(pair[1]);
-          
+
           while (isEncoded) {
             [isEncoded, decodedValue] = decodeCookieValue(decodedValue);
           }
-        
+
           return decodedValue;
         }
       }

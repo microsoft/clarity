@@ -215,8 +215,11 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
         case maskTags.indexOf(tag) >= 0:
             let type = attributes[Constant.Type];
             let meta: string = Constant.Empty;
-            Object.keys(attributes).forEach(x => meta += attributes[x].toLowerCase());
-            let exclude = maskExclude.some(x => meta.indexOf(x) >= 0);
+            const excludedPrivacyAttributes = [Constant.Class, Constant.Style]
+            Object.keys(attributes)
+              .filter((x) => !excludedPrivacyAttributes.includes(x as Constant))
+              .forEach((x) => (meta += attributes[x].toLowerCase()));
+            let exclude = maskExclude.some((x) => meta.indexOf(x) >= 0);
             // Regardless of privacy mode, always mask off user input from input boxes or drop downs with two exceptions:
             // (1) The node is detected to be one of the excluded fields, in which case we drop everything
             // (2) The node's type is one of the allowed types (like checkboxes)
@@ -343,6 +346,11 @@ function remove(id: number, source: Source): void {
 }
 
 function removeNodeFromNodesMap(id: number) {
+    // Shadow dom roots shouldn't be deleted, 
+    // we should keep listening to the mutations there even they're not rendered in the DOM.
+    if(nodesMap.get(id).nodeType === Node.DOCUMENT_FRAGMENT_NODE){
+        return;
+    }
     nodesMap.delete(id);
 
     let value = id in values ? values[id] : null;

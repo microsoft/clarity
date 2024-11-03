@@ -37,6 +37,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     tokens.push(pTarget.id);
                     tokens.push(entry.data.x);
                     tokens.push(entry.data.y);
+                    if (entry.data.id !== undefined) { tokens.push(entry.data.id); }
                     queue(tokens);
                     baseline.track(entry.event, entry.data.x, entry.data.y);
                 }
@@ -96,7 +97,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 let iTarget = metadata(entry.data.target as Node, entry.event, entry.data.value);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
-                tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy));
+                tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy, false, entry.data.type));
                 queue(tokens);
             }
             input.reset();
@@ -117,13 +118,19 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.Scroll:
             for (let entry of scroll.state) {
                 let sTarget = metadata(entry.data.target as Node, entry.event);
+                const top = metadata(entry.data.top as Node, entry.event);
+                const bottom = metadata(entry.data.bottom as Node, entry.event);
+                const sTopHash = top?.hash ? top.hash.join(Constant.Dot) : Constant.Empty;
+                const sBottomHash = bottom?.hash ? bottom.hash.join(Constant.Dot) : Constant.Empty;
                 if (sTarget.id > 0) {
                     tokens = [entry.time, entry.event];
                     tokens.push(sTarget.id);
                     tokens.push(entry.data.x);
                     tokens.push(entry.data.y);
+                    tokens.push(sTopHash);
+                    tokens.push(sBottomHash);
                     queue(tokens);
-                    baseline.track(entry.event, entry.data.x, entry.data.y);
+                    baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
                 }
             }
             scroll.reset();

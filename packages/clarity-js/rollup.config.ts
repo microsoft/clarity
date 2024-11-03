@@ -1,10 +1,9 @@
 import alias from "@rollup/plugin-alias";
 import commonjs from "@rollup/plugin-commonjs";
-import resolve from "@rollup/plugin-node-resolve";
+import resolve from "@rollup/plugin-node-resolve";  
 import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import pkg from "./package.json" assert { type: 'json' };
-
 export default [
   {
     input: "src/index.ts",
@@ -13,11 +12,6 @@ export default [
       { file: pkg.module, format: "es", exports: "named" }
     ],
     plugins: [
-      alias({
-        entries: [
-          { find: '@src/layout/style', replacement: '@src/insight/style' }
-        ]
-      }),
       resolve(),
       typescript(),
       commonjs({ include: ["node_modules/**"] })
@@ -34,12 +28,7 @@ export default [
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
     },
-    plugins: [
-      alias({
-        entries: [
-          { find: '@src/layout/style', replacement: '@src/insight/blank' }
-        ]
-      }),
+    plugins: [,
       resolve(),
       typescript(),
       terser({output: {comments: false}}),

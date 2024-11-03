@@ -9,10 +9,10 @@ import * as schema from "@src/layout/schema";
 import { checkDocumentStyles } from "@src/layout/style";
 import { electron } from "@src/data/metadata";
 
-const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last"];
+const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last", "aria-label"];
 const newlineRegex = /[\r\n]+/g;
 
-export default function (node: Node, source: Source): Node {
+export default function (node: Node, source: Source, timestamp: number): Node {
     let child: Node = null;
 
     // Do not track this change if we are attempting to remove a node before discovering it
@@ -35,7 +35,8 @@ export default function (node: Node, source: Source): Node {
             parent = insideFrame && node.parentNode ? dom.iframe(node.parentNode) : parent;
             let docTypePrefix = insideFrame ? Constant.IFramePrefix : Constant.Empty;
             let doctype = node as DocumentType;
-            let docAttributes = { name: doctype.name, publicId: doctype.publicId, systemId: doctype.systemId };
+            let docName = doctype.name ? doctype.name : Constant.HTML; 
+            let docAttributes = { name: docName, publicId: doctype.publicId, systemId: doctype.systemId };
             let docData = { tag: docTypePrefix + Constant.DocumentTag, attributes: docAttributes };
             dom[call](node, parent, docData, source);
             break;
@@ -43,7 +44,7 @@ export default function (node: Node, source: Source): Node {
             // We check for regions in the beginning when discovering document and
             // later whenever there are new additions or modifications to DOM (mutations)
             if (node === document) dom.parse(document);
-            checkDocumentStyles(node as Document);
+            checkDocumentStyles(node as Document, timestamp);
             observe(node);
             break;
         case Node.DOCUMENT_FRAGMENT_NODE:
@@ -67,7 +68,7 @@ export default function (node: Node, source: Source): Node {
                     // the same way we observe real shadow DOM nodes (encapsulation provided by the browser).
                     dom[call](node, shadowRoot.host, { tag: Constant.PolyfillShadowDomTag, attributes: {} }, source);
                 }
-                checkDocumentStyles(node as Document);
+                checkDocumentStyles(node as Document, timestamp);
             }
             break;
         case Node.TEXT_NODE:
@@ -95,7 +96,7 @@ export default function (node: Node, source: Source): Node {
 
             switch (tag) {
                 case "HTML":
-                    parent = insideFrame && parent ? dom.iframe(parent) : null;
+                    parent = insideFrame && parent ? dom.iframe(parent) : parent;
                     let htmlPrefix = insideFrame ? Constant.IFramePrefix : Constant.Empty;
                     let htmlData = { tag: htmlPrefix + tag, attributes };
                     dom[call](node, parent, htmlData, source);
@@ -214,9 +215,11 @@ function observe(root: Node): void {
 function getStyleValue(style: HTMLStyleElement): string {
     // Call trim on the text content to ensure we do not process white spaces ( , \n, \r\n, \t, etc.)
     // Also, check if stylesheet has any data-* attribute, if so process rules instead of looking up text
+    // Additionally, check if style node has an id - if so it's at a high risk to have experienced dynamic
+    // style updates which would make the textContent out of date with its true style contribution.
     let value = style.textContent ? style.textContent.trim() : Constant.Empty;
     let dataset = style.dataset ? Object.keys(style.dataset).length : 0;
-    if (value.length === 0 || dataset > 0) {
+    if (value.length === 0 || dataset > 0 || style.id.length > 0) {
         value = getCssRules(style.sheet as CSSStyleSheet);
     }
     return value;

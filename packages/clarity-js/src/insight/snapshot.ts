@@ -4,6 +4,7 @@ import { Constant, NodeInfo, NodeValue, TargetMetadata } from "@clarity-types/la
 import * as doc from "@src/layout/document";
 import encode from "@src/insight/encode";
 import * as interaction from "@src/interaction";
+import config from "@src/core/config";
 export let values: NodeValue[] = [];
 let index: number = 1;
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
@@ -32,7 +33,7 @@ export function target(evt: UIEvent): Node {
 }
 
 export function metadata(node: Node): TargetMetadata {
-    let output: TargetMetadata = { id: 0, hash: null, privacy: Privacy.Snapshot, node };
+    let output: TargetMetadata = { id: 0, hash: null, privacy: config.conversions ? Privacy.Sensitive : Privacy.Snapshot, node };
     if (node) { output.id = idMap.has(node) ? idMap.get(node) : getId(node); }
     return output;
 }
@@ -110,3 +111,5 @@ function add(node: Node, parent: Node, data: NodeInfo): void {
         values.push({ id, parent: parentId, previous, children: [], data, selector: null, hash: null, region: null, metadata });
     }
 }
+
+export function get(_node: Node): NodeValue {return null;}

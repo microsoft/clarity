@@ -38,17 +38,15 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             region.reset();
             break;
         case Event.StyleSheetAdoption:
-            for (let entry of style.state) {
+        case Event.StyleSheetUpdate:
+            for (let entry of style.sheetAdoptionState) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.newIds);
                 queue(tokens);
             }
-            style.reset();
-            break;
-        case Event.StyleSheetUpdate:
-            for (let entry of style.state) {
+            for (let entry of style.sheetUpdateState) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
@@ -56,6 +54,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 queue(tokens);
             }
             style.reset();
+            break;
         case Event.Animation:
             for (let entry of animation.state) {
                 tokens = [entry.time, entry.event];
@@ -93,8 +92,10 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                     let box = size(value);
                                     let factor = mangle ? -1 : 1;
                                     tokens.push(value.id * factor);
-                                    if (value.parent && active) { tokens.push(value.parent); }
-                                    if (value.previous && active) { tokens.push(value.previous); }
+                                    if (value.parent && active) { 
+                                        tokens.push(value.parent); 
+                                        if (value.previous) { tokens.push(value.previous); }
+                                    }
                                     tokens.push(suspend ? Constant.SuspendMutationTag : data[key]);
                                     if (box && box.length === 2) { tokens.push(`${Constant.Hash}${str(box[0])}.${str(box[1])}`); }
                                     break;

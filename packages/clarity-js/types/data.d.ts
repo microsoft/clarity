@@ -6,7 +6,9 @@ export type DecodedToken = (any | any[]);
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
 export interface MetadataCallbackOptions {
     callback: MetadataCallback,
-    wait: boolean
+    wait: boolean,
+    recall: boolean,
+    called: boolean
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
@@ -68,7 +70,17 @@ export const enum Event {
     Snapshot = 43,
     Animation = 44,
     StyleSheetAdoption = 45,
-    StyleSheetUpdate = 46
+    StyleSheetUpdate = 46,
+
+    // Apps specific events
+    WebViewDiscover = 100,
+    WebViewMutation = 101,
+    MutationError = 102,
+    FragmentVisibility = 103,
+    Keystrokes = 104,
+    BackGesture = 105,
+    WebViewStatus = 106,
+    AppInstallReferrer = 107
 }
 
 export const enum Metric {
@@ -111,7 +123,11 @@ export const enum Metric {
     HardwareConcurrency = 33,
     DeviceMemory = 34,
     Electron = 35,
-    ConstructedStyles = 36
+    ConstructedStyles = 36,
+/**
+ * @deprecated Move it to dimension as it'll report only last value
+ */
+    InteractionNextPaint = 37
 }
 
 export const enum Dimension {
@@ -145,7 +161,14 @@ export const enum Dimension {
     ConnectionType = 27,
     Dob = 28,
     CookieVersion = 29,
-    DeviceFamily = 30 // Allows iOS SDK to override the DeviceFamily value parsed from UserAgent.
+    DeviceFamily = 30, // Allows iOS SDK to override the DeviceFamily value parsed from UserAgent.
+    InitialScrollTop = 31,
+    InitialScrollBottom = 32,
+    AncestorOrigins = 33,
+    Timezone = 34,
+    TimezoneOffset = 35,
+    Consent = 36,
+    InteractionNextPaint = 37
 }
 
 export const enum Check {
@@ -229,7 +252,7 @@ export const enum Setting {
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
     ExtractLimit = 10000, // Do not extract more than 10000 characters
-    ChecksumPrecision = 24, // n-bit integer to represent token hash
+    ChecksumPrecision = 28, // n-bit integer to represent token hash
     UploadTimeout = 15000 // Timeout in ms for XHR requests
 }
 
@@ -297,6 +320,7 @@ export const enum Constant {
     FID = "first-input",
     CLS = "layout-shift",
     LCP = "largest-contentful-paint",
+    PerformanceEventTiming = "event",
     HTTPS = "https://",
     CompressionStream = "CompressionStream",
     Accept = "Accept",
@@ -391,6 +415,7 @@ export interface BaselineData {
     pointerX: number;
     pointerY: number;
     activityTime: number;
+    scrollTime: number;
 }
 
 export interface IdentityData {
@@ -450,4 +475,13 @@ export interface UploadData {
 export interface ClaritySignal {
     type: string
     value?: number
+}
+
+export interface PerformanceEventTiming extends PerformanceEntry {
+    duration: DOMHighResTimeStamp;
+    interactionId: number;
+}
+export interface Interaction {
+    id: number;
+    latency: number;
 }
