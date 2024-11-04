@@ -59,6 +59,10 @@ const getInteractionCountForNavigation = () => {
  * the slowest 2% of interactions, helping identify a likely P98 candidate.
  */
 export const estimateP98LongestInteraction = () => {
+  if(!longestInteractionList.length){
+    return -1;
+  }
+
   const candidateInteractionIndex = Math.min(
     longestInteractionList.length - 1,
     Math.floor(getInteractionCountForNavigation() / 50)
