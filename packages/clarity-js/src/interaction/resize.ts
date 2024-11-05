@@ -31,9 +31,9 @@ function process(event: Event): void {
 
 export function reset(): void {
     data = null;
+    clearTimeout(timeout);
 }
 
 export function stop(): void {
     reset();
-    clearTimeout(timeout);
 }
