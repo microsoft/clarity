@@ -122,7 +122,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
 
     privacy(node, values[id], parentValue);
     updateSelector(values[id]);
-    UpdateImageSize(values[id]);
+    updateImageSize(values[id]);
     track(id, source);
 }
 
@@ -369,7 +369,7 @@ function removeNodeFromNodesMap(id: number) {
     }
 }
 
-function UpdateImageSize(value: NodeValue): void {
+function updateImageSize(value: NodeValue): void {
     // If this element is a image node, and is masked, then track box model for the current element
     if (value.data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { 
         let img = getNode(value.id) as HTMLImageElement;
