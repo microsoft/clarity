@@ -35,9 +35,6 @@ export function ld(json: any): void {
                     metric.max(Metric.RatingCount, num(json[JsonLD.RatingCount]));
                     metric.max(Metric.ReviewCount, num(json[JsonLD.ReviewCount]));
                     break;
-                case JsonLD.Author:
-                    dimension.log(Dimension.AuthorName, json[JsonLD.Name]);
-                    break;
                 case JsonLD.Offer:
                     dimension.log(Dimension.ProductAvailability, json[JsonLD.Availability]);
                     dimension.log(Dimension.ProductCondition, json[JsonLD.ItemCondition]);

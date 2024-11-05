@@ -124,7 +124,10 @@ export const enum Metric {
     DeviceMemory = 34,
     Electron = 35,
     ConstructedStyles = 36,
-    InteractionNextPaint = 37,
+/**
+ * @deprecated Move it to dimension as it'll report only last value
+ */
+    InteractionNextPaint = 37
 }
 
 export const enum Dimension {
@@ -164,7 +167,8 @@ export const enum Dimension {
     AncestorOrigins = 33,
     Timezone = 34,
     TimezoneOffset = 35,
-    Consent = 36
+    Consent = 36,
+    InteractionNextPaint = 37
 }
 
 export const enum Check {
@@ -471,4 +475,13 @@ export interface UploadData {
 export interface ClaritySignal {
     type: string
     value?: number
+}
+
+export interface PerformanceEventTiming extends PerformanceEntry {
+    duration: DOMHighResTimeStamp;
+    interactionId: number;
+}
+export interface Interaction {
+    id: number;
+    latency: number;
 }
