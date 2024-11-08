@@ -93,6 +93,9 @@ export class LayoutHelper {
             case AnimationOperation.Play:
                 animation.play();
                 break;
+            case AnimationOperation.CommitStyles:
+                animation.commitStyles();
+                break;
         }
     }
 

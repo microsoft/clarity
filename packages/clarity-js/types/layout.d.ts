@@ -7,7 +7,8 @@ export const enum AnimationOperation {
     Play = 1,
     Pause = 2,
     Cancel = 3,
-    Finish = 4
+    Finish = 4,
+    CommitStyles = 5
 }
 
 export const enum Source {

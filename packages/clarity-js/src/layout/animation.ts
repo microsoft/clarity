@@ -10,6 +10,7 @@ export let state: AnimationState[] = [];
 let elementAnimate: (keyframes: Keyframe[] | PropertyIndexedKeyframes, options?: number | KeyframeAnimationOptions) => Animation = null;
 let animationPlay: () => void = null;
 let animationPause: () => void = null;
+let animationCommitStyles: () => void = null;
 let animationCancel: () => void = null;
 let animationFinish: () => void = null;
 const animationId = 'clarityAnimationId';
@@ -26,6 +27,7 @@ export function start(): void {
         reset();
         overrideAnimationHelper(animationPlay, "play");
         overrideAnimationHelper(animationPause, "pause");
+        overrideAnimationHelper(animationCommitStyles, "commitStyles");
         overrideAnimationHelper(animationCancel, "cancel");
         overrideAnimationHelper(animationFinish, "finish");
         if (elementAnimate === null) {
@@ -115,6 +117,9 @@ function trackAnimationOperation(animation: Animation, name: string) {
                         break;
                     case "finish":
                         operation = AnimationOperation.Finish;
+                        break;
+                    case "commitStyles":
+                        operation = AnimationOperation.CommitStyles;
                         break;
                 }
                 if (operation) {
