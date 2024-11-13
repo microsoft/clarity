@@ -131,7 +131,8 @@ async function upload(final: boolean = false): Promise<void> {
     // We also attempt to compress the payload if it is not the last payload and the browser supports it
     // In all other cases, we continue to send back string value
     let payload = stringify(encoded);
-    let zipped = last ? null : await compress(payload)
+    // let zipped = last ? null : await compress(payload)
+    let zipped = null
     metric.sum(Metric.TotalBytes, zipped ? zipped.length : payload.length);
     send(payload, zipped, envelope.data.sequence, last);
 
@@ -187,7 +188,17 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
                 xhr.send(zipped);
             } else {
                 // In all other cases, continue sending string back to the server
+                // xhr.setRequestHeader(Constant.Accept, "application/json");
                 xhr.send(payload);
+                xhr.onreadystatechange = function(){
+                  if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                    if(window.clarityPayload) {
+                      window.clarityPayload.push(JSON.parse(xhr.responseText))
+                    } else {
+                      window.clarityPayload = [JSON.parse(xhr.responseText)]
+                    }
+                  }
+                }
             }
         }
     } else if (config.upload) {

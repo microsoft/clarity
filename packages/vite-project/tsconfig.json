@@ -1,0 +1,20 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "baseUrl": "./src/modules/clarity-js",
+    "paths": {
+      "@src/*": ["src/*"],
+      "@clarity-types/*": ["types/*"]
+    }
+    
+  }
+}

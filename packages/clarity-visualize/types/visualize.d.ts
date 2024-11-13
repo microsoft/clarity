@@ -1,4 +1,4 @@
-import { Data, Layout } from "clarity-decode";
+import { Data, Layout } from "../../clarity-decode/types/index";
 
 /**
  * @deprecated Use Visualizer instead.

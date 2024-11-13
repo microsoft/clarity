@@ -1,5 +1,5 @@
-import { Activity, Constant, Heatmap, Setting, ScrollMapInfo, PlaybackState } from "@clarity-types/visualize";
-import { Data } from "clarity-js";
+import { Activity, Constant, Heatmap, Setting, ScrollMapInfo, PlaybackState } from "../types/visualize";
+import { Data } from "../../clarity-js/types/index";
 import { LayoutHelper } from "./layout";
 
 export class HeatmapHelper {

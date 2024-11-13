@@ -161,7 +161,7 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
 
             // Remove reference to this node from the old parent
             if (oldParentId !== null && oldParentId >= 0) {
-                let nodeIndex = values[oldParentId].children.indexOf(id);
+                let nodeIndex = values[oldParentId]?.children.indexOf(id);
                 if (nodeIndex >= 0) {
                     values[oldParentId].children.splice(nodeIndex, 1);
                 }

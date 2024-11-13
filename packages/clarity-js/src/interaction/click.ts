@@ -17,10 +17,12 @@ export function start(): void {
 }
 
 export function observe(root: Node): void {
+  console.log('click ob')
     bind(root, "click", handler.bind(this, Event.Click, root), true);
 }
 
 function handler(event: Event, root: Node, evt: MouseEvent): void {
+  console.log('click111')
     let frame = iframe(root);
     let d = frame ? frame.contentDocument.documentElement : document.documentElement;
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);

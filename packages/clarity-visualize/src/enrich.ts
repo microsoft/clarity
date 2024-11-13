@@ -1,6 +1,7 @@
-import { helper, Layout } from "clarity-js";
-import { Layout as DecodedLayout } from "clarity-decode";
-import { NodeData } from "@clarity-types/visualize";
+import {  helper } from "../../clarity-js/src/index";
+import {  Layout } from "../../clarity-js/types/index";
+import { Layout as DecodedLayout } from "../../clarity-decode/types/index";
+import { NodeData } from "../types/visualize";
 
 export class EnrichHelper {
         

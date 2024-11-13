@@ -1,4 +1,4 @@
-import { Code, Constant, Dimension, Metric, Severity, PerformanceEventTiming } from "@clarity-types/data";
+import { Code, Constant, Dimension, Metric, Severity } from "@clarity-types/data";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";

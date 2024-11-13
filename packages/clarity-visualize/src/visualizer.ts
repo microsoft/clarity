@@ -1,12 +1,12 @@
-import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Setting, ShortCircuitStrategy, Visualizer as VisualizerType } from "@clarity-types/visualize";
-import { Data } from "clarity-js";
-import type { Data as DecodedData, Interaction, Layout } from "clarity-decode";
+import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Setting, ShortCircuitStrategy, Visualizer as VisualizerType } from "../types/visualize";
+import { Data } from "../../clarity-js/types/index";
+import type { Data as DecodedData, Interaction, Layout } from "../../clarity-decode/types/index";
 import { DataHelper } from "./data";
 import { EnrichHelper } from "./enrich";
 import { HeatmapHelper } from "./heatmap";
 import { InteractionHelper } from "./interaction";
 import { LayoutHelper } from "./layout";
-import { Dimension } from "clarity-js/types/data";
+import { Dimension } from "../../clarity-js/types/data";
 
 export class Visualizer implements VisualizerType {
     _state: PlaybackState = null;
@@ -54,6 +54,7 @@ export class Visualizer implements VisualizerType {
     }
 
     public html = async (decoded: DecodedData.DecodedPayload[], target: Window, hash: string = null, useproxy?: LinkHandler, logerror?: ErrorLogger, shortCircuitStrategy: ShortCircuitStrategy = ShortCircuitStrategy.None): Promise<Visualizer> => {
+        console.log('html begin')
         if (decoded && decoded.length > 0 && target) {
             try {
                 // Flatten the payload and parse all events out of them, sorted by time

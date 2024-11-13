@@ -19,6 +19,7 @@ export function reset(): void {
   for (let binding of bindings) {
     // Wrapping inside try / catch to avoid situations where the element may be destroyed before we get a chance to unbind
     try {
+      console.log('RemoveEventListener')
       binding.target[api(Constant.RemoveEventListener)](binding.event, binding.listener, binding.capture);
     } catch { /* do nothing */ }
   }

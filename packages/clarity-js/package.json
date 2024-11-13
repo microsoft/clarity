@@ -11,6 +11,9 @@
   "insight": "build/clarity.insight.js",
   "performance": "build/clarity.performance.js",
   "types": "types/index.d.ts",
+  "files": [
+    "./src/global.ts"
+  ],
   "keywords": [
     "clarity",
     "Microsoft",

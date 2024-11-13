@@ -1,9 +1,9 @@
-import { Data, Layout } from "clarity-js";
-import type { Layout as DecodedLayout } from "clarity-decode";
-import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
-import { StyleSheetOperation } from "clarity-js/types/layout";
-import { AnimationOperation } from "clarity-js/types/layout";
-import { Constant as LayoutConstants } from "clarity-js/types/layout";
+import { Data, Layout } from "../../clarity-js/types/index";
+import type { Layout as DecodedLayout } from "../../clarity-decode/types/index";
+import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "../types/visualize";
+import { StyleSheetOperation } from "../../clarity-js/types/layout";
+import { AnimationOperation } from "../../clarity-js/types/layout";
+import { Constant as LayoutConstants } from "../../clarity-js/types/layout";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;

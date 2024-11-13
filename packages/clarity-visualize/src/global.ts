@@ -1,4 +1,4 @@
-import * as visualize from "@src/clarity";
+import * as visualize from "../src/clarity";
 
 // Expose clarity variable globally to allow access to public interface in a browser
 if (typeof window !== "undefined") {

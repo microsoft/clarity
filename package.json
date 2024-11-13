@@ -17,10 +17,11 @@
     "build:decode": "yarn workspace clarity-decode build",
     "build:visualize": "yarn workspace clarity-visualize build",
     "build:devtools": "yarn workspace clarity-devtools build",
-    "test": "yarn workspace clarity-js test"
+    "test": "yarn workspace clarity-js test",
+    "start": "npx lerna run start"
   },
   "devDependencies": {
-    "lerna": "^6.4.1",
+    "lerna": "^6.6.2",
     "parse-url": "^8.1.0"
   },
   "resolutions": {

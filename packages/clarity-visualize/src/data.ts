@@ -1,6 +1,6 @@
-import { Data, Layout } from "clarity-js";
-import type { Data as DecodedData, Layout as DecodedLayout } from "clarity-decode";
-import { PlaybackState, RegionState } from "@clarity-types/visualize";
+import { Data, Layout } from "../../clarity-js/types/index";
+import type { Data as DecodedData, Layout as DecodedLayout } from "../../clarity-decode/types/index";
+import { PlaybackState, RegionState } from "../types/visualize";
 
 export class DataHelper {
     regionMap = {};
