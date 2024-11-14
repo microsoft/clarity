@@ -137,6 +137,7 @@ export interface Config {
     throttleDom?: boolean;
     conversions?: boolean;
     longTask?: number;
+    includeSubdomains?: boolean;
 }
 
 export const enum Constant {

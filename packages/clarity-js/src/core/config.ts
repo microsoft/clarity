@@ -23,6 +23,7 @@ let config: Config = {
     throttleDom: true,
     conversions: false,
     longTask: 30,
+    includeSubdomains: true,
 };
 
 export default config;

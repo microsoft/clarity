@@ -213,7 +213,7 @@ export function shortid(): string {
 
 function session(): Session {
   let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: null, upload: Constant.Empty };
-  let value = getCookie(Constant.SessionKey);
+  let value = getCookie(Constant.SessionKey, !config.includeSubdomains);
   if (value) {
     let parts = value.split(Constant.Pipe);
     // Making it backward & forward compatible by using greater than comparison (v0.6.21)
@@ -234,7 +234,7 @@ function num(string: string, base: number = 10): number {
 
 function user(): User {
   let output: User = { id: shortid(), version: 0, expiry: null, consent: BooleanFlag.False, dob: 0 };
-  let cookie = getCookie(Constant.CookieKey);
+  let cookie = getCookie(Constant.CookieKey, !config.includeSubdomains);
   if (cookie && cookie.length > 0) {
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
     let parts = cookie.split(Constant.Pipe);
@@ -266,7 +266,7 @@ function user(): User {
   return output;
 }
 
-function getCookie(key: string): string {
+function getCookie(key: string, limit = false): string {
   if (supported(document, Constant.Cookie)) {
     let cookies: string[] = document.cookie.split(Constant.Semicolon);
     if (cookies) {
@@ -283,6 +283,13 @@ function getCookie(key: string): string {
 
           while (isEncoded) {
             [isEncoded, decodedValue] = decodeCookieValue(decodedValue);
+          }
+
+          // If we are limiting cookies, check if the cookie value is limited
+          if (limit) {
+            return decodedValue.endsWith(`${Constant.Tilde}1`)
+              ? decodedValue.substring(0, decodedValue.length - 2)
+              : null;
           }
 
           return decodedValue;
