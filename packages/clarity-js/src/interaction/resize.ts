@@ -1,9 +1,12 @@
 import { Event } from "@clarity-types/data";
-import { ResizeData } from "@clarity-types/interaction";
+import { ResizeData, Setting } from "@clarity-types/interaction";
+import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { bind } from "@src/core/event";
 import encode from "./encode";
+import { schedule } from "@src/core/task";
 
 export let data: ResizeData;
+let timeout: number = null;
 
 export function start(): void {
     bind(window, "resize", recompute);
@@ -18,11 +21,17 @@ function recompute(): void {
         width: de && "clientWidth" in de ? Math.min(de.clientWidth, window.innerWidth) : window.innerWidth,
         height: de && "clientHeight" in de ? Math.min(de.clientHeight, window.innerHeight) : window.innerHeight,
     };
-    encode(Event.Resize);
+    clearTimeout(timeout);
+    timeout = setTimeout(process, Setting.LookAhead, Event.Resize);
+}
+
+function process(event: Event): void {
+    schedule(encode.bind(this, event));
 }
 
 export function reset(): void {
     data = null;
+    clearTimeout(timeout);
 }
 
 export function stop(): void {

@@ -20,7 +20,7 @@ export interface Visualize {
 export class Visualizer {
     readonly state: PlaybackState;
     dom: (event: Layout.DomEvent) => Promise<void>;
-    html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, time?: number, useproxy?: LinkHandler, logerror?: ErrorLogger) => Promise<Visualizer>;
+    html: (decoded: Data.DecodedPayload[], target: Window, hash?: string, useproxy?: LinkHandler, logerror?: ErrorLogger, shortCircuitStrategy?: ShortCircuitStrategy) => Promise<Visualizer>;
     clickmap: (activity?: Activity) => void;
     clearmap: () => void;
     scrollmap: (data?: ScrollMapInfo[], averageFold?: number, addMarkers?: boolean) => void;
@@ -34,7 +34,14 @@ export class Visualizer {
 export type ResizeHandler  = (width: number, height: number) => void;
 export type ErrorLogger = (error: Error) => void;
 export type LinkHandler = (link: string, id: string, linkType: string) => string;
+export type ClickLogger = (args: IClickLoggerArgs) => void;
 
+export interface IClickLoggerArgs {
+    time: number;
+    x: number;
+    y: number;
+    nodeId: number;
+}
 export interface MergedPayload {
     timestamp: number;
     envelope: Data.Envelope;
@@ -54,9 +61,11 @@ export interface Options {
     onresize?: ResizeHandler;
     logerror?: ErrorLogger;
     useproxy?: LinkHandler;
+    onclickMismatch?: ClickLogger;
     metadata?: HTMLElement;
     canvas?: boolean;
     keyframes?: boolean;
+    mobile?: boolean;
 }
 
 export interface NodeData {
@@ -102,6 +111,13 @@ export interface Heatmap {
     a: number; /* Alpha */
 }
 
+export const enum ShortCircuitStrategy {
+    None = 0,
+    HashFirstTimestamp = 1,
+    HashFirstTimestampPlusBuffer = 2,
+    HashBeforeDeleted = 3
+}
+
 export const enum NodeType {
     ELEMENT_NODE = 1,
     ATTRIBUTE_NODE = 2,
@@ -134,6 +150,7 @@ export const enum Constant {
     CustomHover = "clarity-hover",
     Region = "clarity-region",
     AdoptedStyleSheet = "clarity-adopted-style",
+    CustomStyleTag = "clarity-custom-styles",
     Id = "data-clarity-id", 
     HashAlpha = "data-clarity-hashalpha",
     HashBeta = "data-clarity-hashbeta",
@@ -203,5 +220,6 @@ export const enum Setting {
     MarkerColor = "white",
     CanvasTextColor = "#323130",
     CanvasTextFont = "500 12px Segoe UI",
-    ScrollCanvasMaxHeight = 65535
+    ScrollCanvasMaxHeight = 65535,
+    VisualizationSettleBuffer = 100,
 }

@@ -37,6 +37,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     tokens.push(pTarget.id);
                     tokens.push(entry.data.x);
                     tokens.push(entry.data.y);
+                    if (entry.data.id !== undefined) { tokens.push(entry.data.id); }
                     queue(tokens);
                     baseline.track(entry.event, entry.data.x, entry.data.y);
                 }
@@ -96,7 +97,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 let iTarget = metadata(entry.data.target as Node, entry.event, entry.data.value);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
-                tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy));
+                tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy, false, entry.data.type));
                 queue(tokens);
             }
             input.reset();

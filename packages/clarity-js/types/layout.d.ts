@@ -66,6 +66,7 @@ export const enum Constant {
     SvgNamespace = "http://www.w3.org/2000/svg",
     Id = "id",
     Class = "class",
+    Style = "style",
     Href = "href",
     Src = "src",
     Srcset = "srcset",

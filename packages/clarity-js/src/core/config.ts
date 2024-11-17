@@ -20,7 +20,9 @@ let config: Config = {
     action: null,
     dob: null,
     delayDom: false,
-    throttleDom: true
+    throttleDom: true,
+    conversions: false,
+    longTask: 30,
 };
 
 export default config;

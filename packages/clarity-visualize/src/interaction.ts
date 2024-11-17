@@ -47,7 +47,9 @@ export class InteractionHelper {
 
         // Position canvas relative to scroll events on the parent page
         if (scrollTarget === de || scrollTarget === doc.body) {
-            if (!scrollable) { this.state.window.scrollTo(data.x, data.y); }
+            if (!scrollable) { 
+                this.state.window.scrollTo(data.x, data.y); 
+            }
             let canvas = this.overlay();
             if (canvas) {
                 canvas.style.left = data.x + Constant.Pixel;
@@ -146,6 +148,24 @@ export class InteractionHelper {
             case Data.Event.Click:
                 title = "Click";
                 this.drawClick(doc, data.x, data.y, title);
+                if (this.state.options.onclickMismatch) {
+                    const originalTarget = this.layout.element(data.target as number);
+                    let correctTargetHit = false;
+                    const elementsUnderClick = doc.elementsFromPoint(data.x, data.y);
+                    for (const elementUnderClick of elementsUnderClick) {
+                        if (originalTarget === elementUnderClick) {
+                            correctTargetHit = true;
+                        }
+                    }
+                    if (!correctTargetHit) {
+                        this.state.options.onclickMismatch({
+                            time: event.time,
+                            x: data.x,
+                            y: data.y, 
+                            nodeId: data.target as number});
+                    }
+                }
+                
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.DoubleClick:

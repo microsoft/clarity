@@ -58,8 +58,13 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             x = x && frame ? x + Math.round(frame.offsetLeft) : x;
             y = y && frame ? y + Math.round(frame.offsetTop) : y;
 
+            // identifier is 0-based, unique for each touch point and resets when all fingers are lifted
+            // that is not a part of the spec, but it is how it is implemented in browsers
+            // tested in Chromium-based browsers as well as Firefox
+            const id = "identifier" in entry ? entry["identifier"] : undefined;
+
             // Check for null values before processing this event
-            if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y } }); }
+            if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y, id } }); }
         }
     }
 }

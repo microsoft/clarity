@@ -22,6 +22,7 @@ export function upgrade(key: string): void {
         data = { key };
 
         // Update metadata to track we have upgraded this session
+        metadata.callback();
         metadata.save();
 
         // Callback upgrade handler, if configured

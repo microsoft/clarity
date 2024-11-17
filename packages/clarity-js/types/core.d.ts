@@ -26,10 +26,6 @@ export const enum Task {
     Stop = 2
 }
 
-export const enum Setting {
-    LongTask = 30, // 30ms
-}
-
 export const enum ExtractSource {
     Javascript = 0,
     Cookie = 1,
@@ -139,6 +135,8 @@ export interface Config {
     dob?: number;
     delayDom?: boolean;
     throttleDom?: boolean;
+    conversions?: boolean;
+    longTask?: number;
 }
 
 export const enum Constant {

@@ -2,7 +2,9 @@ import { Privacy } from "@clarity-types/core";
 import { Code, Setting, Severity } from "@clarity-types/data";
 import { Constant, Mask, NodeInfo, NodeMeta, NodeValue, Selector, SelectorInput, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
+import { bind } from "@src/core/event";
 import hash from "@src/core/hash";
+import { shortid } from "@src/data/metadata";
 import * as internal from "@src/diagnostic/internal";
 import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
@@ -120,7 +122,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
 
     privacy(node, values[id], parentValue);
     updateSelector(values[id]);
-    size(values[id]);
+    updateImageSize(values[id]);
     track(id, source);
 }
 
@@ -215,8 +217,11 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
         case maskTags.indexOf(tag) >= 0:
             let type = attributes[Constant.Type];
             let meta: string = Constant.Empty;
-            Object.keys(attributes).forEach(x => meta += attributes[x].toLowerCase());
-            let exclude = maskExclude.some(x => meta.indexOf(x) >= 0);
+            const excludedPrivacyAttributes = [Constant.Class, Constant.Style]
+            Object.keys(attributes)
+              .filter((x) => !excludedPrivacyAttributes.includes(x as Constant))
+              .forEach((x) => (meta += attributes[x].toLowerCase()));
+            let exclude = maskExclude.some((x) => meta.indexOf(x) >= 0);
             // Regardless of privacy mode, always mask off user input from input boxes or drop downs with two exceptions:
             // (1) The node is detected to be one of the excluded fields, in which case we drop everything
             // (2) The node's type is one of the allowed types (like checkboxes)
@@ -247,6 +252,12 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             // In a mode where we mask sensitive information by default, look through class names to aggressively mask content
             metadata.privacy = inspect(attributes[Constant.Class], maskText, metadata);
             break;
+        case tag === Constant.ImageTag:
+            // Mask images with blob src as it is not publicly available anyway.
+            if(attributes.src?.startsWith('blob:')){
+                metadata.privacy = Privacy.TextImage;
+            }
+        break;
     }
 }
 
@@ -358,10 +369,21 @@ function removeNodeFromNodesMap(id: number) {
     }
 }
 
-function size(value: NodeValue): void {
+function updateImageSize(value: NodeValue): void {
     // If this element is a image node, and is masked, then track box model for the current element
-    if (value.data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { value.metadata.size = []; }
+    if (value.data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { 
+        let img = getNode(value.id) as HTMLImageElement;
+        // We will not capture the natural image dimensions until it loads. 
+        if(img && (!img.complete || img.naturalWidth === 0)){
+            // This will trigger mutation to update the original width and height after image loads.
+            bind(img, 'load', () => {
+                img.setAttribute('data-clarity-loaded', `${shortid()}`);
+            })
+        }
+        value.metadata.size = [];
+     }
 }
+
 function getPreviousId(node: Node): number {
     let id = null;
 
