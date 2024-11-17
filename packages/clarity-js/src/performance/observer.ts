@@ -110,8 +110,8 @@ function calculateCls(entry: PerformanceEntry): void {
     // For more info: https://web.dev/articles/cls
     if (
         sessionValue &&
-        firstSessionTime && (entry.startTime - firstSessionTime < 1000) &&
-        lastSessionTime && (entry.startTime - lastSessionTime < 5000)
+        lastSessionTime && (entry.startTime - lastSessionTime < 1000) &&
+        firstSessionTime && (entry.startTime - firstSessionTime < 5000)
     ) {
         sessionValue += entry["value"];
         sessionEntriesTime.push(entry.startTime);
