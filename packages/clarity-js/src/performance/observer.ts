@@ -120,10 +120,8 @@ function calculateCls(entry: PerformanceEntry): void {
         sessionEntriesTime = [entry.startTime];
     }
     
-    if(sessionValue > entry["value"]){
-        // Scale the value to avoid sending back floating point number
-        metric.max(Metric.CumulativeLayoutShift, sessionValue * 1000)
-    }
+    // Scale the value to avoid sending back floating point number
+    metric.max(Metric.CumulativeLayoutShift, sessionValue * 1000)
 }
 
 export function stop(): void {
