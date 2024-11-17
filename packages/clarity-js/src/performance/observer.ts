@@ -10,7 +10,7 @@ import * as navigation from "@src/performance/navigation";
 import * as interaction from "@src/performance/interaction";
 
 let observer: PerformanceObserver;
-let sessionEntries: PerformanceEntry[] = [];
+let sessionEntriesTime: number[] = [];
 let sessionValue = 0;
 const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTask, Constant.FID, Constant.CLS, Constant.LCP, Constant.PerformanceEventTiming];
 
@@ -29,7 +29,7 @@ export function start(): void {
             bind(window, "load", setTimeout.bind(this, observe, 0));
         } else { observe(); }
     } else { internal.log(Code.PerformanceObserver, Severity.Info); }
-    sessionEntries = [];
+    sessionEntriesTime = [];
     sessionValue = 0;
 }
 
@@ -100,8 +100,8 @@ function process(entries: PerformanceEntryList): void {
 function calculateCls(entry: PerformanceEntry): void {
     if(entry["hadRecentInput"]) { return; }
     
-    const firstSessionEntry = sessionEntries[0];
-    const lastSessionEntry = sessionEntries[sessionEntries.length - 1];
+    const firstSessionTime = sessionEntriesTime[0];
+    const lastSessionTime = sessionEntriesTime[sessionEntriesTime.length - 1];
 
     // If the entry occurred less than 1 second after the previous entry
     // and less than 5 seconds after the first entry in the session,
@@ -110,23 +110,26 @@ function calculateCls(entry: PerformanceEntry): void {
     // For more info: https://web.dev/articles/cls
     if (
         sessionValue &&
-        lastSessionEntry && (entry.startTime - lastSessionEntry.startTime < 1000) &&
-        firstSessionEntry && (entry.startTime - firstSessionEntry.startTime < 5000)
+        firstSessionTime && (entry.startTime - firstSessionTime < 1000) &&
+        lastSessionTime && (entry.startTime - lastSessionTime < 5000)
     ) {
         sessionValue += entry["value"];
-        sessionEntries.push(entry);
+        sessionEntriesTime.push(entry.startTime);
     } else {
         sessionValue = entry["value"];
-        sessionEntries = [entry];
+        sessionEntriesTime = [entry.startTime];
     }
-    // Scale the value to avoid sending back floating point number
-    metric.max(Metric.CumulativeLayoutShift, entry["value"] * 1000)
+    
+    if(sessionValue > entry["value"]){
+        // Scale the value to avoid sending back floating point number
+        metric.max(Metric.CumulativeLayoutShift, sessionValue * 1000)
+    }
 }
 
 export function stop(): void {
     if (observer) { observer.disconnect(); }
     observer = null;
-    sessionEntries = [];
+    sessionEntriesTime = [];
     sessionValue = 0;
     interaction.resetInteractions();
 }
