@@ -106,7 +106,7 @@ export const enum Constant {
     ChildList = "childList",
     Attributes = "attributes",
     CharacterData = "characterData",
-    Suspend = "suspend",
+    Throttle = "throttle",
     LoadEvent = "load",
     Pixel = "px",
     BorderBox = "border-box",
@@ -217,6 +217,11 @@ export interface MutationQueue {
     time: number;
     mutations: MutationRecord[];
 }
+
+export interface MutationRecordWithTime {
+    timestamp: number;
+    mutation: MutationRecord;
+  }
 
 export interface MutationHistory {
     [key: string]: [/* Count */ number, /* Instance */ number, /* Remove Nodes Buffer */ NodeList?];

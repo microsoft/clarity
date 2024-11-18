@@ -20,7 +20,9 @@ const maxOperations = 20;
 export function start(): void {
     if (
         window["Animation"] && 
+        window["Animation"].prototype && 
         window["KeyframeEffect"] && 
+        window["KeyframeEffect"].prototype && 
         window["KeyframeEffect"].prototype.getKeyframes &&
         window["KeyframeEffect"].prototype.getTiming
     ) {
