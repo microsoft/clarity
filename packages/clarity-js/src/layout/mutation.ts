@@ -21,7 +21,7 @@ import config from "@src/core/config";
 
 let observers: MutationObserver[] = [];
 let mutations: MutationQueue[] = [];
-let throttledMutations: MutationRecordWithTime[] = [];
+let throttledMutations: { [key: number]: MutationRecordWithTime } = {};
 let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
 let attachShadow: (init: ShadowRootInit)  => ShadowRoot = null;
@@ -160,8 +160,6 @@ async function processMutation(timer: Timer, mutation: MutationRecord, instance:
       processNodeList(mutation.removedNodes, Source.ChildListRemove, timer, timestamp);
       break;
     case Constant.Throttle:
-      throttledMutations.push({mutation, timestamp});
-      break;
     default:
       break;
   }
@@ -178,21 +176,20 @@ async function process(): Promise<void> {
     await encode(Event.Mutation, timer, record.time);
   }
 
-  let throttledMutationsToProcess = throttledMutations;
-  throttledMutations = [];
   let processedMutations = false;
-  while (throttledMutationsToProcess.length > 0) {
-    let throttledMutationToProcess = throttledMutationsToProcess.shift();
+  for (var key of Object.keys(throttledMutations)) {
+    let throttledMutationToProcess: MutationRecordWithTime = throttledMutations[key];
+    delete throttledMutations[key];
     processMutation(timer, throttledMutationToProcess.mutation, time(), throttledMutationToProcess.timestamp);
     processedMutations = true;
   }
 
-  if (throttledMutations.length > 0) {
+  if (Object.keys(throttledMutations).length > 0) {
     processThrottledMutations();
   }
 
   // ensure we encode the previously throttled mutations once we have finished them
-  if (throttledMutations.length === 0 && processedMutations) {
+  if (Object.keys(throttledMutations).length === 0 && processedMutations) {
     await encode(Event.Mutation, timer, time());
   }
   
@@ -228,6 +225,8 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
       if (instance > timestamp + Setting.MutationActivePeriod) {
         return m.type;
       }
+      // we only store the most recent mutation for a given key if it is being throttled
+      throttledMutations[key] = {mutation: m, timestamp};
       return Constant.Throttle; 
     }
   }
