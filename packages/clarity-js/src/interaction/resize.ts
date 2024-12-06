@@ -7,8 +7,10 @@ import { schedule } from "@src/core/task";
 
 export let data: ResizeData;
 let timeout: number = null;
+let initialStateLogged = false;
 
 export function start(): void {
+    initialStateLogged = false;
     bind(window, "resize", recompute);
     recompute();
 }
@@ -21,8 +23,13 @@ function recompute(): void {
         width: de && "clientWidth" in de ? Math.min(de.clientWidth, window.innerWidth) : window.innerWidth,
         height: de && "clientHeight" in de ? Math.min(de.clientHeight, window.innerHeight) : window.innerHeight,
     };
-    clearTimeout(timeout);
-    timeout = setTimeout(process, Setting.LookAhead, Event.Resize);
+    if (initialStateLogged) {
+        clearTimeout(timeout);
+        timeout = setTimeout(process, Setting.LookAhead, Event.Resize);
+    } else {
+        encode(Event.Resize);
+        initialStateLogged = true;
+    }
 }
 
 function process(event: Event): void {
