@@ -1,6 +1,6 @@
 import { Priority, Task, Timer } from "@clarity-types/core";
 import { Code, Event, Metric, Severity } from "@clarity-types/data";
-import { Constant, MutationHistory, MutationQueue, Setting, Source } from "@clarity-types/layout";
+import { Constant, MutationHistory, MutationRecordWithTime, MutationQueue, Setting, Source } from "@clarity-types/layout";
 import api from "@src/core/api";
 import * as core from "@src/core";
 import { bind } from "@src/core/event";
@@ -21,6 +21,7 @@ import config from "@src/core/config";
 
 let observers: MutationObserver[] = [];
 let mutations: MutationQueue[] = [];
+let throttledMutations: { [key: number]: MutationRecordWithTime } = {};
 let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
 let attachShadow: (init: ShadowRootInit)  => ShadowRoot = null;
@@ -28,6 +29,7 @@ let mediaInsertRule: (rule: string, index?: number) => number = null;
 let mediaDeleteRule: (index?: number) => void = null;
 let queue: Node[] = [];
 let timeout: number = null;
+let throttleDelay: number = null;
 let activePeriod = null;
 let history: MutationHistory = {};
 
@@ -117,6 +119,7 @@ export function stop(): void {
   observers = [];
   history = {};
   mutations = [];
+  throttledMutations = [];
   queue = [];
   activePeriod = 0;
   timeout = null;
@@ -137,6 +140,30 @@ function handle(m: MutationRecord[]): void {
   });
 }
 
+async function processMutation(timer: Timer, mutation: MutationRecord, instance: number, timestamp: number): Promise<void> {
+  let state = task.state(timer);
+  if (state === Task.Wait) { state = await task.suspend(timer); }
+  if (state === Task.Stop) { return; }      
+  let target = mutation.target;
+  let type = config.throttleDom ? track(mutation, timer, instance, timestamp) : mutation.type;
+  if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
+  if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) { dom.parse(target as ShadowRoot); }
+  switch (type) {
+    case Constant.Attributes:
+        processNode(target, Source.Attributes, timestamp);
+        break;
+    case Constant.CharacterData:
+        processNode(target, Source.CharacterData, timestamp);
+        break;
+    case Constant.ChildList:
+      processNodeList(mutation.addedNodes, Source.ChildListAdd, timer, timestamp);
+      processNodeList(mutation.removedNodes, Source.ChildListRemove, timer, timestamp);
+      break;
+    case Constant.Throttle:
+    default:
+      break;
+  }
+}
 async function process(): Promise<void> {
   let timer: Timer = { id: id(), cost: Metric.LayoutCost };
   task.start(timer);
@@ -144,34 +171,28 @@ async function process(): Promise<void> {
     let record = mutations.shift();
     let instance = time();
     for (let mutation of record.mutations) {
-      let state = task.state(timer);
-      if (state === Task.Wait) { state = await task.suspend(timer); }
-      if (state === Task.Stop) { break; }      
-      let target = mutation.target;
-      let type = config.throttleDom ? track(mutation, timer, instance, record.time) : mutation.type;
-      if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
-      if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) { dom.parse(target as ShadowRoot); }
-      switch (type) {
-        case Constant.Attributes:
-            processNode(target, Source.Attributes, record.time);
-            break;
-        case Constant.CharacterData:
-            processNode(target, Source.CharacterData, record.time);
-            break;
-        case Constant.ChildList:
-          processNodeList(mutation.addedNodes, Source.ChildListAdd, timer, record.time);
-          processNodeList(mutation.removedNodes, Source.ChildListRemove, timer, record.time);
-          break;
-        case Constant.Suspend:
-          let value = dom.get(target);
-          if (value) { value.metadata.suspend = true; }
-          break;
-        default:
-          break;
-      }
+      processMutation(timer, mutation, instance, record.time)
     }
     await encode(Event.Mutation, timer, record.time);
   }
+
+  let processedMutations = false;
+  for (var key of Object.keys(throttledMutations)) {
+    let throttledMutationToProcess: MutationRecordWithTime = throttledMutations[key];
+    delete throttledMutations[key];
+    processMutation(timer, throttledMutationToProcess.mutation, time(), throttledMutationToProcess.timestamp);
+    processedMutations = true;
+  }
+
+  if (Object.keys(throttledMutations).length > 0) {
+    processThrottledMutations();
+  }
+
+  // ensure we encode the previously throttled mutations once we have finished them
+  if (Object.keys(throttledMutations).length === 0 && processedMutations) {
+    await encode(Event.Mutation, timer, time());
+  }
+  
   task.stop(timer);
 }
 
@@ -197,13 +218,16 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
     h[0] = inactive ? (h[1] === instance ? h[0] : h[0] + 1) : 1;
     h[1] = instance;
     // Return updated mutation type based on if we have already hit the threshold or not
-    if (h[0] === Setting.MutationSuspendThreshold) {
+    if (h[0] >= Setting.MutationSuspendThreshold) {
       // Store a reference to removedNodes so we can process them later
       // when we resume mutations again on user interactions
       h[2] = m.removedNodes;
-      return Constant.Suspend;
-    } else if (h[0] > Setting.MutationSuspendThreshold) { 
-      return Constant.Empty; 
+      if (instance > timestamp + Setting.MutationActivePeriod) {
+        return m.type;
+      }
+      // we only store the most recent mutation for a given key if it is being throttled
+      throttledMutations[key] = {mutation: m, timestamp};
+      return Constant.Throttle; 
     }
   }
   return m.type;
@@ -227,6 +251,13 @@ async function processNodeList(list: NodeList, source: Source, timer: Timer, tim
       processNode(list[i], source, timestamp);
     }
   }
+}
+
+function processThrottledMutations(): void {
+  if (throttleDelay) {
+    clearTimeout(throttleDelay);
+  }
+  throttleDelay = setTimeout(() => { task.schedule(process, Priority.High) }, Setting.LookAhead);
 }
 
 export function schedule(node: Node): Node {

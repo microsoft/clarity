@@ -7,7 +7,8 @@ export const enum AnimationOperation {
     Play = 1,
     Pause = 2,
     Cancel = 3,
-    Finish = 4
+    Finish = 4,
+    CommitStyles = 5
 }
 
 export const enum Source {
@@ -105,7 +106,7 @@ export const enum Constant {
     ChildList = "childList",
     Attributes = "attributes",
     CharacterData = "characterData",
-    Suspend = "suspend",
+    Throttle = "throttle",
     LoadEvent = "load",
     Pixel = "px",
     BorderBox = "border-box",
@@ -216,6 +217,11 @@ export interface MutationQueue {
     time: number;
     mutations: MutationRecord[];
 }
+
+export interface MutationRecordWithTime {
+    timestamp: number;
+    mutation: MutationRecord;
+  }
 
 export interface MutationHistory {
     [key: string]: [/* Count */ number, /* Instance */ number, /* Remove Nodes Buffer */ NodeList?];
