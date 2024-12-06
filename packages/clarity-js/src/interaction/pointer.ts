@@ -12,7 +12,7 @@ import encode from "./encode";
 export let state: PointerState[] = [];
 let timeout: number = null;
 let activeTouchPointId = 0;
-let activeTouchPointIds = new Set<number>();
+const activeTouchPointIds = new Set<number>();
 
 export function start(): void {
     reset();
@@ -76,7 +76,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
                     activeTouchPointIds.delete(id);
                     break;
             }
-            const isPrimary: boolean = activeTouchPointId === id;
+            const isPrimary = activeTouchPointId === id;
 
             // Check for null values before processing this event
             if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y, id, isPrimary } }); }

@@ -38,6 +38,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     tokens.push(entry.data.x);
                     tokens.push(entry.data.y);
                     if (entry.data.id !== undefined) { tokens.push(entry.data.id); }
+                    if (entry.data.isPrimary !== undefined) { tokens.push(entry.data.isPrimary.toString()); }
                     queue(tokens);
                     baseline.track(entry.event, entry.data.x, entry.data.y);
                 }
