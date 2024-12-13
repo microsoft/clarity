@@ -1,6 +1,7 @@
 import { Priority, Task, Timer } from "@clarity-types/core";
 import { Code, Event, Metric, Severity } from "@clarity-types/data";
 import { Constant, MutationHistory, MutationRecordWithTime, MutationQueue, Setting, Source } from "@clarity-types/layout";
+import { FunctionNames } from "@clarity-types/performance";
 import api from "@src/core/api";
 import * as core from "@src/core";
 import { bind } from "@src/core/event";
@@ -89,6 +90,7 @@ export function start(): void {
      } catch { attachShadow = null; }
   } 
 }
+start.dn = FunctionNames.MutationStart;
 
 export function observe(node: Node): void {
   // Create a new observer for every time a new DOM tree (e.g. root document or shadowdom root) is discovered on the page
@@ -139,6 +141,7 @@ function handle(m: MutationRecord[]): void {
       measure(region.compute)();
   });
 }
+handle.dn = FunctionNames.MutationHandle;
 
 async function processMutation(timer: Timer, mutation: MutationRecord, instance: number, timestamp: number): Promise<void> {
   let state = task.state(timer);
@@ -299,3 +302,4 @@ function generate(target: Node, type: MutationRecordType): void {
     type
   }]);
 }
+generate.dn = FunctionNames.MutationGenerate;

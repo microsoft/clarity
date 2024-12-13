@@ -1,5 +1,6 @@
 import { Event, Setting } from "@clarity-types/data";
 import { InteractionState, RegionData, RegionState, RegionQueue, RegionVisibility } from "@clarity-types/layout";
+import { FunctionNames } from "@clarity-types/performance";
 import { time } from "@src/core/time";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
@@ -76,6 +77,7 @@ export function compute(): void {
     // Schedule encode only when we have at least one valid data entry
     if (state.length > 0) { encode(Event.Region); }
 }
+compute.dn = FunctionNames.RegionCompute;
 
 function handler(entries: IntersectionObserverEntry[]): void {
     for (let entry of entries) {

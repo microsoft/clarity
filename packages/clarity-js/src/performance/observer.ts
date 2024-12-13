@@ -1,4 +1,5 @@
 import { Code, Constant, Dimension, Metric, Severity, PerformanceEventTiming } from "@clarity-types/data";
+import { FunctionNames } from "@clarity-types/performance";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -49,10 +50,12 @@ function observe(): void {
         }
     } catch { internal.log(Code.PerformanceObserver, Severity.Warning); }
 }
+observe.dn = FunctionNames.ObserverObserve;
 
 function handle(entries: PerformanceObserverEntryList): void {
     process(entries.getEntries());
 }
+handle.dn = FunctionNames.ObserverHandle;
 
 function process(entries: PerformanceEntryList): void {
     let visible = "visibilityState" in document ? document.visibilityState === "visible" : true;

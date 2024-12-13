@@ -1,5 +1,6 @@
 import { Constant, Dimension, Event } from "@clarity-types/data";
 import { ScrollState, Setting } from "@clarity-types/interaction";
+import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -68,6 +69,7 @@ function recompute(event: UIEvent = null): void {
     clearTimeout(timeout);
     timeout = setTimeout(process, Setting.LookAhead, Event.Scroll);
 }
+recompute.dn = FunctionNames.ScrollRecompute;
 
 function getPositionNode(x: number, y: number): Node {
     let node: Node;
@@ -112,6 +114,7 @@ export function compute(): void {
         dimension.log(Dimension.InitialScrollBottom, bottom?.hash?.join(Constant.Dot));
     }
 }
+compute.dn = FunctionNames.ScrollCompute;
 
 export function stop(): void {
     clearTimeout(timeout);

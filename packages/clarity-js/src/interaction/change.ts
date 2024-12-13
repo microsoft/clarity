@@ -1,5 +1,6 @@
 import { Constant, Event, Setting } from "@clarity-types/data";
 import { ChangeState } from "@clarity-types/interaction";
+import { FunctionNames } from "@clarity-types/performance";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import hash from "@src/core/hash";
@@ -28,6 +29,7 @@ function recompute(evt: UIEvent): void {
         schedule(encode.bind(this, Event.Change));
     }    
 }
+recompute.dn = FunctionNames.ChangeRecompute;
 
 export function reset(): void {
     state = [];

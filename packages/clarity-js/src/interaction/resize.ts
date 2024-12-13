@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { ResizeData, Setting } from "@clarity-types/interaction";
+import { FunctionNames } from "@clarity-types/performance";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { bind } from "@src/core/event";
 import encode from "./encode";
@@ -31,6 +32,7 @@ function recompute(): void {
         initialStateLogged = true;
     }
 }
+recompute.dn = FunctionNames.ResizeRecompute;
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));

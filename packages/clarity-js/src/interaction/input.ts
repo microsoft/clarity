@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { InputData, InputState, Setting } from "@clarity-types/interaction";
+import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -43,6 +44,7 @@ function recompute(evt: UIEvent): void {
         timeout = setTimeout(process, Setting.InputLookAhead, Event.Input);
     }
 }
+recompute.dn = FunctionNames.InputRecompute;
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));

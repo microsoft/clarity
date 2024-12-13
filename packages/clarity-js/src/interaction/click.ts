@@ -1,6 +1,7 @@
 import { BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
 import { BrowsingContext, ClickState } from "@clarity-types/interaction";
 import { Box } from "@clarity-types/layout";
+import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -72,6 +73,7 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
         schedule(encode.bind(this, event));
     }
 }
+handler.dn = FunctionNames.ClickHandler;
 
 function link(node: Node): HTMLAnchorElement {
     while (node && node !== document) {

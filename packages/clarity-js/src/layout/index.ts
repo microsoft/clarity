@@ -1,3 +1,4 @@
+import { FunctionNames } from "@clarity-types/performance";
 import * as discover from "@src/layout/discover";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
@@ -28,6 +29,7 @@ export function start(): void {
     style.start();
     animation.start();
 }
+start.dn = FunctionNames.LayoutStart;
 
 export function stop(): void {
     region.stop();

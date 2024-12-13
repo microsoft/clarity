@@ -1,3 +1,4 @@
+import { FunctionNames } from "@clarity-types/performance";
 import * as change from "@src/interaction/change";
 import * as click from "@src/interaction/click";
 import * as clipboard from "@src/interaction/clipboard";
@@ -25,6 +26,7 @@ export function start(): void {
     submit.start();
     unload.start();
 }
+start.dn = FunctionNames.InteractionStart;
 
 export function stop(): void {
     timeline.stop();

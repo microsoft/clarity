@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { VisibilityData } from "@clarity-types/interaction";
+import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { time } from "@src/core/time";
 import encode from "./encode";
@@ -15,6 +16,7 @@ function recompute(evt: UIEvent = null): void {
     data = { visible: "visibilityState" in document ? document.visibilityState : "default" };
     encode(Event.Visibility, time(evt));
 }
+recompute.dn = FunctionNames.VisibilityRecompute;
 
 export function reset(): void {
     data = null;

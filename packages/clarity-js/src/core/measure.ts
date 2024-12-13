@@ -1,6 +1,7 @@
-import { Metric } from "@clarity-types/data";
+import { Code, Metric, Severity } from "@clarity-types/data";
 import { report } from "@src/core/report";
 import * as metric from "@src/data/metric";
+import * as internal from "@src/diagnostic/internal";
 import config from "./config";
 
 // tslint:disable-next-line: ban-types
@@ -13,6 +14,7 @@ export default function (method: Function): Function {
         if (duration > config.longTask) {
             metric.count(Metric.LongTaskCount);
             metric.max(Metric.ThreadBlockedTime, duration);
+            internal.log(Code.FunctionExecutionTime, Severity.Info, `${method.dn || method.name}-${duration}`);
         }
     };
 }

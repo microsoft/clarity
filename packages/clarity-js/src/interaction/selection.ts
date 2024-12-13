@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { SelectionData, Setting } from "@clarity-types/interaction";
+import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
@@ -50,6 +51,7 @@ function recompute(root: Node): void {
     clearTimeout(timeout);
     timeout = setTimeout(process, Setting.LookAhead, Event.Selection);
 }
+recompute.dn = FunctionNames.SelectionRecompute;
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));

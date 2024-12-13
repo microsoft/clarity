@@ -31,3 +31,35 @@ export interface NavigationData {
     encodedSize: number;
     decodedSize: number;
 }
+
+export const enum FunctionNames {
+    HistoryCompute = 1,
+    Restart = 2,
+    DiagnosticStart = 3,
+    ScriptHandler = 4,
+    ChangeRecompute = 5,
+    ClickHandler = 6,
+    ClipboardRecompute = 7,
+    InteractionStart = 8,
+    InputRecompute = 9,
+    PointerMouse = 10,
+    PointerTouch = 11,
+    ResizeRecompute = 12,
+    ScrollRecompute = 13,
+    ScrollCompute = 14,
+    SelectionRecompute = 15,
+    SubmitRecompute = 16,
+    UnloadRecompute = 17,
+    VisibilityRecompute = 18,
+    DocumentCompute = 19,
+    LayoutStart = 20,
+    MutationStart = 21,
+    MutationHandle = 22,
+    MutationGenerate = 23,
+    RegionCompute = 24,
+    PerformanceStart = 25,
+    ObserverObserve = 26,
+    ObserverHandle = 27
+}
+
+declare global { interface Function { dn?: FunctionNames; } }
