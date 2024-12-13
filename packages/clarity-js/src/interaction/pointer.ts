@@ -11,7 +11,8 @@ import encode from "./encode";
 
 export let state: PointerState[] = [];
 let timeout: number = null;
-let activeTouchPointId = 0;
+let hasPrimaryTouch = false;
+let primaryTouchId = 0;
 const activeTouchPointIds = new Set<number>();
 
 export function start(): void {
@@ -68,7 +69,9 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             switch(event) {
                 case Event.TouchStart:
                     if (activeTouchPointIds.size === 0) {
-                        activeTouchPointId = id;
+                        // Track presence of primary touch separately to handle scenarios when same id is repeated
+                        hasPrimaryTouch = true;  
+                        primaryTouchId = id;
                     }
                     activeTouchPointIds.add(id);
                     break;
@@ -77,10 +80,15 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
                     activeTouchPointIds.delete(id);
                     break;
             }
-            const isPrimary = activeTouchPointId === id;
+            const isPrimary = hasPrimaryTouch && primaryTouchId === id;
 
             // Check for null values before processing this event
             if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y, id, isPrimary } }); }
+
+            // Reset primary touch point id once touch event ends
+            if (event === Event.TouchCancel || event === Event.TouchEnd) {
+                if (primaryTouchId === id) { hasPrimaryTouch = false; }
+            }
         }
     }
 }
