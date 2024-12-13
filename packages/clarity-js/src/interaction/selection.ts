@@ -50,6 +50,7 @@ function recompute(root: Node): void {
     clearTimeout(timeout);
     timeout = setTimeout(process, Setting.LookAhead, Event.Selection);
 }
+recompute.displayName = "selectionRecompute";
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));

@@ -28,6 +28,7 @@ export function start(): void {
     style.start();
     animation.start();
 }
+start.displayName = "layoutStart";
 
 export function stop(): void {
     region.stop();

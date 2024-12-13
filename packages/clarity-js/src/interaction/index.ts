@@ -25,6 +25,7 @@ export function start(): void {
     submit.start();
     unload.start();
 }
+start.displayName = "interactionStart";
 
 export function stop(): void {
     timeline.stop();

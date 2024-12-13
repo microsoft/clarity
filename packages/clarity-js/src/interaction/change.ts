@@ -28,6 +28,7 @@ function recompute(evt: UIEvent): void {
         schedule(encode.bind(this, Event.Change));
     }    
 }
+recompute.displayName = "changeRecompute";
 
 export function reset(): void {
     state = [];

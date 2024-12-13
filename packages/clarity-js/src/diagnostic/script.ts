@@ -33,3 +33,4 @@ function handler(error: ErrorEvent): boolean {
 
     return true;
 }
+handler.displayName = "scriptHandler";

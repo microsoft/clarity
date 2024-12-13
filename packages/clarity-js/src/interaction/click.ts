@@ -72,6 +72,7 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
         schedule(encode.bind(this, event));
     }
 }
+handler.displayName = "clickHandler";
 
 function link(node: Node): HTMLAnchorElement {
     while (node && node !== document) {

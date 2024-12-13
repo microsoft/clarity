@@ -194,7 +194,8 @@ export const enum Code {
  * @deprecated No longer support ContentSecurityPolicy
  */
     ContentSecurityPolicy = 7,
-    Config = 8
+    Config = 8,
+    FunctionExecutionTime = 9
 }
 
 export const enum Severity {

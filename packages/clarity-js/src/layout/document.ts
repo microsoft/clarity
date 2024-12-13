@@ -40,6 +40,7 @@ export function compute(): void {
         encode(Event.Document);
     }
 }
+compute.displayName = 'documentCompute';
 
 export function stop(): void {
     reset();

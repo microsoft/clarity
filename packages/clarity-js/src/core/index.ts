@@ -79,3 +79,4 @@ function restart(): void {
     clarity.start();
     custom.event(Constant.Clarity, Constant.Restart);
 }
+restart.displayName = "restart";

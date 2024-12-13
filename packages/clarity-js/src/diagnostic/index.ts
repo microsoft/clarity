@@ -7,6 +7,7 @@ export function start(): void {
     script.start();
     internal.start();
 }
+start.displayName = "diagnosticStart";
 
 export function stop(): void {
     internal.stop();

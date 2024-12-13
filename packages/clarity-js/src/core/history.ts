@@ -55,6 +55,7 @@ function compute(): void {
         window.setTimeout(restart, Setting.RestartDelay);
     }
 }
+compute.displayName = "historyCompute";
 
 function restart(): void {
     clarity.start();

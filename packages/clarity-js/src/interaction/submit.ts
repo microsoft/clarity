@@ -20,6 +20,7 @@ function recompute(evt: UIEvent): void {
     state.push({ time: time(evt), event: Event.Submit, data: { target: target(evt) } });
     schedule(encode.bind(this, Event.Submit));
 }
+recompute.displayName = "submitRecompute";
 
 export function reset(): void {
     state = [];

@@ -43,6 +43,7 @@ function recompute(evt: UIEvent): void {
         timeout = setTimeout(process, Setting.InputLookAhead, Event.Input);
     }
 }
+recompute.displayName = "inputRecompute";
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));

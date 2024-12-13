@@ -76,6 +76,7 @@ export function compute(): void {
     // Schedule encode only when we have at least one valid data entry
     if (state.length > 0) { encode(Event.Region); }
 }
+compute.displayName = "regionCompute";
 
 function handler(entries: IntersectionObserverEntry[]): void {
     for (let entry of entries) {

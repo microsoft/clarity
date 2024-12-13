@@ -5,6 +5,7 @@ export function start(): void {
     navigation.reset();
     observer.start();
 }
+start.displayName = "performanceStart";
 
 export function stop(): void {
     observer.stop();

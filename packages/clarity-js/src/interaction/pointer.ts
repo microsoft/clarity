@@ -45,6 +45,7 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
     // Check for null values before processing this event
     if (x !== null && y !== null) { handler({ time: time(evt), event, data: { target: target(evt), x, y } }); }
 }
+mouse.displayName = "pointerMouse";
 
 function touch(event: Event, root: Node, evt: TouchEvent): void {
     let frame = iframe(root);
@@ -83,6 +84,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
         }
     }
 }
+touch.displayName = "pointerTouch";
 
 function handler(current: PointerState): void {
     switch (current.event) {

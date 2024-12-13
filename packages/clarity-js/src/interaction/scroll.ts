@@ -68,6 +68,7 @@ function recompute(event: UIEvent = null): void {
     clearTimeout(timeout);
     timeout = setTimeout(process, Setting.LookAhead, Event.Scroll);
 }
+recompute.displayName = "scrollRecompute";
 
 function getPositionNode(x: number, y: number): Node {
     let node: Node;
@@ -112,6 +113,7 @@ export function compute(): void {
         dimension.log(Dimension.InitialScrollBottom, bottom?.hash?.join(Constant.Dot));
     }
 }
+compute.displayName = "scrollCompute";
 
 export function stop(): void {
     clearTimeout(timeout);

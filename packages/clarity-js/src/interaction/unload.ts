@@ -16,6 +16,7 @@ function recompute(evt: UIEvent): void {
     encode(Event.Unload, time(evt));
     clarity.stop();
 }
+recompute.displayName = "unloadRecompute";
 
 export function reset(): void {
     data = null;

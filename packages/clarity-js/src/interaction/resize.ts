@@ -31,6 +31,7 @@ function recompute(): void {
         initialStateLogged = true;
     }
 }
+recompute.displayName = "resizeRecompute";
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));

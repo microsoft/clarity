@@ -22,6 +22,7 @@ function recompute(action: Clipboard, evt: UIEvent): void {
     state.push({ time: time(evt), event: Event.Clipboard, data: { target: target(evt), action } });
     schedule(encode.bind(this, Event.Clipboard));
 }
+recompute.displayName = "clipboardRecompute";
 
 export function reset(): void {
     state = [];

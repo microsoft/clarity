@@ -15,6 +15,7 @@ function recompute(evt: UIEvent = null): void {
     data = { visible: "visibilityState" in document ? document.visibilityState : "default" };
     encode(Event.Visibility, time(evt));
 }
+recompute.displayName = "visibilityRecompute";
 
 export function reset(): void {
     data = null;

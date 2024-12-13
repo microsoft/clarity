@@ -49,10 +49,12 @@ function observe(): void {
         }
     } catch { internal.log(Code.PerformanceObserver, Severity.Warning); }
 }
+observe.displayName = "observerObserve";
 
 function handle(entries: PerformanceObserverEntryList): void {
     process(entries.getEntries());
 }
+handle.displayName = "observerHandle";
 
 function process(entries: PerformanceEntryList): void {
     let visible = "visibilityState" in document ? document.visibilityState === "visible" : true;
