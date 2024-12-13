@@ -14,7 +14,7 @@ export default function (method: Function): Function {
         if (duration > config.longTask) {
             metric.count(Metric.LongTaskCount);
             metric.max(Metric.ThreadBlockedTime, duration);
-            internal.log(Code.FunctionExecutionTime, Severity.Info, `${method.displayName || method.name}-${duration}`);
+            internal.log(Code.FunctionExecutionTime, Severity.Info, `${method.dn || method.name}-${duration}`);
         }
     };
 }
