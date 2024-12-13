@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { DocumentData } from "@clarity-types/layout";
+import { FunctionNames } from "@clarity-types/performance";
 import encode from "@src/layout/encode";
 
 export let data: DocumentData;
@@ -40,7 +41,7 @@ export function compute(): void {
         encode(Event.Document);
     }
 }
-compute.displayName = 'documentCompute';
+compute.dn = FunctionNames.DocumentCompute;
 
 export function stop(): void {
     reset();

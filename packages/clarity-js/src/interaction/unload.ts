@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { UnloadData } from "@clarity-types/interaction";
+import { FunctionNames } from "@clarity-types/performance";
 import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
 import { time } from "@src/core/time";
@@ -16,7 +17,7 @@ function recompute(evt: UIEvent): void {
     encode(Event.Unload, time(evt));
     clarity.stop();
 }
-recompute.displayName = "unloadRecompute";
+recompute.dn = FunctionNames.UnloadRecompute;
 
 export function reset(): void {
     data = null;

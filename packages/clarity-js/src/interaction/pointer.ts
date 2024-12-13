@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { PointerState, Setting } from "@clarity-types/interaction";
+import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -46,7 +47,7 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
     // Check for null values before processing this event
     if (x !== null && y !== null) { handler({ time: time(evt), event, data: { target: target(evt), x, y } }); }
 }
-mouse.displayName = "pointerMouse";
+mouse.dn = FunctionNames.PointerMouse;
 
 function touch(event: Event, root: Node, evt: TouchEvent): void {
     let frame = iframe(root);
@@ -92,7 +93,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
         }
     }
 }
-touch.displayName = "pointerTouch";
+touch.dn = FunctionNames.PointerTouch;
 
 function handler(current: PointerState): void {
     switch (current.event) {

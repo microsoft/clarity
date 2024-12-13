@@ -1,5 +1,6 @@
 import { Event, Setting } from "@clarity-types/data";
 import { ScriptErrorData } from "@clarity-types/diagnostic";
+import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import encode from "./encode";
 
@@ -33,4 +34,4 @@ function handler(error: ErrorEvent): boolean {
 
     return true;
 }
-handler.displayName = "scriptHandler";
+handler.dn = FunctionNames.ScriptHandler;
