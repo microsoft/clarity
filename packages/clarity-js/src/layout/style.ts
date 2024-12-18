@@ -19,37 +19,39 @@ let styleTimeMap: {[key: string]: number} = {};
 let documentNodes = [];
 
 export function start(): void {
-    if (replace === null) { 
-        replace = CSSStyleSheet.prototype.replace; 
-        CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
-            if (core.active()) {
-                metric.max(Metric.ConstructedStyles, 1);
-                // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
-                // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
-                // to when it is used in the document rather than potentially being misaligned during the traverse process.
-                if (this[styleSheetPageNum] === metadataFields.pageNum) {
-                    trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
+    if (window['CSSStyleSheet'] && CSSStyleSheet.prototype) {
+        if (replace === null) { 
+            replace = CSSStyleSheet.prototype.replace; 
+            CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
+                if (core.active()) {
+                    metric.max(Metric.ConstructedStyles, 1);
+                    // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
+                    // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
+                    // to when it is used in the document rather than potentially being misaligned during the traverse process.
+                    if (this[styleSheetPageNum] === metadataFields.pageNum) {
+                        trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
+                    }
                 }
-            }
-            return replace.apply(this, arguments);
-        };
-    }
-
-    if (replaceSync === null) { 
-        replaceSync = CSSStyleSheet.prototype.replaceSync; 
-        CSSStyleSheet.prototype.replaceSync = function(): void {
-            if (core.active()) {
-                metric.max(Metric.ConstructedStyles, 1);
-                // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
-                // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
-                // to when it is used in the document rather than potentially being misaligned during the traverse process.
-                if (this[styleSheetPageNum] === metadataFields.pageNum) {
-                    trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
-                }                
-            }
-            return replaceSync.apply(this, arguments);
-        };
-    }
+                return replace.apply(this, arguments);
+            };
+        }
+    
+        if (replaceSync === null) { 
+            replaceSync = CSSStyleSheet.prototype.replaceSync; 
+            CSSStyleSheet.prototype.replaceSync = function(): void {
+                if (core.active()) {
+                    metric.max(Metric.ConstructedStyles, 1);
+                    // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
+                    // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
+                    // to when it is used in the document rather than potentially being misaligned during the traverse process.
+                    if (this[styleSheetPageNum] === metadataFields.pageNum) {
+                        trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
+                    }                
+                }
+                return replaceSync.apply(this, arguments);
+            };
+        }
+    }    
 }
 
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {

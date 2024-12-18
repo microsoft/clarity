@@ -171,6 +171,7 @@ async function process(): Promise<void> {
   let timer: Timer = { id: id(), cost: Metric.LayoutCost };
   task.start(timer);
   while (mutations.length > 0) {
+    console.log(`mutations length is ${mutations.length}`);
     let record = mutations.shift();
     let instance = time();
     for (let mutation of record.mutations) {
@@ -181,6 +182,7 @@ async function process(): Promise<void> {
 
   let processedMutations = false;
   for (var key of Object.keys(throttledMutations)) {
+    console.log(`throttled mutations length is now ${Object.keys(throttledMutations).length}`);
     let throttledMutationToProcess: MutationRecordWithTime = throttledMutations[key];
     delete throttledMutations[key];
     processMutation(timer, throttledMutationToProcess.mutation, time(), throttledMutationToProcess.timestamp);
@@ -195,11 +197,28 @@ async function process(): Promise<void> {
   if (Object.keys(throttledMutations).length === 0 && processedMutations) {
     await encode(Event.Mutation, timer, time());
   }
+
+  cleanHistory();
   
   task.stop(timer);
 }
 
+function cleanHistory(): void {
+  let now = time();
+  if (Object.keys(history).length > Setting.MaxMutationHistoryCount) { 
+    history = {};
+  }
+
+  for (let key of Object.keys(history)) {
+    let h = history[key];
+    if (now > h[1] + Setting.MaxMutationHistoryTime) {
+      delete history[key];
+    }
+  }
+}
+
 function track(m: MutationRecord, timer: Timer, instance: number, timestamp: number): string {
+  console.log(`mutation history length is ${Object.keys(history).length}`);
   let value = m.target ? dom.get(m.target.parentNode) : null;
   // Check if the parent is already discovered and that the parent is not the document root
   if (value && value.data.tag !== Constant.HTML) {
@@ -230,6 +249,7 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
       }
       // we only store the most recent mutation for a given key if it is being throttled
       throttledMutations[key] = {mutation: m, timestamp};
+      console.log(`throttled mutations length is ${Object.keys(throttledMutations).length}`);
       return Constant.Throttle; 
     }
   }
