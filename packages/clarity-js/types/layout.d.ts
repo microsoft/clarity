@@ -156,7 +156,9 @@ export const enum JsonLD {
 export const enum Setting {
     LookAhead = 33, // 33ms
     MutationSuspendThreshold = 10, // Stop listening for mutations after hitting a threshold count
-    MutationActivePeriod = 3000 // Unit: milliseconds. Let mutations continue as normal during active periods of user interactions
+    MutationActivePeriod = 3000, // Unit: milliseconds. Let mutations continue as normal during active periods of user interactions
+    MaxMutationHistoryCount = 10000,
+    MaxMutationHistoryTime = 30000, // Unit: milliseconds. Maximum time to keep mutation history in memory
 }
 
 export const enum StyleSheetOperation {
