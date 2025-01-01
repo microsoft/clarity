@@ -82,6 +82,11 @@ export function start(): void {
   track(u);
 }
 
+export function recurringMetadata(): void {
+  // Set the metadata values that should be sent with every payload
+  dimension.log(Dimension.Url, scrub.url(location.href, !!electron));
+}
+
 function userAgentData(): void {
   let uaData = navigator["userAgentData"];
   if (uaData && uaData.getHighEntropyValues) {

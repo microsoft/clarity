@@ -51,7 +51,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             case Event.Discover:
                 discoverBytes += event.length;
             case Event.Box:
-            case Event.Mutation:                
+            case Event.Mutation:
             case Event.Snapshot:
             case Event.StyleSheetAdoption:
             case Event.StyleSheetUpdate:
@@ -108,6 +108,9 @@ async function upload(final: boolean = false): Promise<void> {
     // And, we only send playback metric when we are able to send the playback bytes back to server
     let sendPlaybackBytes = config.lean === false && playbackBytes > 0 && (playbackBytes < Setting.MaxFirstPayloadBytes || envelope.data.sequence > 0);
     if (sendPlaybackBytes) { metric.max(Metric.Playback, BooleanFlag.True); }
+
+    // Set metadata values that need to be uploaded with every the payload
+    metadata.recurringMetadata();
 
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
@@ -241,7 +244,7 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
 
 function done(sequence: number): void {
     // If we everything went successfully, and it is the first sequence, save this session for future reference
-    if (sequence === 1) { 
+    if (sequence === 1) {
         metadata.save();
         metadata.callback();
     }
