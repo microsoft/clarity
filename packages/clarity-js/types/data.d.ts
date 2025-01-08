@@ -127,7 +127,8 @@ export const enum Metric {
 /**
  * @deprecated Move it to dimension as it'll report only last value
  */
-    InteractionNextPaint = 37
+    InteractionNextPaint = 37,
+    HistoryClear = 38
 }
 
 export const enum Dimension {

@@ -14,6 +14,7 @@ import * as summary from "@src/data/summary";
 import * as internal from "@src/diagnostic/internal";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
+import * as metric from "@src/data/metric";
 import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
@@ -195,8 +196,25 @@ async function process(): Promise<void> {
   if (Object.keys(throttledMutations).length === 0 && processedMutations) {
     await encode(Event.Mutation, timer, time());
   }
+
+  cleanHistory();
   
   task.stop(timer);
+}
+
+function cleanHistory(): void {
+  let now = time();
+  if (Object.keys(history).length > Setting.MaxMutationHistoryCount) { 
+    history = {};
+    metric.count(Metric.HistoryClear);
+  }
+
+  for (let key of Object.keys(history)) {
+    let h = history[key];
+    if (now > h[1] + Setting.MaxMutationHistoryTime) {
+      delete history[key];
+    }
+  }
 }
 
 function track(m: MutationRecord, timer: Timer, instance: number, timestamp: number): string {
