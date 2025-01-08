@@ -138,6 +138,7 @@ export interface Config {
     conversions?: boolean;
     longTask?: number;
     includeSubdomains?: boolean;
+    throttleMutations?: boolean;
 }
 
 export const enum Constant {
