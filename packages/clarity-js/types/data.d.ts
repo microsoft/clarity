@@ -71,6 +71,7 @@ export const enum Event {
     Animation = 44,
     StyleSheetAdoption = 45,
     StyleSheetUpdate = 46,
+    LayoutHash = 47,
 
     // Apps specific events
     WebViewDiscover = 100,

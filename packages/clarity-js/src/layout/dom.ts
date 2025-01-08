@@ -8,6 +8,8 @@ import { shortid } from "@src/data/metadata";
 import * as internal from "@src/diagnostic/internal";
 import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
+import * as layouthash from "@src/layout/layouthash";
+
 let index: number = 1;
 let nodesMap: Map<Number, Node> = null; // Maps id => node to retrieve further node details using id.
 let values: NodeValue[] = [];
@@ -86,8 +88,13 @@ export function getId(node: Node, autogen: boolean = false): number {
 }
 
 export function add(node: Node, parent: Node, data: NodeInfo, source: Source): void {
-    let id = getId(node, true);
+    // Do not add detached nodes
     let parentId = parent ? getId(parent) : null;
+    if (!parent || !parentId && (node as HTMLElement).shadowRoot == null) {
+        return;
+    }
+    
+    let id = getId(node, true);
     let previousId = getPreviousId(node);
     let parentValue: NodeValue = null;
     let regionId = region.exists(node) ? id : null;
@@ -124,6 +131,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     updateSelector(values[id]);
     updateImageSize(values[id]);
     track(id, source);
+    layouthash.trackNode(values[id], node);
 }
 
 export function update(node: Node, parent: Node, data: NodeInfo, source: Source): void {
@@ -154,9 +162,6 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
                 values[parentId].children.splice(childIndex, 0, id);
                 // Update region after the move
                 value.region = region.exists(node) ? id : values[parentId].region;
-            } else {
-                // Mark this element as deleted if the parent has been updated to null
-                remove(id, source);
             }
 
             // Remove reference to this node from the old parent
@@ -167,6 +172,11 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
                 }
             }
             parentChanged = true;
+        }
+
+        // Mark this element as deleted if the parent has been updated to null
+        if (parentId === null) {
+            remove(id, source);
         }
 
         // Update data
@@ -219,8 +229,8 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             let meta: string = Constant.Empty;
             const excludedPrivacyAttributes = [Constant.Class, Constant.Style]
             Object.keys(attributes)
-              .filter((x) => !excludedPrivacyAttributes.includes(x as Constant))
-              .forEach((x) => (meta += attributes[x].toLowerCase()));
+                .filter((x) => !excludedPrivacyAttributes.includes(x as Constant))
+                .forEach((x) => (meta += attributes[x].toLowerCase()));
             let exclude = maskExclude.some((x) => meta.indexOf(x) >= 0);
             // Regardless of privacy mode, always mask off user input from input boxes or drop downs with two exceptions:
             // (1) The node is detected to be one of the excluded fields, in which case we drop everything
@@ -254,10 +264,10 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             break;
         case tag === Constant.ImageTag:
             // Mask images with blob src as it is not publicly available anyway.
-            if(attributes.src?.startsWith('blob:')){
+            if (attributes.src?.startsWith('blob:')) {
                 metadata.privacy = Privacy.TextImage;
             }
-        break;
+            break;
     }
 }
 
@@ -356,12 +366,13 @@ function remove(id: number, source: Source): void {
 function removeNodeFromNodesMap(id: number) {
     // Shadow dom roots shouldn't be deleted, 
     // we should keep listening to the mutations there even they're not rendered in the DOM.
-    if(nodesMap.get(id).nodeType === Node.DOCUMENT_FRAGMENT_NODE){
+    if (nodesMap.get(id).nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
         return;
     }
     nodesMap.delete(id);
 
     let value = id in values ? values[id] : null;
+    layouthash.untrackNode(value);
     if (value && value.children) {
         for (let childId of value.children) {
             removeNodeFromNodesMap(childId);
@@ -371,17 +382,17 @@ function removeNodeFromNodesMap(id: number) {
 
 function updateImageSize(value: NodeValue): void {
     // If this element is a image node, and is masked, then track box model for the current element
-    if (value.data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { 
+    if (value.data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) {
         let img = getNode(value.id) as HTMLImageElement;
         // We will not capture the natural image dimensions until it loads. 
-        if(img && (!img.complete || img.naturalWidth === 0)){
+        if (img && (!img.complete || img.naturalWidth === 0)) {
             // This will trigger mutation to update the original width and height after image loads.
             bind(img, 'load', () => {
                 img.setAttribute('data-clarity-loaded', `${shortid()}`);
             })
         }
         value.metadata.size = [];
-     }
+    }
 }
 
 function getPreviousId(node: Node): number {

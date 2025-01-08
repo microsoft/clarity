@@ -19,13 +19,14 @@ import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
 import processNode from "./node";
 import config from "@src/core/config";
+import * as layouthash from "./layouthash";
 
 let observers: MutationObserver[] = [];
 let mutations: MutationQueue[] = [];
 let throttledMutations: { [key: number]: MutationRecordWithTime } = {};
 let insertRule: (rule: string, index?: number) => number = null;
 let deleteRule: (index?: number) => void = null;
-let attachShadow: (init: ShadowRootInit)  => ShadowRoot = null;
+let attachShadow: (init: ShadowRootInit) => ShadowRoot = null;
 let mediaInsertRule: (rule: string, index?: number) => number = null;
 let mediaDeleteRule: (index?: number) => void = null;
 let queue: Node[] = [];
@@ -35,73 +36,86 @@ let activePeriod = null;
 let history: MutationHistory = {};
 
 export function start(): void {
-    observers = [];
-    queue = [];
-    timeout = null;
-    activePeriod = 0;
-    history = {};
+  observers = [];
+  queue = [];
+  timeout = null;
+  activePeriod = 0;
+  history = {};
 
-    // Some popular open source libraries, like styled-components, optimize performance
-    // by injecting CSS using insertRule API vs. appending text node. A side effect of
-    // using javascript API is that it doesn't trigger DOM mutation and therefore we
-    // need to override the insertRule API and listen for changes manually.
-    if (insertRule === null) { 
-      insertRule = CSSStyleSheet.prototype.insertRule; 
-      CSSStyleSheet.prototype.insertRule = function(): number {
-        if (core.active()) { schedule(this.ownerNode); }
-        return insertRule.apply(this, arguments);
-      };
-    }
+  // Some popular open source libraries, like styled-components, optimize performance
+  // by injecting CSS using insertRule API vs. appending text node. A side effect of
+  // using javascript API is that it doesn't trigger DOM mutation and therefore we
+  // need to override the insertRule API and listen for changes manually.
+  if (insertRule === null) {
+    insertRule = CSSStyleSheet.prototype.insertRule;
+    CSSStyleSheet.prototype.insertRule = function (): number {
+      if (core.active()) { schedule(this.ownerNode); }
+      return insertRule.apply(this, arguments);
+    };
+  }
 
-    if ("CSSMediaRule" in window && mediaInsertRule === null) { 
-      mediaInsertRule = CSSMediaRule.prototype.insertRule; 
-      CSSMediaRule.prototype.insertRule = function(): number {
-        if (core.active()) { schedule(this.parentStyleSheet.ownerNode); }
-        return mediaInsertRule.apply(this, arguments);
-      };
-    }
+  if ("CSSMediaRule" in window && mediaInsertRule === null) {
+    mediaInsertRule = CSSMediaRule.prototype.insertRule;
+    CSSMediaRule.prototype.insertRule = function (): number {
+      if (core.active()) { schedule(this.parentStyleSheet.ownerNode); }
+      return mediaInsertRule.apply(this, arguments);
+    };
+  }
 
-    if (deleteRule === null) { 
-      deleteRule = CSSStyleSheet.prototype.deleteRule;
-      CSSStyleSheet.prototype.deleteRule = function(): void {
-        if (core.active()) { schedule(this.ownerNode); }
-        return deleteRule.apply(this, arguments);
-      };
-    }
+  if (deleteRule === null) {
+    deleteRule = CSSStyleSheet.prototype.deleteRule;
+    CSSStyleSheet.prototype.deleteRule = function (): void {
+      if (core.active()) { schedule(this.ownerNode); }
+      return deleteRule.apply(this, arguments);
+    };
+  }
 
-    if ("CSSMediaRule" in window && mediaDeleteRule === null) { 
-      mediaDeleteRule = CSSMediaRule.prototype.deleteRule;
-      CSSMediaRule.prototype.deleteRule = function(): void {
-        if (core.active()) { schedule(this.parentStyleSheet.ownerNode); }
-        return mediaDeleteRule.apply(this, arguments);
-      };
-    }
+  if ("CSSMediaRule" in window && mediaDeleteRule === null) {
+    mediaDeleteRule = CSSMediaRule.prototype.deleteRule;
+    CSSMediaRule.prototype.deleteRule = function (): void {
+      if (core.active()) { schedule(this.parentStyleSheet.ownerNode); }
+      return mediaDeleteRule.apply(this, arguments);
+    };
+  }
 
-   // Add a hook to attachShadow API calls
-   // In case we are unable to add a hook and browser throws an exception,
-   // reset attachShadow variable and resume processing like before
-   if (attachShadow === null) { 
-     attachShadow = Element.prototype.attachShadow;    
-     try {
-       Element.prototype.attachShadow = function (): ShadowRoot {
-         if (core.active()) { return schedule(attachShadow.apply(this, arguments)) as ShadowRoot; }
-         else { return attachShadow.apply(this, arguments)}   
-       }
-     } catch { attachShadow = null; }
-  } 
+  // Add a hook to attachShadow API calls
+  // In case we are unable to add a hook and browser throws an exception,
+  // reset attachShadow variable and resume processing like before
+  if (attachShadow === null) {
+    attachShadow = Element.prototype.attachShadow;
+    try {
+      Element.prototype.attachShadow = function (): ShadowRoot {
+        if (core.active()) { return schedule(attachShadow.apply(this, arguments)) as ShadowRoot; }
+        else { return attachShadow.apply(this, arguments) }
+      }
+    } catch { attachShadow = null; }
+  }
 }
 start.dn = FunctionNames.MutationStart;
 
 export function observe(node: Node): void {
+  const observerConfig = {
+    // Applies observation to descendants of node as well. Must be true.
+    subtree: true,
+    // Applies observation to changes in properties
+    attributes: true,
+    // Applies observation to additions/removals of children
+    childList: true,
+    // Applies observation to changes in inner text
+    characterData: true,
+    // Keeps track of the old value of the attribute
+    attributeOldValue: true,
+  };
+
   // Create a new observer for every time a new DOM tree (e.g. root document or shadowdom root) is discovered on the page
   // In the case of shadow dom, any mutations that happen within the shadow dom are not bubbled up to the host document
   // For this reason, we need to wire up mutations every time we see a new shadow dom.
   // Also, wrap it inside a try / catch. In certain browsers (e.g. legacy Edge), observer on shadow dom can throw errors
   try {
     let m = api(Constant.MutationObserver);
-    let observer =  m in window ? new window[m](measure(handle) as MutationCallback) : null;
+    let observer = m in window ? new window[m](measure(handle) as MutationCallback) : null;
     if (observer) {
-      observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
+      observer.observe(node, observerConfig);
       observers.push(observer);
     }
   } catch (e) { internal.log(Code.MutationObserver, Severity.Info, e ? e.name : null); }
@@ -135,10 +149,10 @@ function handle(m: MutationRecord[]): void {
   // Queue up mutation records for asynchronous processing
   let now = time();
   summary.track(Event.Mutation, now);
-  mutations.push({ time: now, mutations: m});
+  mutations.push({ time: now, mutations: m });
   task.schedule(process, Priority.High).then((): void => {
-      setTimeout(doc.compute)
-      measure(region.compute)();
+    setTimeout(doc.compute)
+    measure(region.compute)();
   });
 }
 handle.dn = FunctionNames.MutationHandle;
@@ -146,18 +160,18 @@ handle.dn = FunctionNames.MutationHandle;
 async function processMutation(timer: Timer, mutation: MutationRecord, instance: number, timestamp: number): Promise<void> {
   let state = task.state(timer);
   if (state === Task.Wait) { state = await task.suspend(timer); }
-  if (state === Task.Stop) { return; }      
+  if (state === Task.Stop) { return; }
   let target = mutation.target;
   let type = config.throttleDom ? track(mutation, timer, instance, timestamp) : mutation.type;
   if (type && target && target.ownerDocument) { dom.parse(target.ownerDocument); }
   if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) { dom.parse(target as ShadowRoot); }
   switch (type) {
     case Constant.Attributes:
-        processNode(target, Source.Attributes, timestamp);
-        break;
+      processNode(target, Source.Attributes, timestamp);
+      break;
     case Constant.CharacterData:
-        processNode(target, Source.CharacterData, timestamp);
-        break;
+      processNode(target, Source.CharacterData, timestamp);
+      break;
     case Constant.ChildList:
       processNodeList(mutation.addedNodes, Source.ChildListAdd, timer, timestamp);
       processNodeList(mutation.removedNodes, Source.ChildListRemove, timer, timestamp);
@@ -166,7 +180,10 @@ async function processMutation(timer: Timer, mutation: MutationRecord, instance:
     default:
       break;
   }
+
+  layouthash.trackMutation(mutation);
 }
+
 async function process(): Promise<void> {
   let timer: Timer = { id: id(), cost: Metric.LayoutCost };
   task.start(timer);
@@ -195,7 +212,7 @@ async function process(): Promise<void> {
   if (Object.keys(throttledMutations).length === 0 && processedMutations) {
     await encode(Event.Mutation, timer, time());
   }
-  
+
   task.stop(timer);
 }
 
@@ -229,8 +246,8 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
         return m.type;
       }
       // we only store the most recent mutation for a given key if it is being throttled
-      throttledMutations[key] = {mutation: m, timestamp};
-      return Constant.Throttle; 
+      throttledMutations[key] = { mutation: m, timestamp };
+      return Constant.Throttle;
     }
   }
   return m.type;

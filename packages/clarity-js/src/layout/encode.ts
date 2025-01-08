@@ -14,6 +14,7 @@ import * as dom from "@src/layout/dom";
 import * as region from "@src/layout/region";
 import * as style from "@src/layout/style";
 import * as animation from "@src/layout/animation";
+import * as layoutHash from "@src/layout/layouthash";
 
 export default async function (type: Event, timer: Timer = null, ts: number = null): Promise<void> {
     let eventTime = ts || time()
@@ -116,6 +117,15 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 }
                 if (type === Event.Mutation) { baseline.activity(eventTime); }
                 queue(tokenize(tokens), !config.lean);
+
+                // Queue layout hashes event with every mutation event
+                let layoutTokens: Token[] = [eventTime, Event.LayoutHash];
+                const hashes = layoutHash.getCurrentHashes();
+                layoutTokens.push(hashes.styleHash);
+                layoutTokens.push(hashes.layoutHash);
+                layoutTokens.push(hashes.alphaHash);
+                layoutTokens.push(hashes.betaHash);
+                queue(layoutTokens);
             }
             break;
     }

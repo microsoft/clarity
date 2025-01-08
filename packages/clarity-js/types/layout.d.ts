@@ -270,3 +270,10 @@ export interface StyleSheetData {
     cssRules?: string;
     newIds?: string[]
 }
+
+export interface LayoutHash {
+    styleHash: number;
+    layoutHash: number;
+    alphaHash: number;
+    betaHash: number;
+}
