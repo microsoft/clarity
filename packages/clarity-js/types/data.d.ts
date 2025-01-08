@@ -389,6 +389,7 @@ export interface Envelope extends Metadata {
     version: string;
     upload: Upload;
     end: BooleanFlag;
+    url: string;
 }
 
 export interface Transit {

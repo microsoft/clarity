@@ -109,9 +109,6 @@ async function upload(final: boolean = false): Promise<void> {
     let sendPlaybackBytes = config.lean === false && playbackBytes > 0 && (playbackBytes < Setting.MaxFirstPayloadBytes || envelope.data.sequence > 0);
     if (sendPlaybackBytes) { metric.max(Metric.Playback, BooleanFlag.True); }
 
-    // Set metadata values that need to be uploaded with every the payload
-    metadata.recurringMetadata();
-
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
     region.compute();
