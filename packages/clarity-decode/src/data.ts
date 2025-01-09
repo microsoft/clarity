@@ -103,6 +103,7 @@ export function envelope(tokens: Data.Token[]): Data.Envelope {
         pageNum: tokens[7] as number,
         upload: tokens[8] as Data.Upload,
         end: tokens[9] as Data.BooleanFlag,
-        url: tokens[10] as string
+        applicationPlatform: tokens[10] as Data.ApplicationPlatform,
+        url: tokens[11] as string
     };
 }
