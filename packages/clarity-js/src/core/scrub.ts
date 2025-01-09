@@ -4,7 +4,7 @@ import * as Layout from "@clarity-types/layout";
 import config from "@src/core/config";
 
 const catchallRegex = /\S/gi;
-const maxUrlLength = 100; // this is an arbitrary number to truncate URLs sent with every payload, can be changed later
+const maxUrlLength = 255;
 let unicodeRegex = true;
 let digitRegex = null;
 let letterRegex = null;
