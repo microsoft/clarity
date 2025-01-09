@@ -12,6 +12,8 @@ export interface MetadataCallbackOptions {
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
+export const WebApp = 0;
+
 /* Enum */
 export const enum Event {
     /* Data */
@@ -346,6 +348,7 @@ export const enum XMLReadyState {
     Done = 4
 }
 
+
 /* Helper Interfaces */
 
 export interface Payload {
@@ -390,6 +393,7 @@ export interface Envelope extends Metadata {
     version: string;
     upload: Upload;
     end: BooleanFlag;
+    applicationPlatform: number;
     url: string;
 }
 
