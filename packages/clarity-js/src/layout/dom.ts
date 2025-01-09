@@ -86,8 +86,14 @@ export function getId(node: Node, autogen: boolean = false): number {
 }
 
 export function add(node: Node, parent: Node, data: NodeInfo, source: Source): void {
-    let id = getId(node, true);
     let parentId = parent ? getId(parent) : null;
+
+    // Do not add detached nodes
+    if ((!parent || !parentId) && (node as ShadowRoot).host == null) {
+        return;
+    }
+
+    let id = getId(node, true);
     let previousId = getPreviousId(node);
     let parentValue: NodeValue = null;
     let regionId = region.exists(node) ? id : null;
