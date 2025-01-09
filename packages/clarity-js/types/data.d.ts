@@ -12,6 +12,8 @@ export interface MetadataCallbackOptions {
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
+export const WebApp = 0;
+
 /* Enum */
 export const enum Event {
     /* Data */
