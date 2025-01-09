@@ -88,12 +88,13 @@ export function getId(node: Node, autogen: boolean = false): number {
 }
 
 export function add(node: Node, parent: Node, data: NodeInfo, source: Source): void {
-    // Do not add detached nodes
     let parentId = parent ? getId(parent) : null;
-    if (!parent || !parentId && (node as HTMLElement).shadowRoot == null) {
+
+    // Do not add detached nodes
+    if ((!parent || !parentId) && (node as ShadowRoot).host == null) {
         return;
     }
-    
+
     let id = getId(node, true);
     let previousId = getPreviousId(node);
     let parentValue: NodeValue = null;
@@ -162,7 +163,11 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
                 values[parentId].children.splice(childIndex, 0, id);
                 // Update region after the move
                 value.region = region.exists(node) ? id : values[parentId].region;
+            } else {
+                // Mark this element as deleted if the parent has been updated to null
+                remove(id, source);
             }
+
 
             // Remove reference to this node from the old parent
             if (oldParentId !== null && oldParentId >= 0) {
@@ -172,11 +177,6 @@ export function update(node: Node, parent: Node, data: NodeInfo, source: Source)
                 }
             }
             parentChanged = true;
-        }
-
-        // Mark this element as deleted if the parent has been updated to null
-        if (parentId === null) {
-            remove(id, source);
         }
 
         // Update data

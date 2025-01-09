@@ -11,6 +11,14 @@ let alphaHashesMap = new Map();
 let betaHashesMap = new Map();
 let hiddenNodeList = new Set();
 
+export function start(): void {
+    reset();
+}
+
+export function stop(): void {
+    reset();
+}
+
 export function trackMutation(mutation: MutationRecord): void {
     // Only listen to attribute mutations
     if (mutation.type === "attributes") {
@@ -149,6 +157,14 @@ function layoutHash(node: Node, id: number): void {
 
         hiddenNodeList.delete(id);
     }
+}
+
+function reset(): void {
+    styleHashesMap = new Map();
+    layoutHashesMap = new Map();
+    alphaHashesMap = new Map();
+    betaHashesMap = new Map();
+    hiddenNodeList = new Set();
 }
 
 // Public domain 53 bit hash function

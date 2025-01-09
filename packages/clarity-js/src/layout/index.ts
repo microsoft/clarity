@@ -2,6 +2,7 @@ import { FunctionNames } from "@clarity-types/performance";
 import * as discover from "@src/layout/discover";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
+import * as layoutHash from "@src/layout/layouthash";
 import * as mutation from "@src/layout/mutation";
 import * as region from "@src/layout/region";
 import * as style from "@src/layout/style";
@@ -17,6 +18,7 @@ export function start(): void {
     doc.start();
     region.start();
     dom.start();
+    layoutHash.start();
     if (config.delayDom) {
         // Lazy load layout module as part of page load time performance improvements experiment 
         bind(window, 'load', () => {
@@ -38,4 +40,5 @@ export function stop(): void {
     doc.stop();
     style.stop();
     animation.stop();
+    layoutHash.stop();
 }
