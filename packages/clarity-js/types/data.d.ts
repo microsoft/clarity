@@ -211,12 +211,6 @@ export const enum Upload {
     Beacon = 1
 }
 
-export const enum ApplicationPlatform {
-    WebApp = 0,
-    AndroidApp = 1,
-    IOSApp = 2
-}
-
 export const enum BooleanFlag {
     False = 0,
     True = 1
@@ -397,7 +391,7 @@ export interface Envelope extends Metadata {
     version: string;
     upload: Upload;
     end: BooleanFlag;
-    applicationPlatform: ApplicationPlatform;
+    applicationPlatform: number;
     url: string;
 }
 
