@@ -51,7 +51,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
             case Event.Discover:
                 discoverBytes += event.length;
             case Event.Box:
-            case Event.Mutation:                
+            case Event.Mutation:
             case Event.Snapshot:
             case Event.StyleSheetAdoption:
             case Event.StyleSheetUpdate:
@@ -241,7 +241,7 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
 
 function done(sequence: number): void {
     // If we everything went successfully, and it is the first sequence, save this session for future reference
-    if (sequence === 1) { 
+    if (sequence === 1) {
         metadata.save();
         metadata.callback();
     }

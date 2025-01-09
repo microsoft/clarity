@@ -4,6 +4,7 @@ import * as Layout from "@clarity-types/layout";
 import config from "@src/core/config";
 
 const catchallRegex = /\S/gi;
+const maxUrlLength = 255;
 let unicodeRegex = true;
 let digitRegex = null;
 let letterRegex = null;
@@ -87,17 +88,24 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
     return value;
 }
 
-export function url(input: string, electron: boolean = false): string {
+export function url(input: string, electron: boolean = false, truncate: boolean = false): string {
+    let result = input;
     // Replace the URL for Electron apps so we don't send back file:/// URL
-    if (electron) { return `${Data.Constant.HTTPS}${Data.Constant.Electron}`; }
-
-    let drop = config.drop;
-    if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
-      let [path, query] = input.split("?");
-      let swap = Data.Constant.Dropped;
-      return path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
+    if (electron) {
+        result = `${Data.Constant.HTTPS}${Data.Constant.Electron}`;
+    } else {
+        let drop = config.drop;
+        if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
+            let [path, query] = input.split("?");
+            let swap = Data.Constant.Dropped;
+            result = path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
+        }
     }
-    return input;
+
+    if (truncate) {
+        result = result.substring(0, maxUrlLength);
+    }
+    return result;
 }
 
 function mangleText(value: string): string {
@@ -111,7 +119,7 @@ function mangleText(value: string): string {
     }
     return value;
 }
- 
+
 function mask(value: string): string {
     return value.replace(catchallRegex, Data.Constant.Mask);
 }
@@ -149,7 +157,7 @@ function redact(value: string): string {
     let hasEmail = false;
     let hasWhitespace = false;
     let array = null;
-    
+
     regex(); // Initialize regular expressions
 
     for (let i = 0; i < value.length; i++) {
