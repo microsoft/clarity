@@ -34,6 +34,7 @@ let timeout: number = null;
 let throttleDelay: number = null;
 let activePeriod = null;
 let history: MutationHistory = {};
+let criticalPeriod = null;
 
 export function start(): void {
     observers = [];
@@ -41,6 +42,7 @@ export function start(): void {
     timeout = null;
     activePeriod = 0;
     history = {};
+    criticalPeriod = 0;
 
     // Some popular open source libraries, like styled-components, optimize performance
     // by injecting CSS using insertRule API vs. appending text node. A side effect of
@@ -126,10 +128,12 @@ export function stop(): void {
   queue = [];
   activePeriod = 0;
   timeout = null;
+  criticalPeriod = 0;
 }
 
 export function active(): void {
   activePeriod = time() + Setting.MutationActivePeriod;
+  criticalPeriod = time() + Setting.INPCriticalPeriod;
 }
 
 function handle(m: MutationRecord[]): void {
@@ -223,9 +227,13 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
   if (value && value.data.tag !== Constant.HTML) {
     // calculate inactive period based on the timestamp of the mutation not when the mutation is processed
     let inactive = timestamp > activePeriod;
+    // Calculate critical period based on when mutation is processed
+    const critical = instance < criticalPeriod;
     let target = dom.get(m.target);
     let element = target && target.selector ? target.selector.join() : m.target.nodeName;
     let parent = value.selector ? value.selector.join() : Constant.Empty;
+    // Check if its a low priority (e.g., ads related) element mutation happening during critical period
+    const lowPriMutation = config.throttleMutations && critical && element.indexOf("adthrive-ad") !== -1;
     // We use selector, instead of id, to determine the key (signature for the mutation) because in some cases
     // repeated mutations can cause elements to be destroyed and then recreated as new DOM nodes
     // In those cases, IDs will change however the selector (which is relative to DOM xPath) remains the same
@@ -235,11 +243,14 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
     let h = history[key];
     // Lookup any pending nodes queued up for removal, and process them now if we suspended a mutation before
     if (inactive === false && h[0] >= Setting.MutationSuspendThreshold) { processNodeList(h[2], Source.ChildListRemove, timer, timestamp); }
-    // Update the counter
-    h[0] = inactive ? (h[1] === instance ? h[0] : h[0] + 1) : 1;
+    
+    // Update the counter, do not reset counter if its critical period
+    h[0] = inactive || lowPriMutation ? (h[1] === instance ? h[0] : h[0] + 1) : 1;
     h[1] = instance;
-    // Return updated mutation type based on if we have already hit the threshold or not
-    if (h[0] >= Setting.MutationSuspendThreshold) {
+    // Return updated mutation type based on,
+    // 1. if we have already hit the threshold or not
+    // 2. if its a low priority mutation happening during critical time period
+    if (h[0] >= Setting.MutationSuspendThreshold || lowPriMutation) {
       // Store a reference to removedNodes so we can process them later
       // when we resume mutations again on user interactions
       h[2] = m.removedNodes;
@@ -263,13 +274,14 @@ function names(nodes: NodeList): string {
 async function processNodeList(list: NodeList, source: Source, timer: Timer, timestamp: number): Promise<void> {
   let length = list ? list.length : 0;
   for (let i = 0; i < length; i++) {
+    const node = list[i];
     if (source === Source.ChildListAdd) {
-      traverse(list[i], timer, source, timestamp);
+      traverse(node, timer, source, timestamp);
     } else {
       let state = task.state(timer);
       if (state === Task.Wait) { state = await task.suspend(timer); }
       if (state === Task.Stop) { break; }
-      processNode(list[i], source, timestamp);
+      processNode(node, source, timestamp);
     }
   }
 }

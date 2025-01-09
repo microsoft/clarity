@@ -24,6 +24,7 @@ let config: Config = {
     conversions: false,
     longTask: 30,
     includeSubdomains: true,
+    throttleMutations: false,
 };
 
 export default config;
