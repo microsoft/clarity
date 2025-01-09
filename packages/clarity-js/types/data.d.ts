@@ -12,8 +12,6 @@ export interface MetadataCallbackOptions {
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
-export const WebApp = 0;
-
 /* Enum */
 export const enum Event {
     /* Data */
@@ -47,22 +45,22 @@ export const enum Event {
     Input = 27,
     Visibility = 28,
     Navigation = 29,
-/**
- * @deprecated No longer support Network Connection
- */
+    /**
+     * @deprecated No longer support Network Connection
+     */
     Connection = 30,
     ScriptError = 31,
-/**
- * @deprecated No longer support Image Error
- */
+    /**
+     * @deprecated No longer support Image Error
+     */
     ImageError = 32,
     Log = 33,
     Variable = 34,
     Limit = 35,
     Summary = 36,
-/**
- * @deprecated No longer support Box event
- */
+    /**
+     * @deprecated No longer support Box event
+     */
     Box = 37,
     Clipboard = 38,
     Submit = 39,
@@ -116,9 +114,9 @@ export const enum Metric {
     Mobile = 27,
     UploadTime = 28,
     SinglePage = 29,
-/**
- * @deprecated Browser API is deprecated. Reference: https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory
- */
+    /**
+     * @deprecated Browser API is deprecated. Reference: https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory
+     */
     UsedMemory = 30,
     Iframed = 31,
     MaxTouchPoints = 32,
@@ -126,9 +124,9 @@ export const enum Metric {
     DeviceMemory = 34,
     Electron = 35,
     ConstructedStyles = 36,
-/**
- * @deprecated Move it to dimension as it'll report only last value
- */
+    /**
+     * @deprecated Move it to dimension as it'll report only last value
+     */
     InteractionNextPaint = 37,
     HistoryClear = 38
 }
@@ -193,9 +191,9 @@ export const enum Code {
     CallStackDepth = 4,
     Selector = 5,
     Metric = 6,
-/**
- * @deprecated No longer support ContentSecurityPolicy
- */
+    /**
+     * @deprecated No longer support ContentSecurityPolicy
+     */
     ContentSecurityPolicy = 7,
     Config = 8,
     FunctionExecutionTime = 9
@@ -268,6 +266,10 @@ export const enum Character {
     Tab = 9,
     NewLine = 10,
     Return = 13
+}
+
+export const enum ApplicationPlatform {
+    WebApp = 0
 }
 
 export const enum Constant {
@@ -470,7 +472,7 @@ export interface UpgradeData {
 }
 
 export interface ExtractData {
-    [key: number]: { [subkey : number]: string }; // Array of { subkey: number } representing the extracted data
+    [key: number]: { [subkey: number]: string }; // Array of { subkey: number } representing the extracted data
 }
 
 export interface UploadData {
@@ -488,6 +490,7 @@ export interface PerformanceEventTiming extends PerformanceEntry {
     duration: DOMHighResTimeStamp;
     interactionId: number;
 }
+
 export interface Interaction {
     id: number;
     latency: number;
