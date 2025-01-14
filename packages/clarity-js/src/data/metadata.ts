@@ -8,7 +8,8 @@ import * as scrub from "@src/core/scrub";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
-import * as trackConsent from "@src/data/consent";
+import * as trackConsent from "@src/data/track-consent";
+import * as tcf from "@src/data/tcf";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
@@ -76,7 +77,17 @@ export function start(): void {
   }
 
   // Track consent config
-  trackConsent.config(config.track);
+  if (tcf.isSupported()) {
+    tcf.readTcfConsent();
+    if (tcf.hasCachedConsent()) {
+      let [consent, tcfString, gdprApplies] = tcf.getCachedConsent();
+      trackConsent.fromTcf(consent, tcfString, gdprApplies);
+    } else {
+      trackConsent.fromConfig(config.track);
+    }
+  } else {
+    trackConsent.fromConfig(config.track);
+  }
 
   // Track ids using a cookie if configuration allows it
   track(u);
@@ -121,7 +132,7 @@ export function id(): string {
   return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
 }
 
-export function consent(status: boolean = true): void {
+export function consent(status: boolean = true, fromApi: boolean = true): void {
   if (!status) {
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
@@ -135,7 +146,10 @@ export function consent(status: boolean = true): void {
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    trackConsent.consent();
+
+    if (fromApi) {
+      trackConsent.fromConsentApi();
+    }
   }
 }
 
