@@ -89,8 +89,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
     let parentId = parent ? getId(parent) : null;
 
     // Do not add detached nodes
-    if ((!parent || !parentId) && (node as ShadowRoot).host == null &&
-    node.nodeType !== Node.DOCUMENT_TYPE_NODE) {
+    if ((!parent || !parentId) && (node as ShadowRoot).host == null && node.nodeType !== Node.DOCUMENT_TYPE_NODE) {
         return;
     }
 
