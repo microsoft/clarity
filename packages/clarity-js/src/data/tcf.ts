@@ -35,7 +35,7 @@ export function readTcfConsent(): void {
 }
 
 export function hasCachedConsent(): boolean {
-    return tcfConsentRead;
+    return tcfConsentRead && tcfConsent !== null && tcfString !== null && gdprApplies !== null;
 }
 
 export function getCachedConsent(): [consent: boolean, tcfString: string, gdprApplies: boolean] {
