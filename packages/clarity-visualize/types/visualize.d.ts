@@ -191,7 +191,9 @@ export const enum Constant {
     InputTag = "input",
     AutoComplete = "autocomplete",
     NewPassword = "new-password",
-    StyleSheet = "stylesheet"
+    StyleSheet = "stylesheet",
+    OriginalBackgroundColor = "data-clarity-background-color",
+    OriginalOpacity = "data-clarity-opacity"
 }
 
 export const enum Setting {
