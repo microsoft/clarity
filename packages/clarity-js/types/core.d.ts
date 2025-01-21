@@ -139,7 +139,9 @@ export interface Config {
     longTask?: number;
     includeSubdomains?: boolean;
     throttleMutations?: boolean;
-    inpCriticalPeriod?: number;
+    dropMutations?: boolean;
+    criticalMs?: number;
+    discard?: string[];
 }
 
 export const enum Constant {

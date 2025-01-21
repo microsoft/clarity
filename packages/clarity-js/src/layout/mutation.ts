@@ -133,7 +133,7 @@ export function stop(): void {
 
 export function active(): void {
   activePeriod = time() + Setting.MutationActivePeriod;
-  criticalPeriod = time() + config.inpCriticalPeriod;
+  criticalPeriod = time() + config.criticalMs;
 }
 
 function handle(m: MutationRecord[]): void {
@@ -233,7 +233,9 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
     let element = target && target.selector ? target.selector.join() : m.target.nodeName;
     let parent = value.selector ? value.selector.join() : Constant.Empty;
     // Check if its a low priority (e.g., ads related) element mutation happening during critical period
-    const lowPriMutation = config.throttleMutations && critical && element.indexOf("adthrive-ad") !== -1;
+    const lowPriMutation =
+      config.throttleMutations && critical &&
+      (config.discard.length === 0 || config.discard.some((key) => element.includes(key)));
     // We use selector, instead of id, to determine the key (signature for the mutation) because in some cases
     // repeated mutations can cause elements to be destroyed and then recreated as new DOM nodes
     // In those cases, IDs will change however the selector (which is relative to DOM xPath) remains the same
@@ -257,8 +259,10 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
       if (instance > timestamp + Setting.MutationActivePeriod) {
         return m.type;
       }
-      // we only store the most recent mutation for a given key if it is being throttled
-      throttledMutations[key] = {mutation: m, timestamp};
+      if (!config.dropMutations) {
+        // we only store the most recent mutation for a given key if it is being throttled
+        throttledMutations[key] = {mutation: m, timestamp};
+      }
       return Constant.Throttle; 
     }
   }
