@@ -22,7 +22,6 @@ let config: Config = {
     delayDom: false,
     throttleDom: true,
     conversions: false,
-    longTask: 30,
     includeSubdomains: true,
     throttleMutations: false,
     dropMutations: false,
