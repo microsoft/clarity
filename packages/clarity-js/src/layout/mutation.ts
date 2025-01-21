@@ -133,7 +133,7 @@ export function stop(): void {
 
 export function active(): void {
   activePeriod = time() + Setting.MutationActivePeriod;
-  criticalPeriod = time() + Setting.INPCriticalPeriod;
+  criticalPeriod = time() + config.inpCriticalPeriod;
 }
 
 function handle(m: MutationRecord[]): void {

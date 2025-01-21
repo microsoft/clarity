@@ -25,6 +25,7 @@ let config: Config = {
     longTask: 30,
     includeSubdomains: true,
     throttleMutations: false,
+    inpCriticalPeriod: 200,
 };
 
 export default config;
