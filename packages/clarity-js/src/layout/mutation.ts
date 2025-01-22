@@ -233,6 +233,7 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
     let element = target && target.selector ? target.selector.join() : m.target.nodeName;
     let parent = value.selector ? value.selector.join() : Constant.Empty;
     // Check if its a low priority (e.g., ads related) element mutation happening during critical period
+    // If the discard list is empty, we discard all mutations during critical period
     const lowPriMutation =
       config.throttleMutations && critical &&
       (config.discard.length === 0 || config.discard.some((key) => element.includes(key)));
