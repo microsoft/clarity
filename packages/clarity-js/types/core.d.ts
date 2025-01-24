@@ -136,9 +136,11 @@ export interface Config {
     delayDom?: boolean;
     throttleDom?: boolean;
     conversions?: boolean;
-    longTask?: number;
     includeSubdomains?: boolean;
     throttleMutations?: boolean;
+    dropMutations?: boolean;
+    criticalMs?: number;
+    discard?: string[];
 }
 
 export const enum Constant {
