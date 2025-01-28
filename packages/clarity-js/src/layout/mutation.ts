@@ -179,7 +179,7 @@ async function process(): Promise<void> {
     let record = mutations.shift();
     let instance = time();
     for (let mutation of record.mutations) {
-      processMutation(timer, mutation, instance, record.time)
+      await processMutation(timer, mutation, instance, record.time)
     }
     await encode(Event.Mutation, timer, record.time);
   }
@@ -188,7 +188,7 @@ async function process(): Promise<void> {
   for (var key of Object.keys(throttledMutations)) {
     let throttledMutationToProcess: MutationRecordWithTime = throttledMutations[key];
     delete throttledMutations[key];
-    processMutation(timer, throttledMutationToProcess.mutation, time(), throttledMutationToProcess.timestamp);
+    await processMutation(timer, throttledMutationToProcess.mutation, time(), throttledMutationToProcess.timestamp);
     processedMutations = true;
   }
 
