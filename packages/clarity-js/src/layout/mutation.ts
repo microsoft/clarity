@@ -140,7 +140,7 @@ function handle(m: MutationRecord[]): void {
   // Queue up mutation records for asynchronous processing
   let now = time();
   summary.track(Event.Mutation, now);
-  mutations.push({ time: now, mutations: m});
+  mutations.push({ time: now, mutations: m}); 
   task.schedule(process, Priority.High).then((): void => {
       setTimeout(doc.compute)
       measure(region.compute)();
@@ -160,7 +160,7 @@ async function processMutation(timer: Timer, mutation: MutationRecord, instance:
     case Constant.Attributes:
         processNode(target, Source.Attributes, timestamp);
         break;
-    case Constant.CharacterData:
+  case Constant.CharacterData:
         processNode(target, Source.CharacterData, timestamp);
         break;
     case Constant.ChildList:
@@ -179,7 +179,7 @@ async function process(): Promise<void> {
     let record = mutations.shift();
     let instance = time();
     for (let mutation of record.mutations) {
-      processMutation(timer, mutation, instance, record.time)
+      await processMutation(timer, mutation, instance, record.time)
     }
     await encode(Event.Mutation, timer, record.time);
   }
@@ -188,7 +188,7 @@ async function process(): Promise<void> {
   for (var key of Object.keys(throttledMutations)) {
     let throttledMutationToProcess: MutationRecordWithTime = throttledMutations[key];
     delete throttledMutations[key];
-    processMutation(timer, throttledMutationToProcess.mutation, time(), throttledMutationToProcess.timestamp);
+    await processMutation(timer, throttledMutationToProcess.mutation, time(), throttledMutationToProcess.timestamp);
     processedMutations = true;
   }
 
