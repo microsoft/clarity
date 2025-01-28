@@ -37,6 +37,7 @@ export function reset(): void {
 }
 
 export async function schedule(task: TaskFunction, priority: Priority = Priority.Normal): Promise<void> {
+    // If this task is already scheduled, skip it
     for (let q of queuedTasks) {
         if (q.task === task) {
             return;
@@ -151,7 +152,7 @@ async function wait(): Promise<RequestIdleCallbackDeadline> {
 // This means, that any code that runs as part of requestAnimationFrame will by default be blocking in nature. Not what we want.
 // For non-blocking behavior, We need to know when browser has finished painting. This can be accomplished in two different ways (hacks):
 //   (1) Use MessageChannel to pass the message, and browser will receive the message right after paint event has occured.
-//   (2) Use setTimeout call within requestAnimationFrame. This also works, but there's a risk that browser may throttle setTimeout calls.  
+//   (2) Use setTimeout call within requestAnimationFrame. This also works, but there's a risk that browser may throttle setTimeout calls.
 // Given this information, we are currently using (1) from above. More information on (2) as well as some additional context is below:
 // https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Performance_best_practices_for_Firefox_fe_engineers
 function requestIdleCallbackPolyfill(callback: (deadline: RequestIdleCallbackDeadline) => void, options: RequestIdleCallbackOptions): void {

@@ -140,7 +140,7 @@ function handle(m: MutationRecord[]): void {
   // Queue up mutation records for asynchronous processing
   let now = time();
   summary.track(Event.Mutation, now);
-  mutations.push({ time: now, mutations: m}); 
+  mutations.push({ time: now, mutations: m});
   task.schedule(process, Priority.High).then((): void => {
       setTimeout(doc.compute)
       measure(region.compute)();
@@ -160,7 +160,7 @@ async function processMutation(timer: Timer, mutation: MutationRecord, instance:
     case Constant.Attributes:
         processNode(target, Source.Attributes, timestamp);
         break;
-  case Constant.CharacterData:
+    case Constant.CharacterData:
         processNode(target, Source.CharacterData, timestamp);
         break;
     case Constant.ChildList:
