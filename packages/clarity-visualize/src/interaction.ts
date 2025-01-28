@@ -73,11 +73,29 @@ export class InteractionHelper {
     public visibility = (event: Interaction.VisibilityEvent): void => {
         let doc = this.state.window.document;
         if (doc && doc.documentElement && event.data.visible !== Constant.Visible) {
+            // if the website has styles on the <html> node then we need to save the reference to them before we change them
+            // to indicate the window was hidden. This is to ensure that we can restore the original styles when the window is visible again.
+            const bg = doc.documentElement.style.backgroundColor;
+            if (bg) {
+                doc.documentElement.setAttribute(Constant.OriginalBackgroundColor, bg);
+            }
+            const o = doc.documentElement.style.opacity;
+            if (o) {
+                doc.documentElement.setAttribute(Constant.OriginalOpacity, o);
+            }
             doc.documentElement.style.backgroundColor = Constant.Black;
             doc.documentElement.style.opacity = Constant.HiddenOpacity;
         } else {
-            doc.documentElement.style.backgroundColor = Constant.Transparent;
-            doc.documentElement.style.opacity = Constant.VisibleOpacity;
+            if (doc.documentElement.getAttribute(Constant.OriginalBackgroundColor)) {
+                doc.documentElement.style.backgroundColor = doc.documentElement.getAttribute(Constant.OriginalBackgroundColor);
+            } else {
+                doc.documentElement.style.backgroundColor = '';
+            }
+            if (doc.documentElement.getAttribute(Constant.OriginalOpacity)) {
+                doc.documentElement.style.opacity = doc.documentElement.getAttribute(Constant.OriginalOpacity);
+            } else {
+                doc.documentElement.style.opacity = '';
+            }
         }
     };
 
