@@ -1,4 +1,4 @@
-import { Diagnostic } from "clarity-js";
+import { Diagnostic } from "clarity-js/types";
 import { PartialEvent } from "./core";
 
 export interface ScriptErrorEvent extends PartialEvent { data: Diagnostic.ScriptErrorData; }

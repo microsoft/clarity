@@ -1,4 +1,4 @@
-import { Performance } from "clarity-js";
+import { Performance } from "clarity-js/types";
 import { PartialEvent } from "./core";
 
 export interface NavigationEvent extends PartialEvent { data: Performance.NavigationData; }

@@ -1,4 +1,4 @@
-import { Data, Performance } from "clarity-js";
+import { Data, Performance } from "clarity-js/types";
 import { PerformanceEvent } from "../types/performance";
 
 export function decode(tokens: Data.Token[]): PerformanceEvent  {

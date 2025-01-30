@@ -1,5 +1,5 @@
 import { Constant } from "@clarity-types/data";
-import { Data, Layout } from "clarity-js";
+import { Data, Layout } from "clarity-js/types";
 import { DomData, LayoutEvent, Interaction, RegionVisibility  } from "../types/layout";
 
 const AverageWordLength = 6;

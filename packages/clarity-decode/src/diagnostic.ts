@@ -1,4 +1,4 @@
-import { Data, Diagnostic } from "clarity-js";
+import { Data, Diagnostic } from "clarity-js/types";
 import { DiagnosticEvent } from "../types/diagnostic";
 
 export function decode(tokens: Data.Token[]): DiagnosticEvent {

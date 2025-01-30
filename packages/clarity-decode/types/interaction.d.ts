@@ -1,4 +1,4 @@
-import { Interaction } from "clarity-js";
+import { Interaction } from "clarity-js/types";
 import { PartialEvent } from "./core";
 
 export interface ClickData extends Interaction.ClickData {

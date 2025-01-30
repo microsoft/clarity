@@ -1,4 +1,4 @@
-import { Layout } from "clarity-js";
+import { Layout } from "clarity-js/types";
 import { PartialEvent } from "./core";
 
 export interface RegionEvent extends PartialEvent { data: Layout.RegionData[]; }

@@ -1,4 +1,4 @@
-import { Core, Data } from "clarity-js";
+import { Core, Data } from "clarity-js/types";
 
 export import Config = Core.Config;
 

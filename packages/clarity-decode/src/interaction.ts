@@ -1,4 +1,4 @@
-import { Data, Interaction, Layout } from "clarity-js";
+import { Data, Interaction, Layout } from "clarity-js/types";
 import { InteractionEvent, ClickData, TimelineData } from "../types/interaction";
 
 export function decode(tokens: Data.Token[]): InteractionEvent {

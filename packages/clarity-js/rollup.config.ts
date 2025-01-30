@@ -3,6 +3,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";  
 import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
+import json from "@rollup/plugin-json";
 import pkg from "./package.json" assert { type: 'json' };
 export default [
   {
@@ -14,7 +15,8 @@ export default [
     plugins: [
       resolve(),
       typescript(),
-      commonjs({ include: ["node_modules/**"] })
+      commonjs({ include: ["node_modules/**"] }),
+      json(),
     ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
@@ -32,7 +34,8 @@ export default [
       resolve(),
       typescript(),
       terser({output: {comments: false}}),
-      commonjs({ include: ["node_modules/**"] })
+      commonjs({ include: ["node_modules/**"] }),
+      json(),
     ]
   },
   {
@@ -46,7 +49,8 @@ export default [
       resolve(),
       typescript(),
       terser({output: {comments: false}}),
-      commonjs({ include: ["node_modules/**"] })
+      commonjs({ include: ["node_modules/**"] }),
+      json(),
     ]
   },
   {
@@ -70,7 +74,8 @@ export default [
       resolve(),
       typescript(),
       terser({output: {comments: false}}),
-      commonjs({ include: ["node_modules/**"] })
+      commonjs({ include: ["node_modules/**"] }),
+      json(),
     ]
   },
   {
@@ -92,7 +97,8 @@ export default [
       resolve(),
       typescript(),
       terser({output: {comments: false}}),
-      commonjs({ include: ["node_modules/**"] })
+      commonjs({ include: ["node_modules/**"] }),
+      json(),
     ]
   }
 ];

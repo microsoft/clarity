@@ -1,4 +1,4 @@
-import { Data } from "clarity-js";
+import { Data } from "clarity-js/types";
 import { Constant, DataEvent } from "../types/data";
 
 export function decode(tokens: Data.Token[]): DataEvent {
