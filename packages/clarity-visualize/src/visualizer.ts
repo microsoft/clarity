@@ -1,5 +1,5 @@
 import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Setting, ShortCircuitStrategy, Visualizer as VisualizerType } from "@clarity-types/visualize";
-import { Data } from "clarity-js";
+import { Data } from "clarity-js/types";
 import type { Data as DecodedData, Interaction, Layout } from "clarity-decode";
 import { DataHelper } from "./data";
 import { EnrichHelper } from "./enrich";

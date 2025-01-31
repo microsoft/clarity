@@ -1,4 +1,4 @@
-import { Data, Layout } from "clarity-js";
+import { Data, Layout } from "clarity-js/types";
 import type { Data as DecodedData, Layout as DecodedLayout } from "clarity-decode";
 import { PlaybackState, RegionState } from "@clarity-types/visualize";
 

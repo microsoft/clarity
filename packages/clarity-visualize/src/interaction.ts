@@ -1,5 +1,5 @@
 import { Asset, Constant, PlaybackState, Point, Setting } from "@clarity-types/visualize";
-import { Data, Layout } from "clarity-js";
+import { Data, Layout } from "clarity-js/types";
 import type { Interaction } from "clarity-decode"
 import { LayoutHelper } from "./layout";
 

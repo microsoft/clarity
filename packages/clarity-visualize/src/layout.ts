@@ -1,4 +1,4 @@
-import { Data, Layout } from "clarity-js";
+import { Data, Layout } from "clarity-js/types";
 import type { Layout as DecodedLayout } from "clarity-decode";
 import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
 import { StyleSheetOperation } from "clarity-js/types/layout";

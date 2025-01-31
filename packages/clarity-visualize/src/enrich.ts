@@ -1,4 +1,6 @@
-import { helper, Layout } from "clarity-js";
+import * as selector from "clarity-js/src/layout/selector";
+import hash from "clarity-js/src/core/hash";
+import { Layout } from "clarity-js/types";
 import { Layout as DecodedLayout } from "clarity-decode";
 import { NodeData } from "@clarity-types/visualize";
 
@@ -14,7 +16,7 @@ export class EnrichHelper {
     public reset = (): void => {
         this.children = {};
         this.nodes = {};
-        helper.selector.reset();
+        selector.reset();
     }
 
     public selectors = (event: DecodedLayout.DomEvent): DecodedLayout.DomEvent => {
@@ -48,14 +50,14 @@ export class EnrichHelper {
 
             // Get stable selector
             // We intentionally use "null" value for empty selectors to keep parity with v0.6.25 and before.
-            let selectorAlpha = helper.selector.get(input, Layout.Selector.Alpha);
+            let selectorAlpha = selector.get(input, Layout.Selector.Alpha);
             d.selectorAlpha = selectorAlpha.length > 0 ? selectorAlpha : null;
-            d.hashAlpha = selectorAlpha.length > 0 ? helper.hash(d.selectorAlpha) : null;
+            d.hashAlpha = selectorAlpha.length > 0 ? hash(d.selectorAlpha) : null;
             
             // Get beta selector
-            let selectorBeta = helper.selector.get(input, Layout.Selector.Beta);
+            let selectorBeta = selector.get(input, Layout.Selector.Beta);
             d.selectorBeta = selectorBeta.length > 0 ? selectorBeta : null;
-            d.hashBeta = selectorBeta.length > 0 ? helper.hash(d.selectorBeta) : null;
+            d.hashBeta = selectorBeta.length > 0 ? hash(d.selectorBeta) : null;
 
             /* Track state for future reference */
             node.alpha = selectorAlpha;
