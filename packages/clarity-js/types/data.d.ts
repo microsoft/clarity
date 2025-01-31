@@ -426,6 +426,13 @@ export interface BaselineData {
     pointerY: number;
     activityTime: number;
     scrollTime: number;
+    pointerTime: number;
+    moveX: number;
+    moveY: number;
+    moveTime: number;
+    downX: number;
+    downY: number;
+    downTime: number;
 }
 
 export interface IdentityData {
