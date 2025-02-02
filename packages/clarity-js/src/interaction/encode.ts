@@ -45,7 +45,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                         }
                     }
                     queue(tokens);
-                    baseline.track(entry.event, entry.data.x, entry.data.y);
+                    baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
                 }
             }
             pointer.reset();
