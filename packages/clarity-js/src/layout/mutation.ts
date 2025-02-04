@@ -37,6 +37,7 @@ let history: MutationHistory = {};
 let criticalPeriod = null;
 
 export function start(): void {
+    start.dn = FunctionNames.MutationStart;
     observers = [];
     queue = [];
     timeout = null;
@@ -93,7 +94,6 @@ export function start(): void {
      } catch { attachShadow = null; }
   } 
 }
-start.dn = FunctionNames.MutationStart;
 
 export function observe(node: Node): void {
   // Create a new observer for every time a new DOM tree (e.g. root document or shadowdom root) is discovered on the page
@@ -137,6 +137,7 @@ export function active(): void {
 }
 
 function handle(m: MutationRecord[]): void {
+  handle.dn = FunctionNames.MutationHandle;
   // Queue up mutation records for asynchronous processing
   let now = time();
   summary.track(Event.Mutation, now);
@@ -146,7 +147,6 @@ function handle(m: MutationRecord[]): void {
       measure(region.compute)();
   });
 }
-handle.dn = FunctionNames.MutationHandle;
 
 async function processMutation(timer: Timer, mutation: MutationRecord, instance: number, timestamp: number): Promise<void> {
   let state = task.state(timer);
@@ -325,6 +325,7 @@ function trigger(): void {
 }
 
 function generate(target: Node, type: MutationRecordType): void {
+  generate.dn = FunctionNames.MutationGenerate;
   measure(handle)([{
     addedNodes: [target],
     attributeName: null,
@@ -337,4 +338,3 @@ function generate(target: Node, type: MutationRecordType): void {
     type
   }]);
 }
-generate.dn = FunctionNames.MutationGenerate;

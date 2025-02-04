@@ -13,6 +13,7 @@ export function start(): void {
 }
 
 function handler(error: ErrorEvent): boolean {
+    handler.dn = FunctionNames.ScriptHandler;
     let e = error["error"] || error;
     // While rare, it's possible for code to fail repeatedly during the lifetime of the same page
     // In those cases, we only want to log the failure first few times and not spam logs with redundant information.
@@ -34,4 +35,3 @@ function handler(error: ErrorEvent): boolean {
 
     return true;
 }
-handler.dn = FunctionNames.ScriptHandler;

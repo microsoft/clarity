@@ -31,6 +31,7 @@ export function start(): void {
 }
 
 function observe(): void {
+    observe.dn = FunctionNames.ObserverObserve;
     // Some browsers will throw an error for unsupported entryType, e.g. "layout-shift"
     // In those cases, we log it as a warning and continue with rest of the Clarity processing
     try {
@@ -50,12 +51,11 @@ function observe(): void {
         }
     } catch { internal.log(Code.PerformanceObserver, Severity.Warning); }
 }
-observe.dn = FunctionNames.ObserverObserve;
 
 function handle(entries: PerformanceObserverEntryList): void {
+    handle.dn = FunctionNames.ObserverHandle;
     process(entries.getEntries());
 }
-handle.dn = FunctionNames.ObserverHandle;
 
 function process(entries: PerformanceEntryList): void {
     let visible = "visibilityState" in document ? document.visibilityState === "visible" : true;

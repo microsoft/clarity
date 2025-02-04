@@ -13,11 +13,11 @@ export function start(): void {
 }
 
 function recompute(evt: UIEvent): void {
+    recompute.dn = FunctionNames.UnloadRecompute;
     data = { name: evt.type };
     encode(Event.Unload, time(evt));
     clarity.stop();
 }
-recompute.dn = FunctionNames.UnloadRecompute;
 
 export function reset(): void {
     data = null;

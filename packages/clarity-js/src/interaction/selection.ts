@@ -20,6 +20,7 @@ export function observe(root: Node): void {
 }
 
 function recompute(root: Node): void {
+    recompute.dn = FunctionNames.SelectionRecompute;
     let doc = root.nodeType === Node.DOCUMENT_NODE ? root as Document : document;
     let current = doc.getSelection();
 
@@ -51,7 +52,6 @@ function recompute(root: Node): void {
     clearTimeout(timeout);
     timeout = setTimeout(process, Setting.LookAhead, Event.Selection);
 }
-recompute.dn = FunctionNames.SelectionRecompute;
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));

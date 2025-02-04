@@ -27,6 +27,7 @@ export function observe(root: Node): void {
 }
 
 function recompute(event: UIEvent = null): void {
+    recompute.dn = FunctionNames.ScrollRecompute;
     let w = window as Window;
     let de = document.documentElement;
     let element = event ? target(event) : de;
@@ -69,14 +70,13 @@ function recompute(event: UIEvent = null): void {
     clearTimeout(timeout);
     timeout = setTimeout(process, Setting.LookAhead, Event.Scroll);
 }
-recompute.dn = FunctionNames.ScrollRecompute;
 
 function getPositionNode(x: number, y: number): Node {
     let node: Node;
     if ("caretPositionFromPoint" in document) {
         node = (document as any).caretPositionFromPoint(x, y)?.offsetNode;
     } else if ("caretRangeFromPoint" in document) {
-        node = document.caretRangeFromPoint(x, y)?.startContainer;
+        node = (document as any).caretRangeFromPoint(x, y)?.startContainer;
     }
     if (!node) {
         node = document.elementFromPoint(x, y) as Node;
@@ -105,6 +105,7 @@ function similar(last: ScrollState, current: ScrollState): boolean {
 }
 
 export function compute(): void {
+    compute.dn = FunctionNames.ScrollCompute;
     if (initialTop) {
         const top = metadata(initialTop, null);
         dimension.log(Dimension.InitialScrollTop, top?.hash?.join(Constant.Dot));
@@ -114,7 +115,6 @@ export function compute(): void {
         dimension.log(Dimension.InitialScrollBottom, bottom?.hash?.join(Constant.Dot));
     }
 }
-compute.dn = FunctionNames.ScrollCompute;
 
 export function stop(): void {
     clearTimeout(timeout);
