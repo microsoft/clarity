@@ -27,7 +27,14 @@ export function reset(): void {
             pointerX: buffer.pointerX,
             pointerY: buffer.pointerY,
             activityTime: buffer.activityTime,
-            scrollTime: buffer.scrollTime
+            scrollTime: buffer.scrollTime,
+            pointerTime: buffer.pointerTime,
+            moveX: buffer.moveX,
+            moveY: buffer.moveY,
+            moveTime: buffer.moveTime,
+            downX: buffer.downX,
+            downY: buffer.downY,
+            downTime: buffer.downTime,
           }
         };
     }
@@ -42,7 +49,14 @@ export function reset(): void {
         pointerX: 0,
         pointerY: 0,
         activityTime: 0,
-        scrollTime: 0
+        scrollTime: 0,
+        pointerTime: 0,
+        moveX: 0,
+        moveY: 0,
+        moveTime: 0,
+        downX: 0,
+        downY: 0,
+        downTime: 0,
     };
 }
 
@@ -61,9 +75,26 @@ export function track(event: Event, x: number, y: number, time?: number): void {
             buffer.scrollY = y;
             buffer.scrollTime = time;
             break;
+        case Event.MouseMove:
+            buffer.moveX = x;
+            buffer.moveY = y;
+            buffer.moveTime = time;
+            buffer.pointerX = x;
+            buffer.pointerY = y;
+            buffer.pointerTime = time;
+            break;
+        case Event.MouseDown:
+            buffer.downX = x;
+            buffer.downY = y;
+            buffer.downTime = time;
+            buffer.pointerX = x;
+            buffer.pointerY = y;
+            buffer.pointerTime = time;
+            break;
         default:
             buffer.pointerX = x;
             buffer.pointerY = y;
+            buffer.pointerTime = time;
             break;
     }
     update = true;

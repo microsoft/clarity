@@ -58,7 +58,14 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 pointerX: tokens[9] as number,
                 pointerY: tokens[10] as number,
                 activityTime: tokens[11] as number,
-                scrollTime: tokens.length > 12 ? tokens[12] as number: null
+                scrollTime: tokens.length > 12 ? tokens[12] as number: null,
+                pointerTime: tokens.length > 13 ? tokens[13] as number: null,
+                moveX: tokens.length > 14 ? tokens[14] as number: null,
+                moveY: tokens.length > 15 ? tokens[15] as number: null,
+                moveTime: tokens.length > 16 ? tokens[16] as number: null,
+                downX: tokens.length > 17 ? tokens[17] as number: null, 
+                downY: tokens.length > 18 ? tokens[18] as number: null,
+                downTime: tokens.length > 19 ? tokens[19] as number: null,
             }
             return { time, event, data: baselineData };
         case Data.Event.Variable:
