@@ -17,6 +17,7 @@ export function start(): void {
 }
 
 function recompute(): void {
+    recompute.dn = FunctionNames.ResizeRecompute;
     let de = document.documentElement;
     // window.innerWidth includes width of the scrollbar and is not a true representation of the viewport width.
     // Therefore, when possible, use documentElement's clientWidth property.
@@ -32,7 +33,6 @@ function recompute(): void {
         initialStateLogged = true;
     }
 }
-recompute.dn = FunctionNames.ResizeRecompute;
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));

@@ -13,10 +13,10 @@ export function start(): void {
 }
 
 function recompute(evt: UIEvent = null): void {
+    recompute.dn = FunctionNames.VisibilityRecompute;
     data = { visible: "visibilityState" in document ? document.visibilityState : "default" };
     encode(Event.Visibility, time(evt));
 }
-recompute.dn = FunctionNames.VisibilityRecompute;
 
 export function reset(): void {
     data = null;

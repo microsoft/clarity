@@ -60,6 +60,7 @@ export function track(id: number, event: Event): void {
 }
 
 export function compute(): void {
+    compute.dn = FunctionNames.RegionCompute;
     // Process any regions where we couldn't resolve an "id" for at the time of last intersection observer event
     // This could happen in cases where elements are not yet processed by Clarity's virtual DOM but browser reports a change, regardless.
     // For those cases we add them to the queue and re-process them below
@@ -77,7 +78,6 @@ export function compute(): void {
     // Schedule encode only when we have at least one valid data entry
     if (state.length > 0) { encode(Event.Region); }
 }
-compute.dn = FunctionNames.RegionCompute;
 
 function handler(entries: IntersectionObserverEntry[]): void {
     for (let entry of entries) {

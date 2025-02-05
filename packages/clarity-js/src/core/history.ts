@@ -49,6 +49,7 @@ function check(): boolean {
 }
 
 function compute(): void {
+    compute.dn = FunctionNames.HistoryCompute;
     count = 0; // Reset the counter
     if (url !== getCurrentUrl()) {
         // If the url changed, start tracking it as a new page
@@ -56,7 +57,6 @@ function compute(): void {
         window.setTimeout(restart, Setting.RestartDelay);
     }
 }
-compute.dn = FunctionNames.HistoryCompute;
 
 function restart(): void {
     clarity.start();

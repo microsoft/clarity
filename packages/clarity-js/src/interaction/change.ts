@@ -21,6 +21,7 @@ export function observe(root: Node): void {
 }
 
 function recompute(evt: UIEvent): void {
+    recompute.dn = FunctionNames.ChangeRecompute;
     let element = target(evt) as HTMLInputElement;
     if (element) {
         let value = element.value;
@@ -29,7 +30,6 @@ function recompute(evt: UIEvent): void {
         schedule(encode.bind(this, Event.Change));
     }    
 }
-recompute.dn = FunctionNames.ChangeRecompute;
 
 export function reset(): void {
     state = [];

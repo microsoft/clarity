@@ -15,6 +15,7 @@ export function start(): void {
 }
 
 export function compute(): void {
+    compute.dn = FunctionNames.DocumentCompute;
     let body = document.body;
     let d = document.documentElement;
     let bodyClientWidth = body ? body.clientWidth : null;
@@ -41,7 +42,6 @@ export function compute(): void {
         encode(Event.Document);
     }
 }
-compute.dn = FunctionNames.DocumentCompute;
 
 export function stop(): void {
     reset();

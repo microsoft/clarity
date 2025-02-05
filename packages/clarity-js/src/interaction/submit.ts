@@ -18,10 +18,10 @@ export function observe(root: Node): void {
 }
 
 function recompute(evt: UIEvent): void {
+    recompute.dn = FunctionNames.SubmitRecompute;
     state.push({ time: time(evt), event: Event.Submit, data: { target: target(evt) } });
     schedule(encode.bind(this, Event.Submit));
 }
-recompute.dn = FunctionNames.SubmitRecompute;
 
 export function reset(): void {
     state = [];
