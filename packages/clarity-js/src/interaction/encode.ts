@@ -95,6 +95,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.Unload:
             let u = unload.data;
             tokens.push(u.name);
+            tokens.push(u.persisted);
             unload.reset();
             queue(tokens);
             break;
