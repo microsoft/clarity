@@ -122,6 +122,12 @@ export interface ClickData {
     link: string;
     hash: string;
     trust: number;
+    isFullText: BooleanFlag;
+}
+
+export interface TextInfo {
+    text: string;
+    isFullText: BooleanFlag;
 }
 
 export interface ClipboardData {
