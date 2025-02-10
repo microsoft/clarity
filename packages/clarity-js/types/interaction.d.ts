@@ -1,3 +1,4 @@
+import { BooleanFlag } from "@clarity-types/data";
 import { Time } from "./core";
 import { Event, Target } from "./data";
 
@@ -150,6 +151,7 @@ export interface SelectionData {
 
 export interface UnloadData {
     name: string;
+    persisted: BooleanFlag;
 }
 
 export interface VisibilityData {
