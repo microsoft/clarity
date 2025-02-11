@@ -1,7 +1,7 @@
 import { Event, Metric } from "@clarity-types/data";
 import { StyleSheetOperation, StyleSheetState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
-import { shortid, data as metadataFields } from "@src/data/metadata";
+import { shortid } from "@src/data/metadata";
 import encode from "@src/layout/encode";
 import { getId } from "@src/layout/dom";
 import * as core from "@src/core";
@@ -13,10 +13,10 @@ export let sheetAdoptionState: StyleSheetState[] = [];
 let replace: (text?: string) => Promise<CSSStyleSheet> = null;
 let replaceSync: (text?: string) => void = null;
 const styleSheetId = 'claritySheetId';
-const styleSheetPageNum = 'claritySheetNum';
 let styleSheetMap = {};
 let styleTimeMap: {[key: string]: number} = {};
 let documentNodes = [];
+let createdSheetIds = [];
 
 export function start(): void {
     if (window['CSSStyleSheet'] && CSSStyleSheet.prototype) {
@@ -28,7 +28,7 @@ export function start(): void {
                     // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
                     // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
                     // to when it is used in the document rather than potentially being misaligned during the traverse process.
-                    if (this[styleSheetPageNum] === metadataFields.pageNum) {
+                    if (createdSheetIds.indexOf(this[styleSheetId]) > -1) {
                         trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
                     }
                 }
@@ -44,7 +44,7 @@ export function start(): void {
                     // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
                     // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
                     // to when it is used in the document rather than potentially being misaligned during the traverse process.
-                    if (this[styleSheetPageNum] === metadataFields.pageNum) {
+                    if (createdSheetIds.indexOf(this[styleSheetId]) > -1) {
                         trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
                     }                
                 }
@@ -66,17 +66,17 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
     metric.max(Metric.ConstructedStyles, 1);
     let currentStyleSheets: string[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
-        const pageNum = metadataFields.pageNum;
         // If we haven't seen this style sheet on this page yet, we create a reference to it for the visualizer.
         // For SPA or times in which Clarity restarts on a given page, our visualizer would lose context
         // on the previously created style sheet for page N-1.
         // Then we synthetically call replaceSync with its contents to bootstrap it
-        if (styleSheet[styleSheetPageNum] !== pageNum) {
-            styleSheet[styleSheetPageNum] = pageNum;
+        if (!styleSheet[styleSheetId] || createdSheetIds.indexOf(styleSheet[styleSheetId]) === -1) {
             styleSheet[styleSheetId] = shortid();
+            createdSheetIds.push(styleSheet[styleSheetId]);
             trackStyleChange(timestamp, styleSheet[styleSheetId], StyleSheetOperation.Create);
             trackStyleChange(timestamp, styleSheet[styleSheetId], StyleSheetOperation.ReplaceSync, getCssRules(styleSheet));
         }
+
         currentStyleSheets.push(styleSheet[styleSheetId]);
     }
 
@@ -109,6 +109,7 @@ export function stop(): void {
     styleSheetMap = {};
     styleTimeMap = {};
     documentNodes = [];
+    createdSheetIds = [];
     reset();
 }
 
