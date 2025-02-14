@@ -47,6 +47,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
             }
             return { time, event, data: summary };
         case Data.Event.Baseline:
+            const tokenLength = tokens.length;
             let baselineData: Data.BaselineData = {
                 visible: tokens[2] as number,
                 docWidth: tokens[3] as number,
@@ -58,14 +59,20 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 pointerX: tokens[9] as number,
                 pointerY: tokens[10] as number,
                 activityTime: tokens[11] as number,
-                scrollTime: tokens.length > 12 ? tokens[12] as number: null,
-                pointerTime: tokens.length > 13 ? tokens[13] as number: null,
-                moveX: tokens.length > 14 ? tokens[14] as number: null,
-                moveY: tokens.length > 15 ? tokens[15] as number: null,
-                moveTime: tokens.length > 16 ? tokens[16] as number: null,
-                downX: tokens.length > 17 ? tokens[17] as number: null, 
-                downY: tokens.length > 18 ? tokens[18] as number: null,
-                downTime: tokens.length > 19 ? tokens[19] as number: null,
+                scrollTime: tokenLength > 12 ? tokens[12] as number: null,
+                pointerTime: tokenLength > 13 ? tokens[13] as number: null,
+                moveX: tokenLength > 14 ? tokens[14] as number: null,
+                moveY: tokenLength > 15 ? tokens[15] as number: null,
+                moveTime: tokenLength > 16 ? tokens[16] as number: null,
+                downX: tokenLength > 17 ? tokens[17] as number: null, 
+                downY: tokenLength > 18 ? tokens[18] as number: null,
+                downTime: tokenLength > 19 ? tokens[19] as number: null,
+                upX: tokenLength > 20 ? tokens[20] as number: null,
+                upY: tokenLength > 21 ? tokens[21] as number: null,
+                upTime: tokenLength > 22 ? tokens[22] as number: null,
+                pointerPrevX: tokenLength > 23 ? tokens[23] as number: null,
+                pointerPrevY: tokenLength > 24 ? tokens[24] as number: null,
+                pointerPrevTime: tokenLength > 25 ? tokens[25] as number: null,
             }
             return { time, event, data: baselineData };
         case Data.Event.Variable:
