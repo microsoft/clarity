@@ -101,7 +101,10 @@ export interface BrowserEvent {
     event: string;
     target: EventTarget;
     listener: EventListener;
-    capture: boolean;
+    options: {
+        capture: boolean;
+        passive: boolean;
+    };
 }
 
 export interface Report {
