@@ -433,6 +433,12 @@ export interface BaselineData {
     downX: number;
     downY: number;
     downTime: number;
+    upX: number;
+    upY: number;
+    upTime: number;
+    pointerPrevX: number;
+    pointerPrevY: number;
+    pointerPrevTime: number;
 }
 
 export interface IdentityData {

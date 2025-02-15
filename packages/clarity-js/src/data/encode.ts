@@ -38,6 +38,12 @@ export default function(event: Event): void {
                 tokens.push(b.data.downX);
                 tokens.push(b.data.downY);
                 tokens.push(b.data.downTime);
+                tokens.push(b.data.upX);
+                tokens.push(b.data.upY);
+                tokens.push(b.data.upTime);
+                tokens.push(b.data.pointerPrevX);
+                tokens.push(b.data.pointerPrevY);
+                tokens.push(b.data.pointerPrevTime);
                 queue(tokens, false);
             }
             baseline.reset();

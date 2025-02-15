@@ -35,6 +35,12 @@ export function reset(): void {
             downX: buffer.downX,
             downY: buffer.downY,
             downTime: buffer.downTime,
+            upX: buffer.upX,
+            upY: buffer.upY,
+            upTime: buffer.upTime,
+            pointerPrevX: buffer.pointerPrevX,
+            pointerPrevY: buffer.pointerPrevY,
+            pointerPrevTime: buffer.pointerPrevTime,
           }
         };
     }
@@ -57,6 +63,12 @@ export function reset(): void {
         downX: 0,
         downY: 0,
         downTime: 0,
+        upX: 0,
+        upY: 0,
+        upTime: 0,
+        pointerPrevX: 0,
+        pointerPrevY: 0,
+        pointerPrevTime: 0,
     };
 }
 
@@ -79,6 +91,9 @@ export function track(event: Event, x: number, y: number, time?: number): void {
             buffer.moveX = x;
             buffer.moveY = y;
             buffer.moveTime = time;
+            buffer.pointerPrevX = buffer.pointerX;
+            buffer.pointerPrevY = buffer.pointerY;
+            buffer.pointerPrevTime = buffer.pointerTime;
             buffer.pointerX = x;
             buffer.pointerY = y;
             buffer.pointerTime = time;
@@ -87,11 +102,28 @@ export function track(event: Event, x: number, y: number, time?: number): void {
             buffer.downX = x;
             buffer.downY = y;
             buffer.downTime = time;
+            buffer.pointerPrevX = buffer.pointerX;
+            buffer.pointerPrevY = buffer.pointerY;
+            buffer.pointerPrevTime = buffer.pointerTime;
+            buffer.pointerX = x;
+            buffer.pointerY = y;
+            buffer.pointerTime = time;
+            break;
+        case Event.MouseUp:
+            buffer.upX = x;
+            buffer.upY = y;
+            buffer.upTime = time;
+            buffer.pointerPrevX = buffer.pointerX;
+            buffer.pointerPrevY = buffer.pointerY;
+            buffer.pointerPrevTime = buffer.pointerTime;
             buffer.pointerX = x;
             buffer.pointerY = y;
             buffer.pointerTime = time;
             break;
         default:
+            buffer.pointerPrevX = buffer.pointerX;
+            buffer.pointerPrevY = buffer.pointerY;
+            buffer.pointerPrevTime = buffer.pointerTime;
             buffer.pointerX = x;
             buffer.pointerY = y;
             buffer.pointerTime = time;
