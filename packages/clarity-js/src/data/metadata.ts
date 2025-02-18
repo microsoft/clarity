@@ -160,7 +160,7 @@ export function callback(): void {
 }
 
 export function save(): void {
-  if (!data) return;
+  if (!data || !config.track) return;
   let ts = Math.round(Date.now());
   let upload = config.upload && typeof config.upload === Constant.String ? (config.upload as string).replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
