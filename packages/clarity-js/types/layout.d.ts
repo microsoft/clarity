@@ -263,7 +263,6 @@ export interface TargetMetadata {
     id: number;
     hash: [string, string];
     privacy: Privacy;
-    node: Node;
 }
 
 export interface StyleSheetData {
