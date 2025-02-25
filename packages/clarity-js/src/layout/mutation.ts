@@ -35,6 +35,7 @@ let throttleDelay: number = null;
 let activePeriod = null;
 let history: MutationHistory = {};
 let criticalPeriod = null;
+let observedNodes: WeakMap<Node, MutationObserver> = new WeakMap<Node, MutationObserver>();
 
 // We ignore mutations if these attributes are updated
 const IGNORED_ATTRIBUTES = ["data-google-query-id", "data-load-complete", "data-google-container-id"];
@@ -47,6 +48,7 @@ export function start(): void {
   activePeriod = 0;
   history = {};
   criticalPeriod = 0;
+  observedNodes = new WeakMap<Node, MutationObserver>();
 
   // Some popular open source libraries, like styled-components, optimize performance
   // by injecting CSS using insertRule API vs. appending text node. A side effect of
@@ -117,10 +119,16 @@ export function observe(node: Node): void {
   // For this reason, we need to wire up mutations every time we see a new shadow dom.
   // Also, wrap it inside a try / catch. In certain browsers (e.g. legacy Edge), observer on shadow dom can throw errors
   try {
+    // Cleanup old observer if present.
+    if (observedNodes.has(node)) {
+      observedNodes.get(node)?.disconnect();
+    }
+
     let m = api(Constant.MutationObserver);
     let observer = m in window ? new window[m](measure(handle) as MutationCallback) : null;
     if (observer) {
       observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
+      observedNodes.set(node, observer);
       observers.push(observer);
     }
   } catch (e) {
