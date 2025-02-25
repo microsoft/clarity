@@ -35,6 +35,8 @@ let throttleDelay: number = null;
 let activePeriod = null;
 let history: MutationHistory = {};
 let criticalPeriod = null;
+let iframeDocumentMap: WeakMap<Node, Set<Node>> = null;
+let observedNodes: WeakMap<Node, MutationObserver> = null;
 
 // We ignore mutations if these attributes are updated
 const IGNORED_ATTRIBUTES = ["data-google-query-id", "data-load-complete", "data-google-container-id"];
@@ -47,6 +49,8 @@ export function start(): void {
   activePeriod = 0;
   history = {};
   criticalPeriod = 0;
+  iframeDocumentMap = new WeakMap<Node, Set<Node>>();
+  observedNodes = new WeakMap<Node, MutationObserver>();
 
   // Some popular open source libraries, like styled-components, optimize performance
   // by injecting CSS using insertRule API vs. appending text node. A side effect of
@@ -117,10 +121,30 @@ export function observe(node: Node): void {
   // For this reason, we need to wire up mutations every time we see a new shadow dom.
   // Also, wrap it inside a try / catch. In certain browsers (e.g. legacy Edge), observer on shadow dom can throw errors
   try {
+    // Cleanup old observer if present. This can happen in case of nested observers within an iframe
+    // that was removed but we couldn't disconnect the observer as iframe contentDocument returns null
+    // when it is removed.
+    if (observedNodes.has(node)) {
+      observedNodes.get(node)?.disconnect();
+    }
+
     let m = api(Constant.MutationObserver);
     let observer = m in window ? new window[m](measure(handle) as MutationCallback) : null;
     if (observer) {
       observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
+      const frame = dom.iframe(node);
+
+      // Track all nodes within an iframe so that they can be recursively disconnected
+      // when the iframe is removed to avoid memory leaks and potential duplication of mutations
+      // if the iframe is added back into the document
+      if (frame) {
+        if (!iframeDocumentMap.has(frame)) {
+          iframeDocumentMap.set(frame, new Set<Node>());
+        }
+        iframeDocumentMap.get(frame).add(node);
+      }
+
+      observedNodes.set(node, observer);
       observers.push(observer);
     }
   } catch (e) {
@@ -151,6 +175,8 @@ export function stop(): void {
   activePeriod = 0;
   timeout = null;
   criticalPeriod = 0;
+  iframeDocumentMap = new WeakMap();
+  observedNodes = new WeakMap();
 }
 
 export function active(): void {
@@ -338,8 +364,36 @@ async function processNodeList(list: NodeList, source: Source, timer: Timer, tim
       if (state === Task.Stop) {
         break;
       }
+      if (source === Source.ChildListRemove && node.nodeType === Node.ELEMENT_NODE) {
+        let el = node as HTMLElement;
+        if (el.tagName === "IFRAME") {
+          disconnectObserversInIFrame(node);
+        }
+      }
       processNode(node, source, timestamp);
     }
+  }
+}
+
+function disconnectObserversInIFrame(frame: Node) {
+  if (iframeDocumentMap.has(frame)) {
+    const iframeMap = iframeDocumentMap.get(frame);
+    iframeMap.forEach((n) => {
+      // Disconnect the observer and delete the document nodes within iframe from observed nodes
+      if (observedNodes.has(n)) {
+        const ob = observedNodes.get(n);
+        ob.disconnect();
+        observedNodes.delete(n);
+
+        // Remove the observer from list of observers as well
+        const index = observers.indexOf(ob);
+
+        if (index > -1) {
+          observers.splice(index, 1);
+        }
+      }
+    });
+    iframeDocumentMap.delete(frame);
   }
 }
 
