@@ -5,6 +5,7 @@ import { shortid } from "@src/data/metadata";
 import encode from "@src/layout/encode";
 import { getId } from "@src/layout/dom";
 import * as core from "@src/core";
+import config from "@src/core/config";
 import { getCssRules } from "./node";
 import * as metric from "@src/data/metric";
 
@@ -19,6 +20,8 @@ let documentNodes = [];
 let createdSheetIds = [];
 
 export function start(): void {
+    if (config.lean && config.lite) { return; }
+
     if (window['CSSStyleSheet'] && CSSStyleSheet.prototype) {
         if (replace === null) { 
             replace = CSSStyleSheet.prototype.replace; 
@@ -55,6 +58,8 @@ export function start(): void {
 }
 
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
+    if (config.lean && config.lite) { return; }
+
     if (documentNodes.indexOf(documentNode) === -1) {
         documentNodes.push(documentNode);
     }
