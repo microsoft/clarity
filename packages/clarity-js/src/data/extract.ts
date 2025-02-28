@@ -4,6 +4,7 @@ import encode from "./encode";
 import * as internal from "@src/diagnostic/internal";
 import { Code, Constant, Severity } from "@clarity-types/data";
 import { hashText } from "@src/clarity";
+import hash from "@src/core/hash";
 
 export let data: ExtractData = {};
 export let keys: Set<number> = new Set();
@@ -109,12 +110,12 @@ export function compute(): void {
                 }  
 
                 let maskedData = maskedSelectors[key];
-                for (let s in maskedData){
-                    let selectorKey = parseInt(s);
+                for (let m in maskedData){
+                    let selectorKey = parseInt(m);
                     let nodes = document.querySelectorAll(maskedData[selectorKey]) as NodeListOf<HTMLElement>;
                     if (nodes) {
                         let text = Array.from(nodes).map(e => e.textContent)
-                        let content = hashText(text.join(Constant.Seperator)).trim().substring(0, Setting.ExtractLimit);
+                        let content = hash(text.join(Constant.Seperator)).trim().substring(0, Setting.ExtractLimit);
                         update(key, selectorKey, content);
                     }
                 }
