@@ -86,7 +86,9 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                     let mangle = shouldMangle(value);
                     let keys = active ? ["tag", "attributes", "value"] : ["tag"];
                     for (let key of keys) {
-                        if (data[key]) {
+                        // we check for data[key] === '' because we want to encode empty strings as well, especially for value - which if skipped can cause our decoder to assume the final
+                        // attribute was the value for the node
+                        if (data[key] || data[key] === '') {
                             switch (key) {
                                 case "tag":
                                     let box = size(value);
