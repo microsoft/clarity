@@ -32,6 +32,7 @@ export function trigger(input: string): void {
         var values = parts.length > 1 ? JSON.parse(parts[1]) : {};
         variables[key] = {};
         selectors[key] = {};
+        maskedSelectors[key] = {};
         hashes[key] = {};
         validation[key] = element;
         for (var v in values) {
