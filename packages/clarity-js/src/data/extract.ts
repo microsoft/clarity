@@ -10,6 +10,7 @@ export let keys: Set<number> = new Set();
 
 let variables : { [key: number]: { [key: number]: Syntax[] }} = {};
 let selectors : { [key: number]: { [key: number]: string }} = {};
+let maskedSelectors : { [key: number]: { [key: number]: string }} = {};
 let hashes : { [key: number]: { [key: number]: string }} = {};
 let validation : { [key: number]: string } = {};
 
@@ -43,6 +44,8 @@ export function trigger(input: string): void {
                 source = ExtractSource.Javascript
             } else if (value.startsWith(Constant.Bang)) {
                 source = ExtractSource.Hash
+            } else if (value.startsWith(Constant.At)){
+                source = ExtractSource.Masked
             }
             switch (source) {
                 case ExtractSource.Javascript:
@@ -55,6 +58,10 @@ export function trigger(input: string): void {
                 case ExtractSource.Hash:
                     let hash = value.substring(1, value.length);
                     hashes[key][id] = hash;
+                    break;
+                case ExtractSource.Masked:
+                    let selector = value.substring(1, value.length);
+                    maskedSelectors[key][id] = selector;
                     break;
             }
         }
@@ -99,6 +106,17 @@ export function compute(): void {
                     let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
                     update(key, hashKey, content);
                 }  
+
+                let maskedData = maskedSelectors[key];
+                for (let s in maskedData){
+                    let selectorKey = parseInt(s);
+                    let nodes = document.querySelectorAll(maskedData[selectorKey]) as NodeListOf<HTMLElement>;
+                    if (nodes) {
+                        let text = Array.from(nodes).map(e => e.textContent)
+                        let content = hashText(text.join(Constant.Seperator)).trim().substring(0, Setting.ExtractLimit);
+                        update(key, selectorKey, content);
+                    }
+                }
             }
         }
 

@@ -31,7 +31,8 @@ export const enum ExtractSource {
     Cookie = 1,
     Text = 2,
     Fragment = 3,
-    Hash = 4
+    Hash = 4,
+    Masked = 5
 }
 
 export const enum Type {
