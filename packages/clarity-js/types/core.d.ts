@@ -99,7 +99,6 @@ export interface OffsetDistance {
 
 export interface BrowserEvent {
     event: string;
-    target: EventTarget;
     listener: EventListener;
     options: {
         capture: boolean;
