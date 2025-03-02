@@ -23,6 +23,7 @@ let maskTags = [];
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
 let iframeMap: WeakMap<Document, HTMLIFrameElement> = null; // Maps iframe's contentDocument => parent iframe element
+let docIframeMap: WeakMap<HTMLIFrameElement, Document> = null; // Maps parent iframe element => iframe's contentDocument
 let privacyMap: WeakMap<Node, Privacy> = null; // Maps node => Privacy (enum)
 let fraudMap: WeakMap<Node, number> = null; // Maps node => FraudId (number)
 
@@ -49,6 +50,7 @@ function reset(): void {
     nodesMap = new Map();
     idMap = new WeakMap();
     iframeMap = new WeakMap();
+    docIframeMap = new WeakMap();
     privacyMap = new WeakMap();
     fraudMap = new WeakMap();
     selector.reset();
@@ -83,6 +85,12 @@ export function getId(node: Node, autogen: boolean = false): number {
     }
 
     return id ? id : null;
+}
+
+// A lighter version of add functionality used only to track the node
+export function liteadd(node: Node): void {
+    let id = getId(node, true);
+    nodesMap.set(id, node);
 }
 
 export function add(node: Node, parent: Node, data: NodeInfo, source: Source): void {
@@ -200,6 +208,7 @@ export function sameorigin(node: Node): boolean {
             let doc = frame.contentDocument;
             if (doc) {
                 iframeMap.set(frame.contentDocument, frame);
+                docIframeMap.set(frame, frame.contentDocument);
                 output = true;
             }
         } catch { /* do nothing */ }
@@ -211,6 +220,13 @@ export function iframe(node: Node): HTMLIFrameElement {
     let doc = node.nodeType === Node.DOCUMENT_NODE ? node as Document : null;
     return doc && iframeMap.has(doc) ? iframeMap.get(doc) : null;
 }
+
+export function iframeDoc(frame: HTMLIFrameElement): Document {
+    if (docIframeMap.has(frame)) {
+        return docIframeMap.get(frame);
+    }
+    return null;
+} 
 
 function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
     let data = value.data;

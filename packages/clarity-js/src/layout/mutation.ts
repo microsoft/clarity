@@ -21,7 +21,7 @@ import traverse from "@src/layout/traverse";
 import processNode from "./node";
 import config from "@src/core/config";
 
-let observers: MutationObserver[] = [];
+let observers: Set<MutationObserver> = new Set();
 let mutations: MutationQueue[] = [];
 let throttledMutations: { [key: number]: MutationRecordWithTime } = {};
 let insertRule: (rule: string, index?: number) => number = null;
@@ -42,7 +42,7 @@ const IGNORED_ATTRIBUTES = ["data-google-query-id", "data-load-complete", "data-
 
 export function start(): void {
   start.dn = FunctionNames.MutationStart;
-  observers = [];
+  observers = new Set();
   queue = [];
   timeout = null;
   activePeriod = 0;
@@ -119,17 +119,13 @@ export function observe(node: Node): void {
   // For this reason, we need to wire up mutations every time we see a new shadow dom.
   // Also, wrap it inside a try / catch. In certain browsers (e.g. legacy Edge), observer on shadow dom can throw errors
   try {
-    // Cleanup old observer if present.
-    if (observedNodes.has(node)) {
-      observedNodes.get(node)?.disconnect();
-    }
 
     let m = api(Constant.MutationObserver);
     let observer = m in window ? new window[m](measure(handle) as MutationCallback) : null;
     if (observer) {
       observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
       observedNodes.set(node, observer);
-      observers.push(observer);
+      observers.add(observer);
     }
   } catch (e) {
     internal.log(Code.MutationObserver, Severity.Info, e ? e.name : null);
@@ -146,24 +142,34 @@ export function monitor(frame: HTMLIFrameElement): void {
 }
 
 export function stop(): void {
-  for (let observer of observers) {
+  for (let observer of Array.from(observers)) {
     if (observer) {
       observer.disconnect();
     }
   }
-  observers = [];
+  observers = new Set();
   history = {};
   mutations = [];
-  throttledMutations = [];
+  throttledMutations = {};
   queue = [];
   activePeriod = 0;
   timeout = null;
   criticalPeriod = 0;
+  observedNodes = new WeakMap();
 }
 
 export function active(): void {
   activePeriod = time() + Setting.MutationActivePeriod;
   criticalPeriod = time() + config.criticalMs;
+}
+
+export function disconnect(n: Node): void {
+  const ob = observedNodes.get(n);
+  if (ob) {
+    ob.disconnect();
+    observers.delete(ob);
+    observedNodes.delete(n);
+  }
 }
 
 function handle(m: MutationRecord[]): void {

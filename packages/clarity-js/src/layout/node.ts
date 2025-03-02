@@ -1,6 +1,7 @@
 import { Constant, Source } from "@clarity-types/layout";
 import { Code, Dimension, Severity } from "@clarity-types/data";
 import * as dom from "./dom";
+import { unbindTarget } from "@src/core/event";
 import * as dimension from "@src/data/dimension";
 import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
@@ -41,11 +42,17 @@ export default function (node: Node, source: Source, timestamp: number): Node {
             dom[call](node, parent, docData, source);
             break;
         case Node.DOCUMENT_NODE:
+            observe(node);
             // We check for regions in the beginning when discovering document and
             // later whenever there are new additions or modifications to DOM (mutations)
-            if (node === document) dom.parse(document);
+            if (node === document) {
+                dom.parse(document);
+            } else {
+                // For all other document nodes, we keep track of the node so that duplicate
+                // observers are not added on subsequent mutations.
+                dom.liteadd(node);
+            }
             checkDocumentStyles(node as Document, timestamp);
-            observe(node);
             break;
         case Node.DOCUMENT_FRAGMENT_NODE:
             let shadowRoot = (node as ShadowRoot);
@@ -163,6 +170,9 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                             child = iframe.contentDocument;
                         }
                     }
+                    if (source === Source.ChildListRemove) {
+                        ignore(iframe);
+                    }
                     dom[call](node, parent, frameData, source);
                     break;
                 case "LINK":
@@ -210,6 +220,20 @@ function observe(root: Node): void {
     if (dom.has(root)) { return; }
     mutation.observe(root); // Observe mutations for this root node
     interaction.observe(root); // Observe interactions for this root node
+}
+
+function ignore(root: HTMLIFrameElement): void {
+    // iframes will have load event listeners and they should be removed when iframe is removed
+    // from the document
+    unbindTarget(root);
+    const doc = dom.iframeDoc(root);
+    
+    if (doc) {
+        // When an iframe is removed, we should also remove all listeners attached to its document
+        // to avoid memory leaks.
+        unbindTarget(doc);
+        mutation.disconnect(doc);
+    }
 }
 
 function getStyleValue(style: HTMLStyleElement): string {
