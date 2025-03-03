@@ -4,6 +4,7 @@ import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
+import { iframeUnavailable } from "./styles/IframeUnavailable";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
@@ -283,6 +284,7 @@ export class LayoutHelper {
                         let custom = doc.createElement("style");
                         custom.setAttribute(Constant.CustomStyleTag, "true");
                         custom.innerText = this.getCustomStyle();
+                        custom.innerText += `\n${iframeUnavailable}`;
                         headElement.appendChild(custom);
                     }
                     this.setAttributes(headElement as HTMLElement, node);
@@ -548,7 +550,7 @@ export class LayoutHelper {
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
-            `${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
+            //`${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
             `*[${Constant.Suspend}] { filter: grayscale(100%); }` + 
             `body { font-size: initial; }
             ${this.getMobileCustomStyle()}`;
