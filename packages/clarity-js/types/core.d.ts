@@ -32,7 +32,6 @@ export const enum ExtractSource {
     Text = 2,
     Fragment = 3,
     Hash = 4,
-    Masked = 5
 }
 
 export const enum Type {
