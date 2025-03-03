@@ -11,7 +11,6 @@ export let keys: Set<number> = new Set();
 
 let variables : { [key: number]: { [key: number]: Syntax[] }} = {};
 let selectors : { [key: number]: { [key: number]: string }} = {};
-let maskedSelectors : { [key: number]: { [key: number]: string }} = {};
 let hashes : { [key: number]: { [key: number]: string }} = {};
 let validation : { [key: number]: string } = {};
 
@@ -33,7 +32,6 @@ export function trigger(input: string): void {
         var values = parts.length > 1 ? JSON.parse(parts[1]) : {};
         variables[key] = {};
         selectors[key] = {};
-        maskedSelectors[key] = {};
         hashes[key] = {};
         validation[key] = element;
         for (var v in values) {
@@ -46,8 +44,6 @@ export function trigger(input: string): void {
                 source = ExtractSource.Javascript
             } else if (value.startsWith(Constant.Bang)) {
                 source = ExtractSource.Hash
-            } else if (value.startsWith(Constant.At)){
-                source = ExtractSource.Masked
             }
             switch (source) {
                 case ExtractSource.Javascript:
@@ -60,10 +56,6 @@ export function trigger(input: string): void {
                 case ExtractSource.Hash:
                     let hash = value.substring(1, value.length);
                     hashes[key][id] = hash;
-                    break;
-                case ExtractSource.Masked:
-                    let selector = value.substring(1, value.length);
-                    maskedSelectors[key][id] = selector;
                     break;
             }
         }
@@ -79,6 +71,7 @@ export function clone(v: Syntax[]): Syntax[] {
 
 export function compute(): void {
     try {
+        let shouldMask = false;
         for (let v in variables) {
             let key = parseInt(v);
             if (validation[key] == Constant.Empty || document.querySelector(validation[key]))
@@ -95,10 +88,16 @@ export function compute(): void {
                 let selectorData = selectors[key];
                 for (let s in selectorData) {
                     let selectorKey = parseInt(s);
-                    let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
+                    let selector = selectorData[selectorKey];
+                    if (selector.startsWith(Constant.At)){
+                        shouldMask = true;
+                        selector = selector.substring(1, selector.length);
+                    }
+                    let nodes = document.querySelectorAll(selector) as NodeListOf<HTMLElement>;
                     if (nodes) {
                         let text = Array.from(nodes).map(e => e.textContent)
-                        update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
+                        let content = shouldMask ? hash(text.join(Constant.Seperator)).trim() : text.join(Constant.Seperator);
+                        update(key, selectorKey, content.substring(0, Setting.ExtractLimit));
                     }
                 }
 
@@ -107,17 +106,6 @@ export function compute(): void {
                     let hashKey = parseInt(h);
                     let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
                     update(key, hashKey, content);
-                }  
-
-                let maskedData = maskedSelectors[key];
-                for (let m in maskedData){
-                    let selectorKey = parseInt(m);
-                    let nodes = document.querySelectorAll(maskedData[selectorKey]) as NodeListOf<HTMLElement>;
-                    if (nodes) {
-                        let text = Array.from(nodes).map(e => e.textContent)
-                        let content = hash(text.join(Constant.Seperator)).trim().substring(0, Setting.ExtractLimit);
-                        update(key, selectorKey, content);
-                    }
                 }
             }
         }
