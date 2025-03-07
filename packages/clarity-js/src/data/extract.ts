@@ -47,14 +47,14 @@ export function trigger(input: string): void {
             }
             switch (source) {
                 case ExtractSource.Javascript:
-                    let variable = value.slice(1, value.length);
+                    let variable = value.slice(1);
                     variables[key][id] = parse(variable);
                     break;
                 case ExtractSource.Text:
                     selectors[key][id] = value;
                     break;
                 case ExtractSource.Hash:
-                    let hash = value.slice(1, value.length);
+                    let hash = value.slice(1);
                     hashes[key][id] = hash;
                     break;
             }
@@ -91,13 +91,12 @@ export function compute(): void {
                     let selector = selectorData[selectorKey];
                     if (selector.startsWith(Constant.At)){
                         shouldMask = true;
-                        selector = selector.slice(1, selector.length);
+                        selector = selector.slice(1);
                     }
                     let nodes = document.querySelectorAll(selector) as NodeListOf<HTMLElement>;
                     if (nodes) {
-                        let text = Array.from(nodes).map(e => e.textContent)
-                        let content = shouldMask ? hash(text.join(Constant.Seperator)).trim() : text.join(Constant.Seperator);
-                        update(key, selectorKey, content.slice(0, Setting.ExtractLimit));
+                        let text = Array.from(nodes).map(e => e.textContent).join(Constant.Seperator);
+                        update(key, selectorKey, (shouldMask ? hash(text).trim() : text).slice(0, Setting.ExtractLimit));
                     }
                 }
 
