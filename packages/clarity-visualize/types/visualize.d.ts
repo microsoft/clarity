@@ -66,6 +66,9 @@ export interface Options {
     canvas?: boolean;
     keyframes?: boolean;
     mobile?: boolean;
+    thirdPartyIframeMessage?: string;
+    bitmapMessage?: string;
+    elementMaskedMessage?: string;
 }
 
 export interface NodeData {
@@ -156,6 +159,7 @@ export const enum Constant {
     HashBeta = "data-clarity-hashbeta",
     Hide = "data-clarity-hide",
     Unavailable = "data-clarity-unavailable",
+    UnavailableSmall = "data-clarity-unavailable-small",
     Suspend = "data-clarity-suspend",
     Hidden = "hidden",
     Visible = "visible",
@@ -193,7 +197,11 @@ export const enum Constant {
     NewPassword = "new-password",
     StyleSheet = "stylesheet",
     OriginalBackgroundColor = "data-clarity-background-color",
-    OriginalOpacity = "data-clarity-opacity"
+    OriginalOpacity = "data-clarity-opacity",
+    ThirdPartyIframeMessage = "Clarity can't track third-party iFrames",
+    BitmapMessage = "Clarity can't track bitmaps", 
+    ElementMaskedMessage = "Element is masked",
+    UnavailableTextClass = "clarity-unavailable-text"
 }
 
 export const enum Setting {

@@ -4,7 +4,9 @@ import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
-import { iframeUnavailable } from "./styles/IframeUnavailable";
+import iframeUnavailableSvg from "./styles/IframeUnavailable.svg";
+import iframeUnavailableSmallSvg from "./styles/IframeUnavailableSmall.svg";
+import svgText from "./styles/svgText.css";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
@@ -23,11 +25,16 @@ export class LayoutHelper {
     stylesToApply: { [id: string] : string[] } = {};
     BackgroundImageEligibleElements = ['DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'ASIDE', 'NAV', 'SPAN', 'P', 'MAIN'];
     MaskedBackgroundImageStyle = `#CCC no-repeat center url("${Asset.Hide}")`;
+    ThirdPartyIframeMessage: string;
+    BitmapMessage: string;
+    ElementMaskedMessage: string;
 
-
-    constructor(state: PlaybackState, isMobile: boolean = false) {
+    constructor(state: PlaybackState, isMobile = false, thirdPartyIframeMessage: string = Constant.ThirdPartyIframeMessage, bitmapMessage: string = Constant.BitmapMessage, elementMaskedMessage: string = Constant.ElementMaskedMessage) {
         this.state = state;
-        this.isMobile = isMobile
+        this.isMobile = isMobile;
+        this.ThirdPartyIframeMessage = thirdPartyIframeMessage;
+        this.BitmapMessage = bitmapMessage;
+        this.ElementMaskedMessage = elementMaskedMessage;
     }
 
     public reset = (): void => {
@@ -63,7 +70,7 @@ export class LayoutHelper {
         }
     }
 
-    public element = (nodeId: number): Node => {
+    public element = (nodeId: number): Node | null => {
         return nodeId !== null && nodeId > 0 && nodeId in this.nodes ? this.nodes[nodeId] : null;
     }
 
@@ -284,7 +291,6 @@ export class LayoutHelper {
                         let custom = doc.createElement("style");
                         custom.setAttribute(Constant.CustomStyleTag, "true");
                         custom.innerText = this.getCustomStyle();
-                        custom.innerText += `\n${iframeUnavailable}`;
                         headElement.appendChild(custom);
                     }
                     this.setAttributes(headElement as HTMLElement, node);
@@ -294,7 +300,7 @@ export class LayoutHelper {
                     let linkElement = this.element(node.id) as HTMLLinkElement;
                     linkElement = linkElement ? linkElement : this.createElement(doc, node.tag) as HTMLLinkElement;
                     if (!node.attributes) { node.attributes = {}; }
-                    this.setAttributes(linkElement as HTMLElement, node);
+                    this.setAttributes(linkElement, node);
                     if ("rel" in node.attributes) {
                         if (node.attributes["rel"] === Constant.StyleSheet) {
                             this.stylesheets.push(new Promise((resolve: () => void): void => {
@@ -327,22 +333,37 @@ export class LayoutHelper {
                     if (proxy && !!node.attributes?.src) {
                         node.attributes.src = proxy(node.attributes.src, node.attributes.id, Layout.Constant.ImageTag);
                     }
-                    this.setAttributes(imgElement as HTMLElement, node);
+                    this.setAttributes(imgElement, node);
                     this.resize(imgElement, node.width, node.height);
                     insert(node, parent, imgElement, pivot);
                     break;
                 case "STYLE":
                     let styleElement = this.element(node.id) as HTMLStyleElement ?? doc.createElement(node.tag) as HTMLStyleElement;
-                    this.setAttributes(styleElement as HTMLElement, node);
+                    this.setAttributes(styleElement, node);
                     styleElement.textContent = node.value;
                     insert(node, parent, styleElement, pivot);
                     this.style(styleElement);
                     break;
                 case "IFRAME":
-                    let iframeElement = this.element(node.id) as HTMLElement;
-                    iframeElement = iframeElement ? iframeElement : this.createElement(doc, node.tag);
+                    let iframeElement = this.element(node.id) as HTMLIFrameElement;
+                    iframeElement = iframeElement ? iframeElement : this.createElement(doc, node.tag) as HTMLIFrameElement;
                     if (!node.attributes) { node.attributes = {}; }
-                    this.setAttributes(iframeElement as HTMLElement, node);
+                    this.setAttributes(iframeElement, node);
+
+                    // when we create an iframe that isn't same origin, we want to add a text message to the background image that replaced it
+                    if (node.attributes[Layout.Constant.SameOrigin] !== "true" && typeof iframeElement.setAttribute === Constant.Function && iframeElement.contentDocument.querySelectorAll(`.${Constant.UnavailableTextClass}`).length === 0) {
+                        if (this.svgFitsText(iframeElement)) {
+                            var iframeBodyDiv = this.createElement(iframeElement.contentDocument, "DIV");
+                            var infoMessageSpan = this.createElement(iframeElement.contentDocument, "SPAN");
+                            iframeBodyDiv.setAttribute("class", Constant.UnavailableTextClass);
+                            infoMessageSpan.innerText = this.ThirdPartyIframeMessage;
+                            iframeBodyDiv.insertBefore(infoMessageSpan, null);
+                            iframeElement.contentWindow.document.body.insertBefore(iframeBodyDiv, null);
+                            var iframeStyling = this.createElement(iframeElement.contentDocument, "STYLE");
+                            iframeStyling.innerText = svgText;
+                            iframeElement.contentWindow.document.head.insertBefore(iframeStyling, null);
+                        }
+                    }
                     insert(node, parent, iframeElement, pivot);
                     break;
                 default:
@@ -521,7 +542,11 @@ export class LayoutHelper {
         }
 
         if (sameorigin === false && tag === Constant.IFrameTag && typeof node.setAttribute === Constant.Function) {
-            node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
+            if (this.svgFitsText(node)) {
+                node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
+            } else {
+                node.setAttribute(Constant.UnavailableSmall, Layout.Constant.Empty);
+            }
         }
 
         // Add an empty ALT tag on all IMG elements
@@ -550,9 +575,18 @@ export class LayoutHelper {
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
             `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
-            //`${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
+            `${Constant.IFrameTag}[${Constant.Unavailable}] { ${iframeUnavailableSvg} }` +
+            `${Constant.IFrameTag}[${Constant.UnavailableSmall}] { ${iframeUnavailableSmallSvg} }` +
             `*[${Constant.Suspend}] { filter: grayscale(100%); }` + 
             `body { font-size: initial; }
             ${this.getMobileCustomStyle()}`;
+    }
+
+    private svgFitsText = (inputElement: HTMLElement): boolean => {
+        var dimensions = inputElement.getBoundingClientRect();
+        if (dimensions.width >= 132 && dimensions.height >= 132) {
+            return true;
+        }
+        return false;
     }
 }
