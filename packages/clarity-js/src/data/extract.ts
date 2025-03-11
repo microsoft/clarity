@@ -71,7 +71,6 @@ export function clone(v: Syntax[]): Syntax[] {
 
 export function compute(): void {
     try {
-        let shouldMask = false;
         for (let v in variables) {
             let key = parseInt(v);
             if (validation[key] == Constant.Empty || document.querySelector(validation[key]))
@@ -87,6 +86,7 @@ export function compute(): void {
 
                 let selectorData = selectors[key];
                 for (let s in selectorData) {
+                    let shouldMask = false;
                     let selectorKey = parseInt(s);
                     let selector = selectorData[selectorKey];
                     if (selector.startsWith(Constant.At)){
