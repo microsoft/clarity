@@ -426,19 +426,19 @@ export interface BaselineData {
     pointerY: number;
     activityTime: number;
     scrollTime: number;
-    pointerTime: number;
-    moveX: number;
-    moveY: number;
-    moveTime: number;
-    downX: number;
-    downY: number;
-    downTime: number;
-    upX: number;
-    upY: number;
-    upTime: number;
-    pointerPrevX: number;
-    pointerPrevY: number;
-    pointerPrevTime: number;
+    pointerTime?: number;
+    moveX?: number;
+    moveY?: number;
+    moveTime?: number;
+    downX?: number;
+    downY?: number;
+    downTime?: number;
+    upX?: number;
+    upY?: number;
+    upTime?: number;
+    pointerPrevX?: number;
+    pointerPrevY?: number;
+    pointerPrevTime?: number;
 }
 
 export interface IdentityData {
