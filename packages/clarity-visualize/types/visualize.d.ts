@@ -66,6 +66,7 @@ export interface Options {
     canvas?: boolean;
     keyframes?: boolean;
     mobile?: boolean;
+    betaMasking?: boolean;
     thirdPartyIframeMessage?: string;
     bitmapMessage?: string;
     elementMaskedMessage?: string;
@@ -167,6 +168,7 @@ export const enum Constant {
     Small = "s",
     Medium = "m",
     Large = "l",
+    Beta = "b",
     Dom = "dom",
     Context = "2d",
     Pixel = "px",    
@@ -232,4 +234,5 @@ export const enum Setting {
     CanvasTextFont = "500 12px Segoe UI",
     ScrollCanvasMaxHeight = 65535,
     VisualizationSettleBuffer = 100,
+    LargeSvg = 132
 }
