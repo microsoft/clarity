@@ -127,7 +127,7 @@ function reset(envelope: Data.Envelope, userAgent: string): void {
         (links[i] as HTMLElement).onclick = function(): void { save(i); };
     }
     const mobile = isMobileDevice(userAgent);
-    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata, mobile, onclickMismatch: (args) => console.log(`${args.time}|${args.x}|${args.y}|${args.nodeId}`) });
+    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata, mobile, betaMasking: true, onclickMismatch: (args) => console.log(`${args.time}|${args.x}|${args.y}|${args.nodeId}`) });
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
