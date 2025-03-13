@@ -47,3 +47,15 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: yarn install
       - run: yarn build
+      - run: npm publish
+        working-directory: ./packages/clarity-js
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+      - run: npm publish
+        working-directory: ./packages/clarity-decode
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+      - run: npm publish
+        working-directory: ./packages/clarity-visualize
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
