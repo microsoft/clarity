@@ -2,7 +2,7 @@ import { BrowserEvent, Constant } from "@clarity-types/core";
 import api from "./api";
 import measure from "./measure";
 
-let bindings: BrowserEvent[] = [];
+let bindings: Map<EventTarget, BrowserEvent[]> = new Map();
 
 export function bind(target: EventTarget, event: string, listener: EventListener, capture: boolean = false, passive: boolean = true): void {
   listener = measure(listener) as EventListener;
@@ -10,7 +10,11 @@ export function bind(target: EventTarget, event: string, listener: EventListener
   // E.g. Iframe may start off as same-origin but later turn into cross-origin, and the following lines will throw an exception.
   try {
     target[api(Constant.AddEventListener)](event, listener, { capture, passive });
-    bindings.push({ event, target, listener, options: { capture, passive } });
+    if (!has(target)) {
+      bindings.set(target, []);
+    }
+
+    bindings.get(target).push({ event, listener, options: { capture, passive } });
   } catch {
     /* do nothing */
   }
@@ -18,13 +22,32 @@ export function bind(target: EventTarget, event: string, listener: EventListener
 
 export function reset(): void {
   // Walk through existing list of bindings and remove them all
-  for (let binding of bindings) {
+  bindings.forEach((bindingsPerTarget: BrowserEvent[], target: EventTarget) => {
+    resetByTarget(bindingsPerTarget, target);
+  });
+
+  bindings = new Map();
+}
+
+export function unbind(target: EventTarget) {
+  if (!has(target)) {
+    return;
+  }
+  resetByTarget(bindings.get(target), target);
+}
+
+export function has(target: EventTarget): boolean {
+  return bindings.has(target);
+}
+
+function resetByTarget(bindingsPerTarget: BrowserEvent[], target: EventTarget): void {
+  bindingsPerTarget.forEach((binding) => {
     // Wrapping inside try / catch to avoid situations where the element may be destroyed before we get a chance to unbind
     try {
-      binding.target[api(Constant.RemoveEventListener)](binding.event, binding.listener, { capture: binding.options.capture, passive: binding.options.passive });
+      target[api(Constant.RemoveEventListener)](binding.event, binding.listener, { capture: binding.options.capture, passive: binding.options.passive });
     } catch {
       /* do nothing */
     }
-  }
-  bindings = [];
+  });
+  bindings.delete(target);
 }

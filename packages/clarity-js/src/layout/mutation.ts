@@ -4,7 +4,7 @@ import { Constant, MutationHistory, MutationRecordWithTime, MutationQueue, Setti
 import { FunctionNames } from "@clarity-types/performance";
 import api from "@src/core/api";
 import * as core from "@src/core";
-import { bind } from "@src/core/event";
+import * as event from "@src/core/event";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
@@ -21,7 +21,7 @@ import traverse from "@src/layout/traverse";
 import processNode from "./node";
 import config from "@src/core/config";
 
-let observers: MutationObserver[] = [];
+let observers: Set<MutationObserver> = new Set();
 let mutations: MutationQueue[] = [];
 let throttledMutations: { [key: number]: MutationRecordWithTime } = {};
 let insertRule: (rule: string, index?: number) => number = null;
@@ -34,7 +34,6 @@ let timeout: number = null;
 let throttleDelay: number = null;
 let activePeriod = null;
 let history: MutationHistory = {};
-let criticalPeriod = null;
 let observedNodes: WeakMap<Node, MutationObserver> = new WeakMap<Node, MutationObserver>();
 
 // We ignore mutations if these attributes are updated
@@ -42,12 +41,11 @@ const IGNORED_ATTRIBUTES = ["data-google-query-id", "data-load-complete", "data-
 
 export function start(): void {
   start.dn = FunctionNames.MutationStart;
-  observers = [];
+  observers = new Set();
   queue = [];
   timeout = null;
   activePeriod = 0;
   history = {};
-  criticalPeriod = 0;
   observedNodes = new WeakMap<Node, MutationObserver>();
 
   // Some popular open source libraries, like styled-components, optimize performance
@@ -119,17 +117,13 @@ export function observe(node: Node): void {
   // For this reason, we need to wire up mutations every time we see a new shadow dom.
   // Also, wrap it inside a try / catch. In certain browsers (e.g. legacy Edge), observer on shadow dom can throw errors
   try {
-    // Cleanup old observer if present.
-    if (observedNodes.has(node)) {
-      observedNodes.get(node)?.disconnect();
-    }
 
     let m = api(Constant.MutationObserver);
     let observer = m in window ? new window[m](measure(handle) as MutationCallback) : null;
     if (observer) {
       observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
       observedNodes.set(node, observer);
-      observers.push(observer);
+      observers.add(observer);
     }
   } catch (e) {
     internal.log(Code.MutationObserver, Severity.Info, e ? e.name : null);
@@ -141,29 +135,37 @@ export function monitor(frame: HTMLIFrameElement): void {
   // This includes cases where iframe location is updated without explicitly updating src attribute
   // E.g. iframe.contentWindow.location.href = "new-location";
   if (dom.has(frame) === false) {
-    bind(frame, Constant.LoadEvent, generate.bind(this, frame, Constant.ChildList), true);
+    event.bind(frame, Constant.LoadEvent, generate.bind(this, frame, Constant.ChildList), true);
   }
 }
 
 export function stop(): void {
-  for (let observer of observers) {
+  for (let observer of Array.from(observers)) {
     if (observer) {
       observer.disconnect();
     }
   }
-  observers = [];
+  observers = new Set();
   history = {};
   mutations = [];
-  throttledMutations = [];
+  throttledMutations = {};
   queue = [];
   activePeriod = 0;
   timeout = null;
-  criticalPeriod = 0;
+  observedNodes = new WeakMap();
 }
 
 export function active(): void {
   activePeriod = time() + Setting.MutationActivePeriod;
-  criticalPeriod = time() + config.criticalMs;
+}
+
+export function disconnect(n: Node): void {
+  const ob = observedNodes.get(n);
+  if (ob) {
+    ob.disconnect();
+    observers.delete(ob);
+    observedNodes.delete(n);
+  }
 }
 
 function handle(m: MutationRecord[]): void {
@@ -275,14 +277,9 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
     let inactive = timestamp > activePeriod;
 
     // Calculate critical period based on when mutation is processed
-    const critical = instance < criticalPeriod;
     let target = dom.get(m.target);
     let element = target && target.selector ? target.selector.join() : m.target.nodeName;
     let parent = value.selector ? value.selector.join() : Constant.Empty;
-
-    // Check if its a low priority (e.g., ads related) element mutation happening during critical period
-    // If the discard list is empty, we discard all mutations during critical period
-    const lowPriMutation = config.throttleMutations && critical && (config.discard.length === 0 || config.discard.some((key) => element.includes(key)));
 
     // We use selector, instead of id, to determine the key (signature for the mutation) because in some cases
     // repeated mutations can cause elements to be destroyed and then recreated as new DOM nodes
@@ -299,13 +296,13 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
     }
 
     // Update the counter, do not reset counter if its critical period
-    h[0] = inactive || lowPriMutation ? (h[1] === instance ? h[0] : h[0] + 1) : 1;
+    h[0] = inactive ? (h[1] === instance ? h[0] : h[0] + 1) : 1;
     h[1] = instance;
 
     // Return updated mutation type based on,
     // 1. if we have already hit the threshold or not
     // 2. if its a low priority mutation happening during critical time period
-    if (h[0] >= Setting.MutationSuspendThreshold || lowPriMutation) {
+    if (h[0] >= Setting.MutationSuspendThreshold) {
       // Store a reference to removedNodes so we can process them later
       // when we resume mutations again on user interactions
       h[2] = m.removedNodes;

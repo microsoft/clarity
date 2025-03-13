@@ -1,6 +1,7 @@
 import { Constant, Source } from "@clarity-types/layout";
 import { Code, Dimension, Severity } from "@clarity-types/data";
 import * as dom from "./dom";
+import * as event from "@src/core/event";
 import * as dimension from "@src/data/dimension";
 import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
@@ -43,7 +44,9 @@ export default function (node: Node, source: Source, timestamp: number): Node {
         case Node.DOCUMENT_NODE:
             // We check for regions in the beginning when discovering document and
             // later whenever there are new additions or modifications to DOM (mutations)
-            if (node === document) dom.parse(document);
+            if (node === document) {
+                dom.parse(document);
+            }
             checkDocumentStyles(node as Document, timestamp);
             observe(node);
             break;
@@ -163,6 +166,9 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                             child = iframe.contentDocument;
                         }
                     }
+                    if (source === Source.ChildListRemove) {
+                        removeObserver(iframe);
+                    }
                     dom[call](node, parent, frameData, source);
                     break;
                 case "LINK":
@@ -207,9 +213,31 @@ export default function (node: Node, source: Source, timestamp: number): Node {
 }
 
 function observe(root: Node): void {
-    if (dom.has(root)) { return; }
+    if (dom.has(root) || event.has(root)) { return; }
     mutation.observe(root); // Observe mutations for this root node
     interaction.observe(root); // Observe interactions for this root node
+}
+
+export function removeObserver(root: HTMLIFrameElement): void {
+    // iframes will have load event listeners and they should be removed when iframe is removed
+    // from the document
+    event.unbind(root);
+    const { doc = null, win = null } = dom.iframeContent(root) || {};
+
+    if (win) {
+        // For iframes, scroll event is observed on content window and this needs to be removed as well
+        event.unbind(win);
+    }
+    
+    if (doc) {
+        // When an iframe is removed, we should also remove all listeners attached to its document
+        // to avoid memory leaks.
+        event.unbind(doc);
+        mutation.disconnect(doc);
+        
+        // Remove iframe and content document from maps tracking them
+        dom.removeIFrame(root, doc);
+    }
 }
 
 function getStyleValue(style: HTMLStyleElement): string {

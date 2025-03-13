@@ -6,6 +6,7 @@ import { bind } from "@src/core/event";
 import hash from "@src/core/hash";
 import { shortid } from "@src/data/metadata";
 import * as internal from "@src/diagnostic/internal";
+import { removeObserver } from "@src/layout/node";
 import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
 let index: number = 1;
@@ -23,6 +24,7 @@ let maskTags = [];
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
 let iframeMap: WeakMap<Document, HTMLIFrameElement> = null; // Maps iframe's contentDocument => parent iframe element
+let iframeContentMap: WeakMap<HTMLIFrameElement, { doc: Document, win: Window }> = null; // Maps parent iframe element => iframe's contentDocument & contentWindow
 let privacyMap: WeakMap<Node, Privacy> = null; // Maps node => Privacy (enum)
 let fraudMap: WeakMap<Node, number> = null; // Maps node => FraudId (number)
 
@@ -49,6 +51,7 @@ function reset(): void {
     nodesMap = new Map();
     idMap = new WeakMap();
     iframeMap = new WeakMap();
+    iframeContentMap = new WeakMap();
     privacyMap = new WeakMap();
     fraudMap = new WeakMap();
     selector.reset();
@@ -200,6 +203,7 @@ export function sameorigin(node: Node): boolean {
             let doc = frame.contentDocument;
             if (doc) {
                 iframeMap.set(frame.contentDocument, frame);
+                iframeContentMap.set(frame, { doc: frame.contentDocument, win: frame.contentWindow });
                 output = true;
             }
         } catch { /* do nothing */ }
@@ -210,6 +214,18 @@ export function sameorigin(node: Node): boolean {
 export function iframe(node: Node): HTMLIFrameElement {
     let doc = node.nodeType === Node.DOCUMENT_NODE ? node as Document : null;
     return doc && iframeMap.has(doc) ? iframeMap.get(doc) : null;
+}
+
+export function iframeContent(frame: HTMLIFrameElement): {doc: Document, win: Window } {
+    if (iframeContentMap.has(frame)) {
+        return iframeContentMap.get(frame);
+    }
+    return null;
+}
+
+export function removeIFrame(frame: HTMLIFrameElement, doc: Document): void {
+    iframeContentMap.delete(frame);
+    iframeMap.delete(doc);
 }
 
 function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
@@ -360,11 +376,18 @@ function remove(id: number, source: Source): void {
 }
 
 function removeNodeFromNodesMap(id: number) {
+    const nodeToBeRemoved = nodesMap.get(id);
     // Shadow dom roots shouldn't be deleted, 
     // we should keep listening to the mutations there even they're not rendered in the DOM.
-    if(nodesMap.get(id).nodeType === Node.DOCUMENT_FRAGMENT_NODE){
+    if(nodeToBeRemoved?.nodeType === Node.DOCUMENT_FRAGMENT_NODE){
         return;
     }
+
+    if (nodeToBeRemoved && nodeToBeRemoved?.nodeType === Node.ELEMENT_NODE && nodeToBeRemoved["tagName"] === "IFRAME") {
+        const iframe = nodeToBeRemoved as HTMLIFrameElement;
+        removeObserver(iframe);
+    }
+
     nodesMap.delete(id);
 
     let value = id in values ? values[id] : null;
