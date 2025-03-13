@@ -1,0 +1,49 @@
+# This workflow builds and publishes selected libraries
+
+name: Publish to NPM
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'packages/clarity-js/src/core/version.ts'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: yarn install
+      - run: yarn build
+      - run: yarn test
+      - run: |
+          # Make size check script executable
+          chmod +x ./scripts/check-file-size.sh
+      - run: |
+          # Run the size check script for clarity-js
+          ../../scripts/check-file-size.sh clarity-js ${{ vars.VERSION_FOR_SIZE_COMPARISON }} "build/clarity.min.js" 2
+        working-directory: ./packages/clarity-js
+      - run: |
+          # Run the size check script for clarity-decode
+          ../../scripts/check-file-size.sh clarity-decode ${{ vars.VERSION_FOR_SIZE_COMPARISON }} "build/clarity.decode.min.js" 2
+        working-directory: ./packages/clarity-decode
+      - run: |
+          # Run the size check script for clarity-visualize
+          ../../scripts/check-file-size.sh clarity-visualize ${{ vars.VERSION_FOR_SIZE_COMPARISON }} "build/clarity.visualize.min.js" 2
+        working-directory: ./packages/clarity-visualize
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - run: yarn install
+      - run: yarn build
