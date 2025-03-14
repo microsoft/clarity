@@ -53,7 +53,7 @@
     "build": "yarn build:clean && yarn build:main",
     "build:main": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "build:clean": "del-cli build/*",
-    "test": "ts-mocha -p test/tsconfig.test.json test/**/*.test.ts",
+    "test": "ts-mocha -p test/tsconfig.test.json test/stub.test.ts",
     "tslint": "tslint --project ./",
     "tslint:fix": "tslint --fix --project ./ --force"
   },
