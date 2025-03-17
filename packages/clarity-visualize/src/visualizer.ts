@@ -157,7 +157,7 @@ export class Visualizer implements VisualizerType {
         this.data = new DataHelper(this.state);
         this.layout = new LayoutHelper(this.state, options.mobile, options.betaMasking, options.thirdPartyIframeMessage, options.bitmapMessage, options.elementMaskedMessage);
         this.heatmap = new HeatmapHelper(this.state, this.layout);
-        this.interaction = new InteractionHelper(this.state, this.layout);
+        this.interaction = new InteractionHelper(this.state, this.layout, options.betaMasking);
 
         // If discover event was passed, render it now
         if (options.dom) { 

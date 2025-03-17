@@ -4,11 +4,10 @@ import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
-import iframeUnavailableSvg from "./styles/IframeUnavailable.svg";
-import iframeUnavailableSmallSvg from "./styles/IframeUnavailableSmall.svg";
-import imageMaskedSvg from "./styles/imageMasked.svg";
-import imageMaskedSmallSvg from "./styles/imageMaskedSmall.svg";
-import svgText from "./styles/svgText.css";
+import iframeUnavailableSvg from "./styles/IframeUnavailable/english.svg";
+import iframeUnavailableSmallSvg from "./styles/IframeUnavailable/iconOnly.svg";
+import imageMaskedSvg from "./styles/imageMasked/english.svg";
+import imageMaskedSmallSvg from "./styles/imageMasked/iconOnly.svg";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
@@ -353,21 +352,6 @@ export class LayoutHelper {
                     iframeElement = iframeElement ? iframeElement : this.createElement(doc, node.tag) as HTMLIFrameElement;
                     if (!node.attributes) { node.attributes = {}; }
                     this.setAttributes(iframeElement, node);
-
-                    // when we create an iframe that isn't same origin, we want to add a text message to the background image that replaced it
-                    if (this.BetaMasking && node.attributes[Layout.Constant.SameOrigin] !== "true" && typeof iframeElement.setAttribute === Constant.Function && iframeElement.contentDocument?.querySelectorAll(`.${Constant.UnavailableTextClass}`).length === 0) {
-                        if (this.svgFitsText(iframeElement)) {
-                            var iframeBodyDiv = this.createElement(iframeElement.contentDocument, "DIV");
-                            var infoMessageSpan = this.createElement(iframeElement.contentDocument, "SPAN");
-                            iframeBodyDiv.setAttribute("class", Constant.UnavailableTextClass);
-                            infoMessageSpan.innerText = this.ThirdPartyIframeMessage;
-                            iframeBodyDiv.insertBefore(infoMessageSpan, null);
-                            iframeElement.contentWindow.document.body.insertBefore(iframeBodyDiv, null);
-                            var iframeStyling = this.createElement(iframeElement.contentDocument, "STYLE");
-                            iframeStyling.innerText = svgText;
-                            iframeElement.contentWindow.document.head.insertBefore(iframeStyling, null);
-                        }
-                    }
                     insert(node, parent, iframeElement, pivot);
                     break;
                 default:
@@ -530,8 +514,10 @@ export class LayoutHelper {
                         node.setAttribute(`data-clarity-${attribute}`, v);
                     } else if (tag === Constant.ImageTag && attribute.indexOf("src") === 0 && (v === null || v.length === 0)) {
                         if (this.BetaMasking) {
-                            if (this.svgFitsText(node)) {
+                            if (data.width >= Setting.LargeSvg && data.height >= Setting.LargeSvg) {
                                 node.setAttribute(Constant.Hide, `${Constant.Large}${Constant.Beta}`);
+                                // todo (samart): put into a const
+                                node.setAttribute('data-clarity-unavailable-text', this.ThirdPartyIframeMessage);
                             } else {
                                 node.setAttribute(Constant.Hide, `${Constant.Small}${Constant.Beta}`);
                             }
@@ -556,6 +542,8 @@ export class LayoutHelper {
         if (sameorigin === false && tag === Constant.IFrameTag && typeof node.setAttribute === Constant.Function) {
             if (this.svgFitsText(node)) {
                 node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
+                // todo (samart): put into a const
+                node.setAttribute('data-clarity-unavailable-text', this.ThirdPartyIframeMessage);
             } else {
                 node.setAttribute(Constant.UnavailableSmall, Layout.Constant.Empty);
             }
@@ -583,8 +571,7 @@ export class LayoutHelper {
 
     private getCustomStyle = (): string => {
         // tslint:disable-next-line: max-line-length
-        return `${Constant.ImageTag}[${Constant.Hide}] { background-color: #CCC; background-image: url(${Asset.Hide}); background-repeat:no-repeat; background-position: center; }` +
-            this.getImageHiddenCss() +
+        return this.getImageHiddenCss() +
             this.getIframeUnavailableCss() +
             `${Constant.IFrameTag}[${Constant.UnavailableSmall}] { ${iframeUnavailableSmallSvg} }` +
             `*[${Constant.Suspend}] { filter: grayscale(100%); }` + 
@@ -614,7 +601,8 @@ export class LayoutHelper {
             return  `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}${Constant.Beta}] { ${imageMaskedSmallSvg} }` +
                     `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}${Constant.Beta}] { ${imageMaskedSvg} }`;
         } else {
-            return `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
+            return  `${Constant.ImageTag}[${Constant.Hide}] { background-color: #CCC; background-image: url(${Asset.Hide}); background-repeat:no-repeat; background-position: center; }` +
+                    `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
                     `${Constant.ImageTag}[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
                     `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }`;
         }

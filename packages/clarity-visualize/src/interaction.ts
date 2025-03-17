@@ -2,6 +2,8 @@ import { Asset, Constant, PlaybackState, Point, Setting } from "@clarity-types/v
 import { Data, Layout } from "clarity-js";
 import type { Interaction } from "clarity-decode"
 import { LayoutHelper } from "./layout";
+import pointerSvg from "./styles/pointer/pointerIcon.svg";
+import clickStyle from "./styles/pointer/click.css";
 
 export class InteractionHelper {
     static TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
@@ -14,10 +16,12 @@ export class InteractionHelper {
     clickAudio = null;
     layout: LayoutHelper;
     state: PlaybackState;
+    vnext: boolean;
 
-    constructor(state: PlaybackState, layout: LayoutHelper) {
+    constructor(state: PlaybackState, layout: LayoutHelper, vnext: boolean) {
         this.state = state;
         this.layout = layout;
+        this.vnext = vnext;
     }
 
     public reset = (): void => {
@@ -148,13 +152,12 @@ export class InteractionHelper {
                 "@keyframes disappear { 90% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(1.3, 1.3); opacity: 0; } }" +
                 `#${Constant.InteractionCanvas} { position: absolute; left: 0; top: 0; z-index: ${Setting.ZIndex}; background: none; }` +
                 `#${Constant.PointerLayer} { position: absolute; z-index: ${Setting.ZIndex}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
-                `.${Constant.ClickLayer}, .${Constant.ClickRing}, .${Constant.TouchLayer}, .${Constant.TouchRing} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
-                `.${Constant.ClickRing} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
+                this.getClickLayerStyle() +
                 `.${Constant.TouchLayer} { background: radial-gradient(rgba(242,97,12,1), transparent); }` +
                 `.${Constant.TouchRing} { background: transparent; border: 1px solid rgba(242,97,12,0.8); }` +
                 `.${Constant.PointerClickLayer} { background-image: url(${Asset.Click}); }` +
                 `.${Constant.PointerNone} { background: none; }` +
-                `.${Constant.PointerMove} { background-image: url(${Asset.Pointer}); }`;
+                this.getPointerStyle();
 
             p.appendChild(style);
         }
@@ -270,10 +273,10 @@ export class InteractionHelper {
         let de = doc.documentElement;
         let click = doc.createElement("DIV");
         click.className = Constant.ClickLayer;
+        
         click.setAttribute(Constant.Title, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
         click.style.left = (x - Setting.ClickRadius / 2) + Constant.Pixel;
         click.style.top = (y - Setting.ClickRadius / 2) + Constant.Pixel
-        de.appendChild(click);
 
         // First pulsating ring
         let ringOne = click.cloneNode() as HTMLElement;
@@ -284,11 +287,23 @@ export class InteractionHelper {
         ringOne.style.animationFillMode = "forwards";
         click.appendChild(ringOne);
 
-        // Second pulsating ring
-        let ringTwo = ringOne.cloneNode() as HTMLElement;
-        ringTwo.style.animation = "pulsate-two 1 1s";
-        click.appendChild(ringTwo);
+        if (this.vnext) {
+            // TODO (samart): ten seconds right now, should update to 30 and move to const
+            // TODO (samart): also, design wants this to be 10 seconds of player time, not wall clock, so need to hook into player time somehow
+            // setTimeout(() => { de.removeChild(click); }, 10000);
+            let center = doc.createElement("DIV");
+            center.className = `${Constant.ClickLayer}-center`;
+            click.appendChild(center);
 
+
+        } else {    
+            // Second pulsating ring
+            let ringTwo = ringOne.cloneNode() as HTMLElement;
+            ringTwo.style.animation = "pulsate-two 1 1s";
+            click.appendChild(ringTwo);
+        }
+        de.appendChild(click);
+        
         // Play sound
         if (typeof Audio !== Constant.Undefined) {
             if (this.clickAudio === null) { 
@@ -296,7 +311,7 @@ export class InteractionHelper {
                 click.appendChild(this.clickAudio);
             }
             this.clickAudio.play();
-        }
+        }   
     };
 
     private overlay = (): HTMLCanvasElement => {
@@ -436,4 +451,21 @@ export class InteractionHelper {
         const dy = a.y - b.y;
         return Math.sqrt(dx * dx + dy * dy);
     };
+
+    private getPointerStyle = (): string => {
+        if (this.vnext) {
+            return `.${Constant.PointerMove} { ${pointerSvg} }`;
+        } else {
+            return `.${Constant.PointerMove} { background-image: url(${Asset.Pointer}); }`;
+        }
+    }
+
+    private getClickLayerStyle = (): string => {
+        if (this.vnext) {
+            return clickStyle;
+        } else {
+            return  `.${Constant.ClickLayer}, .${Constant.ClickRing}, .${Constant.TouchLayer}, .${Constant.TouchRing} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
+                    `.${Constant.ClickRing} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }`;
+        }
+    }
 }

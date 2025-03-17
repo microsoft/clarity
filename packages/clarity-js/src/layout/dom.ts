@@ -218,7 +218,7 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
     let current = metadata.privacy;
     let attributes = data.attributes || {};
     let tag = data.tag.toUpperCase();
-
+    
     switch (true) {
         case maskTags.indexOf(tag) >= 0:
             let type = attributes[Constant.Type];
@@ -260,6 +260,7 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             break;
         case tag === Constant.ImageTag:
             // Mask images with blob src as it is not publicly available anyway.
+            // TODO (samart): this is where I should be marking the special blob attribute actually
             if(attributes.src?.startsWith('blob:')){
                 metadata.privacy = Privacy.TextImage;
             }
