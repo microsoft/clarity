@@ -66,6 +66,7 @@ export interface Options {
     canvas?: boolean;
     keyframes?: boolean;
     mobile?: boolean;
+    // TODO (samart): rename to vnext?
     betaMasking?: boolean;
     thirdPartyIframeMessage?: string;
     bitmapMessage?: string;
