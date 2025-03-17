@@ -17,7 +17,8 @@
     "build:decode": "yarn workspace clarity-decode build",
     "build:visualize": "yarn workspace clarity-visualize build",
     "build:devtools": "yarn workspace clarity-devtools build",
-    "test": "yarn workspace clarity-js test"
+    "test": "yarn workspace clarity-js test",
+    "bump-version": "ts-node scripts/bump-version.ts"
   },
   "devDependencies": {
     "lerna": "^6.4.1",
