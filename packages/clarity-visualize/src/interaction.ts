@@ -4,6 +4,7 @@ import type { Interaction } from "clarity-decode"
 import { LayoutHelper } from "./layout";
 import pointerSvg from "./styles/pointer/pointerIcon.svg";
 import clickStyle from "./styles/pointer/click.css";
+import { ClickVizualizationData } from "clarity-decode/types/interaction";
 
 export class InteractionHelper {
     static TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
@@ -17,6 +18,7 @@ export class InteractionHelper {
     layout: LayoutHelper;
     state: PlaybackState;
     vnext: boolean;
+    visualizedClicks: ClickVizualizationData[] = [];
 
     constructor(state: PlaybackState, layout: LayoutHelper, vnext: boolean) {
         this.state = state;
@@ -168,7 +170,11 @@ export class InteractionHelper {
         switch (type) {
             case Data.Event.Click:
                 title = "Click";
-                this.drawClick(doc, data.x, data.y, title);
+                this.visualizedClicks.push({
+                    doc: de,
+                    click: this.drawClick(doc, data.x, data.y, title),
+                    time: event.time
+                });
                 if (this.state.options.onclickMismatch) {
                     const originalTarget = this.layout.element(data.target as number);
                     let correctTargetHit = false;
@@ -191,14 +197,22 @@ export class InteractionHelper {
                 break;
             case Data.Event.DoubleClick:
                 title = "Click";
-                this.drawClick(doc, data.x, data.y, title);
+                this.visualizedClicks.push({
+                    doc: de,
+                    click: this.drawClick(doc, data.x, data.y, title),
+                    time: event.time
+                });
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.TouchStart:
             case Data.Event.TouchEnd:
             case Data.Event.TouchCancel:
                 title = "Touch";
-                this.drawTouch(doc, data.x, data.y, title);
+                this.visualizedClicks.push({
+                    doc: de,
+                    click: this.drawTouch(doc, data.x, data.y, title),
+                    time: event.time
+                });
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.TouchMove:
@@ -217,6 +231,26 @@ export class InteractionHelper {
         }
         p.setAttribute(Constant.Title, `${title} (${data.x}${Constant.Pixel}, ${data.y}${Constant.Pixel})`);
     };
+
+    public clearOldClickVisualizations = (currentTimestamp: number): void => {
+        if (this.vnext) {
+            while(this.visualizedClicks.length > Setting.MaxClicksDisplayed) {
+                const visualizedClick = this.visualizedClicks.shift();
+                this.fadeOutElement(visualizedClick.click, visualizedClick.doc);
+            }
+
+            var tooOldClicks = this.visualizedClicks.filter(click => currentTimestamp - click.time > Setting.MaxClickDisplayDuration);
+            tooOldClicks.forEach(click => {
+                this.fadeOutElement(click.click, click.doc);
+                this.visualizedClicks.splice(this.visualizedClicks.indexOf(click), 1);
+            });
+        }        
+    }
+
+    private fadeOutElement = (element: HTMLElement, document: HTMLElement): void => {
+        element.classList.add("clarity-click-hidden");
+        setTimeout(() => { document.removeChild(element); }, 10000);
+    }
 
     private hover = (): void => {
         if (this.targetId && this.targetId !== this.hoverId) {
@@ -248,7 +282,7 @@ export class InteractionHelper {
         } else { this.points.push(point); }
     }
 
-    private drawTouch = (doc: Document, x: number, y: number, title: string): void => {
+    private drawTouch = (doc: Document, x: number, y: number, title: string): HTMLElement => {
         let de = doc.documentElement;
         let touch = doc.createElement("DIV");
         touch.className = Constant.TouchLayer;
@@ -267,9 +301,11 @@ export class InteractionHelper {
         ringOne.style.animation = "pulsate-touch 1 1s";
         ringOne.style.animationFillMode = "forwards";
         touch.appendChild(ringOne);
+
+        return touch;
     };
 
-    private drawClick = (doc: Document, x: number, y: number, title: string): void => {
+    private drawClick = (doc: Document, x: number, y: number, title: string): HTMLElement => {
         let de = doc.documentElement;
         let click = doc.createElement("DIV");
         click.className = Constant.ClickLayer;
@@ -288,9 +324,6 @@ export class InteractionHelper {
         click.appendChild(ringOne);
 
         if (this.vnext) {
-            // TODO (samart): ten seconds right now, should update to 30 and move to const
-            // TODO (samart): also, design wants this to be 10 seconds of player time, not wall clock, so need to hook into player time somehow
-            // setTimeout(() => { de.removeChild(click); }, 10000);
             let center = doc.createElement("DIV");
             center.className = `${Constant.ClickLayer}-center`;
             click.appendChild(center);
@@ -311,7 +344,8 @@ export class InteractionHelper {
                 click.appendChild(this.clickAudio);
             }
             this.clickAudio.play();
-        }   
+        }
+        return click;
     };
 
     private overlay = (): HTMLCanvasElement => {

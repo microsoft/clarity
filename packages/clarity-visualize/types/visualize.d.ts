@@ -235,5 +235,7 @@ export const enum Setting {
     CanvasTextFont = "500 12px Segoe UI",
     ScrollCanvasMaxHeight = 65535,
     VisualizationSettleBuffer = 100,
-    LargeSvg = 132
+    LargeSvg = 132,
+    MaxClicksDisplayed = 10,
+    MaxClickDisplayDuration = 5000
 }

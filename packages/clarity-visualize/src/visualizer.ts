@@ -172,6 +172,7 @@ export class Visualizer implements VisualizerType {
         let time = 0;
         for (let entry of events) {
             time = entry.time;
+            this.interaction.clearOldClickVisualizations(time);
             switch (entry.event) {
                 case Data.Event.Metric:
                     this.data.metric(entry as DecodedData.MetricEvent);
