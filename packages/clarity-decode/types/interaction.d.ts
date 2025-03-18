@@ -9,6 +9,11 @@ export interface TimelineData extends Interaction.TimelineData {
     hashBeta: string;
 }
 
+export interface ClickVizualizationData {
+    doc: HTMLElement;
+    click: HTMLElement;
+    time: number;
+}
 
 export interface InputEvent extends PartialEvent { data: Interaction.InputData; }
 export interface ChangeEvent extends PartialEvent { data: Interaction.ChangeData; }
