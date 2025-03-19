@@ -67,9 +67,6 @@ export interface Options {
     keyframes?: boolean;
     mobile?: boolean;
     vNext?: boolean;
-    thirdPartyIframeMessage?: string;
-    bitmapMessage?: string;
-    elementMaskedMessage?: string;
 }
 
 export interface NodeData {
