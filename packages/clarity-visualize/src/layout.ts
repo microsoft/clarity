@@ -26,18 +26,14 @@ export class LayoutHelper {
     stylesToApply: { [id: string] : string[] } = {};
     BackgroundImageEligibleElements = ['DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'ASIDE', 'NAV', 'SPAN', 'P', 'MAIN'];
     MaskedBackgroundImageStyle = `#CCC no-repeat center url("${Asset.Hide}")`;
-    ThirdPartyIframeMessage: string;
     BitmapMessage: string;
     ElementMaskedMessage: string;
-    BetaMasking: boolean;
+    vNext: boolean;
 
-    constructor(state: PlaybackState, isMobile = false, betaMasking = false, thirdPartyIframeMessage: string = Constant.ThirdPartyIframeMessage, bitmapMessage: string = Constant.BitmapMessage, elementMaskedMessage: string = Constant.ElementMaskedMessage) {
+    constructor(state: PlaybackState, isMobile = false, vNext = false) {
         this.state = state;
         this.isMobile = isMobile;
-        this.BetaMasking = betaMasking;
-        this.ThirdPartyIframeMessage = thirdPartyIframeMessage;
-        this.BitmapMessage = bitmapMessage;
-        this.ElementMaskedMessage = elementMaskedMessage;
+        this.vNext = vNext;
     }
 
     public reset = (): void => {
@@ -513,11 +509,9 @@ export class LayoutHelper {
                     } else if (tag === Constant.IFrameTag && (attribute.indexOf("src") === 0 || attribute.indexOf("allow") === 0) || attribute === "sandbox") {
                         node.setAttribute(`data-clarity-${attribute}`, v);
                     } else if (tag === Constant.ImageTag && attribute.indexOf("src") === 0 && (v === null || v.length === 0)) {
-                        if (this.BetaMasking) {
+                        if (this.vNext) {
                             if (data.width >= Setting.LargeSvg && data.height >= Setting.LargeSvg) {
                                 node.setAttribute(Constant.Hide, `${Constant.Large}${Constant.Beta}`);
-                                // todo (samart): put into a const
-                                node.setAttribute('data-clarity-unavailable-text', this.ThirdPartyIframeMessage);
                             } else {
                                 node.setAttribute(Constant.Hide, `${Constant.Small}${Constant.Beta}`);
                             }
@@ -542,8 +536,6 @@ export class LayoutHelper {
         if (sameorigin === false && tag === Constant.IFrameTag && typeof node.setAttribute === Constant.Function) {
             if (this.svgFitsText(node)) {
                 node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
-                // todo (samart): put into a const
-                node.setAttribute('data-clarity-unavailable-text', this.ThirdPartyIframeMessage);
             } else {
                 node.setAttribute(Constant.UnavailableSmall, Layout.Constant.Empty);
             }
@@ -587,9 +579,8 @@ export class LayoutHelper {
         return false;
     }
 
-    // TODO (samart): maybe move the small / regular classes into attribute = small | large like images
     private getIframeUnavailableCss = (): string => {
-        if (this.BetaMasking) {
+        if (this.vNext) {
             return `${Constant.IFrameTag}[${Constant.Unavailable}] { ${iframeUnavailableSvg} }`;
         } else {
             return `${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }`;
@@ -597,7 +588,7 @@ export class LayoutHelper {
     }
 
     private getImageHiddenCss = (): string => {
-        if (this.BetaMasking) {
+        if (this.vNext) {
             return  `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}${Constant.Beta}] { ${imageMaskedSmallSvg} }` +
                     `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}${Constant.Beta}] { ${imageMaskedSvg} }`;
         } else {

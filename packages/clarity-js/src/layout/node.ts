@@ -186,8 +186,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                 case "VIDEO":
                 case "AUDIO":
                 case "SOURCE":
-                    // Ignoring any base64 src attribute for media elements to prevent big unused tokens to be sent and shock the network 
-                    // TODO (samart): probably add an attribute to show it was masked here?
+                    // Ignoring any base64 src attribute for media elements to prevent big unused tokens to be sent and shock the network
                     if (Constant.Src in attributes && attributes[Constant.Src].startsWith("data:")) {
                         attributes[Constant.Src] = "";
                     }
