@@ -196,11 +196,7 @@ export const enum Constant {
     NewPassword = "new-password",
     StyleSheet = "stylesheet",
     OriginalBackgroundColor = "data-clarity-background-color",
-    OriginalOpacity = "data-clarity-opacity",
-    ThirdPartyIframeMessage = "Clarity can't track third-party iFrames",
-    BitmapMessage = "Clarity can't track bitmaps", 
-    ElementMaskedMessage = "Element is masked",
-    UnavailableTextClass = "clarity-unavailable-text"
+    OriginalOpacity = "data-clarity-opacity"
 }
 
 export const enum Setting {
