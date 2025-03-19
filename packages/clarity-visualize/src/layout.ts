@@ -26,8 +26,6 @@ export class LayoutHelper {
     stylesToApply: { [id: string] : string[] } = {};
     BackgroundImageEligibleElements = ['DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'ASIDE', 'NAV', 'SPAN', 'P', 'MAIN'];
     MaskedBackgroundImageStyle = `#CCC no-repeat center url("${Asset.Hide}")`;
-    BitmapMessage: string;
-    ElementMaskedMessage: string;
     vNext: boolean;
 
     constructor(state: PlaybackState, isMobile = false, vNext = false) {
