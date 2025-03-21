@@ -4,6 +4,10 @@ import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
+import iframeUnavailableSvg from "./styles/IframeUnavailable/english.svg";
+import iframeUnavailableSmallSvg from "./styles/IframeUnavailable/iconOnly.svg";
+import imageMaskedSvg from "./styles/imageMasked/english.svg";
+import imageMaskedSmallSvg from "./styles/imageMasked/iconOnly.svg";
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
@@ -22,11 +26,12 @@ export class LayoutHelper {
     stylesToApply: { [id: string] : string[] } = {};
     BackgroundImageEligibleElements = ['DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'ASIDE', 'NAV', 'SPAN', 'P', 'MAIN'];
     MaskedBackgroundImageStyle = `#CCC no-repeat center url("${Asset.Hide}")`;
+    vNext: boolean;
 
-
-    constructor(state: PlaybackState, isMobile: boolean = false) {
+    constructor(state: PlaybackState, isMobile = false, vNext = false) {
         this.state = state;
-        this.isMobile = isMobile
+        this.isMobile = isMobile;
+        this.vNext = vNext;
     }
 
     public reset = (): void => {
@@ -62,7 +67,7 @@ export class LayoutHelper {
         }
     }
 
-    public element = (nodeId: number): Node => {
+    public element = (nodeId: number): Node | null => {
         return nodeId !== null && nodeId > 0 && nodeId in this.nodes ? this.nodes[nodeId] : null;
     }
 
@@ -292,7 +297,7 @@ export class LayoutHelper {
                     let linkElement = this.element(node.id) as HTMLLinkElement;
                     linkElement = linkElement ? linkElement : this.createElement(doc, node.tag) as HTMLLinkElement;
                     if (!node.attributes) { node.attributes = {}; }
-                    this.setAttributes(linkElement as HTMLElement, node);
+                    this.setAttributes(linkElement, node);
                     if ("rel" in node.attributes) {
                         if (node.attributes["rel"] === Constant.StyleSheet) {
                             this.stylesheets.push(new Promise((resolve: () => void): void => {
@@ -325,22 +330,22 @@ export class LayoutHelper {
                     if (proxy && !!node.attributes?.src) {
                         node.attributes.src = proxy(node.attributes.src, node.attributes.id, Layout.Constant.ImageTag);
                     }
-                    this.setAttributes(imgElement as HTMLElement, node);
+                    this.setAttributes(imgElement, node);
                     this.resize(imgElement, node.width, node.height);
                     insert(node, parent, imgElement, pivot);
                     break;
                 case "STYLE":
                     let styleElement = this.element(node.id) as HTMLStyleElement ?? doc.createElement(node.tag) as HTMLStyleElement;
-                    this.setAttributes(styleElement as HTMLElement, node);
+                    this.setAttributes(styleElement, node);
                     styleElement.textContent = node.value;
                     insert(node, parent, styleElement, pivot);
                     this.style(styleElement);
                     break;
                 case "IFRAME":
-                    let iframeElement = this.element(node.id) as HTMLElement;
-                    iframeElement = iframeElement ? iframeElement : this.createElement(doc, node.tag);
+                    let iframeElement = this.element(node.id) as HTMLIFrameElement;
+                    iframeElement = iframeElement ? iframeElement : this.createElement(doc, node.tag) as HTMLIFrameElement;
                     if (!node.attributes) { node.attributes = {}; }
-                    this.setAttributes(iframeElement as HTMLElement, node);
+                    this.setAttributes(iframeElement, node);
                     insert(node, parent, iframeElement, pivot);
                     break;
                 default:
@@ -502,12 +507,20 @@ export class LayoutHelper {
                     } else if (tag === Constant.IFrameTag && (attribute.indexOf("src") === 0 || attribute.indexOf("allow") === 0) || attribute === "sandbox") {
                         node.setAttribute(`data-clarity-${attribute}`, v);
                     } else if (tag === Constant.ImageTag && attribute.indexOf("src") === 0 && (v === null || v.length === 0)) {
-                        node.setAttribute(attribute, Asset.Transparent);
-                        let size = Constant.Large;
-                        if (data.width) {
-                            size = data.width <= Setting.Medium ? Constant.Medium : (data.width <= Setting.Small ? Constant.Small : size);
-                        }
-                        node.setAttribute(Constant.Hide, size);
+                        if (this.vNext) {
+                            if (data.width >= Setting.LargeSvg && data.height >= Setting.LargeSvg) {
+                                node.setAttribute(Constant.Hide, `${Constant.Large}${Constant.Beta}`);
+                            } else {
+                                node.setAttribute(Constant.Hide, `${Constant.Small}${Constant.Beta}`);
+                            }
+                        } else {
+                            node.setAttribute(attribute, Asset.Transparent);
+                            let size = Constant.Large;
+                            if (data.width) {
+                                size = data.width <= Setting.Medium ? Constant.Medium : (data.width <= Setting.Small ? Constant.Small : size);
+                            }
+                            node.setAttribute(Constant.Hide, size);
+                        }                        
                     } else {
                         node.setAttribute(attribute, v);
                     }
@@ -519,7 +532,11 @@ export class LayoutHelper {
         }
 
         if (sameorigin === false && tag === Constant.IFrameTag && typeof node.setAttribute === Constant.Function) {
-            node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
+            if (this.svgFitsText(node)) {
+                node.setAttribute(Constant.Unavailable, Layout.Constant.Empty);
+            } else {
+                node.setAttribute(Constant.UnavailableSmall, Layout.Constant.Empty);
+            }
         }
 
         // Add an empty ALT tag on all IMG elements
@@ -544,13 +561,39 @@ export class LayoutHelper {
 
     private getCustomStyle = (): string => {
         // tslint:disable-next-line: max-line-length
-        return `${Constant.ImageTag}[${Constant.Hide}] { background-color: #CCC; background-image: url(${Asset.Hide}); background-repeat:no-repeat; background-position: center; }` +
-            `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
-            `${Constant.ImageTag}[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
-            `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }` +
-            `${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }` +
+        return this.getImageHiddenCss() +
+            this.getIframeUnavailableCss() +
+            `${Constant.IFrameTag}[${Constant.UnavailableSmall}] { ${iframeUnavailableSmallSvg} }` +
             `*[${Constant.Suspend}] { filter: grayscale(100%); }` + 
             `body { font-size: initial; }
             ${this.getMobileCustomStyle()}`;
+    }
+
+    private svgFitsText = (inputElement: HTMLElement): boolean => {
+        var dimensions = inputElement.getBoundingClientRect();
+        if (dimensions.width >= Setting.LargeSvg && dimensions.height >= Setting.LargeSvg) {
+            return true;
+        }
+        return false;
+    }
+
+    private getIframeUnavailableCss = (): string => {
+        if (this.vNext) {
+            return `${Constant.IFrameTag}[${Constant.Unavailable}] { ${iframeUnavailableSvg} }`;
+        } else {
+            return `${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }`;
+        }
+    }
+
+    private getImageHiddenCss = (): string => {
+        if (this.vNext) {
+            return  `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}${Constant.Beta}] { ${imageMaskedSmallSvg} }` +
+                    `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}${Constant.Beta}] { ${imageMaskedSvg} }`;
+        } else {
+            return  `${Constant.ImageTag}[${Constant.Hide}] { background-color: #CCC; background-image: url(${Asset.Hide}); background-repeat:no-repeat; background-position: center; }` +
+                    `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
+                    `${Constant.ImageTag}[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
+                    `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }`;
+        }
     }
 }

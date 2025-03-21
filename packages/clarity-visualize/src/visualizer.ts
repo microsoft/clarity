@@ -155,9 +155,9 @@ export class Visualizer implements VisualizerType {
         // Initialize helpers
         this.enrich = new EnrichHelper();
         this.data = new DataHelper(this.state);
-        this.layout = new LayoutHelper(this.state, options.mobile);
+        this.layout = new LayoutHelper(this.state, options.mobile, options.vNext);
         this.heatmap = new HeatmapHelper(this.state, this.layout);
-        this.interaction = new InteractionHelper(this.state, this.layout);
+        this.interaction = new InteractionHelper(this.state, this.layout, options.vNext);
 
         // If discover event was passed, render it now
         if (options.dom) { 
@@ -172,6 +172,7 @@ export class Visualizer implements VisualizerType {
         let time = 0;
         for (let entry of events) {
             time = entry.time;
+            this.interaction.clearOldClickVisualizations(time);
             switch (entry.event) {
                 case Data.Event.Metric:
                     this.data.metric(entry as DecodedData.MetricEvent);
