@@ -24,8 +24,8 @@
     js-tokens "^4.0.0"
 
 "@cspotcode/source-map-support@^0.8.0":
-  version "0.8.2"
-  resolved "https://registry.yarnpkg.com/@cspotcode/source-map-support/-/source-map-support-0.8.2.tgz#00629c35a688e05a88b1cda684fb9d5e73f000a1"
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@cspotcode/source-map-support/-/source-map-support-0.8.1.tgz#00629c35a688e05a88b1cda684fb9d5e73f000a1"
   integrity sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
@@ -4463,7 +4463,7 @@ read-pkg-up@^7.0.1:
   dependencies:
     find-up "^4.1.0"
     read-pkg "^5.2.0"
-    type-fest "^0.8.2"
+    type-fest "^0.8.1"
 
 read-pkg-up@^8.0.0:
   version "8.0.0"
@@ -5259,9 +5259,9 @@ type-fest@^0.6.0:
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.6.0.tgz#8d2a2370d3df886eb5c90ada1c5bf6188acf838b"
   integrity sha512-q+MB8nYR1KDLrgr4G5yemftpMC7/QLqVndBmEEdqzmNj5dcFOO4Oo8qlwZE3ULT3+Zim1F8Kq4cBnikNhlCMlg==
 
-type-fest@^0.8.2:
-  version "0.8.2"
-  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.8.2.tgz#09e249ebde851d3b1e48d27c105444667f17b83d"
+type-fest@^0.8.1:
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.8.1.tgz#09e249ebde851d3b1e48d27c105444667f17b83d"
   integrity sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==
 
 type-fest@^1.0.1, type-fest@^1.2.1, type-fest@^1.2.2:
