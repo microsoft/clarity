@@ -31,8 +31,8 @@ const bumpVersion = async (): Promise<void> => {
         const newVersion = generateNewVersion(currentVersion, versionPartToBump);
         console.log(`New version: ${newVersion}`);
 
-        await updateSourceVersionFile(versionSourceFile, newVersion);
-        await updateJsonVersionFiles(jsonFilesToUpdate, newVersion);
+        await updateFiles([versionSourceFile], (content) => content.replace(SourceVersionRegExp, newVersion))
+        await updateFiles(jsonFilesToUpdate, (content) => updateVersionInJson(content, newVersion))
         await addVersionFilesToGit(versionSourceFile, jsonFilesToUpdate);
 
         console.log('Version bump complete.');
@@ -90,21 +90,14 @@ const generateNewVersion = (version: string, versionPartToBump: VersionPart): st
     return versionParts.join('.');
 };
 
-const updateSourceVersionFile = async (versionSourceFile: string, newVersion: string): Promise<void> => {
-    console.log(`Updating ${versionSourceFile}...`);
-    const versionFileContent = await fs.readFile(getFullFilePath(versionSourceFile), 'utf-8');
-    const newVersionFileContent = versionFileContent.replace(SourceVersionRegExp, newVersion);
-    await fs.writeFile(getFullFilePath(versionSourceFile), newVersionFileContent, 'utf-8');
-};
-
-const updateJsonVersionFiles = async (filesToUpdate: string[], newVersion: string): Promise<void> => {
-    for (const filePath of filesToUpdate) {
-        console.log(`Updating ${filePath}...`);
-        const fileContent = await fs.readFile(getFullFilePath(filePath), 'utf-8');
-        const newFileContent = updateVersionInJson(fileContent, newVersion);
-        await fs.writeFile(getFullFilePath(filePath), newFileContent, 'utf-8');
+const updateFiles = async (files: string[], update: (content: string) => string) => {
+    for (const file of files) {
+        console.log(`Updating ${file}...`);
+        const path = getFullFilePath(file);
+        const content = await fs.readFile(path, 'utf-8');
+        await fs.writeFile(path, update(content), 'utf-8');
     }
-};
+}
 
 function updateVersionInJson(fileContent: string, newVersion: string): string {
     const versionFieldNames = [
@@ -144,16 +137,15 @@ const addVersionFilesToGit = async (versionSourceFile: string, jsonFilesToUpdate
     const filesToGitAddStr = filesToGitAdd.map(file => `"${getFullFilePath(file)}"`).join(' ');
 
     exec(`git add ${filesToGitAddStr}`, (error, stdout, stderr) => {
+        if (stderr) {
+            console.error(`Git command error output: ${stderr}`);
+        }
         if (error) {
             console.error(`Error executing git command: ${error}`);
             return;
         }
 
         console.log('Changed version files added to git.');
-
-        if (stderr) {
-            console.error(`Git command error output: ${stderr}`);
-        }
     });
 };
 
