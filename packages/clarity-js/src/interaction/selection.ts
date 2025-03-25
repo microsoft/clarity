@@ -1,6 +1,8 @@
 import { Event } from "@clarity-types/data";
 import { SelectionData, Setting } from "@clarity-types/interaction";
 import { FunctionNames } from "@clarity-types/performance";
+import { time } from "@src/core/time";
+import * as summary from "@src/data/summary";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
@@ -17,6 +19,7 @@ export function start(): void {
 export function observe(root: Node): void {
     bind(root, "selectstart", recompute.bind(this, root), true);
     bind(root, "selectionchange", recompute.bind(this, root), true);
+    trackDropdownChanges(root)
 }
 
 function recompute(root: Node): void {
@@ -66,3 +69,19 @@ export function stop(): void {
     reset();
     clearTimeout(timeout);
 }
+
+function trackDropdownChanges(root: Node): void {
+    let queryableRoot = root as Document | Element;
+
+    if (queryableRoot.querySelectorAll) {
+        const dropdowns = queryableRoot.querySelectorAll("select");
+
+        dropdowns.forEach(dropdown => {
+            const selectElement = dropdown as HTMLSelectElement;
+            bind(selectElement, "click", () => summary.track(Event.Change, time()), true);
+            bind(selectElement, "change", () => summary.track(Event.Change, time()), true);
+        });
+    }
+    summary.track(Event.Change, time());
+}
+
