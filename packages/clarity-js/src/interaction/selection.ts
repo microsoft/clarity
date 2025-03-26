@@ -1,8 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { SelectionData, Setting } from "@clarity-types/interaction";
 import { FunctionNames } from "@clarity-types/performance";
-import { time } from "@src/core/time";
-import * as summary from "@src/data/summary";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
@@ -68,5 +66,3 @@ export function stop(): void {
     reset();
     clearTimeout(timeout);
 }
-
-
