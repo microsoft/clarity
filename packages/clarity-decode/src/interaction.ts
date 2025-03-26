@@ -36,7 +36,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 link: tokens[11] as string,
                 hash: clickHashes[0],
                 hashBeta: clickHashes.length > 0 ? clickHashes[1] : null,
-                trust: tokens.length > 13 ? tokens[13] as number : Data.BooleanFlag.True
+                trust: tokens.length > 13 ? tokens[13] as number : Data.BooleanFlag.True,
+                isFullText: tokens.length > 14 ? tokens[14] as number : null,
             };
             return { time, event, data: clickData };
         case Data.Event.Clipboard:
@@ -94,7 +95,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let visibleData: Interaction.VisibilityData = { visible: tokens[2] as string };
             return { time, event, data: visibleData };
         case Data.Event.Unload:
-            let unloadData: Interaction.UnloadData = { name: tokens[2] as string };
+            let unloadData: Interaction.UnloadData = { name: tokens[2] as string, persisted: tokens[3] as number };
             return { time, event, data: unloadData };
     }
     return null;

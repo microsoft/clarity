@@ -159,7 +159,6 @@ export const enum Setting {
     MutationActivePeriod = 3000, // Unit: milliseconds. Let mutations continue as normal during active periods of user interactions
     MaxMutationHistoryCount = 10000,
     MaxMutationHistoryTime = 30000, // Unit: milliseconds. Maximum time to keep mutation history in memory
-    INPCriticalPeriod = 200  // Unit: milliseconds. Throttle less important mutations during critical periods of user interactions
 }
 
 export const enum StyleSheetOperation {
@@ -264,7 +263,6 @@ export interface TargetMetadata {
     id: number;
     hash: [string, string];
     privacy: Privacy;
-    node: Node;
 }
 
 export interface StyleSheetData {

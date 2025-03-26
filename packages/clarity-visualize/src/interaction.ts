@@ -2,6 +2,9 @@ import { Asset, Constant, PlaybackState, Point, Setting } from "@clarity-types/v
 import { Data, Layout } from "clarity-js";
 import type { Interaction } from "clarity-decode"
 import { LayoutHelper } from "./layout";
+import pointerSvg from "./styles/pointer/pointerIcon.svg";
+import clickStyle from "./styles/pointer/click.css";
+import { ClickVizualizationData } from "clarity-decode/types/interaction";
 
 export class InteractionHelper {
     static TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
@@ -14,10 +17,13 @@ export class InteractionHelper {
     clickAudio = null;
     layout: LayoutHelper;
     state: PlaybackState;
+    vnext: boolean;
+    visualizedClicks: ClickVizualizationData[] = [];
 
-    constructor(state: PlaybackState, layout: LayoutHelper) {
+    constructor(state: PlaybackState, layout: LayoutHelper, vnext: boolean) {
         this.state = state;
         this.layout = layout;
+        this.vnext = vnext;
     }
 
     public reset = (): void => {
@@ -73,11 +79,29 @@ export class InteractionHelper {
     public visibility = (event: Interaction.VisibilityEvent): void => {
         let doc = this.state.window.document;
         if (doc && doc.documentElement && event.data.visible !== Constant.Visible) {
+            // if the website has styles on the <html> node then we need to save the reference to them before we change them
+            // to indicate the window was hidden. This is to ensure that we can restore the original styles when the window is visible again.
+            const bg = doc.documentElement.style.backgroundColor;
+            if (bg) {
+                doc.documentElement.setAttribute(Constant.OriginalBackgroundColor, bg);
+            }
+            const o = doc.documentElement.style.opacity;
+            if (o) {
+                doc.documentElement.setAttribute(Constant.OriginalOpacity, o);
+            }
             doc.documentElement.style.backgroundColor = Constant.Black;
             doc.documentElement.style.opacity = Constant.HiddenOpacity;
         } else {
-            doc.documentElement.style.backgroundColor = Constant.Transparent;
-            doc.documentElement.style.opacity = Constant.VisibleOpacity;
+            if (doc.documentElement.getAttribute(Constant.OriginalBackgroundColor)) {
+                doc.documentElement.style.backgroundColor = doc.documentElement.getAttribute(Constant.OriginalBackgroundColor);
+            } else {
+                doc.documentElement.style.backgroundColor = '';
+            }
+            if (doc.documentElement.getAttribute(Constant.OriginalOpacity)) {
+                doc.documentElement.style.opacity = doc.documentElement.getAttribute(Constant.OriginalOpacity);
+            } else {
+                doc.documentElement.style.opacity = '';
+            }
         }
     };
 
@@ -130,13 +154,12 @@ export class InteractionHelper {
                 "@keyframes disappear { 90% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(1.3, 1.3); opacity: 0; } }" +
                 `#${Constant.InteractionCanvas} { position: absolute; left: 0; top: 0; z-index: ${Setting.ZIndex}; background: none; }` +
                 `#${Constant.PointerLayer} { position: absolute; z-index: ${Setting.ZIndex}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
-                `.${Constant.ClickLayer}, .${Constant.ClickRing}, .${Constant.TouchLayer}, .${Constant.TouchRing} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
-                `.${Constant.ClickRing} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
+                this.getClickLayerStyle() +
                 `.${Constant.TouchLayer} { background: radial-gradient(rgba(242,97,12,1), transparent); }` +
                 `.${Constant.TouchRing} { background: transparent; border: 1px solid rgba(242,97,12,0.8); }` +
                 `.${Constant.PointerClickLayer} { background-image: url(${Asset.Click}); }` +
                 `.${Constant.PointerNone} { background: none; }` +
-                `.${Constant.PointerMove} { background-image: url(${Asset.Pointer}); }`;
+                this.getPointerStyle();
 
             p.appendChild(style);
         }
@@ -147,7 +170,11 @@ export class InteractionHelper {
         switch (type) {
             case Data.Event.Click:
                 title = "Click";
-                this.drawClick(doc, data.x, data.y, title);
+                this.visualizedClicks.push({
+                    doc: de,
+                    click: this.drawClick(doc, data.x, data.y, title),
+                    time: event.time
+                });
                 if (this.state.options.onclickMismatch) {
                     const originalTarget = this.layout.element(data.target as number);
                     let correctTargetHit = false;
@@ -170,14 +197,22 @@ export class InteractionHelper {
                 break;
             case Data.Event.DoubleClick:
                 title = "Click";
-                this.drawClick(doc, data.x, data.y, title);
+                this.visualizedClicks.push({
+                    doc: de,
+                    click: this.drawClick(doc, data.x, data.y, title),
+                    time: event.time
+                });
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.TouchStart:
             case Data.Event.TouchEnd:
             case Data.Event.TouchCancel:
                 title = "Touch";
-                this.drawTouch(doc, data.x, data.y, title);
+                this.visualizedClicks.push({
+                    doc: de,
+                    click: this.drawTouch(doc, data.x, data.y, title),
+                    time: event.time
+                });
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.TouchMove:
@@ -196,6 +231,26 @@ export class InteractionHelper {
         }
         p.setAttribute(Constant.Title, `${title} (${data.x}${Constant.Pixel}, ${data.y}${Constant.Pixel})`);
     };
+
+    public clearOldClickVisualizations = (currentTimestamp: number): void => {
+        if (this.vnext) {
+            while(this.visualizedClicks.length > Setting.MaxClicksDisplayed) {
+                const visualizedClick = this.visualizedClicks.shift();
+                this.fadeOutElement(visualizedClick.click, visualizedClick.doc);
+            }
+
+            var tooOldClicks = this.visualizedClicks.filter(click => currentTimestamp - click.time > Setting.MaxClickDisplayDuration);
+            tooOldClicks.forEach(click => {
+                this.fadeOutElement(click.click, click.doc);
+                this.visualizedClicks.splice(this.visualizedClicks.indexOf(click), 1);
+            });
+        }        
+    }
+
+    private fadeOutElement = (element: HTMLElement, document: HTMLElement): void => {
+        element.classList.add("clarity-click-hidden");
+        setTimeout(() => { document.removeChild(element); }, 10000);
+    }
 
     private hover = (): void => {
         if (this.targetId && this.targetId !== this.hoverId) {
@@ -227,7 +282,7 @@ export class InteractionHelper {
         } else { this.points.push(point); }
     }
 
-    private drawTouch = (doc: Document, x: number, y: number, title: string): void => {
+    private drawTouch = (doc: Document, x: number, y: number, title: string): HTMLElement => {
         let de = doc.documentElement;
         let touch = doc.createElement("DIV");
         touch.className = Constant.TouchLayer;
@@ -246,16 +301,18 @@ export class InteractionHelper {
         ringOne.style.animation = "pulsate-touch 1 1s";
         ringOne.style.animationFillMode = "forwards";
         touch.appendChild(ringOne);
+
+        return touch;
     };
 
-    private drawClick = (doc: Document, x: number, y: number, title: string): void => {
+    private drawClick = (doc: Document, x: number, y: number, title: string): HTMLElement => {
         let de = doc.documentElement;
         let click = doc.createElement("DIV");
         click.className = Constant.ClickLayer;
+        
         click.setAttribute(Constant.Title, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
         click.style.left = (x - Setting.ClickRadius / 2) + Constant.Pixel;
         click.style.top = (y - Setting.ClickRadius / 2) + Constant.Pixel
-        de.appendChild(click);
 
         // First pulsating ring
         let ringOne = click.cloneNode() as HTMLElement;
@@ -266,11 +323,20 @@ export class InteractionHelper {
         ringOne.style.animationFillMode = "forwards";
         click.appendChild(ringOne);
 
-        // Second pulsating ring
-        let ringTwo = ringOne.cloneNode() as HTMLElement;
-        ringTwo.style.animation = "pulsate-two 1 1s";
-        click.appendChild(ringTwo);
+        if (this.vnext) {
+            let center = doc.createElement("DIV");
+            center.className = `${Constant.ClickLayer}-center`;
+            click.appendChild(center);
 
+
+        } else {    
+            // Second pulsating ring
+            let ringTwo = ringOne.cloneNode() as HTMLElement;
+            ringTwo.style.animation = "pulsate-two 1 1s";
+            click.appendChild(ringTwo);
+        }
+        de.appendChild(click);
+        
         // Play sound
         if (typeof Audio !== Constant.Undefined) {
             if (this.clickAudio === null) { 
@@ -279,6 +345,7 @@ export class InteractionHelper {
             }
             this.clickAudio.play();
         }
+        return click;
     };
 
     private overlay = (): HTMLCanvasElement => {
@@ -418,4 +485,21 @@ export class InteractionHelper {
         const dy = a.y - b.y;
         return Math.sqrt(dx * dx + dy * dy);
     };
+
+    private getPointerStyle = (): string => {
+        if (this.vnext) {
+            return `.${Constant.PointerMove} { ${pointerSvg} }`;
+        } else {
+            return `.${Constant.PointerMove} { background-image: url(${Asset.Pointer}); }`;
+        }
+    }
+
+    private getClickLayerStyle = (): string => {
+        if (this.vnext) {
+            return clickStyle;
+        } else {
+            return  `.${Constant.ClickLayer}, .${Constant.ClickRing}, .${Constant.TouchLayer}, .${Constant.TouchRing} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
+                    `.${Constant.ClickRing} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }`;
+        }
+    }
 }

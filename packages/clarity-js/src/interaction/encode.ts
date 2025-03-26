@@ -45,7 +45,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                         }
                     }
                     queue(tokens);
-                    baseline.track(entry.event, entry.data.x, entry.data.y);
+                    baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
                 }
             }
             pointer.reset();
@@ -67,6 +67,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 tokens.push(scrub.url(entry.data.link));
                 tokens.push(cHash);
                 tokens.push(entry.data.trust);
+                tokens.push(entry.data.isFullText);
                 queue(tokens);
                 timeline.track(entry.time, entry.event, cHash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
@@ -95,6 +96,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.Unload:
             let u = unload.data;
             tokens.push(u.name);
+            tokens.push(u.persisted);
             unload.reset();
             queue(tokens);
             break;

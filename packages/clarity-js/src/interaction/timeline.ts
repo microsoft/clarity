@@ -39,7 +39,7 @@ export function track(time: number,
     // Since timeline only keeps the data for configured time, we still want to continue tracking these values
     // as part of the baseline. For instance, in a scenario where last scroll happened 5s ago.
     // We would still need to capture the last scroll position as part of the baseline event, even when timeline will be empty.
-    baseline.track(event, x, y);
+    baseline.track(event, x, y, time);
 }
 
 export function compute(): void {

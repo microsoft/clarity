@@ -21,6 +21,7 @@ export function observe(root: Node): void {
 }
 
 function recompute(evt: UIEvent): void {
+    recompute.dn = FunctionNames.InputRecompute;
     let input = target(evt) as HTMLInputElement;
     let value = get(input);
     if (input && input.type && value) {
@@ -44,7 +45,6 @@ function recompute(evt: UIEvent): void {
         timeout = setTimeout(process, Setting.InputLookAhead, Event.Input);
     }
 }
-recompute.dn = FunctionNames.InputRecompute;
 
 function process(event: Event): void {
     schedule(encode.bind(this, event));

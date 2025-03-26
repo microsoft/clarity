@@ -20,10 +20,10 @@ export function observe(root: Node): void {
 }
 
 function recompute(action: Clipboard, evt: UIEvent): void {
+    recompute.dn = FunctionNames.ClipboardRecompute;
     state.push({ time: time(evt), event: Event.Clipboard, data: { target: target(evt), action } });
     schedule(encode.bind(this, Event.Clipboard));
 }
-recompute.dn = FunctionNames.ClipboardRecompute;
 
 export function reset(): void {
     state = [];

@@ -13,6 +13,7 @@ import * as unload from "@src/interaction/unload";
 import * as visibility from "@src/interaction/visibility";
 
 export function start(): void {
+    start.dn = FunctionNames.InteractionStart;
     timeline.start();
     click.start();
     clipboard.start();
@@ -26,7 +27,6 @@ export function start(): void {
     submit.start();
     unload.start();
 }
-start.dn = FunctionNames.InteractionStart;
 
 export function stop(): void {
     timeline.stop();

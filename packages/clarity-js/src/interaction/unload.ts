@@ -1,4 +1,4 @@
-import { Event } from "@clarity-types/data";
+import { BooleanFlag, Event } from "@clarity-types/data";
 import { UnloadData } from "@clarity-types/interaction";
 import { FunctionNames } from "@clarity-types/performance";
 import * as clarity from "@src/clarity";
@@ -12,12 +12,12 @@ export function start(): void {
     bind(window, "pagehide", recompute);
 }
 
-function recompute(evt: UIEvent): void {
-    data = { name: evt.type };
+function recompute(evt: PageTransitionEvent): void {
+    recompute.dn = FunctionNames.UnloadRecompute;
+    data = { name: evt.type, persisted: evt.persisted ? BooleanFlag.True : BooleanFlag.False };
     encode(Event.Unload, time(evt));
     clarity.stop();
 }
-recompute.dn = FunctionNames.UnloadRecompute;
 
 export function reset(): void {
     data = null;

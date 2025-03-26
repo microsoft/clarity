@@ -99,9 +99,11 @@ export interface OffsetDistance {
 
 export interface BrowserEvent {
     event: string;
-    target: EventTarget;
     listener: EventListener;
-    capture: boolean;
+    options: {
+        capture: boolean;
+        passive: boolean;
+    };
 }
 
 export interface Report {
@@ -136,9 +138,11 @@ export interface Config {
     delayDom?: boolean;
     throttleDom?: boolean;
     conversions?: boolean;
-    longTask?: number;
     includeSubdomains?: boolean;
     throttleMutations?: boolean;
+    dropMutations?: boolean;
+    criticalMs?: number;
+    discard?: string[];
 }
 
 export const enum Constant {

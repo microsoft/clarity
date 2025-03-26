@@ -1,5 +1,5 @@
 import { BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
-import { BrowsingContext, ClickState } from "@clarity-types/interaction";
+import { BrowsingContext, ClickState, TextInfo } from "@clarity-types/interaction";
 import { Box } from "@clarity-types/layout";
 import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
@@ -22,6 +22,7 @@ export function observe(root: Node): void {
 }
 
 function handler(event: Event, root: Node, evt: MouseEvent): void {
+    handler.dn = FunctionNames.ClickHandler;
     let frame = iframe(root);
     let d = frame ? frame.contentDocument.documentElement : document.documentElement;
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
@@ -54,6 +55,7 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
 
     // Check for null values before processing this event
     if (x !== null && y !== null) {
+        const textInfo = text(t);
         state.push({
             time: time(evt), event, data: {
                 target: t,
@@ -64,17 +66,17 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 button: evt.button,
                 reaction: reaction(t),
                 context: context(a),
-                text: text(t),
+                text: textInfo.text,
                 link: a ? a.href : null,
                 hash: null,
-                trust: evt.isTrusted ? BooleanFlag.True : BooleanFlag.False
+                trust: evt.isTrusted ? BooleanFlag.True : BooleanFlag.False,
+                isFullText: textInfo.isFullText,
             }
         });
         schedule(encode.bind(this, event));
     }
     trackSelectClicks(evt);
 }
-handler.dn = FunctionNames.ClickHandler;
 
 function link(node: Node): HTMLAnchorElement {
     while (node && node !== document) {
@@ -89,19 +91,23 @@ function link(node: Node): HTMLAnchorElement {
     return null;
 }
 
-function text(element: Node): string {
+function text(element: Node): TextInfo {
     let output = null;
+    let isFullText = false;
     if (element) {
         // Grab text using "textContent" for most HTMLElements, however, use "value" for HTMLInputElements and "alt" for HTMLImageElement.
         let t = element.textContent || String((element as HTMLInputElement).value || '') || (element as HTMLImageElement).alt;
         if (t) {
             // Replace multiple occurrence of space characters with a single white space
             // Also, trim any spaces at the beginning or at the end of string
+            const trimmedText =  t.replace(/\s+/g, Constant.Space).trim();
             // Finally, send only first few characters as specified by the Setting
-            output = t.replace(/\s+/g, Constant.Space).trim().substr(0, Setting.ClickText);
+            output = trimmedText.substring(0, Setting.ClickText);
+            isFullText = output.length === trimmedText.length;
         }
     }
-    return output;
+
+    return { text: output, isFullText: isFullText ? BooleanFlag.True : BooleanFlag.False };
 }
 
 function reaction(element: Node): BooleanFlag {

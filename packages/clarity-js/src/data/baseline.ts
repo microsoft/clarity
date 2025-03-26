@@ -27,7 +27,20 @@ export function reset(): void {
             pointerX: buffer.pointerX,
             pointerY: buffer.pointerY,
             activityTime: buffer.activityTime,
-            scrollTime: buffer.scrollTime
+            scrollTime: buffer.scrollTime,
+            pointerTime: buffer.pointerTime,
+            moveX: buffer.moveX,
+            moveY: buffer.moveY,
+            moveTime: buffer.moveTime,
+            downX: buffer.downX,
+            downY: buffer.downY,
+            downTime: buffer.downTime,
+            upX: buffer.upX,
+            upY: buffer.upY,
+            upTime: buffer.upTime,
+            pointerPrevX: buffer.pointerPrevX,
+            pointerPrevY: buffer.pointerPrevY,
+            pointerPrevTime: buffer.pointerPrevTime,
           }
         };
     }
@@ -42,7 +55,20 @@ export function reset(): void {
         pointerX: 0,
         pointerY: 0,
         activityTime: 0,
-        scrollTime: 0
+        scrollTime: 0,
+        pointerTime: undefined,
+        moveX: undefined,
+        moveY: undefined,
+        moveTime: undefined,
+        downX: undefined,
+        downY: undefined,
+        downTime: undefined,
+        upX: undefined,
+        upY: undefined,
+        upTime: undefined,
+        pointerPrevX: undefined,
+        pointerPrevY: undefined,
+        pointerPrevTime: undefined,
     };
 }
 
@@ -61,9 +87,46 @@ export function track(event: Event, x: number, y: number, time?: number): void {
             buffer.scrollY = y;
             buffer.scrollTime = time;
             break;
-        default:
+        case Event.MouseMove:
+            buffer.moveX = x;
+            buffer.moveY = y;
+            buffer.moveTime = time;
+            buffer.pointerPrevX = buffer.pointerX;
+            buffer.pointerPrevY = buffer.pointerY;
+            buffer.pointerPrevTime = buffer.pointerTime;
             buffer.pointerX = x;
             buffer.pointerY = y;
+            buffer.pointerTime = time;
+            break;
+        case Event.MouseDown:
+            buffer.downX = x;
+            buffer.downY = y;
+            buffer.downTime = time;
+            buffer.pointerPrevX = buffer.pointerX;
+            buffer.pointerPrevY = buffer.pointerY;
+            buffer.pointerPrevTime = buffer.pointerTime;
+            buffer.pointerX = x;
+            buffer.pointerY = y;
+            buffer.pointerTime = time;
+            break;
+        case Event.MouseUp:
+            buffer.upX = x;
+            buffer.upY = y;
+            buffer.upTime = time;
+            buffer.pointerPrevX = buffer.pointerX;
+            buffer.pointerPrevY = buffer.pointerY;
+            buffer.pointerPrevTime = buffer.pointerTime;
+            buffer.pointerX = x;
+            buffer.pointerY = y;
+            buffer.pointerTime = time;
+            break;
+        default:
+            buffer.pointerPrevX = buffer.pointerX;
+            buffer.pointerPrevY = buffer.pointerY;
+            buffer.pointerPrevTime = buffer.pointerTime;
+            buffer.pointerX = x;
+            buffer.pointerY = y;
+            buffer.pointerTime = time;
             break;
     }
     update = true;

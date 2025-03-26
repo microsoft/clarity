@@ -12,6 +12,7 @@ import config from "@src/core/config";
 export { hashText } from "@src/layout/dom";
 
 export function start(): void {
+    start.dn = FunctionNames.LayoutStart;
     // The order below is important 
     // and is determined by interdependencies of modules
     doc.start();
@@ -29,7 +30,6 @@ export function start(): void {
     style.start();
     animation.start();
 }
-start.dn = FunctionNames.LayoutStart;
 
 export function stop(): void {
     region.stop();

@@ -77,7 +77,7 @@ export function suspend(): void {
 }
 
 function restart(): void {
+    restart.dn = FunctionNames.Restart;
     clarity.start();
     custom.event(Constant.Clarity, Constant.Restart);
 }
-restart.dn = FunctionNames.Restart;

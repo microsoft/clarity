@@ -1,3 +1,4 @@
+import { BooleanFlag } from "@clarity-types/data";
 import { Time } from "./core";
 import { Event, Target } from "./data";
 
@@ -121,6 +122,12 @@ export interface ClickData {
     link: string;
     hash: string;
     trust: number;
+    isFullText: BooleanFlag;
+}
+
+export interface TextInfo {
+    text: string;
+    isFullText: BooleanFlag;
 }
 
 export interface ClipboardData {
@@ -150,6 +157,7 @@ export interface SelectionData {
 
 export interface UnloadData {
     name: string;
+    persisted: BooleanFlag;
 }
 
 export interface VisibilityData {

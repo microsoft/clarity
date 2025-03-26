@@ -255,7 +255,8 @@ export const enum Setting {
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
     ExtractLimit = 10000, // Do not extract more than 10000 characters
     ChecksumPrecision = 28, // n-bit integer to represent token hash
-    UploadTimeout = 15000 // Timeout in ms for XHR requests
+    UploadTimeout = 15000, // Timeout in ms for XHR requests
+    LongTask = 30, // Long Task threshold in ms
 }
 
 export const enum Character {
@@ -425,6 +426,19 @@ export interface BaselineData {
     pointerY: number;
     activityTime: number;
     scrollTime: number;
+    pointerTime?: number;
+    moveX?: number;
+    moveY?: number;
+    moveTime?: number;
+    downX?: number;
+    downY?: number;
+    downTime?: number;
+    upX?: number;
+    upY?: number;
+    upTime?: number;
+    pointerPrevX?: number;
+    pointerPrevY?: number;
+    pointerPrevTime?: number;
 }
 
 export interface IdentityData {

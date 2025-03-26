@@ -33,6 +33,7 @@ export function observe(root: Node): void {
 }
 
 function mouse(event: Event, root: Node, evt: MouseEvent): void {
+    mouse.dn = FunctionNames.PointerMouse;
     let frame = iframe(root);
     let d = frame ? frame.contentDocument.documentElement : document.documentElement;
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
@@ -47,9 +48,9 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
     // Check for null values before processing this event
     if (x !== null && y !== null) { handler({ time: time(evt), event, data: { target: target(evt), x, y } }); }
 }
-mouse.dn = FunctionNames.PointerMouse;
 
 function touch(event: Event, root: Node, evt: TouchEvent): void {
+    touch.dn = FunctionNames.PointerTouch;
     let frame = iframe(root);
     let d = frame ? frame.contentDocument.documentElement : document.documentElement;
     let touches = evt.changedTouches;
@@ -93,7 +94,6 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
         }
     }
 }
-touch.dn = FunctionNames.PointerTouch;
 
 function handler(current: PointerState): void {
     switch (current.event) {

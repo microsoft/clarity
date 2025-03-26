@@ -4,6 +4,7 @@ import encode from "./encode";
 import * as internal from "@src/diagnostic/internal";
 import { Code, Constant, Severity } from "@clarity-types/data";
 import { hashText } from "@src/clarity";
+import hash from "@src/core/hash";
 
 export let data: ExtractData = {};
 export let keys: Set<number> = new Set();
@@ -46,14 +47,14 @@ export function trigger(input: string): void {
             }
             switch (source) {
                 case ExtractSource.Javascript:
-                    let variable = value.substring(1, value.length);
+                    let variable = value.slice(1);
                     variables[key][id] = parse(variable);
                     break;
                 case ExtractSource.Text:
                     selectors[key][id] = value;
                     break;
                 case ExtractSource.Hash:
-                    let hash = value.substring(1, value.length);
+                    let hash = value.slice(1);
                     hashes[key][id] = hash;
                     break;
             }
@@ -85,20 +86,26 @@ export function compute(): void {
 
                 let selectorData = selectors[key];
                 for (let s in selectorData) {
+                    let shouldMask = false;
                     let selectorKey = parseInt(s);
-                    let nodes = document.querySelectorAll(selectorData[selectorKey]) as NodeListOf<HTMLElement>;
+                    let selector = selectorData[selectorKey];
+                    if (selector.startsWith(Constant.At)){
+                        shouldMask = true;
+                        selector = selector.slice(1);
+                    }
+                    let nodes = document.querySelectorAll(selector) as NodeListOf<HTMLElement>;
                     if (nodes) {
-                        let text = Array.from(nodes).map(e => e.textContent)
-                        update(key, selectorKey, text.join(Constant.Seperator).substring(0, Setting.ExtractLimit));
+                        let text = Array.from(nodes).map(e => e.textContent).join(Constant.Seperator);
+                        update(key, selectorKey, (shouldMask ? hash(text).trim() : text).slice(0, Setting.ExtractLimit));
                     }
                 }
 
                 let hashData = hashes[key];
                 for (let h in hashData) {
                     let hashKey = parseInt(h);
-                    let content = hashText(hashData[hashKey]).trim().substring(0, Setting.ExtractLimit);
+                    let content = hashText(hashData[hashKey]).trim().slice(0, Setting.ExtractLimit);
                     update(key, hashKey, content);
-                }  
+                }
             }
         }
 
@@ -147,9 +154,9 @@ function parse(variable: string): Syntax[] {
         let conditionStart = part.indexOf(Constant.ConditionStart);
         let conditionEnd = part.indexOf(Constant.ConditionEnd);
         syntax.push({
-            name : arrayStart > 0 ? part.substring(0, arrayStart) : (conditionStart > 0 ? part.substring(0, conditionStart) : part),
+            name : arrayStart > 0 ? part.slice(0, arrayStart) : (conditionStart > 0 ? part.slice(0, conditionStart) : part),
             type : arrayStart > 0 ? Type.Array : (conditionStart > 0 ? Type.Object : Type.Simple),
-            condition : conditionStart > 0 ? part.substring(conditionStart + 1, conditionEnd) : null
+            condition : conditionStart > 0 ? part.slice(conditionStart + 1, conditionEnd) : null
         });
     }
 
@@ -187,7 +194,7 @@ function evaluate(variable: Syntax[], base: Object = window): any {
 
 function str(input: string): string {
     // Automatically trim string to max of Setting.ExtractLimit to avoid fetching long strings
-    return input ? JSON.stringify(input).substring(0, Setting.ExtractLimit) : input;
+    return input ? JSON.stringify(input).slice(0, Setting.ExtractLimit) : input;
 }
 
 function match(base: Object, condition: string): boolean {

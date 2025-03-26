@@ -66,6 +66,7 @@ export interface Options {
     canvas?: boolean;
     keyframes?: boolean;
     mobile?: boolean;
+    vNext?: boolean;
 }
 
 export interface NodeData {
@@ -156,6 +157,7 @@ export const enum Constant {
     HashBeta = "data-clarity-hashbeta",
     Hide = "data-clarity-hide",
     Unavailable = "data-clarity-unavailable",
+    UnavailableSmall = "data-clarity-unavailable-small",
     Suspend = "data-clarity-suspend",
     Hidden = "hidden",
     Visible = "visible",
@@ -163,6 +165,7 @@ export const enum Constant {
     Small = "s",
     Medium = "m",
     Large = "l",
+    Beta = "b",
     Dom = "dom",
     Context = "2d",
     Pixel = "px",    
@@ -191,7 +194,9 @@ export const enum Constant {
     InputTag = "input",
     AutoComplete = "autocomplete",
     NewPassword = "new-password",
-    StyleSheet = "stylesheet"
+    StyleSheet = "stylesheet",
+    OriginalBackgroundColor = "data-clarity-background-color",
+    OriginalOpacity = "data-clarity-opacity"
 }
 
 export const enum Setting {
@@ -222,4 +227,7 @@ export const enum Setting {
     CanvasTextFont = "500 12px Segoe UI",
     ScrollCanvasMaxHeight = 65535,
     VisualizationSettleBuffer = 100,
+    LargeSvg = 132,
+    MaxClicksDisplayed = 10,
+    MaxClickDisplayDuration = 5000
 }
