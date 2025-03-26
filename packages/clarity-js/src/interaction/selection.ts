@@ -19,7 +19,6 @@ export function start(): void {
 export function observe(root: Node): void {
     bind(root, "selectstart", recompute.bind(this, root), true);
     bind(root, "selectionchange", recompute.bind(this, root), true);
-    trackDropdownChanges(root)
 }
 
 function recompute(root: Node): void {
@@ -70,18 +69,4 @@ export function stop(): void {
     clearTimeout(timeout);
 }
 
-function trackDropdownChanges(root: Node): void {
-    let queryableRoot = root as Document | Element;
-
-    if (queryableRoot.querySelectorAll) {
-        const dropdowns = queryableRoot.querySelectorAll("select");
-
-        dropdowns.forEach(dropdown => {
-            const selectElement = dropdown as HTMLSelectElement;
-            bind(selectElement, "click", () => summary.track(Event.Change, time()), true);
-            bind(selectElement, "change", () => summary.track(Event.Change, time()), true);
-        });
-    }
-    summary.track(Event.Change, time());
-}
 

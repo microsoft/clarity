@@ -9,7 +9,7 @@ import { iframe } from "@src/layout/dom";
 import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
 import encode from "./encode";
-
+import * as summary from "@src/data/summary";
 const UserInputTags = ["input", "textarea", "radio", "button", "canvas"];
 export let state: ClickState[] = [];
 
@@ -75,6 +75,7 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
         });
         schedule(encode.bind(this, event));
     }
+    trackSelectClicks(evt);
 }
 
 function link(node: Node): HTMLAnchorElement {
@@ -159,4 +160,11 @@ export function reset(): void {
 
 export function stop(): void {
     reset();
+}
+
+function trackSelectClicks(evt: UIEvent): void {
+    const node = evt.target;
+    if (node instanceof Element && node.tagName === "SELECT") {
+        summary.track(Event.Click, time());
+    }
 }
