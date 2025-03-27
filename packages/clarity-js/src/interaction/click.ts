@@ -10,7 +10,7 @@ import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
 import encode from "./encode";
 
-const UserInputTags = ["input", "textarea", "radio", "button", "canvas"];
+const UserInputTags = ["input", "textarea", "radio", "button", "canvas", "select"];
 export let state: ClickState[] = [];
 
 export function start(): void {
