@@ -71,6 +71,9 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 hash: null,
                 trust: evt.isTrusted ? BooleanFlag.True : BooleanFlag.False,
                 isFullText: textInfo.isFullText,
+                tag: tag(t).substring(0, Setting.ClickTag),
+                class: className(t).substring(0, Setting.ClickClass),
+                id: id(t).substring(0, Setting.ClickId),
             }
         });
         schedule(encode.bind(this, event));
@@ -110,13 +113,42 @@ function text(element: Node): TextInfo {
 }
 
 function reaction(element: Node): BooleanFlag {
-    if (element.nodeType === Node.ELEMENT_NODE) {
-        let tag = (element as HTMLElement).tagName.toLowerCase();
-        if (UserInputTags.indexOf(tag) >= 0) {
-            return BooleanFlag.False;
-        }
+    const tagName = tag(element);
+
+    if (UserInputTags.indexOf(tagName) >= 0) {
+        return BooleanFlag.False;
     }
     return BooleanFlag.True;
+}
+
+function tag(element: Node): string {
+    let tagName = "";
+
+    if (element.nodeType === Node.ELEMENT_NODE) {
+        tagName = (element as HTMLElement).tagName.toLowerCase();
+    }
+
+    return tagName;
+}
+
+function className(element: Node): string {
+    let c = "";
+
+    if (element.nodeType === Node.ELEMENT_NODE) {
+        c = (element as HTMLElement).className.toLowerCase();
+    }
+
+    return c;
+}
+
+function id(element: Node): string {
+    let i = "";
+
+    if (element.nodeType === Node.ELEMENT_NODE) {
+        i = (element as HTMLElement).id.toLowerCase();
+    }
+
+    return i;
 }
 
 function layout(element: Element): Box {
