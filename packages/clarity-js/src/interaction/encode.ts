@@ -72,6 +72,9 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 tokens.push(cHash);
                 tokens.push(entry.data.trust);
                 tokens.push(entry.data.isFullText);
+                tokens.push(entry.data.tag);
+                tokens.push(entry.data.class);
+                tokens.push(entry.data.id);
                 queue(tokens);
                 timeline.track(entry.time, entry.event, cHash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
