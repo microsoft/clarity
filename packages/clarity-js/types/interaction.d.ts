@@ -123,6 +123,9 @@ export interface ClickData {
     hash: string;
     trust: number;
     isFullText: BooleanFlag;
+    tag: string;
+    class: string;
+    id: string;
 }
 
 export interface TextInfo {
