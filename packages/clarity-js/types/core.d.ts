@@ -120,6 +120,7 @@ export interface Config {
     projectId?: string;
     delay?: number;
     lean?: boolean;
+    lite?: boolean;
     track?: boolean;
     content?: boolean;
     drop?: string[];

@@ -3,6 +3,8 @@ import * as core from "@src/core";
 import config from "@src/core/config";
 import encode from "@src/data/encode";
 import * as metadata from "@src/data/metadata";
+import * as discover from "@src/layout/discover";
+import * as style from "@src/layout/style";
 
 export let data: UpgradeData = null;
 
@@ -29,6 +31,11 @@ export function upgrade(key: string): void {
         if (config.upgrade) { config.upgrade(key); }
 
         encode(Event.Upgrade);
+
+        if (config.lite) {
+            discover.start();
+            style.start();
+        }
     }
 }
 
