@@ -126,7 +126,8 @@ export async function suspend(timer: Timer): Promise<Task> {
     let id = key(timer);
     if (id in tracker) {
         stop(timer);
-        tracker[id].yield = (await wait()).timeRemaining();
+        // some customer polyfills for requestIdleCallback return null 
+        tracker[id].yield = (await wait())?.timeRemaining() || Setting.LongTask;
         restart(timer);
     }
     // After we are done with suspending task, ensure that we are still operating in the right context
