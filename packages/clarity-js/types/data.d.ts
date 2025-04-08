@@ -340,7 +340,8 @@ export const enum Constant {
     Timeout = "Timeout",
     Bang = "!",
     SHA256 = "SHA-256",
-    Electron = "Electron"
+    Electron = "Electron",
+    Caret = "^",
 }
 
 export const enum XMLReadyState {
