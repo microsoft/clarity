@@ -215,7 +215,8 @@ function session(): Session {
   let output: Session = { session: shortid(), ts: Math.round(Date.now()), count: 1, upgrade: null, upload: Constant.Empty };
   let value = getCookie(Constant.SessionKey, !config.includeSubdomains);
   if (value) {
-    let parts = value.split(Constant.Pipe);
+    // Maintaining support for pipe separator for backward compatibility, this can be removed in future releases
+    let parts = value.includes(Constant.Caret) ? value.split(Constant.Caret) : value.split(Constant.Pipe);
     // Making it backward & forward compatible by using greater than comparison (v0.6.21)
     // In future version, we can reduce the parts length to be 5 where the last part contains the full upload URL
     if (parts.length >= 5 && output.ts - num(parts[1]) < Setting.SessionTimeout) {
@@ -237,21 +238,8 @@ function user(): User {
   let cookie = getCookie(Constant.CookieKey, !config.includeSubdomains);
   if (cookie && cookie.length > 0) {
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
-    let parts = cookie.split(Constant.Pipe);
-    // For backward compatibility introduced in v0.6.18; following code can be removed with future iterations
-    // Count number of times Clarity's user cookie crumb appears in document.cookie (could be on different sub-domains e.g. www.domain.com and .domain.com)
-    let count = 0;
-    for (let c of document.cookie.split(Constant.Semicolon)) { count += c.split(Constant.Equals)[0].trim() === Constant.CookieKey ? 1 : 0; }
-    // Check if we either got version-less cookie value or saw multiple copies of the user cookie crumbs
-    // In both these cases, we go ahead and delete the existing cookie set on current domain
-    if (parts.length === 1 || count > 1) {
-      let deleted = `${Constant.Semicolon}${Constant.Expires}${(new Date(0)).toUTCString()}${Constant.Path}`;
-      // First, delete current user cookie which might be set on current sub-domain vs. root domain
-      document.cookie = `${Constant.CookieKey}=${deleted}`;
-      // Second, same thing for current session cookie so it can be re-written later with the root domain
-      document.cookie = `${Constant.SessionKey}=${deleted}`;
-    }
-    // End code for backward compatibility
+    // Maintaining support for pipe separator for backward compatibility, this can be removed in future releases
+    let parts = cookie.includes(Constant.Caret) ? cookie.split(Constant.Caret) : cookie.split(Constant.Pipe);
     // Read version information and timestamp from cookie, if available
     if (parts.length > 1) { output.version = num(parts[1]); }
     if (parts.length > 2) { output.expiry = num(parts[2], 36); }
