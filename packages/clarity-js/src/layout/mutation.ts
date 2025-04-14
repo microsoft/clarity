@@ -344,6 +344,10 @@ function generate(target: Node, type: MutationRecordType): void {
 
 
 function proxyStyleRules(win: any): void {
+  if (win === null || win === undefined) {
+    return;
+  }
+
   // Some popular open source libraries, like styled-components, optimize performance
   // by injecting CSS using insertRule API vs. appending text node. A side effect of
   // using javascript API is that it doesn't trigger DOM mutation and therefore we
