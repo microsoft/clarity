@@ -1,5 +1,5 @@
 import { UploadCallback } from "@clarity-types/core";
-import { BooleanFlag, Check, Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData, XMLReadyState } from "@clarity-types/data";
+import { BooleanFlag, Check, Code, Constant, EncodedPayload, Event, Metric, Setting, Severity, Token, Transit, UploadData, XMLReadyState } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
@@ -13,6 +13,7 @@ import * as limit from "@src/data/limit";
 import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
+import * as internal from "@src/diagnostic/internal";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
 import * as extract from "@src/data/extract";
@@ -28,12 +29,14 @@ let timeout: number = null;
 let transit: Transit;
 let active: boolean;
 let queuedTime: number = 0;
+let leanLimit = false;
 export let track: UploadData;
 
 export function start(): void {
     active = true;
     discoverBytes = 0;
     playbackBytes = 0;
+    leanLimit = false;
     queuedTime = 0;
     playback = [];
     analysis = [];
@@ -47,14 +50,23 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         let type = tokens.length > 1 ? tokens[1] : null;
         let event = JSON.stringify(tokens);
 
+        if (!config.lean) {
+            leanLimit = false;
+        } else if (!leanLimit && playbackBytes + event.length > Setting.PlaybackBytesLimit) {
+            internal.log(Code.LeanLimit, Severity.Info);
+            leanLimit = true;
+        }
+
         switch (type) {
             case Event.Discover:
+                if (leanLimit) { break; }
                 discoverBytes += event.length;
             case Event.Box:
             case Event.Mutation:
             case Event.Snapshot:
             case Event.StyleSheetAdoption:
             case Event.StyleSheetUpdate:
+                if (leanLimit) { break; }
                 playbackBytes += event.length;
                 playback.push(event);
                 break;
@@ -92,6 +104,7 @@ export function stop(): void {
     upload(true);
     discoverBytes = 0;
     playbackBytes = 0;
+    leanLimit = false;
     queuedTime = 0;
     playback = [];
     analysis = [];
@@ -141,6 +154,7 @@ async function upload(final: boolean = false): Promise<void> {
         playback = [];
         playbackBytes = 0;
         discoverBytes = 0;
+        leanLimit = false;
     }
 }
 
