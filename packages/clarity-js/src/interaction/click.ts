@@ -71,9 +71,9 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 hash: null,
                 trust: evt.isTrusted ? BooleanFlag.True : BooleanFlag.False,
                 isFullText: textInfo.isFullText,
-                tag: tag(t).substring(0, Setting.ClickTag),
-                class: className(t).substring(0, Setting.ClickClass),
-                id: id(t).substring(0, Setting.ClickId),
+                tag: getElementAttribute(t, "tagName").substring(0, Setting.ClickTag),
+                class: getElementAttribute(t, "className").substring(0, Setting.ClickClass),
+                id: getElementAttribute(t, "id").substring(0, Setting.ClickId),
             }
         });
         schedule(encode.bind(this, event));
@@ -113,7 +113,7 @@ function text(element: Node): TextInfo {
 }
 
 function reaction(element: Node): BooleanFlag {
-    const tagName = tag(element);
+    const tagName = getElementAttribute(element, "tagName");
 
     if (UserInputTags.indexOf(tagName) >= 0) {
         return BooleanFlag.False;
@@ -121,34 +121,12 @@ function reaction(element: Node): BooleanFlag {
     return BooleanFlag.True;
 }
 
-function tag(element: Node): string {
-    let tagName = "";
-
+function getElementAttribute(element: Node, attribute: "tagName" | "className" | "id"): string {
     if (element.nodeType === Node.ELEMENT_NODE) {
-        tagName = (element as HTMLElement).tagName.toLowerCase();
+        const value = (element as HTMLElement)?.[attribute]?.toLowerCase();
+        return value || "";
     }
-
-    return tagName;
-}
-
-function className(element: Node): string {
-    let c = "";
-
-    if (element.nodeType === Node.ELEMENT_NODE) {
-        c = (element as HTMLElement).className.toLowerCase();
-    }
-
-    return c;
-}
-
-function id(element: Node): string {
-    let i = "";
-
-    if (element.nodeType === Node.ELEMENT_NODE) {
-        i = (element as HTMLElement).id.toLowerCase();
-    }
-
-    return i;
+    return "";
 }
 
 function layout(element: Element): Box {
