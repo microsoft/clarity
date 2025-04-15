@@ -10,18 +10,22 @@ import * as metric from "@src/data/metric";
 
 export let sheetUpdateState: StyleSheetState[] = [];
 export let sheetAdoptionState: StyleSheetState[] = [];
-let replace: (text?: string) => Promise<CSSStyleSheet> = null;
-let replaceSync: (text?: string) => void = null;
 const styleSheetId = 'claritySheetId';
 let styleSheetMap = {};
 let styleTimeMap: {[key: string]: number} = {};
 let documentNodes = [];
 let createdSheetIds = [];
 
-export function start(): void {
-    if (window['CSSStyleSheet'] && CSSStyleSheet.prototype) {
-        if (replace === null) { 
-            replace = CSSStyleSheet.prototype.replace; 
+function proxyStyleRules(win: any) {
+    if (win === null || win === undefined) {
+        return;
+      }
+    
+      win.clarityOverrides = win.clarityOverrides || {};
+
+      if (win['CSSStyleSheet'] && win.CSSStyleSheet.prototype) {
+        if (win.clarityOverrides.replace === undefined) { 
+            win.clarityOverrides.replace = CSSStyleSheet.prototype.replace; 
             CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
                 if (core.active()) {
                     metric.max(Metric.ConstructedStyles, 1);
@@ -32,12 +36,12 @@ export function start(): void {
                         trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
                     }
                 }
-                return replace.apply(this, arguments);
+                return win.clarityOverrides.replace.apply(this, arguments);
             };
         }
     
-        if (replaceSync === null) { 
-            replaceSync = CSSStyleSheet.prototype.replaceSync; 
+        if (win.clarityOverrides.replaceSync === undefined) { 
+            win.clarityOverrides.replaceSync = CSSStyleSheet.prototype.replaceSync; 
             CSSStyleSheet.prototype.replaceSync = function(): void {
                 if (core.active()) {
                     metric.max(Metric.ConstructedStyles, 1);
@@ -48,15 +52,22 @@ export function start(): void {
                         trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
                     }                
                 }
-                return replaceSync.apply(this, arguments);
+                return win.clarityOverrides.replaceSync.apply(this, arguments);
             };
         }
-    }    
+    }   
+}
+
+export function start(): void {
+    proxyStyleRules(window);
 }
 
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
     if (documentNodes.indexOf(documentNode) === -1) {
         documentNodes.push(documentNode);
+        if (documentNode.defaultView) {
+            proxyStyleRules(documentNode.defaultView);
+        }
     }
     timestamp = timestamp || time();
     if (!documentNode?.adoptedStyleSheets) {

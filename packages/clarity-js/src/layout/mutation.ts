@@ -42,9 +42,10 @@ export function start(): void {
   activePeriod = 0;
   history = {};
   observedNodes = new WeakMap<Node, MutationObserver>();
+  proxyStyleRules(window);
 }
 
-export function observe(node: Node): void {
+export function observe(node: Document | ShadowRoot): void {
   // Create a new observer for every time a new DOM tree (e.g. root document or shadowdom root) is discovered on the page
   // In the case of shadow dom, any mutations that happen within the shadow dom are not bubbled up to the host document
   // For this reason, we need to wire up mutations every time we see a new shadow dom.
@@ -58,7 +59,10 @@ export function observe(node: Node): void {
       observedNodes.set(node, observer);
       observers.add(observer);
     }
-    proxyStyleRules((node as any).defaultView);
+    if (node['defaultView']) {
+      proxyStyleRules(node['defaultView']);
+    }
+    
   } catch (e) {
     internal.log(Code.MutationObserver, Severity.Info, e ? e.name : null);
   }
@@ -348,65 +352,67 @@ function proxyStyleRules(win: any): void {
     return;
   }
 
+  win.clarityOverrides = win.clarityOverrides || {};
+
   // Some popular open source libraries, like styled-components, optimize performance
   // by injecting CSS using insertRule API vs. appending text node. A side effect of
   // using javascript API is that it doesn't trigger DOM mutation and therefore we
   // need to override the insertRule API and listen for changes manually.
-  if (win.clarityInsertRule === undefined) {
-    win.clarityInsertRule = win.CSSStyleSheet.prototype.insertRule;
+  if (win.clarityOverrides.InsertRule === undefined) {
+    win.clarityOverrides.InsertRule = win.CSSStyleSheet.prototype.insertRule;
     win.CSSStyleSheet.prototype.insertRule = function (): number {
       if (core.active()) {
         schedule(this.ownerNode);
       }
-      return win.clarityInsertRule.apply(this, arguments);
+      return win.clarityOverrides.InsertRule.apply(this, arguments);
     };
   }
 
-  if ("CSSMediaRule" in win && win.clarityMediaInsertRule === undefined) {
-    win.clarityMediaInsertRule = win.CSSMediaRule.prototype.insertRule;
+  if ("CSSMediaRule" in win && win.clarityOverrides.MediaInsertRule === undefined) {
+    win.clarityOverrides.MediaInsertRule = win.CSSMediaRule.prototype.insertRule;
     win.CSSMediaRule.prototype.insertRule = function (): number {
       if (core.active()) {
         schedule(this.parentStyleSheet.ownerNode);
       }
-      return win.clarityMediaInsertRule.apply(this, arguments);
+      return win.clarityOverrides.MediaInsertRule.apply(this, arguments);
     };
   }
 
-  if (win.clarityDeleteRule === undefined) {
-    win.clarityDeleteRule = win.CSSStyleSheet.prototype.deleteRule;
+  if (win.clarityOverrides.DeleteRule === undefined) {
+    win.clarityOverrides.DeleteRule = win.CSSStyleSheet.prototype.deleteRule;
     win.CSSStyleSheet.prototype.deleteRule = function (): void {
       if (core.active()) {
         schedule(this.ownerNode);
       }
-      return win.clarityDeleteRule.apply(this, arguments);
+      return win.clarityOverrides.DeleteRule.apply(this, arguments);
     };
   }
 
-  if ("CSSMediaRule" in win && win.clarityMediaDeleteRule === undefined) {
-    win.clarityMediaDeleteRule = win.CSSMediaRule.prototype.deleteRule;
+  if ("CSSMediaRule" in win && win.clarityOverrides.MediaDeleteRule === undefined) {
+    win.clarityOverrides.MediaDeleteRule = win.CSSMediaRule.prototype.deleteRule;
     win.CSSMediaRule.prototype.deleteRule = function (): void {
       if (core.active()) {
         schedule(this.parentStyleSheet.ownerNode);
       }
-      return win.clarityMediaDeleteRule.apply(this, arguments);
+      return win.clarityOverrides.MediaDeleteRule.apply(this, arguments);
     };
   }
 
   // Add a hook to attachShadow API calls
   // In case we are unable to add a hook and browser throws an exception,
   // reset attachShadow variable and resume processing like before
-  if (win.clarityAttachShadow === undefined) {
-    win.clarityAttachShadow = win.Element.prototype.attachShadow;
+  if (win.clarityOverrides.AttachShadow === undefined) {
+    win.clarityOverrides.AttachShadow = win.Element.prototype.attachShadow;
     try {
       win.Element.prototype.attachShadow = function (): ShadowRoot {
         if (core.active()) {
-          return schedule(win.clarityAttachShadow.apply(this, arguments)) as ShadowRoot;
+          return schedule(win.clarityOverrides.AttachShadow.apply(this, arguments)) as ShadowRoot;
         } else {
-          return win.clarityAttachShadow.apply(this, arguments);
+          return win.clarityOverrides.AttachShadow.apply(this, arguments);
         }
       };
     } catch {
-      win.clarityAttachShadow = null;
+      win.clarityOverrides.AttachShadow = null;
     }
   }
 }
