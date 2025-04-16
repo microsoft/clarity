@@ -426,6 +426,8 @@ function getPreviousId(node: Node): number {
 }
 
 function track(id: number, source: Source, changed: boolean = true, parentChanged: boolean = false): void {
+  if (config.lean && config.lite) { return; }
+
     // Keep track of the order in which mutations happened, they may not be sequential
     // Edge case: If an element is added later on, and pre-discovered element is moved as a child.
     // In that case, we need to reorder the pre-discovered element in the update list to keep visualization consistent.
