@@ -123,8 +123,9 @@ function reaction(element: Node): BooleanFlag {
 
 function getElementAttribute(element: Node, attribute: "tagName" | "className" | "id"): string {
     if (element.nodeType === Node.ELEMENT_NODE) {
-        const value = (element as HTMLElement)?.[attribute]?.toLowerCase();
-        return value || "";
+        const attr = (element as HTMLElement)?.[attribute];
+        const value = typeof attr === "string" ? attr?.toLowerCase() : "";
+        return value;
     }
     return "";
 }
