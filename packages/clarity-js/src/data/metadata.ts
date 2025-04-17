@@ -1,6 +1,5 @@
 import { Time } from "@clarity-types/core";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting } from "@clarity-types/data";
-import * as clarity from "@src/clarity";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Status } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -122,12 +121,26 @@ export function id(): string {
 }
 
 export function consent(status: boolean = true): void {
-  if (!status) {
+  if (status) {
+    consentv2({ adStorage: true, analyticsStorage: true });
+    trackConsent.consent();
+    return;
+  }
+  consentv2({ adStorage: false, analyticsStorage: false });
+}
+
+export function consentv2(status: Status = {}): void {
+
+  const statusvalues: Status = {
+    adStorage: status.adStorage ?? false,
+    analyticsStorage: status.analyticsStorage ?? false
+  };
+
+  if(!statusvalues.analyticsStorage){
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
-    clarity.stop();
-    window.setTimeout(clarity.start, Setting.RestartDelay);
+    trackConsent.consentv2(statusvalues.toString());
     return;
   }
 
@@ -135,7 +148,7 @@ export function consent(status: boolean = true): void {
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    trackConsent.consent();
+    trackConsent.consentv2(statusvalues.toString());
   }
 }
 

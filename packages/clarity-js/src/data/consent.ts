@@ -1,5 +1,16 @@
-import { Dimension } from "@clarity-types/data";
+import { Dimension, Event } from "@clarity-types/data";
 import * as dimension from "@src/data/dimension";
+import encode from "./encode";
+
+export let data: string = "";
+
+export function start(): void {
+    data = "";
+}
+
+export function stop(): void {
+    data = "";
+}
 
 const enum ConsentType {
     None = 0,
@@ -18,4 +29,16 @@ export function consent(): void {
 
 function trackConsent(consent: ConsentType): void {
     dimension.log(Dimension.Consent, consent.toString());
+}
+
+export function consentv2(status: string): void {
+    data = status;
+}
+
+export function compute(): void {
+    encode(Event.Consent);
+}
+
+export function reset(): void {
+    data = "";
 }
