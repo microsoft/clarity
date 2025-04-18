@@ -48,7 +48,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                 dom.parse(document);
             }
             checkDocumentStyles(node as Document, timestamp);
-            observe(node);
+            observe(node as Document);
             break;
         case Node.DOCUMENT_FRAGMENT_NODE:
             let shadowRoot = (node as ShadowRoot);
@@ -212,7 +212,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
     return child;
 }
 
-function observe(root: Node): void {
+function observe(root: Document | ShadowRoot): void {
     if (dom.has(root) || event.has(root)) { return; }
     mutation.observe(root); // Observe mutations for this root node
     interaction.observe(root); // Observe interactions for this root node
