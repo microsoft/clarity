@@ -5,6 +5,7 @@ import { shortid } from "@src/data/metadata";
 import encode from "@src/layout/encode";
 import { getId } from "@src/layout/dom";
 import * as core from "@src/core";
+import config from "@src/core/config";
 import { getCssRules } from "./node";
 import * as metric from "@src/data/metric";
 
@@ -17,13 +18,13 @@ let documentNodes = [];
 let createdSheetIds = [];
 
 function proxyStyleRules(win: any) {
-    if (win === null || win === undefined) {
+    if ((config.lean && config.lite) || win === null || win === undefined) {
         return;
       }
     
-      win.clarityOverrides = win.clarityOverrides || {};
+    win.clarityOverrides = win.clarityOverrides || {};
 
-      if (win['CSSStyleSheet'] && win.CSSStyleSheet.prototype) {
+    if (win['CSSStyleSheet'] && win.CSSStyleSheet.prototype) {
         if (win.clarityOverrides.replace === undefined) { 
             win.clarityOverrides.replace = CSSStyleSheet.prototype.replace; 
             CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
@@ -39,7 +40,7 @@ function proxyStyleRules(win: any) {
                 return win.clarityOverrides.replace.apply(this, arguments);
             };
         }
-    
+
         if (win.clarityOverrides.replaceSync === undefined) { 
             win.clarityOverrides.replaceSync = CSSStyleSheet.prototype.replaceSync; 
             CSSStyleSheet.prototype.replaceSync = function(): void {
@@ -63,6 +64,8 @@ export function start(): void {
 }
 
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
+    if (config.lean && config.lite) { return; }
+
     if (documentNodes.indexOf(documentNode) === -1) {
         documentNodes.push(documentNode);
         if (documentNode.defaultView) {

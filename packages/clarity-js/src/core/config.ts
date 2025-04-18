@@ -4,6 +4,7 @@ let config: Config = {
     projectId: null,
     delay: 1 * Time.Second,
     lean: false,
+    lite: false,
     track: true,
     content: true,
     drop: [],
