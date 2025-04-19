@@ -8,6 +8,7 @@ import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
 import * as trackConsent from "@src/data/consent";
+import { clarity } from "..";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
@@ -120,27 +121,31 @@ export function id(): string {
   return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
 }
 
+//TODO: Remove this function once consentv2 is fully released
 export function consent(status: boolean = true): void {
-  if (status) {
-    consentv2({ adStorage: true, analyticsStorage: true });
-    trackConsent.consent();
+  if (!status) {
+    consentv2();
     return;
   }
-  consentv2({ adStorage: false, analyticsStorage: false });
+  
+  consentv2({ adStorage: true, analyticsStorage: true });
+  trackConsent.consent();
 }
 
-export function consentv2(status: Status = {}): void {
+export function consentv2(status: Status = {adStorage: false, analyticsStorage: false}): void {
 
-  const statusvalues: Status = {
+  const normalizedsStatus: Status = {
     adStorage: status.adStorage ?? false,
     analyticsStorage: status.analyticsStorage ?? false
   };
 
-  if(!statusvalues.analyticsStorage){
+  if(!normalizedsStatus.analyticsStorage){
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
-    trackConsent.consentv2(statusvalues.toString());
+    trackConsent.consentv2(normalizedsStatus);
+    clarity.stop();
+    window.setTimeout(clarity.start, Setting.RestartDelay);
     return;
   }
 
@@ -148,7 +153,7 @@ export function consentv2(status: Status = {}): void {
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    trackConsent.consentv2(statusvalues.toString());
+    trackConsent.consentv2(normalizedsStatus);
   }
 }
 
