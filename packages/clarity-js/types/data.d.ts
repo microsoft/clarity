@@ -71,6 +71,7 @@ export const enum Event {
     Animation = 44,
     StyleSheetAdoption = 45,
     StyleSheetUpdate = 46,
+    Consent = 47,
 
     // Apps specific events
     WebViewDiscover = 100,
@@ -509,4 +510,9 @@ export interface PerformanceEventTiming extends PerformanceEntry {
 export interface Interaction {
     id: number;
     latency: number;
+}
+
+export interface Status{
+    adStorage?: boolean;
+    analyticsStorage?: boolean;
 }
