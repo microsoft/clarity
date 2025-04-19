@@ -138,9 +138,10 @@ export default function(event: Event): void {
             extract.reset();
             queue(tokens, false);
         case Event.Consent:
-            tokens.push(consent.data);
+            tokens.push(consent.data.adStorage.toString());
+            tokens.push(consent.data.analyticsStorage.toString());
             consent.reset();
-            queue(tokens, false);
+            queue(tokens);
             break;
     }
 }

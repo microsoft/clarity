@@ -44,5 +44,4 @@ export function compute(): void {
     summary.compute();
     limit.compute();
     extract.compute();
-    consent.compute();
 }

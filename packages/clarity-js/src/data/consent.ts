@@ -1,15 +1,15 @@
-import { Dimension, Event } from "@clarity-types/data";
+import { Dimension, Event, Status } from "@clarity-types/data";
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
 
-export let data: string = "";
+export let data: Status = {};
 
 export function start(): void {
-    data = "";
+    data = {};
 }
 
 export function stop(): void {
-    data = "";
+    data = {};
 }
 
 const enum ConsentType {
@@ -19,7 +19,12 @@ const enum ConsentType {
 }
 
 export function config(track: boolean): void {
+    const status: Status = {
+        adStorage: track,
+        analyticsStorage: track
+    };
     trackConsent(track ? ConsentType.Implicit : ConsentType.None);
+    consentv2(status);
 }
 
 // When we get consent signal as false, we restart the service and track config as false.
@@ -31,14 +36,11 @@ function trackConsent(consent: ConsentType): void {
     dimension.log(Dimension.Consent, consent.toString());
 }
 
-export function consentv2(status: string): void {
+export function consentv2(status: Status): void {
     data = status;
-}
-
-export function compute(): void {
     encode(Event.Consent);
 }
 
 export function reset(): void {
-    data = "";
+    data = {};
 }
