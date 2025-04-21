@@ -1,4 +1,5 @@
 import { Time } from "@clarity-types/core";
+import * as clarity from "@src/clarity";
 import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Status } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
@@ -8,7 +9,6 @@ import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
 import * as trackConsent from "@src/data/consent";
-import { clarity } from "..";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
