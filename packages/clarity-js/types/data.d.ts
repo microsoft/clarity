@@ -123,6 +123,9 @@ export const enum Metric {
     HardwareConcurrency = 33,
     DeviceMemory = 34,
     Electron = 35,
+    /**
+     * @deprecated No longer tracking
+     */
     ConstructedStyles = 36,
     /**
      * @deprecated Move it to dimension as it'll report only last value
