@@ -7,25 +7,26 @@ import { getId } from "@src/layout/dom";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import { getCssRules } from "./node";
-import * as metric from "@src/data/metric";
 
 export let sheetUpdateState: StyleSheetState[] = [];
 export let sheetAdoptionState: StyleSheetState[] = [];
-let replace: (text?: string) => Promise<CSSStyleSheet> = null;
-let replaceSync: (text?: string) => void = null;
 const styleSheetId = 'claritySheetId';
 let styleSheetMap = {};
 let styleTimeMap: {[key: string]: number} = {};
 let documentNodes = [];
 let createdSheetIds = [];
 
-export function start(): void {
-    if (config.lean && config.lite) { return; }
+function proxyStyleRules(win: any) {
+    if ((config.lean && config.lite) || win === null || win === undefined) {
+        return;
+    }
+    
+    win.clarityOverrides = win.clarityOverrides || {};
 
-    if (window['CSSStyleSheet'] && CSSStyleSheet.prototype) {
-        if (replace === null) { 
-            replace = CSSStyleSheet.prototype.replace; 
-            CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
+    if (win['CSSStyleSheet'] && win.CSSStyleSheet.prototype) {
+        if (win.clarityOverrides.replace === undefined) { 
+            win.clarityOverrides.replace = win.CSSStyleSheet.prototype.replace; 
+            win.CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
                 if (core.active()) {
                     // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
                     // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
@@ -34,13 +35,13 @@ export function start(): void {
                         trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
                     }
                 }
-                return replace.apply(this, arguments);
+                return win.clarityOverrides.replace.apply(this, arguments);
             };
         }
-    
-        if (replaceSync === null) { 
-            replaceSync = CSSStyleSheet.prototype.replaceSync; 
-            CSSStyleSheet.prototype.replaceSync = function(): void {
+
+        if (win.clarityOverrides.replaceSync === undefined) { 
+            win.clarityOverrides.replaceSync = win.CSSStyleSheet.prototype.replaceSync; 
+            win.CSSStyleSheet.prototype.replaceSync = function(): void {
                 if (core.active()) {
                     // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
                     // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
@@ -49,10 +50,14 @@ export function start(): void {
                         trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
                     }                
                 }
-                return replaceSync.apply(this, arguments);
+                return win.clarityOverrides.replaceSync.apply(this, arguments);
             };
         }
-    }    
+    }   
+}
+
+export function start(): void {
+    proxyStyleRules(window);
 }
 
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
@@ -60,13 +65,15 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
 
     if (documentNodes.indexOf(documentNode) === -1) {
         documentNodes.push(documentNode);
+        if (documentNode.defaultView) {
+            proxyStyleRules(documentNode.defaultView);
+        }
     }
     timestamp = timestamp || time();
     if (!documentNode?.adoptedStyleSheets) {
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
         return;
     }
-    metric.max(Metric.ConstructedStyles, 1);
     let currentStyleSheets: string[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
         // If we haven't seen this style sheet on this page yet, we create a reference to it for the visualizer.
