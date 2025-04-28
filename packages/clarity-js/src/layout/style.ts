@@ -11,25 +11,22 @@ import * as metric from "@src/data/metric";
 
 export let sheetUpdateState: StyleSheetState[] = [];
 export let sheetAdoptionState: StyleSheetState[] = [];
+let replace: (text?: string) => Promise<CSSStyleSheet> = null;
+let replaceSync: (text?: string) => void = null;
 const styleSheetId = 'claritySheetId';
 let styleSheetMap = {};
 let styleTimeMap: {[key: string]: number} = {};
 let documentNodes = [];
 let createdSheetIds = [];
 
-function proxyStyleRules(win: any) {
-    if ((config.lean && config.lite) || win === null || win === undefined) {
-        return;
-      }
-    
-    win.clarityOverrides = win.clarityOverrides || {};
+export function start(): void {
+    if (config.lean && config.lite) { return; }
 
-    if (win['CSSStyleSheet'] && win.CSSStyleSheet.prototype) {
-        if (win.clarityOverrides.replace === undefined) { 
-            win.clarityOverrides.replace = CSSStyleSheet.prototype.replace; 
+    if (window['CSSStyleSheet'] && CSSStyleSheet.prototype) {
+        if (replace === null) { 
+            replace = CSSStyleSheet.prototype.replace; 
             CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
                 if (core.active()) {
-                    metric.max(Metric.ConstructedStyles, 1);
                     // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
                     // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
                     // to when it is used in the document rather than potentially being misaligned during the traverse process.
@@ -37,15 +34,14 @@ function proxyStyleRules(win: any) {
                         trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
                     }
                 }
-                return win.clarityOverrides.replace.apply(this, arguments);
+                return replace.apply(this, arguments);
             };
         }
-
-        if (win.clarityOverrides.replaceSync === undefined) { 
-            win.clarityOverrides.replaceSync = CSSStyleSheet.prototype.replaceSync; 
+    
+        if (replaceSync === null) { 
+            replaceSync = CSSStyleSheet.prototype.replaceSync; 
             CSSStyleSheet.prototype.replaceSync = function(): void {
                 if (core.active()) {
-                    metric.max(Metric.ConstructedStyles, 1);
                     // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
                     // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
                     // to when it is used in the document rather than potentially being misaligned during the traverse process.
@@ -53,14 +49,10 @@ function proxyStyleRules(win: any) {
                         trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
                     }                
                 }
-                return win.clarityOverrides.replaceSync.apply(this, arguments);
+                return replaceSync.apply(this, arguments);
             };
         }
-    }   
-}
-
-export function start(): void {
-    proxyStyleRules(window);
+    }    
 }
 
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
@@ -68,9 +60,6 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
 
     if (documentNodes.indexOf(documentNode) === -1) {
         documentNodes.push(documentNode);
-        if (documentNode.defaultView) {
-            proxyStyleRules(documentNode.defaultView);
-        }
     }
     timestamp = timestamp || time();
     if (!documentNode?.adoptedStyleSheets) {

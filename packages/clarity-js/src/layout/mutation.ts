@@ -24,6 +24,11 @@ import config from "@src/core/config";
 let observers: Set<MutationObserver> = new Set();
 let mutations: MutationQueue[] = [];
 let throttledMutations: { [key: number]: MutationRecordWithTime } = {};
+let insertRule: (rule: string, index?: number) => number = null;
+let deleteRule: (index?: number) => void = null;
+let attachShadow: (init: ShadowRootInit) => ShadowRoot = null;
+let mediaInsertRule: (rule: string, index?: number) => number = null;
+let mediaDeleteRule: (index?: number) => void = null;
 let queue: Node[] = [];
 let timeout: number = null;
 let throttleDelay: number = null;
@@ -42,10 +47,71 @@ export function start(): void {
   activePeriod = 0;
   history = {};
   observedNodes = new WeakMap<Node, MutationObserver>();
-  proxyStyleRules(window);
+
+  // Some popular open source libraries, like styled-components, optimize performance
+  // by injecting CSS using insertRule API vs. appending text node. A side effect of
+  // using javascript API is that it doesn't trigger DOM mutation and therefore we
+  // need to override the insertRule API and listen for changes manually.
+  if (insertRule === null) {
+    insertRule = CSSStyleSheet.prototype.insertRule;
+    CSSStyleSheet.prototype.insertRule = function (): number {
+      if (core.active()) {
+        schedule(this.ownerNode);
+      }
+      return insertRule.apply(this, arguments);
+    };
+  }
+
+  if ("CSSMediaRule" in window && mediaInsertRule === null) {
+    mediaInsertRule = CSSMediaRule.prototype.insertRule;
+    CSSMediaRule.prototype.insertRule = function (): number {
+      if (core.active()) {
+        schedule(this.parentStyleSheet.ownerNode);
+      }
+      return mediaInsertRule.apply(this, arguments);
+    };
+  }
+
+  if (deleteRule === null) {
+    deleteRule = CSSStyleSheet.prototype.deleteRule;
+    CSSStyleSheet.prototype.deleteRule = function (): void {
+      if (core.active()) {
+        schedule(this.ownerNode);
+      }
+      return deleteRule.apply(this, arguments);
+    };
+  }
+
+  if ("CSSMediaRule" in window && mediaDeleteRule === null) {
+    mediaDeleteRule = CSSMediaRule.prototype.deleteRule;
+    CSSMediaRule.prototype.deleteRule = function (): void {
+      if (core.active()) {
+        schedule(this.parentStyleSheet.ownerNode);
+      }
+      return mediaDeleteRule.apply(this, arguments);
+    };
+  }
+
+  // Add a hook to attachShadow API calls
+  // In case we are unable to add a hook and browser throws an exception,
+  // reset attachShadow variable and resume processing like before
+  if (attachShadow === null) {
+    attachShadow = Element.prototype.attachShadow;
+    try {
+      Element.prototype.attachShadow = function (): ShadowRoot {
+        if (core.active()) {
+          return schedule(attachShadow.apply(this, arguments)) as ShadowRoot;
+        } else {
+          return attachShadow.apply(this, arguments);
+        }
+      };
+    } catch {
+      attachShadow = null;
+    }
+  }
 }
 
-export function observe(node: Document | ShadowRoot): void {
+export function observe(node: Node): void {
   // Create a new observer for every time a new DOM tree (e.g. root document or shadowdom root) is discovered on the page
   // In the case of shadow dom, any mutations that happen within the shadow dom are not bubbled up to the host document
   // For this reason, we need to wire up mutations every time we see a new shadow dom.
@@ -59,10 +125,6 @@ export function observe(node: Document | ShadowRoot): void {
       observedNodes.set(node, observer);
       observers.add(observer);
     }
-    if (node['defaultView']) {
-      proxyStyleRules(node['defaultView']);
-    }
-    
   } catch (e) {
     internal.log(Code.MutationObserver, Severity.Info, e ? e.name : null);
   }
@@ -344,75 +406,4 @@ function generate(target: Node, type: MutationRecordType): void {
       type,
     },
   ]);
-}
-
-
-function proxyStyleRules(win: any): void {
-  if (win === null || win === undefined) {
-    return;
-  }
-
-  win.clarityOverrides = win.clarityOverrides || {};
-
-  // Some popular open source libraries, like styled-components, optimize performance
-  // by injecting CSS using insertRule API vs. appending text node. A side effect of
-  // using javascript API is that it doesn't trigger DOM mutation and therefore we
-  // need to override the insertRule API and listen for changes manually.
-  if (win.clarityOverrides.InsertRule === undefined) {
-    win.clarityOverrides.InsertRule = win.CSSStyleSheet.prototype.insertRule;
-    win.CSSStyleSheet.prototype.insertRule = function (): number {
-      if (core.active()) {
-        schedule(this.ownerNode);
-      }
-      return win.clarityOverrides.InsertRule.apply(this, arguments);
-    };
-  }
-
-  if ("CSSMediaRule" in win && win.clarityOverrides.MediaInsertRule === undefined) {
-    win.clarityOverrides.MediaInsertRule = win.CSSMediaRule.prototype.insertRule;
-    win.CSSMediaRule.prototype.insertRule = function (): number {
-      if (core.active()) {
-        schedule(this.parentStyleSheet.ownerNode);
-      }
-      return win.clarityOverrides.MediaInsertRule.apply(this, arguments);
-    };
-  }
-
-  if (win.clarityOverrides.DeleteRule === undefined) {
-    win.clarityOverrides.DeleteRule = win.CSSStyleSheet.prototype.deleteRule;
-    win.CSSStyleSheet.prototype.deleteRule = function (): void {
-      if (core.active()) {
-        schedule(this.ownerNode);
-      }
-      return win.clarityOverrides.DeleteRule.apply(this, arguments);
-    };
-  }
-
-  if ("CSSMediaRule" in win && win.clarityOverrides.MediaDeleteRule === undefined) {
-    win.clarityOverrides.MediaDeleteRule = win.CSSMediaRule.prototype.deleteRule;
-    win.CSSMediaRule.prototype.deleteRule = function (): void {
-      if (core.active()) {
-        schedule(this.parentStyleSheet.ownerNode);
-      }
-      return win.clarityOverrides.MediaDeleteRule.apply(this, arguments);
-    };
-  }
-
-  // Add a hook to attachShadow API calls
-  // In case we are unable to add a hook and browser throws an exception,
-  // reset attachShadow variable and resume processing like before
-  if (win.clarityOverrides.AttachShadow === undefined) {
-    win.clarityOverrides.AttachShadow = win.Element.prototype.attachShadow;
-    try {
-      win.Element.prototype.attachShadow = function (): ShadowRoot {
-        if (core.active()) {
-          return schedule(win.clarityOverrides.AttachShadow.apply(this, arguments)) as ShadowRoot;
-        } else {
-          return win.clarityOverrides.AttachShadow.apply(this, arguments);
-        }
-      };
-    } catch {
-      win.clarityOverrides.AttachShadow = null;
-    }
-  }
 }
