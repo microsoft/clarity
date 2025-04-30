@@ -140,10 +140,6 @@ export interface Config {
     throttleDom?: boolean;
     conversions?: boolean;
     includeSubdomains?: boolean;
-    throttleMutations?: boolean;
-    dropMutations?: boolean;
-    criticalMs?: number;
-    discard?: string[];
 }
 
 export const enum Constant {
