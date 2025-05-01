@@ -1,4 +1,4 @@
-import { Event, Metric } from "@clarity-types/data";
+import { Event } from "@clarity-types/data";
 import { StyleSheetOperation, StyleSheetState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import { shortid } from "@src/data/metadata";
