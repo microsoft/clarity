@@ -24,10 +24,6 @@ let config: Config = {
     throttleDom: true,
     conversions: false,
     includeSubdomains: true,
-    throttleMutations: false,
-    dropMutations: false,
-    criticalMs: 200,
-    discard: [],
 };
 
 export default config;

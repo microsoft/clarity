@@ -248,10 +248,8 @@ function track(m: MutationRecord, timer: Timer, instance: number, timestamp: num
         return m.type;
       }
 
-      if (!config.dropMutations) {
-        // we only store the most recent mutation for a given key if it is being throttled
-        throttledMutations[key] = { mutation: m, timestamp };
-      }
+      // we only store the most recent mutation for a given key if it is being throttled
+      throttledMutations[key] = { mutation: m, timestamp };
 
       return Constant.Throttle;
     }
