@@ -128,32 +128,33 @@ export function consent(status: boolean = true): void {
     return;
   }
   
-  consentv2({ adStorage: true, analyticsStorage: true });
+  consentv2({ ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
   trackConsent.consent();
 }
 
-export function consentv2(status: Status = {adStorage: false, analyticsStorage: false}): void {
+export function consentv2(status: Status = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied}): void {
 
   const normalizedsStatus: Status = {
-    adStorage: status.adStorage ?? false,
-    analyticsStorage: status.analyticsStorage ?? false
+    ad_Storage: status.ad_Storage ?? Constant.Denied,
+    analytics_Storage: status.analytics_Storage ?? Constant.Denied,
   };
 
-  if(!normalizedsStatus.analyticsStorage){
+  if(!normalizedsStatus.analytics_Storage){
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
-    trackConsent.consentv2(normalizedsStatus);
     clarity.stop();
     window.setTimeout(clarity.start, Setting.RestartDelay);
     return;
   }
 
-  if (core.active()) {
-    config.track = true;
-    track(user(), BooleanFlag.True);
-    save();
+  if (!normalizedsStatus.ad_Storage || core.active()) {
     trackConsent.consentv2(normalizedsStatus);
+    if (core.active()) {
+      config.track = true;
+      track(user(), BooleanFlag.True);
+      save();
+    }
   }
 }
 

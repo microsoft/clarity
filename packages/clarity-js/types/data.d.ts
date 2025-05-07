@@ -343,6 +343,8 @@ export const enum Constant {
     SHA256 = "SHA-256",
     Electron = "Electron",
     Caret = "^",
+    Granted = "granted",
+    Denied = "denied",
 }
 
 export const enum XMLReadyState {
@@ -513,6 +515,6 @@ export interface Interaction {
 }
 
 export interface Status{
-    adStorage?: boolean;
-    analyticsStorage?: boolean;
+    ad_Storage?: string;
+    analytics_Storage?: string;
 }
