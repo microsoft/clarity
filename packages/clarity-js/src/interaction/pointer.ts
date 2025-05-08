@@ -129,7 +129,8 @@ function similar(last: PointerState, current: PointerState): boolean {
     let distance = Math.sqrt(dx * dx + dy * dy);
     let gap = current.time - last.time;
     let match = current.data.target === last.data.target;
-    return current.event === last.event && match && distance < Setting.Distance && gap < Setting.Interval;
+    let sameId = current.data.id !== undefined ? current.data.id === last.data.id : true;
+    return current.event === last.event && match && distance < Setting.Distance && gap < Setting.Interval && sameId;
 }
 
 export function stop(): void {
