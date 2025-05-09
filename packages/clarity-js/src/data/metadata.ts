@@ -1,6 +1,6 @@
 import { Time } from "@clarity-types/core";
 import * as clarity from "@src/clarity";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Status } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Status, ConsentSource } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -128,18 +128,19 @@ export function consent(status: boolean = true): void {
     return;
   }
   
-  consentv2({ ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
+  consentv2(ConsentSource.APIsourced, Constant.Granted, Constant.Granted);
   trackConsent.consent();
 }
 
-export function consentv2(status: Status = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied}): void {
+export function consentv2(source: number = ConsentSource.APIsourced, ad_Storage: string = Constant.Denied, analytics_Storage: string = Constant.Denied): void {
 
-  const normalizedsStatus: Status = {
-    ad_Storage: status.ad_Storage ?? Constant.Denied,
-    analytics_Storage: status.analytics_Storage ?? Constant.Denied,
+  const consentStatus: Status = {
+    source: source,
+    ad_Storage: ad_Storage,
+    analytics_Storage: analytics_Storage,
   };
 
-  if(!normalizedsStatus.analytics_Storage){
+  if(!analytics_Storage){
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
@@ -148,8 +149,8 @@ export function consentv2(status: Status = {ad_Storage: Constant.Denied, analyti
     return;
   }
 
-  if (!normalizedsStatus.ad_Storage || core.active()) {
-    trackConsent.consentv2(normalizedsStatus);
+  if (!ad_Storage || core.active()) {
+    trackConsent.consentv2(consentStatus);
     if (core.active()) {
       config.track = true;
       track(user(), BooleanFlag.True);

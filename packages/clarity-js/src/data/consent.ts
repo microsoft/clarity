@@ -1,4 +1,4 @@
-import { Constant, Dimension, Event, Status } from "@clarity-types/data";
+import { ConsentSource, Constant, Dimension, Event, Status } from "@clarity-types/data";
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
 
@@ -20,6 +20,7 @@ const enum ConsentType {
 
 export function config(track: boolean): void {
     const status: Status = {
+        source: ConsentSource.Implicit,
         ad_Storage: track? Constant.Granted : Constant.Denied,
         analytics_Storage: track? Constant.Granted : Constant.Denied,
     };

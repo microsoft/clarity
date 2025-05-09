@@ -101,7 +101,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
             }
             return { time, event, data: extract };
         case Data.Event.Consent:
-            let consent: Data.Status = { ad_Storage: tokens[2] as string, analytics_Storage: tokens[3] as string};
+            let consent: Data.Status = { source: tokens[2] as number, ad_Storage: tokens[3] as string, analytics_Storage: tokens[4] as string};
             return { time, event, data: consent };
     }
     return null;

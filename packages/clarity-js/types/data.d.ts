@@ -355,6 +355,14 @@ export const enum XMLReadyState {
     Done = 4
 }
 
+export const enum ConsentSource{
+    Unknown = 0,
+    Implicit = 1,
+    APIsourced = 2,
+    GCF = 3,
+    TCF = 4,
+}
+
 
 /* Helper Interfaces */
 
@@ -515,6 +523,7 @@ export interface Interaction {
 }
 
 export interface Status{
+    source?: ConsentSource;
     ad_Storage?: string;
     analytics_Storage?: string;
 }
