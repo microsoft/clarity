@@ -12,6 +12,8 @@ export interface MetadataCallbackOptions {
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
+export type ConsentCallback = (status: Status) => void;
+
 /* Enum */
 export const enum Event {
     /* Data */
@@ -71,6 +73,7 @@ export const enum Event {
     Animation = 44,
     StyleSheetAdoption = 45,
     StyleSheetUpdate = 46,
+    Consent = 47,
 
     // Apps specific events
     WebViewDiscover = 100,
@@ -346,6 +349,8 @@ export const enum Constant {
     SHA256 = "SHA-256",
     Electron = "Electron",
     Caret = "^",
+    Granted = "granted",
+    Denied = "denied",
 }
 
 export const enum XMLReadyState {
@@ -354,6 +359,14 @@ export const enum XMLReadyState {
     Headers_Recieved = 2,
     Loading = 3,
     Done = 4
+}
+
+export const enum ConsentSource{
+    Unknown = 0,
+    Implicit = 1,
+    APIsourced = 2,
+    GCF = 3,
+    TCF = 4,
 }
 
 
@@ -513,4 +526,10 @@ export interface PerformanceEventTiming extends PerformanceEntry {
 export interface Interaction {
     id: number;
     latency: number;
+}
+
+export interface Status{
+    source?: ConsentSource;
+    ad_Storage?: string;
+    analytics_Storage?: string;
 }

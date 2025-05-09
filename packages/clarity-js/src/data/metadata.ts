@@ -1,6 +1,6 @@
 import { Time } from "@clarity-types/core";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Status, ConsentSource, ConsentCallback } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -121,8 +121,30 @@ export function id(): string {
   return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
 }
 
+//TODO: Remove this function once consentv2 is fully released
 export function consent(status: boolean = true): void {
   if (!status) {
+    consentv2();
+    return;
+  }
+  
+  consentv2({ ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
+  trackConsent.consent();
+}
+
+export function consentv2(status: Status = { ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied}, source: number = ConsentSource.APIsourced, cb: ConsentCallback = null): void {
+
+  const consentStatus: Status = {
+    source: source,
+    ad_Storage: status.ad_Storage?? Constant.Denied,
+    analytics_Storage: status.analytics_Storage?? Constant.Denied,
+  };
+
+  if (cb) {
+    cb(consentStatus);
+  }
+
+  if(!consentStatus.analytics_Storage){
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
@@ -131,11 +153,13 @@ export function consent(status: boolean = true): void {
     return;
   }
 
-  if (core.active()) {
-    config.track = true;
-    track(user(), BooleanFlag.True);
-    save();
-    trackConsent.consent();
+  if (!consentStatus.ad_Storage || core.active()) {
+    trackConsent.consentv2(consentStatus);
+    if (core.active()) {
+      config.track = true;
+      track(user(), BooleanFlag.True);
+      save();
+    }
   }
 }
 
