@@ -106,7 +106,7 @@ export function compute(): void {
     for (var documentNode of documentNodes) {
         var docId = documentNode == document ? -1 : getId(documentNode);
         let ts = docId in styleTimeMap ? styleTimeMap[docId] : null;
-        checkDocumentStyles(document, ts);
+        checkDocumentStyles(documentNode, ts);
     }
 }
 
