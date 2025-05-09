@@ -14,7 +14,7 @@ import * as upload from "@src/data/upload";
 import * as variable from "@src/data/variable";
 import * as extract from "@src/data/extract";
 export { event } from "@src/data/custom";
-export { consent, metadata } from "@src/data/metadata";
+export { consent, consentv2, metadata } from "@src/data/metadata";
 export { upgrade } from "@src/data/upgrade";
 export { set, identify } from "@src/data/variable";
 export { signal } from "@src/data/signal";

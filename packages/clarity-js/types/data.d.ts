@@ -12,6 +12,8 @@ export interface MetadataCallbackOptions {
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
+export type ConsentCallback = (status: Status) => void;
+
 /* Enum */
 export const enum Event {
     /* Data */
