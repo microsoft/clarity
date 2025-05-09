@@ -199,7 +199,8 @@ export const enum Code {
      */
     ContentSecurityPolicy = 7,
     Config = 8,
-    FunctionExecutionTime = 9
+    FunctionExecutionTime = 9,
+    LeanLimit = 10,
 }
 
 export const enum Severity {
