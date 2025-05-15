@@ -173,8 +173,8 @@ export function consentv2(consentState: consentState = {ad_Storage: Constant.Den
 function getConsent(consentState: consentState, source : ConsentSource): ConsentData {
   let consent: ConsentData = {
     source: source,
-    ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
-    analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+    ad_Storage: consentState.ad_Storage.toLowerCase() === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+    analytics_Storage: consentState.analytics_Storage.toLocaleLowerCase() === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
   };
 
   return consent;
