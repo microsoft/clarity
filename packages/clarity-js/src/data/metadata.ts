@@ -1,6 +1,6 @@
 import { Time } from "@clarity-types/core";
 import * as clarity from "@src/clarity";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Status, ConsentSource, ConsentData } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, consentState, ConsentSource, ConsentData } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -14,7 +14,7 @@ export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let rootDomain = null;
-let consentStatus: Status = null;
+let consentStatus: consentState = null;
 
 export function start(): void {
   rootDomain = null;
@@ -144,11 +144,11 @@ export function consent(status: boolean = true): void {
   trackConsent.consent();
 }
 
-export function consentv2(latestStatus: Status = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied}, source: number = ConsentSource.API): void {
+export function consentv2(consentState: consentState = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied}, source: number = ConsentSource.API): void {
 
   consentStatus = {
-    ad_Storage: latestStatus.ad_Storage?? Constant.Denied,
-    analytics_Storage: latestStatus.analytics_Storage?? Constant.Denied,
+    ad_Storage: consentState.ad_Storage?? Constant.Denied,
+    analytics_Storage: consentState.analytics_Storage?? Constant.Denied,
   }
 
   const consentData = getConsent(consentStatus, source);
@@ -170,11 +170,11 @@ export function consentv2(latestStatus: Status = {ad_Storage: Constant.Denied, a
   }
 }
 
-function getConsent(status: Status, source : ConsentSource): ConsentData {
+function getConsent(consentState: consentState, source : ConsentSource): ConsentData {
   let consent: ConsentData = {
     source: source,
-    ad_Storage: status.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
-    analytics_Storage: status.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+    ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+    analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
   };
 
   return consent;
