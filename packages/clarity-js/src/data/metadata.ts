@@ -1,6 +1,6 @@
 import { Time } from "@clarity-types/core";
 import * as clarity from "@src/clarity";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Status, ConsentSource, ConsentCallback } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Status, ConsentSource, ConsentCallback, ConsentData } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -14,9 +14,11 @@ export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let rootDomain = null;
+let consentStatus: Status = null;
 
 export function start(): void {
   rootDomain = null;
+  consentStatus = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const timezone = Intl?.DateTimeFormat()?.resolvedOptions()?.timeZone ?? '';
   const timezoneOffset = new Date().getTimezoneOffset().toString();
@@ -97,6 +99,7 @@ function userAgentData(): void {
 
 export function stop(): void {
   rootDomain = null;
+  consentStatus = null;
   data = null;
   callbacks.forEach(cb => { cb.called = false; });
 }
@@ -132,19 +135,27 @@ export function consent(status: boolean = true): void {
   trackConsent.consent();
 }
 
-export function consentv2(status: Status = { ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied}, source: number = ConsentSource.APIsourced, cb: ConsentCallback = null): void {
+export function consentv2(latestStatus?: Status, source: number = ConsentSource.API, cb: ConsentCallback = null): void {
 
-  const consentStatus: Status = {
-    source: source,
-    ad_Storage: status.ad_Storage?? Constant.Denied,
-    analytics_Storage: status.analytics_Storage?? Constant.Denied,
-  };
+  if(!latestStatus && !consentStatus) {
+    consentStatus = {
+      ad_Storage: Constant.Denied,
+      analytics_Storage: Constant.Denied,
+    };
+  }
+
+  if (latestStatus) {
+    consentStatus = latestStatus;
+  }
 
   if (cb) {
     cb(consentStatus);
   }
 
-  if(!consentStatus.analytics_Storage){
+  const consentData = getConsent(consentStatus)
+  consentData.source = source;
+
+  if(!consentData.analytics_Storage){
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
@@ -153,14 +164,21 @@ export function consentv2(status: Status = { ad_Storage: Constant.Denied, analyt
     return;
   }
 
-  if (!consentStatus.ad_Storage || core.active()) {
-    trackConsent.consentv2(consentStatus);
-    if (core.active()) {
-      config.track = true;
-      track(user(), BooleanFlag.True);
-      save();
-    }
+  if (core.active()) {
+    trackConsent.consentv2(consentData);
+    config.track = true;
+    track(user(), BooleanFlag.True);
+    save();
   }
+}
+
+function getConsent(status: Status): ConsentData {
+  let consent: ConsentData = {
+    ad_Storage: status.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+    analytics_Storage: status.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+  };
+
+  return consent;
 }
 
 export function clear(): void {

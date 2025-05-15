@@ -1,8 +1,8 @@
-import { ConsentSource, Constant, Dimension, Event, Status } from "@clarity-types/data";
+import { BooleanFlag, ConsentData, ConsentSource, Dimension, Event } from "@clarity-types/data";
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
 
-export let data: Status = {};
+export let data: ConsentData = {};
 
 export function start(): void {
     data = {};
@@ -19,13 +19,13 @@ const enum ConsentType {
 }
 
 export function config(track: boolean): void {
-    const status: Status = {
+    const consent: ConsentData = {
         source: ConsentSource.Implicit,
-        ad_Storage: track? Constant.Granted : Constant.Denied,
-        analytics_Storage: track? Constant.Granted : Constant.Denied,
+        ad_Storage: track? BooleanFlag.True : BooleanFlag.False,
+        analytics_Storage: track? BooleanFlag.True : BooleanFlag.False,
     };
     trackConsent(track ? ConsentType.Implicit : ConsentType.None);
-    consentv2(status);
+    consentv2(consent);
 }
 
 // When we get consent signal as false, we restart the service and track config as false.
@@ -37,8 +37,8 @@ function trackConsent(consent: ConsentType): void {
     dimension.log(Dimension.Consent, consent.toString());
 }
 
-export function consentv2(status: Status): void {
-    data = status;
+export function consentv2(consent: ConsentData): void {
+    data = consent;
     encode(Event.Consent);
 }
 

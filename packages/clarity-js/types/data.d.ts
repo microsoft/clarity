@@ -360,7 +360,7 @@ export const enum XMLReadyState {
 export const enum ConsentSource{
     Unknown = 0,
     Implicit = 1,
-    APIsourced = 2,
+    API = 2,
     GCF = 3,
     TCF = 4,
 }
@@ -524,8 +524,13 @@ export interface Interaction {
     latency: number;
 }
 
-export interface Status{
-    source?: ConsentSource;
+export interface Status {
     ad_Storage?: string;
     analytics_Storage?: string;
+}
+
+export interface ConsentData {
+    source?: ConsentSource;
+    ad_Storage?: BooleanFlag;
+    analytics_Storage?: BooleanFlag;
 }
