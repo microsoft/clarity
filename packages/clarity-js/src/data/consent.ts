@@ -2,14 +2,14 @@ import { BooleanFlag, ConsentData, ConsentSource, Dimension, Event } from "@clar
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
 
-export let data: ConsentData = {};
+export let data: ConsentData = null;
 
 export function start(): void {
-    data = {};
+    data = null;
 }
 
 export function stop(): void {
-    data = {};
+    data = null;
 }
 
 const enum ConsentType {
@@ -43,5 +43,5 @@ export function consentv2(consent: ConsentData): void {
 }
 
 export function reset(): void {
-    data = {};
+    data = null;
 }

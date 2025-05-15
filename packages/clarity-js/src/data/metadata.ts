@@ -1,6 +1,6 @@
 import { Time } from "@clarity-types/core";
 import * as clarity from "@src/clarity";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Status, ConsentSource, ConsentCallback, ConsentData } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, Status, ConsentSource, ConsentData } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -18,7 +18,6 @@ let consentStatus: Status = null;
 
 export function start(): void {
   rootDomain = null;
-  consentStatus = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const timezone = Intl?.DateTimeFormat()?.resolvedOptions()?.timeZone ?? '';
   const timezoneOffset = new Date().getTimezoneOffset().toString();
@@ -35,6 +34,11 @@ export function start(): void {
   // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
   config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;
+
+  consentStatus = {
+    ad_Storage: config.track ? Constant.Granted : Constant.Denied,
+    analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
+  }
 
   // Log page metadata as dimensions
   dimension.log(Dimension.UserAgent, ua);
@@ -104,9 +108,14 @@ export function stop(): void {
   callbacks.forEach(cb => { cb.called = false; });
 }
 
-export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boolean = false): void {
+export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boolean = false, includeConsent: boolean = false): void {
   let upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let called = false;
+
+  if(includeConsent) {
+    data.consent = consentStatus
+  }
+
   // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
   // directly execute the callback in addition to adding to our list as we only process callbacks at the moment
   // we go through the upgrading flow.
@@ -135,25 +144,14 @@ export function consent(status: boolean = true): void {
   trackConsent.consent();
 }
 
-export function consentv2(latestStatus?: Status, source: number = ConsentSource.API, cb: ConsentCallback = null): void {
+export function consentv2(latestStatus: Status = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied}, source: number = ConsentSource.API): void {
 
-  if(!latestStatus && !consentStatus) {
-    consentStatus = {
-      ad_Storage: Constant.Denied,
-      analytics_Storage: Constant.Denied,
-    };
+  consentStatus = {
+    ad_Storage: latestStatus.ad_Storage?? Constant.Denied,
+    analytics_Storage: latestStatus.analytics_Storage?? Constant.Denied,
   }
 
-  if (latestStatus) {
-    consentStatus = latestStatus;
-  }
-
-  if (cb) {
-    cb(consentStatus);
-  }
-
-  const consentData = getConsent(consentStatus)
-  consentData.source = source;
+  const consentData = getConsent(consentStatus, source);
 
   if(!consentData.analytics_Storage){
     config.track = false;
@@ -172,8 +170,9 @@ export function consentv2(latestStatus?: Status, source: number = ConsentSource.
   }
 }
 
-function getConsent(status: Status): ConsentData {
+function getConsent(status: Status, source : ConsentSource): ConsentData {
   let consent: ConsentData = {
+    source: source,
     ad_Storage: status.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
     analytics_Storage: status.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
   };

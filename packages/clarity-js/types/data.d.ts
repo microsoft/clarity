@@ -12,8 +12,6 @@ export interface MetadataCallbackOptions {
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
-export type ConsentCallback = (status: Status) => void;
-
 /* Enum */
 export const enum Event {
     /* Data */
@@ -385,6 +383,7 @@ export interface Metadata {
     userId: string;
     sessionId: string;
     pageNum: number;
+    consent?: Status;
 }
 
 export interface Session {
@@ -530,7 +529,7 @@ export interface Status {
 }
 
 export interface ConsentData {
-    source?: ConsentSource;
-    ad_Storage?: BooleanFlag;
-    analytics_Storage?: BooleanFlag;
+    source: ConsentSource;
+    ad_Storage: BooleanFlag;
+    analytics_Storage: BooleanFlag;
 }
