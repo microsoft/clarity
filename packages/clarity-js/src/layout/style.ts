@@ -1,4 +1,4 @@
-import { Event, Metric } from "@clarity-types/data";
+import { Event } from "@clarity-types/data";
 import { StyleSheetOperation, type StyleSheetState } from "@clarity-types/layout";
 import * as core from "@src/core";
 import config from "@src/core/config";

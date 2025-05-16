@@ -7,7 +7,8 @@ const c = Constant.Clarity;
 export function setup() {
     // Start queuing up calls while Clarity is inactive and we are in a browser enviornment
     if (typeof w !== "undefined") {
-        w[c] = () => {
+        w[c] = function () {
+            // biome-ignore lint/style/noArguments: <explanation>
             (w[c].q = w[c].q || []).push(arguments);
             // if the start function was called, don't queue it and instead process the queue
             arguments[0] === "start" && w[c].q.unshift(w[c].q.pop()) && process();

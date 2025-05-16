@@ -1,5 +1,5 @@
-import { Character } from "../../types/data";
-import { Constant, Selector, type SelectorInput } from "../../types/layout";
+import { Character } from "@clarity-types/data";
+import { Constant, Selector, type SelectorInput } from "@clarity-types/layout";
 
 const excludeClassNames = Constant.ExcludeClassNames.split(Constant.Comma);
 let selectorMap: { [selector: string]: number[] } = {};

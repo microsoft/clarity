@@ -28,7 +28,7 @@ export default [
             }
             warn(message);
         },
-        plugins: [, resolve(), typescript(), terser({ output: { comments: false } }), commonjs({ include: ["node_modules/**"] })],
+        plugins: [resolve(), typescript(), terser({ output: { comments: false } }), commonjs({ include: ["node_modules/**"] })],
     },
     {
         input: "src/global.ts",
