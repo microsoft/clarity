@@ -356,11 +356,10 @@ export const enum XMLReadyState {
 }
 
 export const enum ConsentSource{
-    Unknown = 0,
-    Implicit = 1,
-    API = 2,
-    GCF = 3,
-    TCF = 4,
+    Implicit = 0,
+    API = 1,
+    GCF = 2,
+    TCF = 3,
 }
 
 
