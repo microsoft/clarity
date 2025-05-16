@@ -1,18 +1,18 @@
 import { Event, Metric } from "@clarity-types/data";
-import { StyleSheetOperation, StyleSheetState } from "@clarity-types/layout";
-import { time } from "@src/core/time";
-import { shortid } from "@src/data/metadata";
-import encode from "@src/layout/encode";
-import { getId } from "@src/layout/dom";
+import { StyleSheetOperation, type StyleSheetState } from "@clarity-types/layout";
 import * as core from "@src/core";
 import config from "@src/core/config";
+import { time } from "@src/core/time";
+import { shortid } from "@src/data/metadata";
+import { getId } from "@src/layout/dom";
+import encode from "@src/layout/encode";
 import { getCssRules } from "./node";
 
 export let sheetUpdateState: StyleSheetState[] = [];
 export let sheetAdoptionState: StyleSheetState[] = [];
-const styleSheetId = 'claritySheetId';
+const styleSheetId = "claritySheetId";
 let styleSheetMap = {};
-let styleTimeMap: {[key: string]: number} = {};
+let styleTimeMap: { [key: string]: number } = {};
 let documentNodes = [];
 let createdSheetIds = [];
 
@@ -20,13 +20,13 @@ function proxyStyleRules(win: any) {
     if ((config.lean && config.lite) || win === null || win === undefined) {
         return;
     }
-    
+
     win.clarityOverrides = win.clarityOverrides || {};
 
-    if (win['CSSStyleSheet'] && win.CSSStyleSheet.prototype) {
-        if (win.clarityOverrides.replace === undefined) { 
-            win.clarityOverrides.replace = win.CSSStyleSheet.prototype.replace; 
-            win.CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
+    if (win["CSSStyleSheet"] && win.CSSStyleSheet.prototype) {
+        if (win.clarityOverrides.replace === undefined) {
+            win.clarityOverrides.replace = win.CSSStyleSheet.prototype.replace;
+            win.CSSStyleSheet.prototype.replace = function (): Promise<CSSStyleSheet> {
                 if (core.active()) {
                     // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
                     // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
@@ -39,21 +39,21 @@ function proxyStyleRules(win: any) {
             };
         }
 
-        if (win.clarityOverrides.replaceSync === undefined) { 
-            win.clarityOverrides.replaceSync = win.CSSStyleSheet.prototype.replaceSync; 
-            win.CSSStyleSheet.prototype.replaceSync = function(): void {
+        if (win.clarityOverrides.replaceSync === undefined) {
+            win.clarityOverrides.replaceSync = win.CSSStyleSheet.prototype.replaceSync;
+            win.CSSStyleSheet.prototype.replaceSync = function (): void {
                 if (core.active()) {
                     // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
                     // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
                     // to when it is used in the document rather than potentially being misaligned during the traverse process.
                     if (createdSheetIds.indexOf(this[styleSheetId]) > -1) {
                         trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
-                    }                
+                    }
                 }
                 return win.clarityOverrides.replaceSync.apply(this, arguments);
             };
         }
-    }   
+    }
 }
 
 export function start(): void {
@@ -61,7 +61,9 @@ export function start(): void {
 }
 
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
-    if (config.lean && config.lite) { return; }
+    if (config.lean && config.lite) {
+        return;
+    }
 
     if (documentNodes.indexOf(documentNode) === -1) {
         documentNodes.push(documentNode);
@@ -74,7 +76,7 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
         // if we don't have adoptedStyledSheets on the Node passed to us, we can short circuit.
         return;
     }
-    let currentStyleSheets: string[] = [];
+    const currentStyleSheets: string[] = [];
     for (var styleSheet of documentNode.adoptedStyleSheets) {
         // If we haven't seen this style sheet on this page yet, we create a reference to it for the visualizer.
         // For SPA or times in which Clarity restarts on a given page, our visualizer would lose context
@@ -90,13 +92,18 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
         currentStyleSheets.push(styleSheet[styleSheetId]);
     }
 
-    let documentId = getId(documentNode, true);
+    const documentId = getId(documentNode, true);
     if (!styleSheetMap[documentId]) {
         styleSheetMap[documentId] = [];
     }
     if (!arraysEqual(currentStyleSheets, styleSheetMap[documentId])) {
         // Using -1 to signify the root document node as we don't track that as part of our nodeMap
-        trackStyleAdoption(timestamp, documentNode == document ? -1 : getId(documentNode), StyleSheetOperation.SetAdoptedStyles, currentStyleSheets);
+        trackStyleAdoption(
+            timestamp,
+            documentNode == document ? -1 : getId(documentNode),
+            StyleSheetOperation.SetAdoptedStyles,
+            currentStyleSheets,
+        );
         styleSheetMap[documentId] = currentStyleSheets;
         styleTimeMap[documentId] = timestamp;
     }
@@ -105,7 +112,7 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
 export function compute(): void {
     for (var documentNode of documentNodes) {
         var docId = documentNode == document ? -1 : getId(documentNode);
-        let ts = docId in styleTimeMap ? styleTimeMap[docId] : null;
+        const ts = docId in styleTimeMap ? styleTimeMap[docId] : null;
         checkDocumentStyles(documentNode, ts);
     }
 }
@@ -130,8 +137,8 @@ function trackStyleChange(time: number, id: string, operation: StyleSheetOperati
         data: {
             id,
             operation,
-            cssRules
-        }
+            cssRules,
+        },
     });
 
     encode(Event.StyleSheetUpdate);
@@ -144,8 +151,8 @@ function trackStyleAdoption(time: number, id: number, operation: StyleSheetOpera
         data: {
             id,
             operation,
-            newIds
-        }
+            newIds,
+        },
     });
 
     encode(Event.StyleSheetAdoption);

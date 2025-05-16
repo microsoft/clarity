@@ -1,4 +1,4 @@
-import * as Data from "./data";
+import type * as Data from "./data";
 
 type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
@@ -8,51 +8,51 @@ type Checksum = [number /* FraudId */, string /* Query Selector */];
 
 /* Enum */
 
-export const enum Priority {
+export enum Priority {
     Normal = 0,
-    High = 1
+    High = 1,
 }
 
-export const enum Time {
+export enum Time {
     Second = 1000,
     Minute = 60 * 1000,
     Hour = 60 * 60 * 1000,
-    Day = 24 * 60 * 60 * 1000
+    Day = 24 * 60 * 60 * 1000,
 }
 
-export const enum Task {
+export enum Task {
     Wait = 0,
     Run = 1,
-    Stop = 2
+    Stop = 2,
 }
 
-export const enum ExtractSource {
+export enum ExtractSource {
     Javascript = 0,
     Cookie = 1,
     Text = 2,
     Fragment = 3,
-    Hash = 4
+    Hash = 4,
 }
 
-export const enum Type {
+export enum Type {
     Array = 1,
     Object = 2,
-    Simple = 3
+    Simple = 3,
 }
 
 export type Syntax = {
-    name: string,
-    type: Type,
-    condition: string
-}
+    name: string;
+    type: Type;
+    condition: string;
+};
 
-export const enum Privacy {
+export enum Privacy {
     None = 0,
     Sensitive = 1,
     Text = 2,
     TextImage = 3,
     Exclude = 4,
-    Snapshot = 5
+    Snapshot = 5,
 }
 
 /* Helper Interfaces */
@@ -83,7 +83,7 @@ export interface RequestIdleCallbackOptions {
 
 export interface RequestIdleCallbackDeadline {
     didTimeout: boolean;
-    timeRemaining: (() => number);
+    timeRemaining: () => number;
 }
 
 export interface AsyncTask {
@@ -142,9 +142,9 @@ export interface Config {
     includeSubdomains?: boolean;
 }
 
-export const enum Constant {
+export enum Constant {
     Zone = "Zone",
     Symbol = "__symbol__",
     AddEventListener = "addEventListener",
-    RemoveEventListener = "removeEventListener"
+    RemoveEventListener = "removeEventListener",
 }

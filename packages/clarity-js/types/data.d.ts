@@ -1,19 +1,19 @@
 import { Time } from "@clarity-types/core";
-export type Target = (number | Node);
-export type Token = (string | number | number[] | string[] | (string | number)[]);
-export type DecodedToken = (any | any[]);
+export type Target = number | Node;
+export type Token = string | number | number[] | string[] | (string | number)[];
+export type DecodedToken = any | any[];
 
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
 export interface MetadataCallbackOptions {
-    callback: MetadataCallback,
-    wait: boolean,
-    recall: boolean,
-    called: boolean
+    callback: MetadataCallback;
+    wait: boolean;
+    recall: boolean;
+    called: boolean;
 }
-export type SignalCallback = (data: ClaritySignal) => void
+export type SignalCallback = (data: ClaritySignal) => void;
 
 /* Enum */
-export const enum Event {
+export enum Event {
     /* Data */
     Metric = 0,
     Dimension = 1,
@@ -80,10 +80,10 @@ export const enum Event {
     Keystrokes = 104,
     BackGesture = 105,
     WebViewStatus = 106,
-    AppInstallReferrer = 107
+    AppInstallReferrer = 107,
 }
 
-export const enum Metric {
+export enum Metric {
     ClientTimestamp = 0,
     Playback = 1,
     TotalBytes = 2,
@@ -131,10 +131,10 @@ export const enum Metric {
      * @deprecated Move it to dimension as it'll report only last value
      */
     InteractionNextPaint = 37,
-    HistoryClear = 38
+    HistoryClear = 38,
 }
 
-export const enum Dimension {
+export enum Dimension {
     UserAgent = 0,
     Url = 1,
     Referrer = 2,
@@ -172,10 +172,10 @@ export const enum Dimension {
     Timezone = 34,
     TimezoneOffset = 35,
     Consent = 36,
-    InteractionNextPaint = 37
+    InteractionNextPaint = 37,
 }
 
-export const enum Check {
+export enum Check {
     None = 0,
     Payload = 1,
     Shutdown = 2,
@@ -183,10 +183,10 @@ export const enum Check {
     Bytes = 4,
     Collection = 5,
     Server = 6,
-    Page = 7
+    Page = 7,
 }
 
-export const enum Code {
+export enum Code {
     RunTask = 0,
     CssRules = 1,
     MutationObserver = 2,
@@ -203,30 +203,30 @@ export const enum Code {
     LeanLimit = 10,
 }
 
-export const enum Severity {
+export enum Severity {
     Info = 0,
     Warning = 1,
     Error = 2,
-    Fatal = 3
+    Fatal = 3,
 }
 
-export const enum Upload {
+export enum Upload {
     Async = 0,
-    Beacon = 1
+    Beacon = 1,
 }
 
-export const enum BooleanFlag {
+export enum BooleanFlag {
     False = 0,
-    True = 1
+    True = 1,
 }
 
-export const enum IframeStatus {
+export enum IframeStatus {
     Unknown = 0,
     TopFrame = 1,
-    Iframe = 2
+    Iframe = 2,
 }
 
-export const enum Setting {
+export enum Setting {
     Expire = 365, // 1 Year
     SessionExpire = 1, // 1 Day
     CookieVersion = 2, // Increment this version every time there's a cookie schema change
@@ -263,21 +263,21 @@ export const enum Setting {
     LongTask = 30, // Long Task threshold in ms
 }
 
-export const enum Character {
+export enum Character {
     Zero = 48,
     Nine = 57,
     At = 64,
     Blank = 32,
     Tab = 9,
     NewLine = 10,
-    Return = 13
+    Return = 13,
 }
 
-export const enum ApplicationPlatform {
-    WebApp = 0
+export enum ApplicationPlatform {
+    WebApp = 0,
 }
 
-export const enum Constant {
+export enum Constant {
     Auto = "Auto",
     Config = "Config",
     Clarity = "clarity",
@@ -348,27 +348,26 @@ export const enum Constant {
     Caret = "^",
 }
 
-export const enum XMLReadyState {
+export enum XMLReadyState {
     Unsent = 0,
     Opened = 1,
     Headers_Recieved = 2,
     Loading = 3,
-    Done = 4
+    Done = 4,
 }
-
 
 /* Helper Interfaces */
 
 export interface Payload {
-    e: Token[]; /* Envelope */
-    a: Token[][]; /* Events that are used for data analysis */
-    p: Token[][]; /* Events that are primarily used for session playback */
+    e: Token[] /* Envelope */;
+    a: Token[][] /* Events that are used for data analysis */;
+    p: Token[][] /* Events that are primarily used for session playback */;
 }
 
 export interface EncodedPayload {
-    e: string; /* Envelope */
-    a: string; /* Analytics Payload */
-    p: string; /* Playback Payload */
+    e: string /* Envelope */;
+    a: string /* Analytics Payload */;
+    p: string /* Playback Payload */;
 }
 
 export interface Metadata {
@@ -501,8 +500,8 @@ export interface UploadData {
 }
 
 export interface ClaritySignal {
-    type: string
-    value?: number
+    type: string;
+    value?: number;
 }
 
 export interface PerformanceEventTiming extends PerformanceEntry {

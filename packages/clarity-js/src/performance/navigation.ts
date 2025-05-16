@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { NavigationData } from "@clarity-types/performance";
+import type { NavigationData } from "@clarity-types/performance";
 import encode from "./encode";
 
 export let data: NavigationData = null;
@@ -25,7 +25,7 @@ export function compute(entry: PerformanceNavigationTiming): void {
         type: entry.type,
         protocol: entry.nextHopProtocol,
         encodedSize: entry.encodedBodySize ? entry.encodedBodySize : 0,
-        decodedSize: entry.decodedBodySize ? entry.decodedBodySize : 0
+        decodedSize: entry.decodedBodySize ? entry.decodedBodySize : 0,
     };
     encode(Event.Navigation);
 }

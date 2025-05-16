@@ -1,5 +1,5 @@
 import { BooleanFlag, Event, IframeStatus, Metric, Setting } from "@clarity-types/data";
-import { FraudData } from "@clarity-types/diagnostic";
+import type { FraudData } from "@clarity-types/diagnostic";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
 import * as metric from "@src/data/metric";
@@ -17,7 +17,6 @@ export function start(): void {
     } catch (ex) {
         metric.max(Metric.Iframed, IframeStatus.Unknown);
     }
-    
 }
 
 export function check(id: number, target: number, input: string): void {

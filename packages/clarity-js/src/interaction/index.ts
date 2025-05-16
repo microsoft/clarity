@@ -40,7 +40,7 @@ export function stop(): void {
     selection.stop();
     change.stop();
     submit.stop();
-    unload.stop()
+    unload.stop();
 }
 
 export function observe(root: Node): void {

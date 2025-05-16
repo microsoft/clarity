@@ -1,4 +1,4 @@
-import { Code, Severity, Target } from "./data";
+import { type Code, type Severity, Target } from "./data";
 
 /* Event Data */
 export interface ScriptErrorData {

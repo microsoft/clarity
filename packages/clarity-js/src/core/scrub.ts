@@ -10,7 +10,7 @@ let digitRegex = null;
 let letterRegex = null;
 let currencyRegex = null;
 
-export function text(value: string, hint: string, privacy: Privacy, mangle: boolean = false, type?: string): string {
+export function text(value: string, hint: string, privacy: Privacy, mangle = false, type?: string): string {
     if (value) {
         if (hint == "input" && (type === "checkbox" || type === "radio")) {
             return value;
@@ -88,17 +88,23 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
     return value;
 }
 
-export function url(input: string, electron: boolean = false, truncate: boolean = false): string {
+export function url(input: string, electron = false, truncate = false): string {
     let result = input;
     // Replace the URL for Electron apps so we don't send back file:/// URL
     if (electron) {
         result = `${Data.Constant.HTTPS}${Data.Constant.Electron}`;
     } else {
-        let drop = config.drop;
+        const drop = config.drop;
         if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
-            let [path, query] = input.split("?");
-            let swap = Data.Constant.Dropped;
-            result = path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
+            const [path, query] = input.split("?");
+            const swap = Data.Constant.Dropped;
+            result =
+                path +
+                "?" +
+                query
+                    .split("&")
+                    .map((p) => (drop.some((x) => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p))
+                    .join("&");
         }
     }
 
@@ -109,12 +115,12 @@ export function url(input: string, electron: boolean = false, truncate: boolean 
 }
 
 function mangleText(value: string): string {
-    let trimmed = value.trim();
+    const trimmed = value.trim();
     if (trimmed.length > 0) {
-        let first = trimmed[0];
-        let index = value.indexOf(first);
-        let prefix = value.substr(0, index);
-        let suffix = value.substr(index + trimmed.length);
+        const first = trimmed[0];
+        const index = value.indexOf(first);
+        const prefix = value.substr(0, index);
+        const suffix = value.substr(index + trimmed.length);
         return `${prefix}${trimmed.length.toString(36)}${suffix}`;
     }
     return value;
@@ -130,7 +136,7 @@ export function scrub(value: string, letter: string, digit: string): string {
 }
 
 function mangleToken(value: string): string {
-    let length = ((Math.floor(value.length / Data.Setting.WordLength) + 1) * Data.Setting.WordLength);
+    const length = (Math.floor(value.length / Data.Setting.WordLength) + 1) * Data.Setting.WordLength;
     let output: string = Layout.Constant.Empty;
     for (let i = 0; i < length; i++) {
         output += i > 0 && i % Data.Setting.WordLength === 0 ? Data.Constant.Space : Data.Constant.Mask;
@@ -143,10 +149,12 @@ function regex(): void {
     // Reference: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions/Unicode_Property_Escapes
     if (unicodeRegex && digitRegex === null) {
         try {
-            digitRegex = new RegExp("\\p{N}", "gu");
-            letterRegex = new RegExp("\\p{L}", "gu");
-            currencyRegex = new RegExp("\\p{Sc}", "gu");
-        } catch { unicodeRegex = false; }
+            digitRegex = /\p{N}/gu;
+            letterRegex = /\p{L}/gu;
+            currencyRegex = /\p{Sc}/gu;
+        } catch {
+            unicodeRegex = false;
+        }
     }
 }
 
@@ -161,16 +169,19 @@ function redact(value: string): string {
     regex(); // Initialize regular expressions
 
     for (let i = 0; i < value.length; i++) {
-        let c = value.charCodeAt(i);
+        const c = value.charCodeAt(i);
         hasDigit = hasDigit || (c >= Data.Character.Zero && c <= Data.Character.Nine); // Check for digits in the current word
         hasEmail = hasEmail || c === Data.Character.At; // Check for @ sign anywhere within the current word
-        hasWhitespace = c === Data.Character.Tab || c === Data.Character.NewLine || c === Data.Character.Return || c === Data.Character.Blank;
+        hasWhitespace =
+            c === Data.Character.Tab || c === Data.Character.NewLine || c === Data.Character.Return || c === Data.Character.Blank;
 
         // Process each word as an individual token to redact any sensitive information
         if (i === 0 || i === value.length - 1 || hasWhitespace) {
             // Performance optimization: Lazy load string -> array conversion only when required
             if (hasDigit || hasEmail) {
-                if (array === null) { array = value.split(Data.Constant.Empty); }
+                if (array === null) {
+                    array = value.split(Data.Constant.Empty);
+                }
                 // Work on a token at a time so we don't have to apply regex to a larger string
                 let token = value.substring(spaceIndex + 1, hasWhitespace ? i : i + 1);
                 // Check if unicode regex is supported, otherwise fallback to calling mask function on this token

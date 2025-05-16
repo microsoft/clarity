@@ -1,34 +1,34 @@
-import { Privacy } from "@clarity-types/core";
+import type { Privacy } from "@clarity-types/core";
 
 /* Enum */
 
-export const enum AnimationOperation {
+export enum AnimationOperation {
     Create = 0,
     Play = 1,
     Pause = 2,
     Cancel = 3,
     Finish = 4,
-    CommitStyles = 5
+    CommitStyles = 5,
 }
 
-export const enum Source {
-    Discover,
-    ChildListAdd,
-    ChildListRemove,
-    Attributes,
-    CharacterData
+export enum Source {
+    Discover = 0,
+    ChildListAdd = 1,
+    ChildListRemove = 2,
+    Attributes = 3,
+    CharacterData = 4,
 }
 
-export const enum Selector {
+export enum Selector {
     Alpha = 0,
     Beta = 1,
-    Default = 1
+    Default = 1,
 }
 
-export const enum InteractionState {
+export enum InteractionState {
     None = 16,
     Clicked = 20,
-    Input = 30
+    Input = 30,
 }
 
 export interface AnimationState {
@@ -46,20 +46,20 @@ export interface AnimationData {
     targetId?: number;
 }
 
-export const enum RegionVisibility {
+export enum RegionVisibility {
     Rendered = 0,
     Visible = 10,
-    ScrolledToEnd = 13
+    ScrolledToEnd = 13,
 }
 
-export const enum Mask {
+export enum Mask {
     Text = "address,password,contact",
     Disable = "radio,checkbox,range,button,reset,submit",
     Exclude = "password,secret,pass,social,ssn,code,hidden",
-    Tags = "INPUT,SELECT,TEXTAREA"
+    Tags = "INPUT,SELECT,TEXTAREA",
 }
 
-export const enum Constant {
+export enum Constant {
     Empty = "",
     SvgPrefix = "svg:",
     DataPrefix = "data:",
@@ -124,10 +124,10 @@ export const enum Constant {
     ogTitle = "og:title",
     SvgStyle = "svg:style",
     ExcludeClassNames = "load,active,fixed,visible,focus,show,collaps,animat",
-    StyleSheet = "stylesheet"
+    StyleSheet = "stylesheet",
 }
 
-export const enum JsonLD { 
+export enum JsonLD {
     Type = "@type",
     Recipe = "recipe",
     Product = "product",
@@ -150,10 +150,10 @@ export const enum JsonLD {
     Article = "article",
     Posting = "posting",
     Headline = "headline",
-    Creator = "creator"
+    Creator = "creator",
 }
 
-export const enum Setting {
+export enum Setting {
     LookAhead = 33, // 33ms
     MutationSuspendThreshold = 10, // Stop listening for mutations after hitting a threshold count
     MutationActivePeriod = 3000, // Unit: milliseconds. Let mutations continue as normal during active periods of user interactions
@@ -161,11 +161,11 @@ export const enum Setting {
     MaxMutationHistoryTime = 30000, // Unit: milliseconds. Maximum time to keep mutation history in memory
 }
 
-export const enum StyleSheetOperation {
+export enum StyleSheetOperation {
     Create = 0,
     Replace = 1,
     ReplaceSync = 2,
-    SetAdoptedStyles = 3
+    SetAdoptedStyles = 3,
 }
 
 /* Helper Interfaces */
@@ -223,7 +223,7 @@ export interface MutationQueue {
 export interface MutationRecordWithTime {
     timestamp: number;
     mutation: MutationRecord;
-  }
+}
 
 export interface MutationHistory {
     [key: string]: [/* Count */ number, /* Instance */ number, /* Remove Nodes Buffer */ NodeList?];
@@ -241,8 +241,8 @@ export interface RegionState {
 
 export interface StyleSheetState {
     time: number;
-    event: number,
-    data: StyleSheetData
+    event: number;
+    data: StyleSheetData;
 }
 
 /* Event Data */
@@ -256,7 +256,7 @@ export interface RegionData {
     id: number;
     visibility: RegionVisibility;
     interaction: InteractionState;
-    name: string;    
+    name: string;
 }
 
 export interface TargetMetadata {
@@ -269,5 +269,5 @@ export interface StyleSheetData {
     id: number | string;
     operation: StyleSheetOperation;
     cssRules?: string;
-    newIds?: string[]
+    newIds?: string[];
 }

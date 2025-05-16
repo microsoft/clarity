@@ -1,5 +1,12 @@
-import { AsyncTask, Priority, RequestIdleCallbackDeadline, RequestIdleCallbackOptions, Task, Timer } from "@clarity-types/core";
-import { TaskFunction, TaskResolve, Tasks } from "@clarity-types/core";
+import {
+    type AsyncTask,
+    Priority,
+    type RequestIdleCallbackDeadline,
+    type RequestIdleCallbackOptions,
+    Task,
+    type Timer,
+} from "@clarity-types/core";
+import type { TaskFunction, TaskResolve, Tasks } from "@clarity-types/core";
 import { Code, Metric, Setting, Severity } from "@clarity-types/data";
 import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
@@ -25,7 +32,9 @@ export function resume(): void {
     if (pauseTask) {
         resumeResolve();
         pauseTask = null;
-        if (activeTask === null) { run(); }
+        if (activeTask === null) {
+            run();
+        }
     }
 }
 
@@ -38,14 +47,14 @@ export function reset(): void {
 
 export async function schedule(task: TaskFunction, priority: Priority = Priority.Normal): Promise<void> {
     // If this task is already scheduled, skip it
-    for (let q of queuedTasks) {
+    for (const q of queuedTasks) {
         if (q.task === task) {
             return;
         }
     }
 
-    let promise = new Promise<void>((resolve: TaskResolve): void => {
-        let insert = priority === Priority.High ? "unshift" : "push";
+    const promise = new Promise<void>((resolve: TaskResolve): void => {
+        const insert = priority === Priority.High ? "unshift" : "push";
         // Queue this task for asynchronous execution later
         // We also store a unique page identifier (id) along with the task to ensure
         // ensure that we do not accidentally execute this task in context of a different page
@@ -54,38 +63,49 @@ export async function schedule(task: TaskFunction, priority: Priority = Priority
 
     // If there is no active task running, and Clarity is not in pause state,
     // invoke the first task in the queue synchronously. This ensures that we don't yield the thread during unload event
-    if (activeTask === null && pauseTask === null) { run(); }
+    if (activeTask === null && pauseTask === null) {
+        run();
+    }
 
     return promise;
 }
 
 function run(): void {
-    let entry = queuedTasks.shift();
+    const entry = queuedTasks.shift();
     if (entry) {
         activeTask = entry;
-        entry.task().then((): void => {
-            // Bail out if the context in which this task was operating is different from the current page
-            // An example scenario where task could span across pages is Single Page Applications (SPA)
-            // A task that started on page #1, but completes on page #2
-            if (entry.id !== metadata.id()) { return; }
-            entry.resolve();
-            activeTask = null; // Reset active task back to null now that the promise is resolved
-            run();
-        }).catch((error: Error): void => {
-            // If one of the scheduled tasks failed, log, recover and continue processing rest of the tasks
-            if (entry.id !== metadata.id()) { return; }
-            if (error) { internal.log(Code.RunTask, Severity.Warning, error.name, error.message, error.stack); }
-            activeTask = null;
-            run();
-        });
+        entry
+            .task()
+            .then((): void => {
+                // Bail out if the context in which this task was operating is different from the current page
+                // An example scenario where task could span across pages is Single Page Applications (SPA)
+                // A task that started on page #1, but completes on page #2
+                if (entry.id !== metadata.id()) {
+                    return;
+                }
+                entry.resolve();
+                activeTask = null; // Reset active task back to null now that the promise is resolved
+                run();
+            })
+            .catch((error: Error): void => {
+                // If one of the scheduled tasks failed, log, recover and continue processing rest of the tasks
+                if (entry.id !== metadata.id()) {
+                    return;
+                }
+                if (error) {
+                    internal.log(Code.RunTask, Severity.Warning, error.name, error.message, error.stack);
+                }
+                activeTask = null;
+                run();
+            });
     }
 }
 
 export function state(timer: Timer): Task {
-    let id = key(timer);
+    const id = key(timer);
     if (id in tracker) {
-        let elapsed = performance.now() - tracker[id].start;
-        return (elapsed > tracker[id].yield) ? Task.Wait : Task.Run;
+        const elapsed = performance.now() - tracker[id].start;
+        return elapsed > tracker[id].yield ? Task.Wait : Task.Run;
     }
     // If this task is no longer being tracked, send stop message to the caller
     return Task.Stop;
@@ -96,10 +116,10 @@ export function start(timer: Timer): void {
 }
 
 function restart(timer: Timer): void {
-    let id = key(timer);
+    const id = key(timer);
     if (tracker && tracker[id]) {
-        let c = tracker[id].calls;
-        let y = tracker[id].yield;
+        const c = tracker[id].calls;
+        const y = tracker[id].yield;
         start(timer);
         tracker[id].calls = c + 1;
         tracker[id].yield = y;
@@ -107,15 +127,17 @@ function restart(timer: Timer): void {
 }
 
 export function stop(timer: Timer): void {
-    let end = performance.now();
-    let id = key(timer);
-    let duration = end - tracker[id].start;
+    const end = performance.now();
+    const id = key(timer);
+    const duration = end - tracker[id].start;
     metric.sum(timer.cost, duration);
     metric.count(Metric.InvokeCount);
 
     // For the first execution, which is synchronous, time is automatically counted towards TotalDuration.
     // However, for subsequent asynchronous runs, we need to manually update TotalDuration metric.
-    if (tracker[id].calls > 0) { metric.sum(Metric.TotalCost, duration); }
+    if (tracker[id].calls > 0) {
+        metric.sum(Metric.TotalCost, duration);
+    }
 }
 
 export async function suspend(timer: Timer): Promise<Task> {
@@ -123,10 +145,10 @@ export async function suspend(timer: Timer): Promise<Task> {
     // It's possible that Clarity is wrapping up instrumentation on a page and we are still in the middle of an async task.
     // In that case, we do not wish to continue yielding thread.
     // Instead, we will turn async task into a sync task and maximize our chances of getting some data back.
-    let id = key(timer);
+    const id = key(timer);
     if (id in tracker) {
         stop(timer);
-        // some customer polyfills for requestIdleCallback return null 
+        // some customer polyfills for requestIdleCallback return null
         tracker[id].yield = (await wait())?.timeRemaining() || Setting.LongTask;
         restart(timer);
     }
@@ -140,7 +162,9 @@ function key(timer: Timer): string {
 }
 
 async function wait(): Promise<RequestIdleCallbackDeadline> {
-    if (pauseTask) { await pauseTask; }
+    if (pauseTask) {
+        await pauseTask;
+    }
     return new Promise<RequestIdleCallbackDeadline>((resolve: (deadline: RequestIdleCallbackDeadline) => void): void => {
         requestIdleCallback(resolve, { timeout: idleTimeout });
     });
@@ -162,20 +186,24 @@ function requestIdleCallbackPolyfill(callback: (deadline: RequestIdleCallbackDea
     const incoming = channel.port1;
     const outgoing = channel.port2;
     incoming.onmessage = (event: MessageEvent): void => {
-        let currentTime = performance.now();
-        let elapsed = currentTime - startTime;
-        let duration = currentTime - event.data;
+        const currentTime = performance.now();
+        const elapsed = currentTime - startTime;
+        const duration = currentTime - event.data;
         if (duration > Setting.LongTask && elapsed < options.timeout) {
-            requestAnimationFrame((): void => { outgoing.postMessage(currentTime); });
+            requestAnimationFrame((): void => {
+                outgoing.postMessage(currentTime);
+            });
         } else {
-            let didTimeout = elapsed > options.timeout;
+            const didTimeout = elapsed > options.timeout;
             callback({
                 didTimeout,
-                timeRemaining: (): number => didTimeout ? Setting.LongTask : Math.max(0, Setting.LongTask - duration)
+                timeRemaining: (): number => (didTimeout ? Setting.LongTask : Math.max(0, Setting.LongTask - duration)),
             });
         }
     };
-    requestAnimationFrame((): void => { outgoing.postMessage(performance.now()); });
+    requestAnimationFrame((): void => {
+        outgoing.postMessage(performance.now());
+    });
 }
 
-let requestIdleCallback = window["requestIdleCallback"] || requestIdleCallbackPolyfill;
+const requestIdleCallback = window["requestIdleCallback"] || requestIdleCallbackPolyfill;

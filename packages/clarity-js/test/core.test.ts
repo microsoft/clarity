@@ -1,19 +1,19 @@
-import { assert } from 'chai';
-import { Browser, Page } from 'playwright';
-import { changes, clicks, inputs, launch, markup, node, text } from './helper';
+import { assert } from "chai";
 import { decode } from "clarity-decode";
+import type { Browser, Page } from "playwright";
+import { changes, clicks, inputs, launch, markup, node, text } from "./helper";
 
 let browser: Browser;
 let page: Page;
 
-describe('Core Tests', () => {
+describe("Core Tests", () => {
     before(async () => {
         browser = await launch();
     });
 
     beforeEach(async () => {
         page = await browser.newPage();
-        await page.goto('about:blank');
+        await page.goto("about:blank");
     });
 
     afterEach(async () => {
@@ -25,21 +25,21 @@ describe('Core Tests', () => {
         browser = null;
     });
 
-    it('should mask sensitive content by default', async () => {
-        let encoded: string[] = await markup(page, "core.html");
-        let decoded = encoded.map(x => decode(x));
-        let heading = text(decoded, "one");
-        let address = text(decoded, "two");
-        let email = node(decoded, "attributes.id", "eml");
-        let password = node(decoded, "attributes.id", "pwd");
-        let search = node(decoded, "attributes.id", "search");
-        let card = node(decoded, "attributes.id", "cardnum");
-        let option = text(decoded, "option1");
-        let textarea = text(decoded, "textarea");
-        let click = clicks(decoded)[0];
-        let input = inputs(decoded)[0];
-        let group = changes(decoded);
-        
+    it("should mask sensitive content by default", async () => {
+        const encoded: string[] = await markup(page, "core.html");
+        const decoded = encoded.map((x) => decode(x));
+        const heading = text(decoded, "one");
+        const address = text(decoded, "two");
+        const email = node(decoded, "attributes.id", "eml");
+        const password = node(decoded, "attributes.id", "pwd");
+        const search = node(decoded, "attributes.id", "search");
+        const card = node(decoded, "attributes.id", "cardnum");
+        const option = text(decoded, "option1");
+        const textarea = text(decoded, "textarea");
+        const click = clicks(decoded)[0];
+        const input = inputs(decoded)[0];
+        const group = changes(decoded);
+
         // Non-sensitive fields continue to pass through with sensitive bits masked off
         assert.equal(heading, "Thanks for your order #▫▪▪▫▫▫▪▪");
 
@@ -66,18 +66,18 @@ describe('Core Tests', () => {
         assert.equal(group[1].data.checksum, "");
     });
 
-    it('should mask all text in strict mode', async () => {
-        let encoded: string[] = await markup(page, "core.html", { content: false });
-        let decoded = encoded.map(x => decode(x));
-        let heading = text(decoded, "one");
-        let address = text(decoded, "two");
-        let email = node(decoded, "attributes.id", "eml");
-        let password = node(decoded, "attributes.id", "pwd");
-        let search = node(decoded, "attributes.id", "search");
-        let card = node(decoded, "attributes.id", "cardnum");
-        let click = clicks(decoded)[0];
-        let input = inputs(decoded)[0];
-        let option = text(decoded, "option1");
+    it("should mask all text in strict mode", async () => {
+        const encoded: string[] = await markup(page, "core.html", { content: false });
+        const decoded = encoded.map((x) => decode(x));
+        const heading = text(decoded, "one");
+        const address = text(decoded, "two");
+        const email = node(decoded, "attributes.id", "eml");
+        const password = node(decoded, "attributes.id", "pwd");
+        const search = node(decoded, "attributes.id", "search");
+        const card = node(decoded, "attributes.id", "cardnum");
+        const click = clicks(decoded)[0];
+        const input = inputs(decoded)[0];
+        const option = text(decoded, "option1");
 
         // All fields are randomized and masked
         assert.equal(heading, "• ••••• ••••• ••••• ••••• •••••");
@@ -93,18 +93,18 @@ describe('Core Tests', () => {
         assert.equal(input.data.value, "••••• •••• •••• ••••");
     });
 
-    it('should unmask non-sensitive text in relaxed mode', async () => {
-        let encoded: string[] = await markup(page, "core.html", { unmask: ["body"] });
-        let decoded = encoded.map(x => decode(x));
-        let heading = text(decoded, "one");
-        let address = text(decoded, "two");
-        let email = node(decoded, "attributes.id", "eml");
-        let password = node(decoded, "attributes.id", "pwd");
-        let search = node(decoded, "attributes.id", "search");
-        let card = node(decoded, "attributes.id", "cardnum");
-        let click = clicks(decoded)[0];
-        let input = inputs(decoded)[0];
-        let option = text(decoded, "option1");
+    it("should unmask non-sensitive text in relaxed mode", async () => {
+        const encoded: string[] = await markup(page, "core.html", { unmask: ["body"] });
+        const decoded = encoded.map((x) => decode(x));
+        const heading = text(decoded, "one");
+        const address = text(decoded, "two");
+        const email = node(decoded, "attributes.id", "eml");
+        const password = node(decoded, "attributes.id", "pwd");
+        const search = node(decoded, "attributes.id", "search");
+        const card = node(decoded, "attributes.id", "cardnum");
+        const click = clicks(decoded)[0];
+        const input = inputs(decoded)[0];
+        const option = text(decoded, "option1");
 
         // Text flows through unmasked for non-sensitive fields, with exception of input fields
         assert.equal(heading, "Thanks for your order #2AB700GH");
@@ -122,13 +122,13 @@ describe('Core Tests', () => {
         assert.equal(input.data.value, "••••• •••• •••• ••••");
     });
 
-    it('should respect mask config even in relaxed mode', async () => {
-        let encoded: string[] = await markup(page, "core.html", { mask: ["#mask"], unmask: ["body"] });
-        let decoded = encoded.map(x => decode(x));
-        let subtree = text(decoded, "child");
-        let click = clicks(decoded)[0];
-        let input = inputs(decoded)[0];
-        
+    it("should respect mask config even in relaxed mode", async () => {
+        const encoded: string[] = await markup(page, "core.html", { mask: ["#mask"], unmask: ["body"] });
+        const decoded = encoded.map((x) => decode(x));
+        const subtree = text(decoded, "child");
+        const click = clicks(decoded)[0];
+        const input = inputs(decoded)[0];
+
         // Masked sub-trees continue to stay masked
         assert.equal(subtree, "••••• •••••");
 

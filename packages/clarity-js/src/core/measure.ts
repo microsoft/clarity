@@ -6,9 +6,13 @@ import * as internal from "@src/diagnostic/internal";
 // tslint:disable-next-line: ban-types
 export default function (method: Function): Function {
     return function (): void {
-        let start = performance.now();
-        try { method.apply(this, arguments); } catch (ex) { throw report(ex); }
-        let duration = performance.now() - start;
+        const start = performance.now();
+        try {
+            method.apply(this, arguments);
+        } catch (ex) {
+            throw report(ex);
+        }
+        const duration = performance.now() - start;
         metric.sum(Metric.TotalCost, duration);
         if (duration > Setting.LongTask) {
             metric.count(Metric.LongTaskCount);

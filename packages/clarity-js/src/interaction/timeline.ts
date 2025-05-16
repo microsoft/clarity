@@ -1,5 +1,5 @@
 import { BooleanFlag, Event } from "@clarity-types/data";
-import { BrowsingContext, Setting, TimelineState } from "@clarity-types/interaction";
+import { BrowsingContext, Setting, type TimelineState } from "@clarity-types/interaction";
 import * as baseline from "@src/data/baseline";
 import * as envelope from "@src/data/envelope";
 import encode from "@src/interaction/encode";
@@ -16,13 +16,15 @@ export function reset(): void {
     updates = [];
 }
 
-export function track(time: number,
+export function track(
+    time: number,
     event: Event,
     hash: string,
     x: number,
     y: number,
     reaction: number = BooleanFlag.True,
-    context: number = BrowsingContext.Self): void {
+    context: number = BrowsingContext.Self,
+): void {
     state.push({
         time,
         event: Event.Timeline,
@@ -32,8 +34,8 @@ export function track(time: number,
             x,
             y,
             reaction,
-            context
-        }
+            context,
+        },
     });
 
     // Since timeline only keeps the data for configured time, we still want to continue tracking these values
@@ -45,12 +47,14 @@ export function track(time: number,
 export function compute(): void {
     const temp = [];
     updates = [];
-    let max = envelope.data.start + envelope.data.duration;
-    let min = Math.max(max - Setting.TimelineSpan, 0);
+    const max = envelope.data.start + envelope.data.duration;
+    const min = Math.max(max - Setting.TimelineSpan, 0);
 
-    for (let s of state) {
+    for (const s of state) {
         if (s.time >= min) {
-            if (s.time <= max) { updates.push(s); }
+            if (s.time <= max) {
+                updates.push(s);
+            }
             temp.push(s);
         }
     }

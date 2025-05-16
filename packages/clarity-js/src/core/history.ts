@@ -1,10 +1,10 @@
 import { BooleanFlag, Code, Constant, Metric, Setting, Severity } from "@clarity-types/data";
 import { FunctionNames } from "@clarity-types/performance";
 import * as clarity from "@src/clarity";
-import * as core from "@src/core"
+import * as core from "@src/core";
 import { bind } from "@src/core/event";
-import * as internal from "@src/diagnostic/internal";
 import * as metric from "@src/data/metric";
+import * as internal from "@src/diagnostic/internal";
 
 let pushState = null;
 let replaceState = null;
@@ -17,9 +17,9 @@ export function start(): void {
     bind(window, "popstate", compute);
 
     // Add a proxy to history.pushState function
-    if (pushState === null) { 
-        pushState = history.pushState; 
-        history.pushState = function(): void {
+    if (pushState === null) {
+        pushState = history.pushState;
+        history.pushState = function (): void {
             pushState.apply(this, arguments);
             if (core.active() && check()) {
                 compute();
@@ -28,10 +28,9 @@ export function start(): void {
     }
 
     // Add a proxy to history.replaceState function
-    if (replaceState === null) 
-    { 
-        replaceState = history.replaceState; 
-        history.replaceState = function(): void {
+    if (replaceState === null) {
+        replaceState = history.replaceState;
+        history.replaceState = function (): void {
             replaceState.apply(this, arguments);
             if (core.active() && check()) {
                 compute();

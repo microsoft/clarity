@@ -1,17 +1,17 @@
-import { BooleanFlag } from "@clarity-types/data";
+import type { BooleanFlag } from "@clarity-types/data";
 import { Time } from "./core";
-import { Event, Target } from "./data";
+import type { Event, Target } from "./data";
 
 /* Enum */
 
-export const enum BrowsingContext {
+export enum BrowsingContext {
     Self = 0,
     Blank = 1,
     Parent = 2,
-    Top = 3
+    Top = 3,
 }
 
-export const enum Setting {
+export enum Setting {
     LookAhead = 500, // 500ms
     InputLookAhead = 1000, // 1s
     Distance = 20, // 20 pixels
@@ -19,10 +19,10 @@ export const enum Setting {
     TimelineSpan = 2 * Time.Second, // 2 seconds
 }
 
-export const enum Clipboard {
+export enum Clipboard {
     Cut = 0,
     Copy = 1,
-    Paste = 2
+    Paste = 2,
 }
 
 /* Helper Interfaces */

@@ -1,4 +1,4 @@
-import { Code, Constant, Dimension, Metric, Severity, PerformanceEventTiming } from "@clarity-types/data";
+import { Code, Constant, Dimension, Metric, PerformanceEventTiming, Severity } from "@clarity-types/data";
 import { FunctionNames } from "@clarity-types/performance";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
@@ -7,11 +7,19 @@ import { setTimeout } from "@src/core/timeout";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import * as internal from "@src/diagnostic/internal";
-import * as navigation from "@src/performance/navigation";
 import * as interaction from "@src/performance/interaction";
+import * as navigation from "@src/performance/navigation";
 
 let observer: PerformanceObserver;
-const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTask, Constant.FID, Constant.CLS, Constant.LCP, Constant.PerformanceEventTiming];
+const types: string[] = [
+    Constant.Navigation,
+    Constant.Resource,
+    Constant.LongTask,
+    Constant.FID,
+    Constant.CLS,
+    Constant.LCP,
+    Constant.PerformanceEventTiming,
+];
 
 export function start(): void {
     // Capture connection properties, if available
@@ -26,8 +34,12 @@ export function start(): void {
         // This allows us to capture loadEventEnd on navigation timeline.
         if (document.readyState !== "complete") {
             bind(window, "load", setTimeout.bind(this, observe, 0));
-        } else { observe(); }
-    } else { internal.log(Code.PerformanceObserver, Severity.Info); }
+        } else {
+            observe();
+        }
+    } else {
+        internal.log(Code.PerformanceObserver, Severity.Info);
+    }
 }
 
 function observe(): void {
@@ -35,21 +47,27 @@ function observe(): void {
     // Some browsers will throw an error for unsupported entryType, e.g. "layout-shift"
     // In those cases, we log it as a warning and continue with rest of the Clarity processing
     try {
-        if (observer) { observer.disconnect(); }
+        if (observer) {
+            observer.disconnect();
+        }
         observer = new PerformanceObserver(measure(handle) as PerformanceObserverCallback);
         // Reference: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceObserver/observe
         // "buffered" flag indicates whether buffered entries should be queued into the observer's buffer.
         // It must only be used only with the "type" option, and cannot be used with entryTypes.
         // This is why we need to individually "observe" each supported type
-        for (let x of types) {
+        for (const x of types) {
             if (PerformanceObserver.supportedEntryTypes.indexOf(x) >= 0) {
                 // Initialize CLS with a value of zero. It's possible (and recommended) for sites to not have any cumulative layout shift.
                 // In those cases, we want to still initialize the metric in Clarity
-                if (x === Constant.CLS) { metric.sum(Metric.CumulativeLayoutShift, 0); }
-                observer.observe({type: x, buffered: true});
+                if (x === Constant.CLS) {
+                    metric.sum(Metric.CumulativeLayoutShift, 0);
+                }
+                observer.observe({ type: x, buffered: true });
             }
         }
-    } catch { internal.log(Code.PerformanceObserver, Severity.Warning); }
+    } catch {
+        internal.log(Code.PerformanceObserver, Severity.Warning);
+    }
 }
 
 function handle(entries: PerformanceObserverEntryList): void {
@@ -58,51 +76,60 @@ function handle(entries: PerformanceObserverEntryList): void {
 }
 
 function process(entries: PerformanceEntryList): void {
-    let visible = "visibilityState" in document ? document.visibilityState === "visible" : true;
+    const visible = "visibilityState" in document ? document.visibilityState === "visible" : true;
     for (let i = 0; i < entries.length; i++) {
-        let entry = entries[i];
+        const entry = entries[i];
         switch (entry.entryType) {
             case Constant.Navigation:
                 navigation.compute(entry as PerformanceNavigationTiming);
                 break;
             case Constant.Resource:
-                let name = entry.name;
+                const name = entry.name;
                 dimension.log(Dimension.NetworkHosts, host(name));
-                if (name === config.upload || name === config.fallback) { metric.max(Metric.UploadTime, entry.duration); }
+                if (name === config.upload || name === config.fallback) {
+                    metric.max(Metric.UploadTime, entry.duration);
+                }
                 break;
             case Constant.LongTask:
                 metric.count(Metric.LongTaskCount);
                 break;
             case Constant.FID:
-                if (visible) { metric.max(Metric.FirstInputDelay, entry["processingStart"] - entry.startTime); }
+                if (visible) {
+                    metric.max(Metric.FirstInputDelay, entry["processingStart"] - entry.startTime);
+                }
                 break;
             case Constant.PerformanceEventTiming:
-                if (visible && 'PerformanceEventTiming' in window &&  'interactionId' in PerformanceEventTiming.prototype)
-                {
-                    interaction.processInteractionEntry(entry as PerformanceEventTiming); 
+                if (visible && "PerformanceEventTiming" in window && "interactionId" in PerformanceEventTiming.prototype) {
+                    interaction.processInteractionEntry(entry as PerformanceEventTiming);
                     // Logging it as dimension because we're always looking for the last value.
-                    dimension.log(Dimension.InteractionNextPaint, interaction.estimateP98LongestInteraction().toString()); 
+                    dimension.log(Dimension.InteractionNextPaint, interaction.estimateP98LongestInteraction().toString());
                 }
                 break;
             case Constant.CLS:
                 // Scale the value to avoid sending back floating point number
-                if (visible && !entry["hadRecentInput"]) { metric.sum(Metric.CumulativeLayoutShift, entry["value"] * 1000); }
+                if (visible && !entry["hadRecentInput"]) {
+                    metric.sum(Metric.CumulativeLayoutShift, entry["value"] * 1000);
+                }
                 break;
             case Constant.LCP:
-                if (visible) { metric.max(Metric.LargestPaint, entry.startTime); }
+                if (visible) {
+                    metric.max(Metric.LargestPaint, entry.startTime);
+                }
                 break;
         }
     }
 }
 
 export function stop(): void {
-    if (observer) { observer.disconnect(); }
+    if (observer) {
+        observer.disconnect();
+    }
     observer = null;
     interaction.resetInteractions();
 }
 
 function host(url: string): string {
-    let a = document.createElement("a");
+    const a = document.createElement("a");
     a.href = url;
     return a.host;
 }
