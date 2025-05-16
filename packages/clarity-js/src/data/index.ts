@@ -19,7 +19,7 @@ export { upgrade } from "@src/data/upgrade";
 export { set, identify } from "@src/data/variable";
 export { signal } from "@src/data/signal";
 
-const modules: Module[] = [baseline, dimension, variable, limit, summary, metadata, envelope, upload, ping, upgrade, extract, consent];
+const modules: Module[] = [baseline, dimension, variable, limit, summary, metadata, envelope, upload, ping, upgrade, extract];
 
 export function start(): void {
     // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
@@ -44,4 +44,5 @@ export function compute(): void {
     summary.compute();
     limit.compute();
     extract.compute();
+    consent.compute();
 }

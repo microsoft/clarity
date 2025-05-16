@@ -3,14 +3,7 @@ import * as dimension from "@src/data/dimension";
 import encode from "./encode";
 
 export let data: ConsentData = null;
-
-export function start(): void {
-    data = null;
-}
-
-export function stop(): void {
-    data = null;
-}
+let updateConsent: boolean = true;
 
 const enum ConsentType {
     None = 0,
@@ -39,9 +32,12 @@ function trackConsent(consent: ConsentType): void {
 
 export function consentv2(consent: ConsentData): void {
     data = consent;
-    encode(Event.Consent);
+    updateConsent = true;
 }
 
-export function reset(): void {
-    data = null;
+export function compute(): void {
+    if(updateConsent){
+        encode(Event.Consent);
+        updateConsent = false;
+    }
 }

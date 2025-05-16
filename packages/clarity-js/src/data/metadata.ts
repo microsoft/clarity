@@ -147,11 +147,11 @@ export function consent(status: boolean = true): void {
 export function consentv2(consentState: consentState = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied}, source: number = ConsentSource.API): void {
 
   consentStatus = {
-    ad_Storage: consentState.ad_Storage?? Constant.Denied,
-    analytics_Storage: consentState.analytics_Storage?? Constant.Denied,
-  }
+    ad_Storage: normalizeConsent(consentState.ad_Storage),
+    analytics_Storage: normalizeConsent(consentState.analytics_Storage)
+};
 
-  const consentData = getConsent(consentStatus, source);
+  const consentData = getConsentData(consentStatus, source);
 
   if(!consentData.analytics_Storage){
     config.track = false;
@@ -170,14 +170,18 @@ export function consentv2(consentState: consentState = {ad_Storage: Constant.Den
   }
 }
 
-function getConsent(consentState: consentState, source : ConsentSource): ConsentData {
+function getConsentData(consentState: consentState, source : ConsentSource): ConsentData {
   let consent: ConsentData = {
     source: source,
-    ad_Storage: consentState.ad_Storage.toLowerCase() === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
-    analytics_Storage: consentState.analytics_Storage.toLocaleLowerCase() === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+    ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+    analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
   };
 
   return consent;
+}
+
+function normalizeConsent(value: unknown): string {
+  return typeof value === 'string' ? value.toLowerCase() : Constant.Denied;
 }
 
 export function clear(): void {
