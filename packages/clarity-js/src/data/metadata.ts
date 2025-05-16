@@ -1,6 +1,6 @@
 import { Time } from "@clarity-types/core";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, consentState, ConsentSource, ConsentData } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -14,6 +14,7 @@ export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let rootDomain = null;
+let consentStatus: consentState = null;
 
 export function start(): void {
   rootDomain = null;
@@ -33,6 +34,11 @@ export function start(): void {
   // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
   config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;
+
+  consentStatus = {
+    ad_Storage: config.track ? Constant.Granted : Constant.Denied,
+    analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
+  }
 
   // Log page metadata as dimensions
   dimension.log(Dimension.UserAgent, ua);
@@ -97,13 +103,19 @@ function userAgentData(): void {
 
 export function stop(): void {
   rootDomain = null;
+  consentStatus = null;
   data = null;
   callbacks.forEach(cb => { cb.called = false; });
 }
 
-export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boolean = false): void {
+export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boolean = false, includeConsent: boolean = false): void {
   let upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let called = false;
+
+  if(includeConsent) {
+    data.consent = consentStatus
+  }
+
   // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
   // directly execute the callback in addition to adding to our list as we only process callbacks at the moment
   // we go through the upgrading flow.
@@ -121,8 +133,27 @@ export function id(): string {
   return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
 }
 
+//TODO: Remove this function once consentv2 is fully released
 export function consent(status: boolean = true): void {
   if (!status) {
+    consentv2();
+    return;
+  }
+  
+  consentv2({ ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
+  trackConsent.consent();
+}
+
+export function consentv2(consentState: consentState = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied}, source: number = ConsentSource.API): void {
+
+  consentStatus = {
+    ad_Storage: normalizeConsent(consentState.ad_Storage),
+    analytics_Storage: normalizeConsent(consentState.analytics_Storage)
+};
+
+  const consentData = getConsentData(consentStatus, source);
+
+  if(!consentData.analytics_Storage){
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
@@ -132,11 +163,25 @@ export function consent(status: boolean = true): void {
   }
 
   if (core.active()) {
+    trackConsent.consentv2(consentData);
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    trackConsent.consent();
   }
+}
+
+function getConsentData(consentState: consentState, source : ConsentSource): ConsentData {
+  let consent: ConsentData = {
+    source: source,
+    ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+    analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+  };
+
+  return consent;
+}
+
+function normalizeConsent(value: unknown): string {
+  return typeof value === 'string' ? value.toLowerCase() : Constant.Denied;
 }
 
 export function clear(): void {

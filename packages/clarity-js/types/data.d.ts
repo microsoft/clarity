@@ -71,6 +71,7 @@ export const enum Event {
     Animation = 44,
     StyleSheetAdoption = 45,
     StyleSheetUpdate = 46,
+    Consent = 47,
 
     // Apps specific events
     WebViewDiscover = 100,
@@ -346,6 +347,8 @@ export const enum Constant {
     SHA256 = "SHA-256",
     Electron = "Electron",
     Caret = "^",
+    Granted = "granted",
+    Denied = "denied",
 }
 
 export const enum XMLReadyState {
@@ -354,6 +357,13 @@ export const enum XMLReadyState {
     Headers_Recieved = 2,
     Loading = 3,
     Done = 4
+}
+
+export const enum ConsentSource{
+    Implicit = 0,
+    API = 1,
+    GCF = 2,
+    TCF = 3,
 }
 
 
@@ -376,6 +386,7 @@ export interface Metadata {
     userId: string;
     sessionId: string;
     pageNum: number;
+    consent?: consentState;
 }
 
 export interface Session {
@@ -513,4 +524,15 @@ export interface PerformanceEventTiming extends PerformanceEntry {
 export interface Interaction {
     id: number;
     latency: number;
+}
+
+export interface consentState {
+    ad_Storage?: string;
+    analytics_Storage?: string;
+}
+
+export interface ConsentData {
+    source: ConsentSource;
+    ad_Storage: BooleanFlag;
+    analytics_Storage: BooleanFlag;
 }
