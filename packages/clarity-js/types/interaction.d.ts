@@ -15,7 +15,8 @@ export const enum Setting {
     LookAhead = 500, // 500ms
     InputLookAhead = 1000, // 1s
     Distance = 20, // 20 pixels
-    Interval = 25, // 25 milliseconds
+    Interval = 50, // 50 milliseconds
+    Throttle = 25, // 25 milliseconds
     TimelineSpan = 2 * Time.Second, // 2 seconds
 }
 

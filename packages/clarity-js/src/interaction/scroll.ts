@@ -9,6 +9,7 @@ import { iframe } from "@src/layout/dom";
 import { target, metadata } from "@src/layout/target";
 import encode from "./encode";
 import * as dimension from "@src/data/dimension";
+import throttle from "@src/core/throttle";
 
 export let state: ScrollState[] = [];
 let initialTop: Node = null;
@@ -23,7 +24,7 @@ export function start(): void {
 export function observe(root: Node): void {
     let frame = iframe(root);
     let node = frame ? frame.contentWindow : (root === document ? window : root);
-    bind(node, "scroll", recompute, true);
+    bind(node, "scroll", throttledRecompute, true);
 }
 
 function recompute(event: UIEvent = null): void {
@@ -70,6 +71,8 @@ function recompute(event: UIEvent = null): void {
     clearTimeout(timeout);
     timeout = setTimeout(process, Setting.LookAhead, Event.Scroll);
 }
+
+const throttledRecompute = throttle(recompute, Setting.Throttle);
 
 function getPositionNode(x: number, y: number): Node {
     let node: Node;

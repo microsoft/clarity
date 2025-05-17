@@ -22,3 +22,6 @@ debug.log
 
 # environment file
 .env
+
+# macOS metadata file
+.DS_Store
