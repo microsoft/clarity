@@ -12,8 +12,7 @@
                 "useDefaultParameterLast": {
                     "level": "error",
                     "fix": "none"
-                },
-                "useImportType": "off"
+                }
             },
             "a11y": {
                 "noNoninteractiveTabindex": {
