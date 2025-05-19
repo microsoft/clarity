@@ -1,6 +1,5 @@
 /* Helper Interface */
 
-
 // Reference: https://wicg.github.io/netinfo/#networkinformation-interface
 export interface NavigatorConnection extends EventTarget {
     effectiveType: string;
@@ -57,7 +56,11 @@ export const enum FunctionNames {
     RegionCompute = 24,
     PerformanceStart = 25,
     ObserverObserve = 26,
-    ObserverHandle = 27
+    ObserverHandle = 27,
 }
 
-declare global { interface Function { dn?: FunctionNames; } }
+declare global {
+    interface Function {
+        dn?: FunctionNames;
+    }
+}

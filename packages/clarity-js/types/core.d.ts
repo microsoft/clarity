@@ -10,20 +10,20 @@ type Checksum = [number /* FraudId */, string /* Query Selector */];
 
 export const enum Priority {
     Normal = 0,
-    High = 1
+    High = 1,
 }
 
 export const enum Time {
     Second = 1000,
     Minute = 60 * 1000,
     Hour = 60 * 60 * 1000,
-    Day = 24 * 60 * 60 * 1000
+    Day = 24 * 60 * 60 * 1000,
 }
 
 export const enum Task {
     Wait = 0,
     Run = 1,
-    Stop = 2
+    Stop = 2,
 }
 
 export const enum ExtractSource {
@@ -31,20 +31,20 @@ export const enum ExtractSource {
     Cookie = 1,
     Text = 2,
     Fragment = 3,
-    Hash = 4
+    Hash = 4,
 }
 
 export const enum Type {
     Array = 1,
     Object = 2,
-    Simple = 3
+    Simple = 3,
 }
 
 export type Syntax = {
-    name: string,
-    type: Type,
-    condition: string
-}
+    name: string;
+    type: Type;
+    condition: string;
+};
 
 export const enum Privacy {
     None = 0,
@@ -52,7 +52,7 @@ export const enum Privacy {
     Text = 2,
     TextImage = 3,
     Exclude = 4,
-    Snapshot = 5
+    Snapshot = 5,
 }
 
 /* Helper Interfaces */
@@ -83,7 +83,7 @@ export interface RequestIdleCallbackOptions {
 
 export interface RequestIdleCallbackDeadline {
     didTimeout: boolean;
-    timeRemaining: (() => number);
+    timeRemaining: () => number;
 }
 
 export interface AsyncTask {
@@ -146,5 +146,5 @@ export const enum Constant {
     Zone = "Zone",
     Symbol = "__symbol__",
     AddEventListener = "addEventListener",
-    RemoveEventListener = "removeEventListener"
+    RemoveEventListener = "removeEventListener",
 }
