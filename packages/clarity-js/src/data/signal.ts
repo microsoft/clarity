@@ -1,30 +1,30 @@
-import { ClaritySignal, SignalCallback } from '@clarity-types/data';
+import type { ClaritySignal, SignalCallback } from "@clarity-types/data";
 
 export let signalCallback: SignalCallback = null;
 
 export function signal(cb: SignalCallback): void {
-  signalCallback = cb;
+    signalCallback = cb;
 }
 
 function parseSignals(signalsPayload: string): ClaritySignal[] {
-  try{
-    const parsedSignals: ClaritySignal[] = JSON.parse(signalsPayload);
-    return parsedSignals;
-  }catch{
-    return []
-  }
+    try {
+        const parsedSignals: ClaritySignal[] = JSON.parse(signalsPayload);
+        return parsedSignals;
+    } catch {
+        return [];
+    }
 }
 
 export function signalsEvent(signalsPayload: string) {
-  try {
-    if (!signalCallback) {
-      return;
+    try {
+        if (!signalCallback) {
+            return;
+        }
+        const signals = parseSignals(signalsPayload);
+        for (const signal of signals) {
+            signalCallback(signal);
+        }
+    } catch {
+        //do nothing
     }
-    const signals = parseSignals(signalsPayload);
-    for (const signal of signals) {
-      signalCallback(signal);
-    }
-  } catch {
-    //do nothing
-  }
 }
