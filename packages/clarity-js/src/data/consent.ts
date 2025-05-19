@@ -1,7 +1,7 @@
 import { Dimension } from "@clarity-types/data";
 import * as dimension from "@src/data/dimension";
 
-enum ConsentType {
+const enum ConsentType {
     None = 0,
     Implicit = 1,
     General = 2,
