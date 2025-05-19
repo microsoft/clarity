@@ -1,4 +1,4 @@
-import { Privacy } from "@clarity-types/core";
+import type { Privacy } from "@clarity-types/core";
 
 /* Enum */
 
@@ -8,27 +8,27 @@ export const enum AnimationOperation {
     Pause = 2,
     Cancel = 3,
     Finish = 4,
-    CommitStyles = 5
+    CommitStyles = 5,
 }
 
 export const enum Source {
-    Discover,
-    ChildListAdd,
-    ChildListRemove,
-    Attributes,
-    CharacterData
+    Discover = 0,
+    ChildListAdd = 1,
+    ChildListRemove = 2,
+    Attributes = 3,
+    CharacterData = 4,
 }
 
 export const enum Selector {
     Alpha = 0,
     Beta = 1,
-    Default = 1
+    Default = 1,
 }
 
 export const enum InteractionState {
     None = 16,
     Clicked = 20,
-    Input = 30
+    Input = 30,
 }
 
 export interface AnimationState {
@@ -49,14 +49,14 @@ export interface AnimationData {
 export const enum RegionVisibility {
     Rendered = 0,
     Visible = 10,
-    ScrolledToEnd = 13
+    ScrolledToEnd = 13,
 }
 
 export const enum Mask {
     Text = "address,password,contact",
     Disable = "radio,checkbox,range,button,reset,submit",
     Exclude = "password,secret,pass,social,ssn,code,hidden",
-    Tags = "INPUT,SELECT,TEXTAREA"
+    Tags = "INPUT,SELECT,TEXTAREA",
 }
 
 export const enum Constant {
@@ -124,10 +124,10 @@ export const enum Constant {
     ogTitle = "og:title",
     SvgStyle = "svg:style",
     ExcludeClassNames = "load,active,fixed,visible,focus,show,collaps,animat",
-    StyleSheet = "stylesheet"
+    StyleSheet = "stylesheet",
 }
 
-export const enum JsonLD { 
+export const enum JsonLD {
     Type = "@type",
     Recipe = "recipe",
     Product = "product",
@@ -150,7 +150,7 @@ export const enum JsonLD {
     Article = "article",
     Posting = "posting",
     Headline = "headline",
-    Creator = "creator"
+    Creator = "creator",
 }
 
 export const enum Setting {
@@ -165,7 +165,7 @@ export const enum StyleSheetOperation {
     Create = 0,
     Replace = 1,
     ReplaceSync = 2,
-    SetAdoptedStyles = 3
+    SetAdoptedStyles = 3,
 }
 
 /* Helper Interfaces */
@@ -238,7 +238,7 @@ export interface MutationQueue {
 export interface MutationRecordWithTime {
     timestamp: number;
     mutation: MutationRecord;
-  }
+}
 
 export interface MutationHistory {
     [key: string]: [/* Count */ number, /* Instance */ number, /* Remove Nodes Buffer */ NodeList?];
@@ -256,8 +256,8 @@ export interface RegionState {
 
 export interface StyleSheetState {
     time: number;
-    event: number,
-    data: StyleSheetData
+    event: number;
+    data: StyleSheetData;
 }
 
 /* Event Data */
@@ -271,7 +271,7 @@ export interface RegionData {
     id: number;
     visibility: RegionVisibility;
     interaction: InteractionState;
-    name: string;    
+    name: string;
 }
 
 export interface TargetMetadata {
@@ -284,5 +284,5 @@ export interface StyleSheetData {
     id: number | string;
     operation: StyleSheetOperation;
     cssRules?: string;
-    newIds?: string[]
+    newIds?: string[];
 }
