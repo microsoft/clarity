@@ -6,5 +6,5 @@ export function setTimeout(handler: (event?: Event | boolean) => void, timeout?:
 }
 
 export function clearTimeout(handle: number): void {
-    return window.clearTimeout(handle);
+    window.clearTimeout(handle);
 }
