@@ -78,7 +78,7 @@ async function sha256(input: string): Promise<string> {
         if (crypto && input) {
             // Reference: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest#converting_a_digest_to_a_hex_string
             const buffer = await crypto.subtle.digest(Constant.SHA256, new TextEncoder().encode(input));
-            return Array.prototype.map.call(new Uint8Array(buffer), (x) => (`00${x.toString(16)}`).slice(-2)).join("");
+            return Array.prototype.map.call(new Uint8Array(buffer), (x) => `00${x.toString(16)}`.slice(-2)).join("");
         }
         return Constant.Empty;
     } catch {
