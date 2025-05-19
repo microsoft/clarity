@@ -169,6 +169,21 @@ export const enum StyleSheetOperation {
 }
 
 /* Helper Interfaces */
+export interface IWindowWithOverrides {
+    clarityOverrides?: {
+        DeleteRule?: typeof CSSMediaRule.prototype.deleteRule;
+        MediaDeleteRule?: typeof CSSMediaRule.prototype.deleteRule;
+        AttachShadow?: typeof Element.prototype.attachShadow;
+        MediaInsertRule?: typeof CSSMediaRule.prototype.insertRule;
+        InsertRule?: typeof CSSStyleSheet.prototype.insertRule;
+        replace?: typeof CSSStyleSheet.prototype.replace;
+        replaceSync?: typeof CSSStyleSheet.prototype.replaceSync;
+    };
+    CSSStyleSheet?: typeof CSSStyleSheet;
+    CSSMediaRule?: typeof CSSMediaRule;
+    Element?: typeof Element;
+}
+
 export interface Box {
     x: number; // Left
     y: number; // Top

@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { StyleSheetOperation, type StyleSheetState } from "@clarity-types/layout";
+import { type IWindowWithOverrides, StyleSheetOperation, type StyleSheetState } from "@clarity-types/layout";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import { time } from "@src/core/time";
@@ -7,14 +7,6 @@ import { shortid } from "@src/data/metadata";
 import { getId } from "@src/layout/dom";
 import encode from "@src/layout/encode";
 import { getCssRules } from "./node";
-
-interface ExtendedWindow {
-    clarityOverrides?: {
-        replace?: typeof CSSStyleSheet.prototype.replace;
-        replaceSync?: typeof CSSStyleSheet.prototype.replaceSync;
-    };
-    CSSStyleSheet?: typeof CSSStyleSheet;
-}
 
 export let sheetUpdateState: StyleSheetState[] = [];
 export let sheetAdoptionState: StyleSheetState[] = [];
@@ -24,7 +16,7 @@ let styleTimeMap: { [key: string]: number } = {};
 let documentNodes = [];
 let createdSheetIds = [];
 
-function proxyStyleRules(win: ExtendedWindow) {
+function proxyStyleRules(win: IWindowWithOverrides) {
     if ((config.lean && config.lite) || win === null || win === undefined) {
         return;
     }
