@@ -1,7 +1,6 @@
 import { Time } from "@clarity-types/core";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[] | (string | number)[]);
-export type DecodedToken = (any | any[]);
 
 export type MetadataCallback = (data: Metadata, playback: boolean) => void;
 export interface MetadataCallbackOptions {
@@ -230,14 +229,18 @@ export const enum Setting {
     Expire = 365, // 1 Year
     SessionExpire = 1, // 1 Day
     CookieVersion = 2, // Increment this version every time there's a cookie schema change
+    // biome-ignore lint/style/useLiteralEnumMembers: Time.Minute is a const enum, it is compiled to a number
     SessionTimeout = 30 * Time.Minute, // 30 minutes
     CookieInterval = 1, // 1 Day
+    // biome-ignore lint/style/useLiteralEnumMembers: Time.Minute is a const enum, it is compiled to a number
     PingInterval = 1 * Time.Minute, // 1 Minute
+    // biome-ignore lint/style/useLiteralEnumMembers: Time.Minute is a const enum, it is compiled to a number
     PingTimeout = 5 * Time.Minute, // 5 Minutes
     SummaryInterval = 100, // Same events within 100ms will be collapsed into single summary
     ClickText = 25, // Maximum number of characters to send as part of Click event's text field
     PayloadLimit = 128, // Do not allow more than specified payloads per page
     PageLimit = 128, // Do not allow more than 128 pages in a session
+    // biome-ignore lint/style/useLiteralEnumMembers: Time.Hour is a const enum, it is compiled to a number
     ShutdownLimit = 2 * Time.Hour, // Shutdown instrumentation after specified time
     RetryLimit = 1, // Maximum number of attempts to upload a payload before giving up
     PlaybackBytesLimit = 10 * 1024 * 1024, // 10MB
@@ -256,6 +259,7 @@ export const enum Setting {
     MegaByte = 1024 * 1024, // 1MB
     UploadFactor = 3, // Slow down sequence by specified factor
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
+    // biome-ignore lint/style/useLiteralEnumMembers: Time.Second is a const enum, it is compiled to a number
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
     ExtractLimit = 10000, // Do not extract more than 10000 characters
     ChecksumPrecision = 28, // n-bit integer to represent token hash

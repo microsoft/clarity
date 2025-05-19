@@ -1,4 +1,4 @@
-import * as Data from "./data";
+import type * as Data from "./data";
 
 type TaskFunction = () => Promise<void>;
 type TaskResolve = () => void;
