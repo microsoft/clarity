@@ -21,9 +21,9 @@ export function signalsEvent(signalsPayload: string) {
       return;
     }
     const signals = parseSignals(signalsPayload);
-    signals.forEach((signal) => {
+    for (const signal of signals) {
       signalCallback(signal);
-    });
+    }
   } catch {
     //do nothing
   }
