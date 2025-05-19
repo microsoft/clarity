@@ -23,7 +23,9 @@ const modules: Module[] = [baseline, dimension, variable, limit, summary, metada
 export function start(): void {
     // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
     metric.start();
-    modules.forEach(x => measure(x.start)());
+    for (const x of modules) {
+        measure(x.start)();
+    }
 }
 
 export function stop(): void {
@@ -31,7 +33,9 @@ export function stop(): void {
     // The ordering below should respect inter-module dependency.
     // E.g. if upgrade depends on upload, then upgrade needs to end before upload.
     // Similarly, if upload depends on metadata, upload needs to end before metadata.
-    modules.slice().reverse().forEach(x => measure(x.stop)());
+    for (const x of modules.slice().reverse()) {
+        measure(x.stop)();
+    }
     metric.stop();
 }
 
