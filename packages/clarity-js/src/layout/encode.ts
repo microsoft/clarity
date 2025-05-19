@@ -1,33 +1,34 @@
-import { Privacy, Task, Timer } from "@clarity-types/core";
-import { Event, Setting, Token } from "@clarity-types/data";
-import { Constant, NodeInfo, NodeValue } from "@clarity-types/layout";
+import { Privacy, Task, type Timer } from "@clarity-types/core";
+import { Event, Setting, type Token } from "@clarity-types/data";
+import { Constant, type NodeInfo, type NodeValue } from "@clarity-types/layout";
 import config from "@src/core/config";
 import * as scrub from "@src/core/scrub";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
-import tokenize from "@src/data/token";
 import * as baseline from "@src/data/baseline";
+import tokenize from "@src/data/token";
 import { queue } from "@src/data/upload";
 import * as fraud from "@src/diagnostic/fraud";
+import * as animation from "@src/layout/animation";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
 import * as region from "@src/layout/region";
 import * as style from "@src/layout/style";
-import * as animation from "@src/layout/animation";
 
 export default async function (type: Event, timer: Timer = null, ts: number = null): Promise<void> {
-    let eventTime = ts || time()
+    const eventTime = ts || time();
     let tokens: Token[] = [eventTime, type];
     switch (type) {
-        case Event.Document:
-            let d = doc.data;
+        case Event.Document: {
+            const d = doc.data;
             tokens.push(d.width);
             tokens.push(d.height);
             baseline.track(type, d.width, d.height);
             queue(tokens);
             break;
+        }
         case Event.Region:
-            for (let r of region.state) {
+            for (const r of region.state) {
                 tokens = [r.time, Event.Region];
                 tokens.push(r.data.id);
                 tokens.push(r.data.interaction);
@@ -39,14 +40,14 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             break;
         case Event.StyleSheetAdoption:
         case Event.StyleSheetUpdate:
-            for (let entry of style.sheetAdoptionState) {
+            for (const entry of style.sheetAdoptionState) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.newIds);
                 queue(tokens);
             }
-            for (let entry of style.sheetUpdateState) {
+            for (const entry of style.sheetUpdateState) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
@@ -56,7 +57,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             style.reset();
             break;
         case Event.Animation:
-            for (let entry of animation.state) {
+            for (const entry of animation.state) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
@@ -69,40 +70,51 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             animation.reset();
             break;
         case Event.Discover:
-        case Event.Mutation:
+        case Event.Mutation: {
             // Check if we are operating within the context of the current page
-            if (task.state(timer) === Task.Stop) { break; }
-            let values = dom.updates();
+            if (task.state(timer) === Task.Stop) {
+                break;
+            }
+            const values = dom.updates();
             // Only encode and queue DOM updates if we have valid updates to report back
             if (values.length > 0) {
-                for (let value of values) {
+                for (const value of values) {
                     let state = task.state(timer);
-                    if (state === Task.Wait) { state = await task.suspend(timer); }
-                    if (state === Task.Stop) { break; }
-                    let data: NodeInfo = value.data;
-                    let active = value.metadata.active;
-                    let suspend = value.metadata.suspend;
-                    let privacy = value.metadata.privacy;
-                    let mangle = shouldMangle(value);
-                    let keys = active ? ["tag", "attributes", "value"] : ["tag"];
-                    for (let key of keys) {
+                    if (state === Task.Wait) {
+                        state = await task.suspend(timer);
+                    }
+                    if (state === Task.Stop) {
+                        break;
+                    }
+                    const data: NodeInfo = value.data;
+                    const active = value.metadata.active;
+                    const suspend = value.metadata.suspend;
+                    const privacy = value.metadata.privacy;
+                    const mangle = shouldMangle(value);
+                    const keys = active ? ["tag", "attributes", "value"] : ["tag"];
+                    for (const key of keys) {
                         // we check for data[key] === '' because we want to encode empty strings as well, especially for value - which if skipped can cause our decoder to assume the final
                         // attribute was the value for the node
-                        if (data[key] || data[key] === '') {
+                        if (data[key] || data[key] === "") {
                             switch (key) {
-                                case "tag":
-                                    let box = size(value);
-                                    let factor = mangle ? -1 : 1;
+                                case "tag": {
+                                    const box = size(value);
+                                    const factor = mangle ? -1 : 1;
                                     tokens.push(value.id * factor);
-                                    if (value.parent && active) { 
-                                        tokens.push(value.parent); 
-                                        if (value.previous) { tokens.push(value.previous); }
+                                    if (value.parent && active) {
+                                        tokens.push(value.parent);
+                                        if (value.previous) {
+                                            tokens.push(value.previous);
+                                        }
                                     }
                                     tokens.push(suspend ? Constant.SuspendMutationTag : data[key]);
-                                    if (box && box.length === 2) { tokens.push(`${Constant.Hash}${str(box[0])}.${str(box[1])}`); }
+                                    if (box && box.length === 2) {
+                                        tokens.push(`${Constant.Hash}${str(box[0])}.${str(box[1])}`);
+                                    }
                                     break;
+                                }
                                 case "attributes":
-                                    for (let attr in data[key]) {
+                                    for (const attr in data[key]) {
                                         if (data[key][attr] !== undefined) {
                                             tokens.push(attribute(attr, data[key][attr], privacy));
                                         }
@@ -116,21 +128,24 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                         }
                     }
                 }
-                if (type === Event.Mutation) { baseline.activity(eventTime); }
+                if (type === Event.Mutation) {
+                    baseline.activity(eventTime);
+                }
                 queue(tokenize(tokens), !config.lean);
             }
             break;
+        }
     }
 }
 
 function shouldMangle(value: NodeValue): boolean {
-    let privacy = value.metadata.privacy;
+    const privacy = value.metadata.privacy;
     return value.data.tag === Constant.TextTag && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
 }
 
 function size(value: NodeValue): number[] {
     if (value.metadata.size !== null && value.metadata.size.length === 0) {
-        let img = dom.getNode(value.id) as HTMLImageElement;
+        const img = dom.getNode(value.id) as HTMLImageElement;
         if (img) {
             return [Math.floor(img.offsetWidth * Setting.BoxPrecision), Math.floor(img.offsetHeight * Setting.BoxPrecision)];
         }

@@ -1,5 +1,5 @@
 import { BooleanFlag, Event } from "@clarity-types/data";
-import { UnloadData } from "@clarity-types/interaction";
+import type { UnloadData } from "@clarity-types/interaction";
 import { FunctionNames } from "@clarity-types/performance";
 import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";

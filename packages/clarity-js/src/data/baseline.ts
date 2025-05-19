@@ -1,11 +1,11 @@
-import { Event, BooleanFlag } from "@clarity-types/data";
-import { BaselineData, BaselineState } from "@clarity-types/data";
+import { BooleanFlag, Event } from "@clarity-types/data";
+import type { BaselineData, BaselineState } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import encode from "@src/data/encode";
 
 export let state: BaselineState = null;
 let buffer: BaselineData = null;
-let update: boolean = false;
+let update = false;
 
 export function start(): void {
     update = false;
@@ -16,60 +16,65 @@ export function reset(): void {
     // Baseline state holds the previous values - if it is updated in the current payload,
     // reset the state to current value after sending the previous state
     if (update) {
-        state = { time: time(), event: Event.Baseline, data: {
-            visible: buffer.visible,
-            docWidth: buffer.docWidth,
-            docHeight: buffer.docHeight,
-            screenWidth: buffer.screenWidth,
-            screenHeight: buffer.screenHeight,
-            scrollX: buffer.scrollX,
-            scrollY: buffer.scrollY,
-            pointerX: buffer.pointerX,
-            pointerY: buffer.pointerY,
-            activityTime: buffer.activityTime,
-            scrollTime: buffer.scrollTime,
-            pointerTime: buffer.pointerTime,
-            moveX: buffer.moveX,
-            moveY: buffer.moveY,
-            moveTime: buffer.moveTime,
-            downX: buffer.downX,
-            downY: buffer.downY,
-            downTime: buffer.downTime,
-            upX: buffer.upX,
-            upY: buffer.upY,
-            upTime: buffer.upTime,
-            pointerPrevX: buffer.pointerPrevX,
-            pointerPrevY: buffer.pointerPrevY,
-            pointerPrevTime: buffer.pointerPrevTime,
-          }
+        state = {
+            time: time(),
+            event: Event.Baseline,
+            data: {
+                visible: buffer.visible,
+                docWidth: buffer.docWidth,
+                docHeight: buffer.docHeight,
+                screenWidth: buffer.screenWidth,
+                screenHeight: buffer.screenHeight,
+                scrollX: buffer.scrollX,
+                scrollY: buffer.scrollY,
+                pointerX: buffer.pointerX,
+                pointerY: buffer.pointerY,
+                activityTime: buffer.activityTime,
+                scrollTime: buffer.scrollTime,
+                pointerTime: buffer.pointerTime,
+                moveX: buffer.moveX,
+                moveY: buffer.moveY,
+                moveTime: buffer.moveTime,
+                downX: buffer.downX,
+                downY: buffer.downY,
+                downTime: buffer.downTime,
+                upX: buffer.upX,
+                upY: buffer.upY,
+                upTime: buffer.upTime,
+                pointerPrevX: buffer.pointerPrevX,
+                pointerPrevY: buffer.pointerPrevY,
+                pointerPrevTime: buffer.pointerPrevTime,
+            },
         };
     }
-    buffer = buffer ? buffer : {
-        visible: BooleanFlag.True,
-        docWidth: 0,
-        docHeight: 0,
-        screenWidth: 0,
-        screenHeight: 0,
-        scrollX: 0,
-        scrollY: 0,
-        pointerX: 0,
-        pointerY: 0,
-        activityTime: 0,
-        scrollTime: 0,
-        pointerTime: undefined,
-        moveX: undefined,
-        moveY: undefined,
-        moveTime: undefined,
-        downX: undefined,
-        downY: undefined,
-        downTime: undefined,
-        upX: undefined,
-        upY: undefined,
-        upTime: undefined,
-        pointerPrevX: undefined,
-        pointerPrevY: undefined,
-        pointerPrevTime: undefined,
-    };
+    buffer = buffer
+        ? buffer
+        : {
+              visible: BooleanFlag.True,
+              docWidth: 0,
+              docHeight: 0,
+              screenWidth: 0,
+              screenHeight: 0,
+              scrollX: 0,
+              scrollY: 0,
+              pointerX: 0,
+              pointerY: 0,
+              activityTime: 0,
+              scrollTime: 0,
+              pointerTime: undefined,
+              moveX: undefined,
+              moveY: undefined,
+              moveTime: undefined,
+              downX: undefined,
+              downY: undefined,
+              downTime: undefined,
+              upX: undefined,
+              upY: undefined,
+              upTime: undefined,
+              pointerPrevX: undefined,
+              pointerPrevY: undefined,
+              pointerPrevTime: undefined,
+          };
 }
 
 export function track(event: Event, x: number, y: number, time?: number): void {

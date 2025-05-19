@@ -1,4 +1,4 @@
-import { Event } from "@clarity-types/data";
+import type { Event } from "@clarity-types/data";
 import measure from "./measure";
 
 export function setTimeout(handler: (event?: Event | boolean) => void, timeout?: number, event?: Event): number {
@@ -6,5 +6,5 @@ export function setTimeout(handler: (event?: Event | boolean) => void, timeout?:
 }
 
 export function clearTimeout(handle: number): void {
-    return window.clearTimeout(handle);
+    window.clearTimeout(handle);
 }

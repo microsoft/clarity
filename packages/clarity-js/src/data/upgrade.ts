@@ -1,4 +1,4 @@
-import { Constant, Event, UpgradeData } from "@clarity-types/data";
+import { Constant, Event, type UpgradeData } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import encode from "@src/data/encode";
@@ -9,7 +9,9 @@ import * as style from "@src/layout/style";
 export let data: UpgradeData = null;
 
 export function start(): void {
-    if (!config.lean && config.upgrade) { config.upgrade(Constant.Config); }
+    if (!config.lean && config.upgrade) {
+        config.upgrade(Constant.Config);
+    }
     data = null;
 }
 
@@ -28,7 +30,9 @@ export function upgrade(key: string): void {
         metadata.save();
 
         // Callback upgrade handler, if configured
-        if (config.upgrade) { config.upgrade(key); }
+        if (config.upgrade) {
+            config.upgrade(key);
+        }
 
         encode(Event.Upgrade);
 

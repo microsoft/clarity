@@ -1,7 +1,7 @@
-export let state = [];
-export let sheetAdoptionState = [];
-export let sheetUpdateState = [];
-export let data = null;
+export const state = [];
+export const sheetAdoptionState = [];
+export const sheetUpdateState = [];
+export const data = null;
 
 /* Intentionally blank module with empty code */
 
