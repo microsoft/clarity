@@ -120,7 +120,9 @@ async function upload(final: boolean = false): Promise<void> {
     // For better instrumentation coverage, we send playback bytes from second sequence onwards
     // And, we only send playback metric when we are able to send the playback bytes back to server
     let sendPlaybackBytes = config.lean === false && playbackBytes > 0 && (playbackBytes < Setting.MaxFirstPayloadBytes || envelope.data.sequence > 0);
-    if (sendPlaybackBytes) { metric.max(Metric.Playback, BooleanFlag.True); }
+    if (sendPlaybackBytes) { metric.max(Metric.Playback, BooleanFlag.True); } else {
+        console.log('no playback bytes in this payload');
+    }
 
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
@@ -195,7 +197,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             xhr.ontimeout = () => { report(new Error(`${Constant.Timeout} : ${url}`)) };
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence); }; }
             xhr.withCredentials = true;
-            if (zipped) {
+            if (zipped && window['makeZipped'] === true) {
                 // If we do have valid compressed array, send it with appropriate HTTP headers so server can decode it appropriately
                 xhr.setRequestHeader(Constant.Accept, Constant.ClarityGzip);
                 xhr.send(zipped);

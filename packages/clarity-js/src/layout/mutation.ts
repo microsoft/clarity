@@ -164,7 +164,8 @@ async function process(): Promise<void> {
     let record = mutations.shift();
     let instance = time();
     for (let mutation of record.mutations) {
-      await processMutation(timer, mutation, instance, record.time);
+        console.log('calling processMutation from process');
+      processMutation(timer, mutation, instance, record.time);
     }
     await encode(Event.Mutation, timer, record.time);
   }

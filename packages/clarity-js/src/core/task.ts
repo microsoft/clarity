@@ -166,7 +166,7 @@ function requestIdleCallbackPolyfill(callback: (deadline: RequestIdleCallbackDea
         let elapsed = currentTime - startTime;
         let duration = currentTime - event.data;
         if (duration > Setting.LongTask && elapsed < options.timeout) {
-            requestAnimationFrame((): void => { outgoing.postMessage(currentTime); });
+            requestAnimationFrame((): void => { console.log('posting message'); outgoing.postMessage(currentTime); });
         } else {
             let didTimeout = elapsed > options.timeout;
             callback({
