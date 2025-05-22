@@ -94,7 +94,7 @@ function overrideAnimationHelper(functionToOverride: () => void, name: string) {
 function trackAnimationOperation(animation: Animation, name: string) {
     if (core.active()) {
         let effect = <KeyframeEffect>animation.effect;
-        let target = getId(effect.target);
+        let target = effect?.target ? getId(effect.target) : null;
         if (target !== null && effect.getKeyframes && effect.getTiming) {
             if (!animation[animationId]) {
                 animation[animationId] = shortid();
