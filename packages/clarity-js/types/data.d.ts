@@ -382,7 +382,7 @@ export interface Metadata {
     userId: string;
     sessionId: string;
     pageNum: number;
-    consent?: consentState;
+    consent?: ConsentState;
 }
 
 export interface Session {
@@ -522,7 +522,7 @@ export interface Interaction {
     latency: number;
 }
 
-export interface consentState {
+export interface ConsentState {
     ad_Storage?: string;
     analytics_Storage?: string;
 }

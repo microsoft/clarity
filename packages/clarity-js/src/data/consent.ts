@@ -36,7 +36,7 @@ export function consentv2(consent: ConsentData): void {
 }
 
 export function compute(): void {
-    if(updateConsent){
+    if (updateConsent) {
         encode(Event.Consent);
         updateConsent = false;
     }

@@ -1,6 +1,6 @@
 import { Time } from "@clarity-types/core";
 import * as clarity from "@src/clarity";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, consentState, ConsentSource, ConsentData } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, ConsentState, ConsentSource, ConsentData } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
@@ -14,7 +14,8 @@ export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let rootDomain = null;
-let consentStatus: consentState = null;
+let consentStatus: ConsentState = null;
+let defaultStatus: ConsentState = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied};
 
 export function start(): void {
   rootDomain = null;
@@ -112,7 +113,7 @@ export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boo
   let upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let called = false;
 
-  if(includeConsent) {
+  if (includeConsent) {
     data.consent = consentStatus
   }
 
@@ -144,7 +145,7 @@ export function consent(status: boolean = true): void {
   trackConsent.consent();
 }
 
-export function consentv2(consentState: consentState = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied}, source: number = ConsentSource.API): void {
+export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.API): void {
 
   consentStatus = {
     ad_Storage: normalizeConsent(consentState.ad_Storage),
@@ -153,7 +154,7 @@ export function consentv2(consentState: consentState = {ad_Storage: Constant.Den
 
   const consentData = getConsentData(consentStatus, source);
 
-  if(!consentData.analytics_Storage){
+  if (!consentData.analytics_Storage) {
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
@@ -170,7 +171,7 @@ export function consentv2(consentState: consentState = {ad_Storage: Constant.Den
   }
 }
 
-function getConsentData(consentState: consentState, source : ConsentSource): ConsentData {
+function getConsentData(consentState: ConsentState, source : ConsentSource): ConsentData {
   let consent: ConsentData = {
     source: source,
     ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
