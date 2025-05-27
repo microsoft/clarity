@@ -128,7 +128,7 @@ export default function (event: Event): void {
         }
         case Event.Extract: {
             const extractKeys = extract.keys;
-            for (const e of extractKeys) {
+            for (const e of Array.from(extractKeys)) {
                 tokens.push(e);
                 const token = [];
                 for (const d in extract.data[e]) {
