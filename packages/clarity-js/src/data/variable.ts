@@ -1,4 +1,4 @@
-import { Constant, Event, IdentityData, Setting, VariableData } from "@clarity-types/data";
+import { Constant, Event, type IdentityData, Setting, type VariableData } from "@clarity-types/data";
 import * as core from "@src/core";
 import { scrub } from "@src/core/scrub";
 import encode from "./encode";
@@ -10,23 +10,28 @@ export function start(): void {
 }
 
 export function set(variable: string, value: string | string[]): void {
-    let values = typeof value === Constant.String ? [value as string] : value as string[];
+    const values = typeof value === "string" ? [value as string] : (value as string[]);
     log(variable, values);
 }
 
-export async function identify(userId: string, sessionId: string = null, pageId: string = null, userHint: string = null): Promise<IdentityData> {
-    let output: IdentityData = { userId: await sha256(userId), userHint: userHint || redact(userId) };
+export async function identify(
+    userId: string,
+    sessionId: string = null,
+    pageId: string = null,
+    userHint: string = null,
+): Promise<IdentityData> {
+    const output: IdentityData = { userId: await sha256(userId), userHint: userHint || redact(userId) };
 
     // By default, hash custom userId using SHA256 algorithm on the client to preserve privacy
     log(Constant.UserId, [output.userId]);
-    
+
     // Optional non-identifying name for the user
     // If name is not explicitly provided, we automatically generate a redacted version of the userId
     log(Constant.UserHint, [output.userHint]);
-    log(Constant.UserType, [detect(userId)]);    
+    log(Constant.UserType, [detect(userId)]);
 
     // Log sessionId and pageId if provided
-    if (sessionId) { 
+    if (sessionId) {
         log(Constant.SessionId, [sessionId]);
         output.sessionId = sessionId;
     }
@@ -39,14 +44,12 @@ export async function identify(userId: string, sessionId: string = null, pageId:
 }
 
 function log(variable: string, value: string[]): void {
-    if (core.active() &&
-        variable &&
-        value &&
-        typeof variable === Constant.String &&
-        variable.length < 255) {
-        let validValues = variable in data ? data[variable] : [];
+    if (core.active() && variable && value && typeof variable === "string" && variable.length < 255) {
+        const validValues = variable in data ? data[variable] : [];
         for (let i = 0; i < value.length; i++) {
-            if (typeof value[i] === Constant.String && value[i].length < 255) { validValues.push(value[i]); }
+            if (typeof value[i] === "string" && value[i].length < 255) {
+                validValues.push(value[i]);
+            }
         }
         data[variable] = validValues;
     }
@@ -65,8 +68,9 @@ export function stop(): void {
 }
 
 function redact(input: string): string {
-    return input && input.length >= Setting.WordLength ? 
-        `${input.substring(0,2)}${scrub(input.substring(2), Constant.Asterix, Constant.Asterix)}` : scrub(input, Constant.Asterix, Constant.Asterix);
+    return input && input.length >= Setting.WordLength
+        ? `${input.substring(0, 2)}${scrub(input.substring(2), Constant.Asterix, Constant.Asterix)}`
+        : scrub(input, Constant.Asterix, Constant.Asterix);
 }
 
 async function sha256(input: string): Promise<string> {
@@ -74,9 +78,12 @@ async function sha256(input: string): Promise<string> {
         if (crypto && input) {
             // Reference: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest#converting_a_digest_to_a_hex_string
             const buffer = await crypto.subtle.digest(Constant.SHA256, new TextEncoder().encode(input));
-            return Array.prototype.map.call(new Uint8Array(buffer), (x: any) =>(('00'+x.toString(16)).slice(-2))).join('');
-        } else { return Constant.Empty; }
-    } catch { return Constant.Empty; }
+            return Array.prototype.map.call(new Uint8Array(buffer), (x) => `00${x.toString(16)}`.slice(-2)).join("");
+        }
+        return Constant.Empty;
+    } catch {
+        return Constant.Empty;
+    }
 }
 
 function detect(input: string): string {
