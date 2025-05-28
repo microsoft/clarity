@@ -86,17 +86,17 @@ export function parse(root: ParentNode, init = false): void {
                 for (const e of Array.from(root.querySelectorAll(x))) {
                     privacyMap.set(e, Privacy.TextImage);
                 }
-            } // Masked Elements
+            } 
             for (const x of config.checksum) {
                 for (const e of Array.from(root.querySelectorAll(x[1]))) {
                     fraudMap.set(e, x[0]);
                 }
-            } // Fraud Checksum Check
+            }
             for (const x of unmask) {
                 for (const e of Array.from(root.querySelectorAll(x))) {
                     privacyMap.set(e, Privacy.None);
                 }
-            } // Unmasked Elements
+            }
         }
     } catch (e) {
         internal.log(Code.Selector, Severity.Warning, e ? e.name : null);
