@@ -63,8 +63,8 @@ export function parse(root: ParentNode, init = false): void {
     // Wrap selectors in a try / catch block.
     // It's possible for script to receive invalid selectors, e.g. "'#id'" with extra quotes, and cause the code below to fail
     try {
-        // Parse unmask configuration into separate query selectors and override tokens as part of initialization
         if (init) {
+             // Parse unmask configuration into separate query selectors and override tokens as part of initialization
             for (const x of config.unmask) {
                 if (x.indexOf(Constant.Bang) < 0) {
                     unmask.push(x);
@@ -428,7 +428,7 @@ function removeNodeFromNodesMap(id: number) {
         return;
     }
 
-    if (nodeToBeRemoved && nodeToBeRemoved.nodeType === Node.ELEMENT_NODE && (nodeToBeRemoved as Element).tagName === "IFRAME") {
+    if (nodeToBeRemoved?.nodeType === Node.ELEMENT_NODE && (nodeToBeRemoved as Element).tagName === "IFRAME") {
         const iframe = nodeToBeRemoved as HTMLIFrameElement;
         removeObserver(iframe);
     }
