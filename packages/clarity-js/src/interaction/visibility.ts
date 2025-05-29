@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { VisibilityData } from "@clarity-types/interaction";
+import type { VisibilityData } from "@clarity-types/interaction";
 import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { time } from "@src/core/time";

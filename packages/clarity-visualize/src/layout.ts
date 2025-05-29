@@ -4,8 +4,8 @@ import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
-import iframeUnavailableSvg from "./styles/IframeUnavailable/english.svg";
-import iframeUnavailableSmallSvg from "./styles/IframeUnavailable/iconOnly.svg";
+import iframeUnavailableSvg from "./styles/iframeUnavailable/english.svg";
+import iframeUnavailableSmallSvg from "./styles/iframeUnavailable/iconOnly.svg";
 import imageMaskedSvg from "./styles/imageMasked/english.svg";
 import imageMaskedSmallSvg from "./styles/imageMasked/iconOnly.svg";
 
@@ -195,7 +195,7 @@ export class LayoutHelper {
             let tag = node.tag;
             if (tag && tag.indexOf(Layout.Constant.IFramePrefix) === 0) { tag = node.tag.substr(Layout.Constant.IFramePrefix.length); }
             if (parent === null && node.parent !== null && node.parent > -1 && tag !== "HTML") {
-                // We are referencing a parent for this node that hasn't been created yet. Push it to a list of nodes to 
+                // We are referencing a parent for this node that hasn't been created yet. Push it to a list of nodes to
                 // try once we are finished with other nodes within this event. Though we don't require HTML tags to
                 // have a parent as they are typically the root.
                 retryEvent.data.push(node);
@@ -308,7 +308,7 @@ export class LayoutHelper {
                                     }
 
                                     linkElement.href = proxy(linkElement.href, linkElement.id, Constant.StyleSheet);
-                                } 
+                                }
                                 linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
                                 setTimeout(resolve, LayoutHelper.TIMEOUT);
                             }));
@@ -403,7 +403,7 @@ export class LayoutHelper {
         if (tag && tag.indexOf(Layout.Constant.SvgPrefix) === 0) {
             return doc.createElementNS(Layout.Constant.SvgNamespace as string, tag.substr(Layout.Constant.SvgPrefix.length)) as HTMLElement;
         }
-        try { 
+        try {
             return doc.createElement(tag);
         } catch (ex) {
             // We log the warning on non-standard markup but continue with the visualization
@@ -434,12 +434,12 @@ export class LayoutHelper {
         }
         return child;
     }
-    
+
 
     // Mask images within a masked ancestor element in the node has a background image.
     private mask = (node: HTMLElement) => {
         if (node && this.BackgroundImageEligibleElements.includes(node.nodeName) && 'getComputedStyle' in window && 'closest' in node) {
-            const urlPattern = /url\(['"]?([^'")]+)['"]?\)/; 
+            const urlPattern = /url\(['"]?([^'")]+)['"]?\)/;
             const computedStyles = window.getComputedStyle(node);
             const hasBackgroundImage = computedStyles.backgroundImage?.match(urlPattern) || computedStyles.background?.match(urlPattern);
             const masked = node.closest?.(`[${LayoutConstants.MaskData}]`);
@@ -520,7 +520,7 @@ export class LayoutHelper {
                                 size = data.width <= Setting.Medium ? Constant.Medium : (data.width <= Setting.Small ? Constant.Small : size);
                             }
                             node.setAttribute(Constant.Hide, size);
-                        }                        
+                        }
                     } else {
                         node.setAttribute(attribute, v);
                     }
@@ -543,14 +543,14 @@ export class LayoutHelper {
         if (tag === Constant.ImageTag && !node.hasAttribute(Constant.AltAttribute)) { node.setAttribute(Constant.AltAttribute, Constant.Empty); }
 
         // During visualization This will prevent the browser from auto filling form fields with saved details of user who is seeing the visualization
-        if (tag === Constant.FormTag || tag === Constant.InputTag) { 
+        if (tag === Constant.FormTag || tag === Constant.InputTag) {
             if (node.hasAttribute(Constant.AutoComplete)) {
                 node.removeAttribute(Constant.AutoComplete);
             }
-            node.setAttribute(Constant.AutoComplete, Constant.NewPassword); 
+            node.setAttribute(Constant.AutoComplete, Constant.NewPassword);
         }
     }
-    
+
     private getMobileCustomStyle = (): string => {
         if(this.isMobile){
             return `*{scrollbar-width: none; scrollbar-gutter: unset;};`
@@ -564,7 +564,7 @@ export class LayoutHelper {
         return this.getImageHiddenCss() +
             this.getIframeUnavailableCss() +
             `${Constant.IFrameTag}[${Constant.UnavailableSmall}] { ${iframeUnavailableSmallSvg} }` +
-            `*[${Constant.Suspend}] { filter: grayscale(100%); }` + 
+            `*[${Constant.Suspend}] { filter: grayscale(100%); }` +
             `body { font-size: initial; }
             ${this.getMobileCustomStyle()}`;
     }

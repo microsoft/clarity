@@ -1,18 +1,19 @@
+import type { Module } from "@clarity-types/core";
 import measure from "@src/core/measure";
 import * as baseline from "@src/data/baseline";
 import * as consent from "@src/data/consent";
 import * as envelope from "@src/data/envelope";
 import * as dimension from "@src/data/dimension";
+import * as envelope from "@src/data/envelope";
+import * as extract from "@src/data/extract";
+import * as limit from "@src/data/limit";
 import * as metadata from "@src/data/metadata";
-import { Module } from "@clarity-types/core";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
-import * as limit from "@src/data/limit";
 import * as summary from "@src/data/summary";
 import * as upgrade from "@src/data/upgrade";
 import * as upload from "@src/data/upload";
 import * as variable from "@src/data/variable";
-import * as extract from "@src/data/extract";
 export { event } from "@src/data/custom";
 export { consent, consentv2, metadata } from "@src/data/metadata";
 export { upgrade } from "@src/data/upgrade";
@@ -24,7 +25,9 @@ const modules: Module[] = [baseline, dimension, variable, limit, summary, metada
 export function start(): void {
     // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
     metric.start();
-    modules.forEach(x => measure(x.start)());
+    for (const x of modules) {
+        measure(x.start)();
+    }
 }
 
 export function stop(): void {
@@ -32,7 +35,9 @@ export function stop(): void {
     // The ordering below should respect inter-module dependency.
     // E.g. if upgrade depends on upload, then upgrade needs to end before upload.
     // Similarly, if upload depends on metadata, upload needs to end before metadata.
-    modules.slice().reverse().forEach(x => measure(x.stop)());
+    for (const x of modules.slice().reverse()) {
+        measure(x.stop)();
+    }
     metric.stop();
 }
 

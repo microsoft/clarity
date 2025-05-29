@@ -1,39 +1,56 @@
-import { UploadCallback } from "@clarity-types/core";
-import { BooleanFlag, Check, Constant, EncodedPayload, Event, Metric, Setting, Token, Transit, UploadData, XMLReadyState } from "@clarity-types/data";
+import type { UploadCallback } from "@clarity-types/core";
+import {
+    BooleanFlag,
+    Check,
+    Code,
+    Constant,
+    type EncodedPayload,
+    Event,
+    Metric,
+    Setting,
+    Severity,
+    type Token,
+    type Transit,
+    type UploadData,
+    XMLReadyState,
+} from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import config from "@src/core/config";
 import measure from "@src/core/measure";
+import { report } from "@src/core/report";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import compress from "@src/data/compress";
 import encode from "@src/data/encode";
 import * as envelope from "@src/data/envelope";
+import * as extract from "@src/data/extract";
 import * as data from "@src/data/index";
 import * as limit from "@src/data/limit";
 import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as ping from "@src/data/ping";
+import { signalsEvent } from "@src/data/signal";
+import * as internal from "@src/diagnostic/internal";
 import * as timeline from "@src/interaction/timeline";
 import * as region from "@src/layout/region";
-import * as extract from "@src/data/extract";
 import * as style from "@src/layout/style";
-import { report } from "@src/core/report";
-import { signalsEvent } from "@src/data/signal";
 
-let discoverBytes: number = 0;
-let playbackBytes: number = 0;
+let discoverBytes = 0;
+let playbackBytes = 0;
 let playback: string[];
 let analysis: string[];
 let timeout: number = null;
 let transit: Transit;
 let active: boolean;
-let queuedTime: number = 0;
+let queuedTime = 0;
+let leanLimit = false;
 export let track: UploadData;
 
 export function start(): void {
     active = true;
     discoverBytes = 0;
     playbackBytes = 0;
+    leanLimit = false;
     queuedTime = 0;
     playback = [];
     analysis = [];
@@ -41,20 +58,34 @@ export function start(): void {
     track = null;
 }
 
-export function queue(tokens: Token[], transmit: boolean = true): void {
+export function queue(tokens: Token[], transmit = true): void {
     if (active) {
-        let now = time();
-        let type = tokens.length > 1 ? tokens[1] : null;
-        let event = JSON.stringify(tokens);
+        const now = time();
+        const type = tokens.length > 1 ? tokens[1] : null;
+        const event = JSON.stringify(tokens);
+
+        if (!config.lean) {
+            leanLimit = false;
+        } else if (!leanLimit && playbackBytes + event.length > Setting.PlaybackBytesLimit) {
+            internal.log(Code.LeanLimit, Severity.Info);
+            leanLimit = true;
+        }
 
         switch (type) {
+            // biome-ignore lint/suspicious/noFallthroughSwitchClause: we want discover bytes to also count as playback bytes
             case Event.Discover:
+                if (leanLimit) {
+                    break;
+                }
                 discoverBytes += event.length;
             case Event.Box:
             case Event.Mutation:
             case Event.Snapshot:
             case Event.StyleSheetAdoption:
             case Event.StyleSheetUpdate:
+                if (leanLimit) {
+                    break;
+                }
                 playbackBytes += event.length;
                 playback.push(event);
                 break;
@@ -69,8 +100,8 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         // Following two checks are precautionary and act as a fail safe mechanism to get out of unexpected situations.
         // Check 1: If for any reason the upload hasn't happened after waiting for 2x the config.delay time,
         // reset the timer. This allows Clarity to attempt an upload again.
-        let gap = delay();
-        if (now - queuedTime > (gap * 2)) {
+        const gap = delay();
+        if (now - queuedTime > gap * 2) {
             clearTimeout(timeout);
             timeout = null;
         }
@@ -79,7 +110,9 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         // However, in certain scenarios - like metric calculation - which are triggered as part of an existing upload
         // We enrich the data going out with the existing upload. In these cases, call to upload comes with 'transmit' set to false.
         if (transmit && timeout === null) {
-            if (type !== Event.Ping) { ping.reset(); }
+            if (type !== Event.Ping) {
+                ping.reset();
+            }
             timeout = setTimeout(upload, gap);
             queuedTime = now;
             limit.check(playbackBytes);
@@ -92,6 +125,7 @@ export function stop(): void {
     upload(true);
     discoverBytes = 0;
     playbackBytes = 0;
+    leanLimit = false;
     queuedTime = 0;
     playback = [];
     analysis = [];
@@ -100,14 +134,17 @@ export function stop(): void {
     active = false;
 }
 
-async function upload(final: boolean = false): Promise<void> {
+async function upload(final = false): Promise<void> {
     timeout = null;
 
     // Check if we can send playback bytes over the wire or not
     // For better instrumentation coverage, we send playback bytes from second sequence onwards
     // And, we only send playback metric when we are able to send the playback bytes back to server
-    let sendPlaybackBytes = config.lean === false && playbackBytes > 0 && (playbackBytes < Setting.MaxFirstPayloadBytes || envelope.data.sequence > 0);
-    if (sendPlaybackBytes) { metric.max(Metric.Playback, BooleanFlag.True); }
+    const sendPlaybackBytes =
+        config.lean === false && playbackBytes > 0 && (playbackBytes < Setting.MaxFirstPayloadBytes || envelope.data.sequence > 0);
+    if (sendPlaybackBytes) {
+        metric.max(Metric.Playback, BooleanFlag.True);
+    }
 
     // CAUTION: Ensure "transmit" is set to false in the queue function for following events
     // Otherwise you run a risk of infinite loop.
@@ -120,18 +157,18 @@ async function upload(final: boolean = false): Promise<void> {
     // In real world tests, we noticed that certain third party scripts (e.g. https://www.npmjs.com/package/raven-js)
     // could inject function arguments for internal tracking (likely stack traces for script errors).
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
-    let last = final === true;
-    let e = JSON.stringify(envelope.envelope(last));
-    let a = `[${analysis.join()}]`;
+    const last = final === true;
+    const e = JSON.stringify(envelope.envelope(last));
+    const a = `[${analysis.join()}]`;
 
-    let p = sendPlaybackBytes ? `[${playback.join()}]` : Constant.Empty;
-    let encoded: EncodedPayload = {e, a, p};
+    const p = sendPlaybackBytes ? `[${playback.join()}]` : Constant.Empty;
+    const encoded: EncodedPayload = { e, a, p };
 
     // Get the payload ready for sending over the wire
     // We also attempt to compress the payload if it is not the last payload and the browser supports it
     // In all other cases, we continue to send back string value
-    let payload = stringify(encoded);
-    let zipped = last ? null : await compress(payload)
+    const payload = stringify(encoded);
+    const zipped = last ? null : await compress(payload);
     metric.sum(Metric.TotalBytes, zipped ? zipped.length : payload.length);
     send(payload, zipped, envelope.data.sequence, last);
 
@@ -141,6 +178,7 @@ async function upload(final: boolean = false): Promise<void> {
         playback = [];
         playbackBytes = 0;
         discoverBytes = 0;
+        leanLimit = false;
     }
 }
 
@@ -148,9 +186,9 @@ function stringify(encoded: EncodedPayload): string {
     return encoded.p.length > 0 ? `{"e":${encoded.e},"a":${encoded.a},"p":${encoded.p}}` : `{"e":${encoded.e},"a":${encoded.a}}`;
 }
 
-function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boolean = false): void {
+function send(payload: string, zipped: Uint8Array, sequence: number, beacon = false): void {
     // Upload data if a valid URL is defined in the config
-    if (typeof config.upload === Constant.String) {
+    if (typeof config.upload === "string") {
         const url = config.upload as string;
         let dispatched = false;
 
@@ -162,8 +200,12 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             try {
                 // Navigator needs to be bound to sendBeacon before it is used to avoid errors in some browsers
                 dispatched = navigator.sendBeacon.bind(navigator)(url, payload);
-                if (dispatched) { done(sequence); }
-            } catch { /* do nothing - and we will automatically fallback to XHR below */ }
+                if (dispatched) {
+                    done(sequence);
+                }
+            } catch {
+                /* do nothing - and we will automatically fallback to XHR below */
+            }
         }
 
         // Before initiating XHR upload, we check if the data has already been uploaded using sendBeacon
@@ -174,12 +216,22 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
         if (dispatched === false) {
             // While tracking payload for retry, we only track string value of the payload to err on the safe side
             // Not all browsers support compression API and the support for it in supported browsers is still experimental
-            if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
-            let xhr = new XMLHttpRequest();
+            if (sequence in transit) {
+                transit[sequence].attempts++;
+            } else {
+                transit[sequence] = { data: payload, attempts: 1 };
+            }
+            const xhr = new XMLHttpRequest();
             xhr.open("POST", url, true);
             xhr.timeout = Setting.UploadTimeout;
-            xhr.ontimeout = () => { report(new Error(`${Constant.Timeout} : ${url}`)) };
-            if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence); }; }
+            xhr.ontimeout = () => {
+                report(new Error(`${Constant.Timeout} : ${url}`));
+            };
+            if (sequence !== null) {
+                xhr.onreadystatechange = (): void => {
+                    measure(check)(xhr, sequence);
+                };
+            }
             xhr.withCredentials = true;
             if (zipped) {
                 // If we do have valid compressed array, send it with appropriate HTTP headers so server can decode it appropriately
@@ -198,7 +250,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
 }
 
 function check(xhr: XMLHttpRequest, sequence: number): void {
-    var transitData = transit[sequence];
+    const transitData = transit[sequence];
     if (xhr && xhr.readyState === XMLReadyState.Done && transitData) {
         // Attempt send payload again (as configured in settings) if we do not receive a success (2XX) response code back from the server
         if ((xhr.status < 200 || xhr.status > 208) && transitData.attempts <= Setting.RetryLimit) {
@@ -212,7 +264,9 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
                 //    1: Browsers block upload because of content security policy violation
                 //    2: Safari will terminate pending XHR requests with status code 0 if the user navigates away from the page
                 // In any case, we switch the upload URL to fallback configuration (if available) before re-trying one more time
-                if (xhr.status === 0) { config.upload = config.fallback ? config.fallback : config.upload; }
+                if (xhr.status === 0) {
+                    config.upload = config.fallback ? config.fallback : config.upload;
+                }
                 // In all other cases, re-attempt sending the same data
                 // For retry we always fallback to string payload, even though we may have attempted
                 // sending zipped payload earlier
@@ -221,9 +275,13 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
         } else {
             track = { sequence, attempts: transitData.attempts, status: xhr.status };
             // Send back an event only if we were not successful in our first attempt
-            if (transitData.attempts > 1) { encode(Event.Upload); }
+            if (transitData.attempts > 1) {
+                encode(Event.Upload);
+            }
             // Handle response if it was a 200 response with a valid body
-            if (xhr.status === 200 && xhr.responseText) { response(xhr.responseText); }
+            if (xhr.status === 200 && xhr.responseText) {
+                response(xhr.responseText);
+            }
             // If we exhausted our retries then trigger Clarity's shutdown for this page since the data will be incomplete
             if (xhr.status === 0) {
                 // And, right before we terminate the session, we will attempt one last time to see if we can use
@@ -232,7 +290,9 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
                 limit.trigger(Check.Retry);
             }
             // Signal that this request completed successfully
-            if (xhr.status >= 200 && xhr.status <= 208) { done(sequence); }
+            if (xhr.status >= 200 && xhr.status <= 208) {
+                done(sequence);
+            }
             // Stop tracking this payload now that it's all done
             delete transit[sequence];
         }
@@ -250,15 +310,14 @@ function done(sequence: number): void {
 function delay(): number {
     // Progressively increase delay as we continue to send more payloads from the client to the server
     // If we are not uploading data to a server, and instead invoking UploadCallback, in that case keep returning configured value
-    let gap = config.lean === false && discoverBytes > 0 ? Setting.MinUploadDelay : envelope.data.sequence * config.delay;
-    return typeof config.upload === Constant.String ? Math.max(Math.min(gap, Setting.MaxUploadDelay), Setting.MinUploadDelay) : config.delay;
+    const gap = config.lean === false && discoverBytes > 0 ? Setting.MinUploadDelay : envelope.data.sequence * config.delay;
+    return typeof config.upload === "string" ? Math.max(Math.min(gap, Setting.MaxUploadDelay), Setting.MinUploadDelay) : config.delay;
 }
 
 function response(payload: string): void {
-    let lines = payload && payload.length > 0 ? payload.split("\n") : [];
-    for (var line of lines)
-    {
-        let parts = line && line.length > 0 ? line.split(/ (.*)/) : [Constant.Empty];
+    const lines = payload && payload.length > 0 ? payload.split("\n") : [];
+    for (const line of lines) {
+        const parts = line && line.length > 0 ? line.split(/ (.*)/) : [Constant.Empty];
         switch (parts[0]) {
             case Constant.End:
                 // Clear out session storage and end the session so we can start fresh the next time
@@ -270,13 +329,19 @@ function response(payload: string): void {
                 break;
             case Constant.Action:
                 // Invoke action callback, if configured and has a valid value
-                if (config.action && parts.length > 1) { config.action(parts[1]); }
+                if (config.action && parts.length > 1) {
+                    config.action(parts[1]);
+                }
                 break;
             case Constant.Extract:
-                if (parts.length > 1) { extract.trigger(parts[1]); }
+                if (parts.length > 1) {
+                    extract.trigger(parts[1]);
+                }
                 break;
             case Constant.Signal:
-                if (parts.length > 1) { signalsEvent(parts[1]); }
+                if (parts.length > 1) {
+                    signalsEvent(parts[1]);
+                }
                 break;
         }
     }

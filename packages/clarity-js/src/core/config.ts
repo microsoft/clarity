@@ -1,6 +1,6 @@
-import { Config, Time } from "@clarity-types/core";
+import { type Config, Time } from "@clarity-types/core";
 
-let config: Config = {
+const config: Config = {
     projectId: null,
     delay: 1 * Time.Second,
     lean: false,
@@ -24,10 +24,6 @@ let config: Config = {
     throttleDom: true,
     conversions: false,
     includeSubdomains: true,
-    throttleMutations: false,
-    dropMutations: false,
-    criticalMs: 200,
-    discard: [],
 };
 
 export default config;
