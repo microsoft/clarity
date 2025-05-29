@@ -1,6 +1,9 @@
 import { Time } from "@clarity-types/core";
 import {
     BooleanFlag,
+    ConsentData,
+    ConsentSource,
+    ConsentState,
     Constant,
     Dimension,
     type Metadata,
@@ -12,7 +15,6 @@ import {
     type User,
 } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, ConsentState, ConsentSource, ConsentData } from "@clarity-types/data";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
