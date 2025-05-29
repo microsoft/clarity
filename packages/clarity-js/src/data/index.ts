@@ -2,7 +2,6 @@ import type { Module } from "@clarity-types/core";
 import measure from "@src/core/measure";
 import * as baseline from "@src/data/baseline";
 import * as consent from "@src/data/consent";
-import * as envelope from "@src/data/envelope";
 import * as dimension from "@src/data/dimension";
 import * as envelope from "@src/data/envelope";
 import * as extract from "@src/data/extract";
