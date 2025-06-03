@@ -191,7 +191,7 @@ export function save(): void {
             ? (config.upload as string).replace(Constant.HTTPS, Constant.Empty)
             : Constant.Empty;
     const upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-    setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
+    setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Caret), Setting.SessionExpire);
 }
 
 function processCallback(upgrade: BooleanFlag) {
@@ -230,7 +230,7 @@ function track(u: User, consentInput: BooleanFlag = null): void {
     // To avoid cookie churn, write user id cookie only once every day
     if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent || u.dob !== dob) {
         const cookieParts = [data.userId, Setting.CookieVersion, end.toString(36), consent, dob];
-        setCookie(Constant.CookieKey, cookieParts.join(Constant.Pipe), Setting.Expire);
+        setCookie(Constant.CookieKey, cookieParts.join(Constant.Caret), Setting.Expire);
     }
 }
 
