@@ -15,7 +15,9 @@ export const enum Setting {
     LookAhead = 500, // 500ms
     InputLookAhead = 1000, // 1s
     Distance = 20, // 20 pixels
-    Interval = 25, // 25 milliseconds
+    ScrollInterval = 50, // 25 milliseconds
+    PointerInterval = 25, // 25 milliseconds
+    Throttle = 25, // 25 milliseconds
     // biome-ignore lint/style/useLiteralEnumMembers: Time.Second is a const enum, it is compiled to a number
     TimelineSpan = 2 * Time.Second, // 2 seconds
 }
