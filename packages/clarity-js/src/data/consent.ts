@@ -1,4 +1,4 @@
-import { BooleanFlag, ConsentData, ConsentSource, Dimension, Event } from "@clarity-types/data";
+import { ConsentData, Dimension, Event } from "@clarity-types/data";
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
 
@@ -11,13 +11,8 @@ const enum ConsentType {
     General = 2,
 }
 
-export function config(track: boolean): void {
-    const consent: ConsentData = {
-        source: ConsentSource.Implicit,
-        ad_Storage: track? BooleanFlag.True : BooleanFlag.False,
-        analytics_Storage: track? BooleanFlag.True : BooleanFlag.False,
-    };
-    trackConsent(track ? ConsentType.Implicit : ConsentType.None);
+export function config(consent: ConsentData): void {
+    trackConsent(consent.analytics_Storage ? ConsentType.Implicit : ConsentType.None);
     consentv2(consent);
 }
 

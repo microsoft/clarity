@@ -8,6 +8,7 @@ export interface MetadataCallbackOptions {
     wait: boolean;
     recall: boolean;
     called: boolean;
+    consentRecall: boolean;
 }
 export type SignalCallback = (data: ClaritySignal) => void;
 
@@ -365,9 +366,7 @@ export const enum XMLReadyState {
 
 export const enum ConsentSource{
     Implicit = 0,
-    API = 1,
-    GCF = 2,
-    TCF = 3,
+    API = 1
 }
 
 /* Helper Interfaces */

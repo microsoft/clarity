@@ -50,11 +50,6 @@ export function start(): void {
     config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
     config.upload =
         config.track && typeof config.upload === "string" && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;
-  
-    consentStatus = {
-      ad_Storage: config.track ? Constant.Granted : Constant.Denied,
-      analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
-    }
 
     // Log page metadata as dimensions
     dimension.log(Dimension.UserAgent, ua);
@@ -101,7 +96,13 @@ export function start(): void {
     }
 
     // Track consent config
-    trackConsent.config(config.track);
+    consentStatus = {
+      ad_Storage: config.track ? Constant.Granted : Constant.Denied,
+      analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
+    }
+
+    const consent = getConsentData(consentStatus, ConsentSource.Implicit);
+    trackConsent.config(consent);
 
     // Track ids using a cookie if configuration allows it
     track(u);
@@ -136,7 +137,7 @@ export function stop(): void {
     }
 }
 
-export function metadata(cb: MetadataCallback, wait = true, recall = false, includeConsent = false): void {
+export function metadata(cb: MetadataCallback, wait = true, recall = false, includeConsent = false, consentRecall = false): void {
     const upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
     let called = false;
   
@@ -153,7 +154,7 @@ export function metadata(cb: MetadataCallback, wait = true, recall = false, incl
         called = true;
     }
     if (recall || !called) {
-        callbacks.push({ callback: cb, wait, recall, called });
+        callbacks.push({ callback: cb, wait, recall, called, consentRecall });
     }
 }
 
@@ -178,8 +179,13 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     analytics_Storage: normalizeConsent(consentState.analytics_Storage)
   };
 
+  //update consent metadata IFF previously included
+  if(data.consent){
+    data.consent = consentStatus;
+  }
+  callback();
   const consentData = getConsentData(consentStatus, source);
-
+  
   if (!consentData.analytics_Storage) {
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
@@ -246,7 +252,7 @@ function processCallback(upgrade: BooleanFlag) {
     if (callbacks.length > 0) {
         for (let i = 0; i < callbacks.length; i++) {
             const cb = callbacks[i];
-            if (cb.callback && !cb.called && (!cb.wait || upgrade)) {
+            if (cb.callback && (!cb.called || cb.consentRecall) && (!cb.wait || upgrade)) {
                 cb.callback(data, !config.lean);
                 cb.called = true;
                 if (!cb.recall) {
