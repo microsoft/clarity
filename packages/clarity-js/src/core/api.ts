@@ -9,6 +9,7 @@ export default function api(method: string): string {
     const isZone = window[Constant.Zone] && Constant.Symbol in window[Constant.Zone];
     if (isZone) {
         internal.log(Code.AngularZone, Severity.Info);
+        return window[Constant.Zone][Constant.Symbol](method);
     }    
-    return  isZone ? window[Constant.Zone][Constant.Symbol](method) : method;
+    return method;
 }
