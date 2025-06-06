@@ -1,6 +1,9 @@
 import { Time } from "@clarity-types/core";
 import {
     BooleanFlag,
+    ConsentData,
+    ConsentSource,
+    ConsentState,
     Constant,
     Dimension,
     type Metadata,
@@ -25,6 +28,8 @@ export let data: Metadata = null;
 export const callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let rootDomain = null;
+let consentStatus: ConsentState = null;
+let defaultStatus: ConsentState = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied};
 
 export function start(): void {
     rootDomain = null;
@@ -91,7 +96,13 @@ export function start(): void {
     }
 
     // Track consent config
-    trackConsent.config(config.track);
+    consentStatus = {
+      ad_Storage: config.track ? Constant.Granted : Constant.Denied,
+      analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
+    }
+
+    const consent = getConsentData(consentStatus, ConsentSource.Implicit);
+    trackConsent.config(consent);
 
     // Track ids using a cookie if configuration allows it
     track(u);
@@ -120,14 +131,20 @@ function userAgentData(): void {
 export function stop(): void {
     rootDomain = null;
     data = null;
+    consentStatus = null;
     for (const cb of callbacks) {
         cb.called = false;
     }
 }
 
-export function metadata(cb: MetadataCallback, wait = true, recall = false): void {
+export function metadata(cb: MetadataCallback, wait = true, recall = false, additionalInfo = false): void {
     const upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
     let called = false;
+  
+    if (additionalInfo) {
+      data.consent = consentStatus
+    }
+  
     // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
     // directly execute the callback in addition to adding to our list as we only process callbacks at the moment
     // we go through the upgrading flow.
@@ -137,7 +154,7 @@ export function metadata(cb: MetadataCallback, wait = true, recall = false): voi
         called = true;
     }
     if (recall || !called) {
-        callbacks.push({ callback: cb, wait, recall, called });
+        callbacks.push({ callback: cb, wait, recall, called, additionalInfo });
     }
 }
 
@@ -145,22 +162,59 @@ export function id(): string {
     return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
 }
 
+//TODO: Remove this function once consentv2 is fully released
 export function consent(status = true): void {
-    if (!status) {
-        config.track = false;
-        setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
-        setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
-        clarity.stop();
-        window.setTimeout(clarity.start, Setting.RestartDelay);
-        return;
-    }
+  if (!status) {
+    consentv2();
+    return;
+  }
+  
+  consentv2({ ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
+  trackConsent.consent();
+}
 
-    if (core.active()) {
-        config.track = true;
-        track(user(), BooleanFlag.True);
-        save();
-        trackConsent.consent();
-    }
+export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.API): void {
+  consentStatus = {
+    ad_Storage: normalizeConsent(consentState.ad_Storage),
+    analytics_Storage: normalizeConsent(consentState.analytics_Storage)
+  };
+
+  //update consent metadata IFF previously included
+  if(data.consent){
+    data.consent = consentStatus;
+  }
+  callback();
+  const consentData = getConsentData(consentStatus, source);
+  
+  if (!consentData.analytics_Storage) {
+    config.track = false;
+    setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
+    setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
+    clarity.stop();
+    window.setTimeout(clarity.start, Setting.RestartDelay);
+    return;
+  }
+
+  if (core.active()) {
+    trackConsent.consentv2(consentData);
+    config.track = true;
+    track(user(), BooleanFlag.True);
+    save();
+  }
+}
+
+function getConsentData(consentState: ConsentState, source : ConsentSource): ConsentData {
+  let consent: ConsentData = {
+    source: source,
+    ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+    analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+  };
+
+  return consent;
+}
+
+function normalizeConsent(value: unknown): string {
+  return typeof value === 'string' ? value.toLowerCase() : Constant.Denied;
 }
 
 export function clear(): void {
@@ -198,7 +252,7 @@ function processCallback(upgrade: BooleanFlag) {
     if (callbacks.length > 0) {
         for (let i = 0; i < callbacks.length; i++) {
             const cb = callbacks[i];
-            if (cb.callback && !cb.called && (!cb.wait || upgrade)) {
+            if (cb.callback && (!cb.called || cb.additionalInfo) && (!cb.wait || upgrade)) {
                 cb.callback(data, !config.lean);
                 cb.called = true;
                 if (!cb.recall) {

@@ -1,6 +1,7 @@
 import type { Module } from "@clarity-types/core";
 import measure from "@src/core/measure";
 import * as baseline from "@src/data/baseline";
+import * as consent from "@src/data/consent";
 import * as dimension from "@src/data/dimension";
 import * as envelope from "@src/data/envelope";
 import * as extract from "@src/data/extract";
@@ -13,7 +14,7 @@ import * as upgrade from "@src/data/upgrade";
 import * as upload from "@src/data/upload";
 import * as variable from "@src/data/variable";
 export { event } from "@src/data/custom";
-export { consent, metadata } from "@src/data/metadata";
+export { consent, consentv2, metadata } from "@src/data/metadata";
 export { upgrade } from "@src/data/upgrade";
 export { set, identify } from "@src/data/variable";
 export { signal } from "@src/data/signal";
@@ -47,4 +48,5 @@ export function compute(): void {
     summary.compute();
     limit.compute();
     extract.compute();
+    consent.compute();
 }
