@@ -137,11 +137,11 @@ export function stop(): void {
     }
 }
 
-export function metadata(cb: MetadataCallback, wait = true, recall = false, includeConsent = false, consentRecall = false): void {
+export function metadata(cb: MetadataCallback, wait = true, recall = false, additionalInfo = false): void {
     const upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
     let called = false;
   
-    if (includeConsent) {
+    if (additionalInfo) {
       data.consent = consentStatus
     }
   
@@ -154,7 +154,7 @@ export function metadata(cb: MetadataCallback, wait = true, recall = false, incl
         called = true;
     }
     if (recall || !called) {
-        callbacks.push({ callback: cb, wait, recall, called, consentRecall });
+        callbacks.push({ callback: cb, wait, recall, called, additionalInfo });
     }
 }
 
@@ -252,7 +252,7 @@ function processCallback(upgrade: BooleanFlag) {
     if (callbacks.length > 0) {
         for (let i = 0; i < callbacks.length; i++) {
             const cb = callbacks[i];
-            if (cb.callback && (!cb.called || cb.consentRecall) && (!cb.wait || upgrade)) {
+            if (cb.callback && (!cb.called || cb.additionalInfo) && (!cb.wait || upgrade)) {
                 cb.callback(data, !config.lean);
                 cb.called = true;
                 if (!cb.recall) {
