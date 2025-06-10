@@ -50,9 +50,10 @@
     "typescript": "^4.3.5"
   },
   "scripts": {
-    "build": "yarn build:clean && yarn build:main",
-    "build:main": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript",
-    "build:clean": "del-cli build/*",
+    "build": "yarn build:clean && yarn build:es2017 && yarn build:es5",
+    "build:clean": "del-cli build/*",   
+    "build:es2017": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript --environment TARGET:es2017,OUTDIR:build/es2017",
+    "build:es5": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript --environment TARGET:es5,OUTDIR:build/es5",
     "test": "ts-mocha -p test/tsconfig.test.json test/stub.test.ts",
     "lint": "biome check --staged",
     "lint:fix": "biome check --write --staged",
