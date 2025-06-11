@@ -1,13 +1,108 @@
 import { Data, Layout } from "clarity-js";
 import type { Layout as DecodedLayout } from "clarity-decode";
-import { Asset, Constant, LinkHandler, NodeType, PlaybackState, Setting } from "@clarity-types/visualize";
+import { Asset, Constant, type LinkHandler, NodeType, type PlaybackState, Setting } from "@clarity-types/visualize";
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
-import iframeUnavailableSvg from "./styles/iframeUnavailable/english.svg";
-import iframeUnavailableSmallSvg from "./styles/iframeUnavailable/iconOnly.svg";
-import imageMaskedSvg from "./styles/imageMasked/english.svg";
-import imageMaskedSmallSvg from "./styles/imageMasked/iconOnly.svg";
+
+/* BEGIN blobUnavailableSvgs */
+import blobUnavailableSvgEnglish from "./styles/blobUnavailable/english.svg";
+import blobUnavailableSvgSmall from "./styles/blobUnavailable/iconOnly.svg";
+import blobUnavailableSvgChineseSimplified from "./styles/blobUnavailable/chineseSimplified.svg";
+import blobUnavailableSvgChineseTraditional from "./styles/blobUnavailable/chineseTraditional.svg";
+import blobUnavailableSvgJapanese from "./styles/blobUnavailable/japanese.svg";
+import blobUnavailableSvgKorean from "./styles/blobUnavailable/korean.svg";
+import blobUnavailableSvgRussian from "./styles/blobUnavailable/russian.svg";
+import blobUnavailableSvgSpanish from "./styles/blobUnavailable/spanish.svg";
+import blobUnavailableSvgTurkish from "./styles/blobUnavailable/turkish.svg";
+import blobUnavailableSvgDutch from "./styles/blobUnavailable/dutch.svg";
+import blobUnavailableSvgFrench from "./styles/blobUnavailable/french.svg";
+import blobUnavailableSvgGerman from "./styles/blobUnavailable/german.svg";
+import blobUnavailableSvgItalian from "./styles/blobUnavailable/italian.svg";
+import blobUnavailableSvgPortuguese from "./styles/blobUnavailable/portuguese.svg";
+const blobUnavailableSvg = {
+    "de-de": blobUnavailableSvgGerman,
+    "en-gb": blobUnavailableSvgEnglish,
+    "en-us": blobUnavailableSvgEnglish,
+    "es-es": blobUnavailableSvgSpanish,
+    "fr-fr": blobUnavailableSvgFrench,
+    "it-it": blobUnavailableSvgItalian,
+    "ja-jp": blobUnavailableSvgJapanese,
+    "ko-kr": blobUnavailableSvgKorean,
+    "nl-nl": blobUnavailableSvgDutch,
+    "pt-br": blobUnavailableSvgPortuguese,
+    "ru-ru": blobUnavailableSvgRussian,
+    "tr-tr": blobUnavailableSvgTurkish,
+    "zh-hans": blobUnavailableSvgChineseSimplified,
+    "zh-hant": blobUnavailableSvgChineseTraditional,
+}
+/* END blobUnavailableSvgs */
+
+/* BEGIN iframeUnavailableSvgs */
+import iframeUnavailableSvgEnglish from "./styles/iframeUnavailable/english.svg";
+import iframeUnavailableSvgSmall from "./styles/iframeUnavailable/iconOnly.svg";
+import iframeUnavailableSvgChineseSimplified from "./styles/iframeUnavailable/chineseSimplified.svg";
+import iframeUnavailableSvgChineseTraditional from "./styles/iframeUnavailable/chineseTraditional.svg";
+import iframeUnavailableSvgJapanese from "./styles/iframeUnavailable/japanese.svg";
+import iframeUnavailableSvgKorean from "./styles/iframeUnavailable/korean.svg";
+import iframeUnavailableSvgRussian from "./styles/iframeUnavailable/russian.svg";
+import iframeUnavailableSvgSpanish from "./styles/iframeUnavailable/spanish.svg";
+import iframeUnavailableSvgTurkish from "./styles/iframeUnavailable/turkish.svg";
+import iframeUnavailableSvgDutch from "./styles/iframeUnavailable/dutch.svg";
+import iframeUnavailableSvgFrench from "./styles/iframeUnavailable/french.svg";
+import iframeUnavailableSvgGerman from "./styles/iframeUnavailable/german.svg";
+import iframeUnavailableSvgItalian from "./styles/iframeUnavailable/italian.svg";
+import iframeUnavailableSvgPortuguese from "./styles/iframeUnavailable/portuguese.svg";
+const iframeUnavailableSvg = {
+    "de-de": iframeUnavailableSvgGerman,
+    "en-gb": iframeUnavailableSvgEnglish,
+    "en-us": iframeUnavailableSvgEnglish,
+    "es-es": iframeUnavailableSvgSpanish,
+    "fr-fr": iframeUnavailableSvgFrench,
+    "it-it": iframeUnavailableSvgItalian,
+    "ja-jp": iframeUnavailableSvgJapanese,
+    "ko-kr": iframeUnavailableSvgKorean,
+    "nl-nl": iframeUnavailableSvgDutch,
+    "pt-br": iframeUnavailableSvgPortuguese,
+    "ru-ru": iframeUnavailableSvgRussian,
+    "tr-tr": iframeUnavailableSvgTurkish,
+    "zh-hans": iframeUnavailableSvgChineseSimplified,
+    "zh-hant": iframeUnavailableSvgChineseTraditional,
+}
+/* END iframeUnavailableSvgs */
+
+/* BEGIN imageMaskedSvgs */
+import imageMaskedSvgEnglish from "./styles/imageMasked/english.svg";
+import imageMaskedSvgSmall from "./styles/imageMasked/iconOnly.svg";
+import imageMaskedSvgChineseSimplified from "./styles/imageMasked/chineseSimplified.svg";
+import imageMaskedSvgChineseTraditional from "./styles/imageMasked/chineseTraditional.svg";
+import imageMaskedSvgJapanese from "./styles/imageMasked/japanese.svg";
+import imageMaskedSvgKorean from "./styles/imageMasked/korean.svg";
+import imageMaskedSvgRussian from "./styles/imageMasked/russian.svg";
+import imageMaskedSvgSpanish from "./styles/imageMasked/spanish.svg";
+import imageMaskedSvgTurkish from "./styles/imageMasked/turkish.svg";
+import imageMaskedSvgDutch from "./styles/imageMasked/dutch.svg";
+import imageMaskedSvgFrench from "./styles/imageMasked/french.svg";
+import imageMaskedSvgGerman from "./styles/imageMasked/german.svg";
+import imageMaskedSvgItalian from "./styles/imageMasked/italian.svg";
+import imageMaskedSvgPortuguese from "./styles/imageMasked/portuguese.svg";
+const imageMaskedSvg = {
+    "de-de": imageMaskedSvgGerman,
+    "en-gb": imageMaskedSvgEnglish,
+    "en-us": imageMaskedSvgEnglish,
+    "es-es": imageMaskedSvgSpanish,
+    "fr-fr": imageMaskedSvgFrench,
+    "it-it": imageMaskedSvgItalian,
+    "ja-jp": imageMaskedSvgJapanese,
+    "ko-kr": imageMaskedSvgKorean,
+    "nl-nl": imageMaskedSvgDutch,
+    "pt-br": imageMaskedSvgPortuguese,
+    "ru-ru": imageMaskedSvgRussian,
+    "tr-tr": imageMaskedSvgTurkish,
+    "zh-hans": imageMaskedSvgChineseSimplified,
+    "zh-hant": imageMaskedSvgChineseTraditional,
+}
+/* END imageMaskedSvgs */
 
 export class LayoutHelper {
     static TIMEOUT = 3000;
@@ -27,11 +122,13 @@ export class LayoutHelper {
     BackgroundImageEligibleElements = ['DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'ASIDE', 'NAV', 'SPAN', 'P', 'MAIN'];
     MaskedBackgroundImageStyle = `#CCC no-repeat center url("${Asset.Hide}")`;
     vNext: boolean;
+    locale: string;
 
-    constructor(state: PlaybackState, isMobile = false, vNext = false) {
+    constructor(state: PlaybackState, isMobile = false, vNext = false, locale = 'en-us') {
         this.state = state;
         this.isMobile = isMobile;
         this.vNext = vNext;
+        this.locale = locale;
     }
 
     public reset = (): void => {
@@ -506,20 +603,28 @@ export class LayoutHelper {
                         // Do nothing if we encounter internal Clarity attributes
                     } else if (tag === Constant.IFrameTag && (attribute.indexOf("src") === 0 || attribute.indexOf("allow") === 0) || attribute === "sandbox") {
                         node.setAttribute(`data-clarity-${attribute}`, v);
-                    } else if (tag === Constant.ImageTag && attribute.indexOf("src") === 0 && (v === null || v.length === 0)) {
+                    } else if (tag === Constant.ImageTag && attribute.indexOf("src") === 0 && ((v === null || v.length === 0 || v?.startsWith('blob:')))) {
                         if (this.vNext) {
-                            if (data.width >= Setting.LargeSvg && data.height >= Setting.LargeSvg) {
-                                node.setAttribute(Constant.Hide, `${Constant.Large}${Constant.Beta}`);
+                            if (v.startsWith('blob:')) { 
+                                if (data.width >= Setting.LargeSvg && data.height >= Setting.LargeSvg) {
+                                    node.setAttribute(Constant.BlobUnavailable, `${Constant.Large}${Constant.Beta}`);
+                                } else {
+                                    node.setAttribute(Constant.BlobUnavailable, `${Constant.Small}${Constant.Beta}`);
+                                }
                             } else {
-                                node.setAttribute(Constant.Hide, `${Constant.Small}${Constant.Beta}`);
+                                if (data.width >= Setting.LargeSvg && data.height >= Setting.LargeSvg) {
+                                    node.setAttribute(Constant.Hide, `${Constant.Large}${Constant.Beta}`);
+                                } else {
+                                    node.setAttribute(Constant.Hide, `${Constant.Small}${Constant.Beta}`);
+                                }
                             }
                         } else {
-                            node.setAttribute(attribute, Asset.Transparent);
-                            let size = Constant.Large;
-                            if (data.width) {
-                                size = data.width <= Setting.Medium ? Constant.Medium : (data.width <= Setting.Small ? Constant.Small : size);
-                            }
-                            node.setAttribute(Constant.Hide, size);
+                                node.setAttribute(attribute, Asset.Transparent);
+                                let size = Constant.Large;
+                                if (data.width) {
+                                    size = data.width <= Setting.Medium ? Constant.Medium : (data.width <= Setting.Small ? Constant.Small : size);
+                                }
+                                node.setAttribute(Constant.Hide, size);
                         }
                     } else {
                         node.setAttribute(attribute, v);
@@ -561,12 +666,15 @@ export class LayoutHelper {
 
     private getCustomStyle = (): string => {
         // tslint:disable-next-line: max-line-length
-        return this.getImageHiddenCss() +
+        let retVal = this.getImageHiddenCss() +
             this.getIframeUnavailableCss() +
-            `${Constant.IFrameTag}[${Constant.UnavailableSmall}] { ${iframeUnavailableSmallSvg} }` +
+            this.getBlobUnavailableCss() +
+            `${Constant.IFrameTag}[${Constant.UnavailableSmall}] { ${iframeUnavailableSvgSmall} }` +
             `*[${Constant.Suspend}] { filter: grayscale(100%); }` +
             `body { font-size: initial; }
             ${this.getMobileCustomStyle()}`;
+        console.log('custom styles will be ', retVal);
+        return retVal;
     }
 
     private svgFitsText = (inputElement: HTMLElement): boolean => {
@@ -579,16 +687,25 @@ export class LayoutHelper {
 
     private getIframeUnavailableCss = (): string => {
         if (this.vNext) {
-            return `${Constant.IFrameTag}[${Constant.Unavailable}] { ${iframeUnavailableSvg} }`;
+            return `${Constant.IFrameTag}[${Constant.UnavailableSmall}] { ${iframeUnavailableSvgSmall} }` +
+                    `${Constant.IFrameTag}[${Constant.Unavailable}] { ${iframeUnavailableSvg[this.locale]} }`;
         } else {
             return `${Constant.IFrameTag}[${Constant.Unavailable}] { background: url(${Asset.Unavailable}) no-repeat center center, url('${Asset.Cross}'); }`;
         }
     }
 
+    private getBlobUnavailableCss = (): string => {
+        if (this.vNext) {
+        return  `${Constant.ImageTag}[${Constant.BlobUnavailable}=${Constant.Small}${Constant.Beta}] { ${blobUnavailableSvgSmall} }` +
+                `${Constant.ImageTag}[${Constant.BlobUnavailable}=${Constant.Large}${Constant.Beta}] { ${blobUnavailableSvg[this.locale]} }`;
+        }
+        return '';
+    }
+
     private getImageHiddenCss = (): string => {
         if (this.vNext) {
-            return  `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}${Constant.Beta}] { ${imageMaskedSmallSvg} }` +
-                    `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}${Constant.Beta}] { ${imageMaskedSvg} }`;
+            return  `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}${Constant.Beta}] { ${imageMaskedSvgSmall} }` +
+                    `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}${Constant.Beta}] { ${imageMaskedSvg[this.locale]} }`;
         } else {
             return  `${Constant.ImageTag}[${Constant.Hide}] { background-color: #CCC; background-image: url(${Asset.Hide}); background-repeat:no-repeat; background-position: center; }` +
                     `${Constant.ImageTag}[${Constant.Hide}=${Constant.Small}] { background-size: 18px 18px; }` +
