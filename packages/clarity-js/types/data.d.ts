@@ -8,7 +8,7 @@ export interface MetadataCallbackOptions {
     wait: boolean;
     recall: boolean;
     called: boolean;
-    additionalInfo: boolean;
+    consentInfo: boolean;
 }
 export type SignalCallback = (data: ClaritySignal) => void;
 

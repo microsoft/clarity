@@ -133,16 +133,18 @@ export function stop(): void {
     data = null;
     consentStatus = null;
     for (const cb of callbacks) {
-        cb.called = false;
+        cb.called = cb.consentInfo;
     }
 }
 
-export function metadata(cb: MetadataCallback, wait = true, recall = false, additionalInfo = false): void {
+export function metadata(cb: MetadataCallback, wait = true, recall = false, consentInfo = false): void {
     const upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
     let called = false;
   
-    if (additionalInfo) {
+    if (consentInfo) {
       data.consent = consentStatus
+    } else{
+        delete data.consent;
     }
   
     // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
@@ -154,7 +156,7 @@ export function metadata(cb: MetadataCallback, wait = true, recall = false, addi
         called = true;
     }
     if (recall || !called) {
-        callbacks.push({ callback: cb, wait, recall, called, additionalInfo });
+        callbacks.push({ callback: cb, wait, recall, called, consentInfo });
     }
 }
 
@@ -183,7 +185,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
   if(data.consent){
     data.consent = consentStatus;
   }
-  callback();
+  callback(true);
   const consentData = getConsentData(consentStatus, source);
   
   if (!consentData.analytics_Storage) {
@@ -232,9 +234,9 @@ function tab(): string {
     return id;
 }
 
-export function callback(): void {
+export function callback(consentUpdate:boolean = false): void {
     const upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-    processCallback(upgrade);
+    processCallback(upgrade, consentUpdate);
 }
 
 export function save(): void {
@@ -248,13 +250,16 @@ export function save(): void {
     setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
 }
 
-function processCallback(upgrade: BooleanFlag) {
+function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): void {
     if (callbacks.length > 0) {
         for (let i = 0; i < callbacks.length; i++) {
             const cb = callbacks[i];
-            if (cb.callback && (!cb.called || cb.additionalInfo) && (!cb.wait || upgrade)) {
+            if (cb.callback && (!cb.called || (cb.consentInfo && consentUpdate)) && (!cb.wait || upgrade)) {
                 cb.callback(data, !config.lean);
                 cb.called = true;
+                if(consentUpdate){
+                    break;
+                }
                 if (!cb.recall) {
                     callbacks.splice(i, 1);
                     i--;
