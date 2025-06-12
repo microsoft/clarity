@@ -2,7 +2,7 @@ import { Time } from "@clarity-types/core";
 export type Target = number | Node;
 export type Token = string | number | number[] | string[] | (string | number)[];
 
-export type MetadataCallback = (data: Metadata, playback: boolean) => void;
+export type MetadataCallback = (data: Metadata, playback: boolean, consentStatus?: ConsentState) => void;
 export interface MetadataCallbackOptions {
     callback: MetadataCallback;
     wait: boolean;

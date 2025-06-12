@@ -133,7 +133,7 @@ export function stop(): void {
     data = null;
     consentStatus = null;
     for (const cb of callbacks) {
-        cb.called = cb.consentInfo;
+        cb.called = false;
     }
 }
 
@@ -141,18 +141,12 @@ export function metadata(cb: MetadataCallback, wait = true, recall = false, cons
     const upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
     let called = false;
   
-    if (consentInfo) {
-      data.consent = consentStatus
-    } else{
-        delete data.consent;
-    }
-  
     // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
     // directly execute the callback in addition to adding to our list as we only process callbacks at the moment
     // we go through the upgrading flow.
     if (data && (upgraded || wait === false)) {
         // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
-        cb(data, !config.lean);
+        cb(data, !config.lean, consentInfo? consentStatus : undefined);
         called = true;
     }
     if (recall || !called) {
@@ -255,7 +249,7 @@ function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): 
         for (let i = 0; i < callbacks.length; i++) {
             const cb = callbacks[i];
             if (cb.callback && (!cb.called || (cb.consentInfo && consentUpdate)) && (!cb.wait || upgrade)) {
-                cb.callback(data, !config.lean);
+                cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
                 cb.called = true;
                 if(consentUpdate){
                     break;

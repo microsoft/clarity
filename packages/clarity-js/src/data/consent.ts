@@ -13,7 +13,7 @@ const enum ConsentType {
 
 export function config(consent: ConsentData): void {
     trackConsent(consent.analytics_Storage ? ConsentType.Implicit : ConsentType.None);
-    consentv2(consent, false);
+    data = consent;
 }
 
 // When we get consent signal as false, we restart the service and track config as false.
@@ -25,11 +25,9 @@ function trackConsent(consent: ConsentType): void {
     dimension.log(Dimension.Consent, consent.toString());
 }
 
-export function consentv2(consent: ConsentData, send: boolean = true): void {
+export function consentv2(consent: ConsentData): void {
     data = consent;
-    if (send) {
-        encode(Event.Consent);
-    }
+    encode(Event.Consent);
 }
 
 // Compute function is called every upload, but we only want to send consent data once.
