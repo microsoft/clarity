@@ -175,10 +175,6 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     analytics_Storage: normalizeConsent(consentState.analytics_Storage)
   };
 
-  //update consent metadata IFF previously included
-  if(data.consent){
-    data.consent = consentStatus;
-  }
   callback(true);
   const consentData = getConsentData(consentStatus, source);
   
@@ -248,12 +244,14 @@ function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): 
     if (callbacks.length > 0) {
         for (let i = 0; i < callbacks.length; i++) {
             const cb = callbacks[i];
-            if (cb.callback && (!cb.called || (cb.consentInfo && consentUpdate)) && (!cb.wait || upgrade)) {
+            if (
+                cb.callback && 
+                (!cb.called || (cb.consentInfo && consentUpdate)) && 
+                (!cb.wait || upgrade) && 
+                (!consentUpdate || cb.consentInfo) // If consentUpdate is true, we only call callbacks that have consentInfo set to true
+            ) {
                 cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
                 cb.called = true;
-                if(consentUpdate){
-                    break;
-                }
                 if (!cb.recall) {
                     callbacks.splice(i, 1);
                     i--;

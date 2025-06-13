@@ -388,7 +388,6 @@ export interface Metadata {
     userId: string;
     sessionId: string;
     pageNum: number;
-    consent?: ConsentState;
 }
 
 export interface Session {
