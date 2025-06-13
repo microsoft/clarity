@@ -11,7 +11,7 @@ import * as layout from "@src/layout";
 import * as performance from "@src/performance";
 import * as queue from "@src/queue";
 export { version };
-export { consent, event, identify, set, upgrade, metadata, signal } from "@src/data";
+export { consent, consentv2,  event, identify, set, upgrade, metadata, signal } from "@src/data";
 export { hashText } from "@src/layout";
 
 const modules: Module[] = [diagnostic, layout, interaction, performance];
