@@ -4,6 +4,7 @@ import { Asset, Constant, type LinkHandler, NodeType, type PlaybackState, Settin
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
+import sharedStyle from "./styles/shared.css";
 
 /* BEGIN blobUnavailableSvgs */
 import blobUnavailableSvgEnglish from "./styles/blobUnavailable/english.svg";
@@ -665,16 +666,14 @@ export class LayoutHelper {
     }
 
     private getCustomStyle = (): string => {
-        // tslint:disable-next-line: max-line-length
-        let retVal = this.getImageHiddenCss() +
+        return this.getImageHiddenCss() +
             this.getIframeUnavailableCss() +
             this.getBlobUnavailableCss() +
+            this.getBackgroundCss() +
             `${Constant.IFrameTag}[${Constant.UnavailableSmall}] { ${iframeUnavailableSvgSmall} }` +
             `*[${Constant.Suspend}] { filter: grayscale(100%); }` +
             `body { font-size: initial; }
             ${this.getMobileCustomStyle()}`;
-        console.log('custom styles will be ', retVal);
-        return retVal;
     }
 
     private svgFitsText = (inputElement: HTMLElement): boolean => {
@@ -696,8 +695,8 @@ export class LayoutHelper {
 
     private getBlobUnavailableCss = (): string => {
         if (this.vNext) {
-        return  `${Constant.ImageTag}[${Constant.BlobUnavailable}=${Constant.Small}${Constant.Beta}] { ${blobUnavailableSvgSmall} }` +
-                `${Constant.ImageTag}[${Constant.BlobUnavailable}=${Constant.Large}${Constant.Beta}] { ${blobUnavailableSvg[this.locale]} }`;
+            return  `${Constant.ImageTag}[${Constant.BlobUnavailable}=${Constant.Small}${Constant.Beta}] { ${blobUnavailableSvgSmall} }` +
+                    `${Constant.ImageTag}[${Constant.BlobUnavailable}=${Constant.Large}${Constant.Beta}] { ${blobUnavailableSvg[this.locale]} }`;
         }
         return '';
     }
@@ -712,5 +711,12 @@ export class LayoutHelper {
                     `${Constant.ImageTag}[${Constant.Hide}=${Constant.Medium}] { background-size: 24px 24px; }` +
                     `${Constant.ImageTag}[${Constant.Hide}=${Constant.Large}] { background-size: 36px 36px; }`;
         }
+    }
+
+    private getBackgroundCss = (): string => {
+        if (this.vNext) {
+            return sharedStyle;
+        }
+        return '';
     }
 }
