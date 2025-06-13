@@ -327,8 +327,6 @@ export class InteractionHelper {
             let center = doc.createElement("DIV");
             center.className = `${Constant.ClickLayer}-center`;
             click.appendChild(center);
-
-
         } else {    
             // Second pulsating ring
             let ringTwo = ringOne.cloneNode() as HTMLElement;
