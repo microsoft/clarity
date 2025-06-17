@@ -131,6 +131,7 @@ export const enum Metric {
      */
     InteractionNextPaint = 37,
     HistoryClear = 38,
+    AngularZone = 39,
 }
 
 export const enum Dimension {
@@ -200,7 +201,6 @@ export const enum Code {
     Config = 8,
     FunctionExecutionTime = 9,
     LeanLimit = 10,
-    AngularZone = 11,
 }
 
 export const enum Severity {
@@ -351,6 +351,8 @@ export const enum Constant {
     SHA256 = "SHA-256",
     Electron = "Electron",
     Caret = "^",
+    Zone = "Zone",
+    Symbol = "__symbol__",
 }
 
 export const enum XMLReadyState {

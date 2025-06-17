@@ -66,6 +66,13 @@ export function start(): void {
     metric.max(Metric.Playback, BooleanFlag.False);
     metric.max(Metric.Electron, electron);
 
+    const zone = (window as any)?.[Constant.Zone];
+    const isZone = zone && Constant.Symbol in zone;
+
+    if (isZone) {
+        metric.max(Metric.AngularZone, BooleanFlag.True);
+    }
+
     // Capture navigator specific dimensions
     if (navigator) {
         dimension.log(Dimension.Language, navigator.language);
