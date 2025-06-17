@@ -1,4 +1,4 @@
-import { Event, Setting, type SummaryData } from "@clarity-types/data";
+import { Event, SummaryData, Setting } from "@clarity-types/data";
 import encode from "./encode";
 
 export let data: SummaryData = null;
@@ -15,15 +15,13 @@ export function track(event: Event, time: number): void {
     if (!(event in data)) {
         data[event] = [[time, 0]];
     } else {
-        const e = data[event];
-        const last = e[e.length - 1];
+        let e = data[event];
+        let last = e[e.length - 1];
         // Add a new entry only if the new event occurs after configured interval
         // Otherwise, extend the duration of the previous entry
         if (time - last[0] > Setting.SummaryInterval) {
             data[event].push([time, 0]);
-        } else {
-            last[1] = time - last[0];
-        }
+        } else { last[1] = time - last[0]; }
     }
 }
 

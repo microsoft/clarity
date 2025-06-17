@@ -1,8 +1,9 @@
-import { Constant, Event, type Token } from "@clarity-types/data";
+import { Constant, Event, Token } from "@clarity-types/data";
 import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
+import { metadata } from "@src/layout/target";
 import * as change from "@src/interaction/change";
 import * as click from "@src/interaction/click";
 import * as clipboard from "@src/interaction/clipboard";
@@ -15,10 +16,9 @@ import * as submit from "@src/interaction/submit";
 import * as timeline from "@src/interaction/timeline";
 import * as unload from "@src/interaction/unload";
 import * as visibility from "@src/interaction/visibility";
-import { metadata } from "@src/layout/target";
 
 export default async function (type: Event, ts: number = null): Promise<void> {
-    const t = ts || time();
+    let t = ts || time();
     let tokens: Token[] = [t, type];
     switch (type) {
         case Event.MouseDown:
@@ -30,15 +30,15 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.TouchEnd:
         case Event.TouchMove:
         case Event.TouchCancel:
-            for (const entry of pointer.state) {
-                const pTarget = metadata(entry.data.target as Node, entry.event);
+            for (let entry of pointer.state) {
+                let pTarget = metadata(entry.data.target as Node, entry.event);
                 if (pTarget.id > 0) {
                     tokens = [entry.time, entry.event];
                     tokens.push(pTarget.id);
                     tokens.push(entry.data.x);
                     tokens.push(entry.data.y);
-                    if (entry.data.id !== undefined) {
-                        tokens.push(entry.data.id);
+                    if (entry.data.id !== undefined) { 
+                        tokens.push(entry.data.id); 
 
                         if (entry.data.isPrimary !== undefined) {
                             tokens.push(entry.data.isPrimary.toString());
@@ -53,10 +53,10 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             pointer.reset();
             break;
         case Event.Click:
-            for (const entry of click.state) {
-                const cTarget = metadata(entry.data.target as Node, entry.event, entry.data.text);
+            for (let entry of click.state) {
+                let cTarget = metadata(entry.data.target as Node, entry.event, entry.data.text);
                 tokens = [entry.time, entry.event];
-                const cHash = cTarget.hash ? cTarget.hash.join(Constant.Dot) : Constant.Empty;
+                let cHash = cTarget.hash ? cTarget.hash.join(Constant.Dot) : Constant.Empty;
                 tokens.push(cTarget.id);
                 tokens.push(entry.data.x);
                 tokens.push(entry.data.y);
@@ -76,9 +76,9 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             click.reset();
             break;
         case Event.Clipboard:
-            for (const entry of clipboard.state) {
+            for (let entry of clipboard.state) {
                 tokens = [entry.time, entry.event];
-                const target = metadata(entry.data.target as Node, entry.event);
+                let target = metadata(entry.data.target as Node, entry.event);
                 if (target.id > 0) {
                     tokens.push(target.id);
                     tokens.push(entry.data.action);
@@ -87,26 +87,24 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             }
             clipboard.reset();
             break;
-        case Event.Resize: {
-            const r = resize.data;
+        case Event.Resize:
+            let r = resize.data;
             tokens.push(r.width);
             tokens.push(r.height);
             baseline.track(type, r.width, r.height);
             resize.reset();
             queue(tokens);
             break;
-        }
-        case Event.Unload: {
-            const u = unload.data;
+        case Event.Unload:
+            let u = unload.data;
             tokens.push(u.name);
             tokens.push(u.persisted);
             unload.reset();
             queue(tokens);
             break;
-        }
         case Event.Input:
-            for (const entry of input.state) {
-                const iTarget = metadata(entry.data.target as Node, entry.event, entry.data.value);
+            for (let entry of input.state) {
+                let iTarget = metadata(entry.data.target as Node, entry.event, entry.data.value);
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
                 tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy, false, entry.data.type));
@@ -114,11 +112,11 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             }
             input.reset();
             break;
-        case Event.Selection: {
-            const s = selection.data;
+        case Event.Selection:
+            let s = selection.data;
             if (s) {
-                const startTarget = metadata(s.start as Node, type);
-                const endTarget = metadata(s.end as Node, type);
+                let startTarget = metadata(s.start as Node, type);
+                let endTarget = metadata(s.end as Node, type);
                 tokens.push(startTarget.id);
                 tokens.push(s.startOffset);
                 tokens.push(endTarget.id);
@@ -127,10 +125,9 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 queue(tokens);
             }
             break;
-        }
         case Event.Scroll:
-            for (const entry of scroll.state) {
-                const sTarget = metadata(entry.data.target as Node, entry.event);
+            for (let entry of scroll.state) {
+                let sTarget = metadata(entry.data.target as Node, entry.event);
                 const top = metadata(entry.data.top as Node, entry.event);
                 const bottom = metadata(entry.data.bottom as Node, entry.event);
                 const sTopHash = top?.hash ? top.hash.join(Constant.Dot) : Constant.Empty;
@@ -149,9 +146,9 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             scroll.reset();
             break;
         case Event.Change:
-            for (const entry of change.state) {
+            for (let entry of change.state) {
                 tokens = [entry.time, entry.event];
-                const target = metadata(entry.data.target as Node, entry.event);
+                let target = metadata(entry.data.target as Node, entry.event);
                 if (target.id > 0) {
                     tokens = [entry.time, entry.event];
                     tokens.push(target.id);
@@ -164,9 +161,9 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             change.reset();
             break;
         case Event.Submit:
-            for (const entry of submit.state) {
+            for (let entry of submit.state) {
                 tokens = [entry.time, entry.event];
-                const target = metadata(entry.data.target as Node, entry.event);
+                let target = metadata(entry.data.target as Node, entry.event);
                 if (target.id > 0) {
                     tokens.push(target.id);
                     queue(tokens);
@@ -175,7 +172,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             submit.reset();
             break;
         case Event.Timeline:
-            for (const entry of timeline.updates) {
+            for (let entry of timeline.updates) {
                 tokens = [entry.time, entry.event];
                 tokens.push(entry.data.type);
                 tokens.push(entry.data.hash);
@@ -187,13 +184,12 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             }
             timeline.reset();
             break;
-        case Event.Visibility: {
-            const v = visibility.data;
+        case Event.Visibility:
+            let v = visibility.data;
             tokens.push(v.visible);
             queue(tokens);
             baseline.visibility(t, v.visible);
             visibility.reset();
             break;
-        }
     }
 }

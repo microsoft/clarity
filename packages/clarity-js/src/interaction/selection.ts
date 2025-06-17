@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { type SelectionData, Setting } from "@clarity-types/interaction";
+import { SelectionData, Setting } from "@clarity-types/interaction";
 import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
@@ -21,25 +21,21 @@ export function observe(root: Node): void {
 
 function recompute(root: Node): void {
     recompute.dn = FunctionNames.SelectionRecompute;
-    const doc = root.nodeType === Node.DOCUMENT_NODE ? (root as Document) : document;
-    const current = doc.getSelection();
+    let doc = root.nodeType === Node.DOCUMENT_NODE ? root as Document : document;
+    let current = doc.getSelection();
 
     // Bail out if we don't have a valid selection
-    if (current === null) {
-        return;
-    }
+    if (current === null) { return; }
 
     // Bail out if we got a valid selection but not valid nodes
     // In Edge, selectionchange gets fired even on interactions like right clicks and
     // can result in null anchorNode and focusNode if there was no previous selection on page
     // Also, ignore any selections that start and end at the exact same point
-    if (
-        (current.anchorNode === null && current.focusNode === null) ||
-        (current.anchorNode === current.focusNode && current.anchorOffset === current.focusOffset)
-    ) {
+    if ((current.anchorNode === null && current.focusNode === null) ||
+        (current.anchorNode === current.focusNode && current.anchorOffset === current.focusOffset)) {
         return;
     }
-    const startNode = data.start ? data.start : null;
+    let startNode = data.start ? data.start : null;
     if (previous !== null && data.start !== null && startNode !== current.anchorNode) {
         clearTimeout(timeout);
         process(Event.Selection);
@@ -49,7 +45,7 @@ function recompute(root: Node): void {
         start: current.anchorNode,
         startOffset: current.anchorOffset,
         end: current.focusNode,
-        endOffset: current.focusOffset,
+        endOffset: current.focusOffset
     };
     previous = current;
 

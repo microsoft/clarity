@@ -1,13 +1,13 @@
-import type { Config } from "@clarity-types/core";
+import { Config } from "@clarity-types/core";
 import { Constant } from "@clarity-types/data";
 import { FunctionNames } from "@clarity-types/performance";
-import * as clarity from "@src/clarity";
 import configuration from "@src/core/config";
 import * as event from "@src/core/event";
 import * as history from "@src/core/history";
 import * as report from "@src/core/report";
 import * as task from "@src/core/task";
 import * as time from "@src/core/time";
+import * as clarity from "@src/clarity";
 import * as custom from "@src/data/custom";
 
 let status = false;
@@ -36,17 +36,15 @@ export function active(): boolean {
 
 export function check(): boolean {
     try {
-        const globalPrivacyControlSet = navigator && "globalPrivacyControl" in navigator && navigator.globalPrivacyControl === true;
-        return (
-            status === false &&
+        let globalPrivacyControlSet = navigator && "globalPrivacyControl" in navigator && navigator['globalPrivacyControl'] == true;
+        return status === false &&
             typeof Promise !== "undefined" &&
-            window.MutationObserver &&
-            document.createTreeWalker &&
+            window["MutationObserver"] &&
+            document["createTreeWalker"] &&
             "now" in Date &&
             "now" in performance &&
             typeof WeakMap !== "undefined" &&
             !globalPrivacyControlSet
-        );
     } catch (ex) {
         return false;
     }
@@ -54,13 +52,9 @@ export function check(): boolean {
 
 export function config(override: Config): boolean {
     // Process custom configuration overrides, if available
-    if (override === null || status) {
-        return false;
-    }
-    for (const key in override) {
-        if (key in configuration) {
-            configuration[key] = override[key];
-        }
+    if (override === null || status) { return false; }
+    for (let key in override) {
+        if (key in configuration) { configuration[key] = override[key]; }
     }
     return true;
 }
@@ -77,12 +71,8 @@ export function suspend(): void {
     if (status) {
         custom.event(Constant.Clarity, Constant.Suspend);
         clarity.stop();
-        for (const x of ["mousemove", "touchstart"]) {
-            event.bind(document, x, restart);
-        }
-        for (const x of ["resize", "scroll", "pageshow"]) {
-            event.bind(window, x, restart);
-        }
+        ["mousemove", "touchstart"].forEach(x => event.bind(document, x, restart));
+        ["resize", "scroll", "pageshow"].forEach(x => event.bind(window, x, restart));
     }
 }
 

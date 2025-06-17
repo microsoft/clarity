@@ -1,4 +1,4 @@
-import { Check, Event, type LimitData, Setting } from "@clarity-types/data";
+import { Check, Event, LimitData, Setting } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import { time } from "@src/core/time";
 import * as envelope from "@src/data/envelope";

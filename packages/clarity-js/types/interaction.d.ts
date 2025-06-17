@@ -1,6 +1,6 @@
-import type { BooleanFlag } from "@clarity-types/data";
+import { BooleanFlag } from "@clarity-types/data";
 import { Time } from "./core";
-import type { Event, Target } from "./data";
+import { Event, Target } from "./data";
 
 /* Enum */
 
@@ -8,7 +8,7 @@ export const enum BrowsingContext {
     Self = 0,
     Blank = 1,
     Parent = 2,
-    Top = 3,
+    Top = 3
 }
 
 export const enum Setting {
@@ -25,7 +25,7 @@ export const enum Setting {
 export const enum Clipboard {
     Cut = 0,
     Copy = 1,
-    Paste = 2,
+    Paste = 2
 }
 
 /* Helper Interfaces */

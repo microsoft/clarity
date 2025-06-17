@@ -1,11 +1,11 @@
-import { Event, type Token } from "@clarity-types/data";
+import {Event, Token} from "@clarity-types/data";
 import { time } from "@src/core/time";
 import { queue } from "@src/data/upload";
 import * as navigation from "@src/performance/navigation";
 
-export default async function (type: Event): Promise<void> {
-    const t = time();
-    const tokens: Token[] = [t, type];
+export default async function(type: Event): Promise<void> {
+    let t = time();
+    let tokens: Token[] = [t, type];
     switch (type) {
         case Event.Navigation:
             tokens.push(navigation.data.fetchStart);
