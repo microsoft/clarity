@@ -248,9 +248,7 @@ function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): 
                 }
             }
         }
-      }
     }
-  }
 }
 
 function supported(target: Window | Document, api: string): boolean {

@@ -137,13 +137,12 @@ export default function(event: Event): void {
             
             extract.reset();
             queue(tokens, false);
-        }
-        case Event.Consent: {
+        
+        case Event.Consent: 
             tokens.push(consent.data.source);
             tokens.push(consent.data.ad_Storage);
             tokens.push(consent.data.analytics_Storage);
             queue(tokens);
             break;
-        }
     }
 }
