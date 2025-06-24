@@ -67,7 +67,6 @@ export interface Options {
     keyframes?: boolean;
     mobile?: boolean;
     vNext?: boolean;
-    locale?: string;
 }
 
 export interface NodeData {
@@ -157,7 +156,6 @@ export const enum Constant {
     HashAlpha = "data-clarity-hashalpha",
     HashBeta = "data-clarity-hashbeta",
     Hide = "data-clarity-hide",
-    BlobUnavailable = "data-clarity-blob-hide",
     Unavailable = "data-clarity-unavailable",
     UnavailableSmall = "data-clarity-unavailable-small",
     Suspend = "data-clarity-suspend",
