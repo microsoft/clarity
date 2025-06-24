@@ -1,15 +1,15 @@
 import { Constant, Dimension, Event } from "@clarity-types/data";
-import { type ScrollState, Setting } from "@clarity-types/interaction";
+import { ScrollState, Setting } from "@clarity-types/interaction";
 import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import throttle from "@src/core/throttle";
-import * as dimension from "@src/data/dimension";
 import { iframe } from "@src/layout/dom";
-import { metadata, target } from "@src/layout/target";
+import { target, metadata } from "@src/layout/target";
 import encode from "./encode";
+import * as dimension from "@src/data/dimension";
 
 export let state: ScrollState[] = [];
 let initialTop: Node = null;
@@ -22,8 +22,8 @@ export function start(): void {
 }
 
 export function observe(root: Node): void {
-    const frame = iframe(root);
-    const node = frame ? frame.contentWindow : root === document ? window : root;
+    let frame = iframe(root);
+    let node = frame ? frame.contentWindow : (root === document ? window : root);
     bind(node, "scroll", throttledRecompute, true);
 }
 
@@ -35,7 +35,7 @@ function recompute(event: UIEvent = null): void {
 
     // If the target is a Document node, then identify corresponding documentElement and window for this document
     if (element && element.nodeType === Node.DOCUMENT_NODE) {
-        const frame = iframe(element);
+        let frame = iframe(element);
         w = frame ? frame.contentWindow : w;
         element = de = (element as Document).documentElement;
     }
@@ -43,8 +43,8 @@ function recompute(event: UIEvent = null): void {
     // Edge doesn't support scrollTop position on document.documentElement.
     // For cross browser compatibility, looking up pageYOffset on window if the scroll is on document.
     // And, if for some reason that is not available, fall back to looking up scrollTop on document.documentElement.
-    const x = element === de && "pageXOffset" in w ? Math.round(w.pageXOffset) : Math.round((element as HTMLElement).scrollLeft);
-    const y = element === de && "pageYOffset" in w ? Math.round(w.pageYOffset) : Math.round((element as HTMLElement).scrollTop);
+    let x = element === de && "pageXOffset" in w ? Math.round(w.pageXOffset) : Math.round((element as HTMLElement).scrollLeft);
+    let y = element === de && "pageYOffset" in w ? Math.round(w.pageYOffset) : Math.round((element as HTMLElement).scrollTop);
     const width = window.innerWidth;
     const height = window.innerHeight;
     const xPosition = width / 3;
@@ -54,20 +54,18 @@ function recompute(event: UIEvent = null): void {
     const top = getPositionNode(xPosition, startYPosition);
     const bottom = getPositionNode(xPosition, endYPosition);
 
-    const current: ScrollState = { time: time(event), event: Event.Scroll, data: { target: element, x, y, top, bottom } };
+    let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y, top, bottom} };
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
-    if ((event === null && x === 0 && y === 0) || x === null || y === null) {
+    if ((event === null && x === 0 && y === 0) || (x === null || y === null)) {
         initialTop = top;
         initialBottom = bottom;
         return;
     }
 
-    const length = state.length;
-    const last = length > 1 ? state[length - 2] : null;
-    if (last && similar(last, current)) {
-        state.pop();
-    }
+    let length = state.length;
+    let last = length > 1 ? state[length - 2] : null;
+    if (last && similar(last, current)) { state.pop(); }
     state.push(current);
 
     clearTimeout(timeout);
@@ -79,10 +77,9 @@ const throttledRecompute = throttle(recompute, Setting.Throttle);
 function getPositionNode(x: number, y: number): Node {
     let node: Node;
     if ("caretPositionFromPoint" in document) {
-        // biome-ignore lint/suspicious/noExplicitAny: caretPositionFromPoint is not defined on all browsers, makes typescript unhappy
         node = (document as any).caretPositionFromPoint(x, y)?.offsetNode;
     } else if ("caretRangeFromPoint" in document) {
-        node = (document as Document).caretRangeFromPoint(x, y)?.startContainer;
+        node = (document as any).caretRangeFromPoint(x, y)?.startContainer;
     }
     if (!node) {
         node = document.elementFromPoint(x, y) as Node;
@@ -105,9 +102,9 @@ function process(event: Event): void {
 }
 
 function similar(last: ScrollState, current: ScrollState): boolean {
-    const dx = last.data.x - current.data.x;
-    const dy = last.data.y - current.data.y;
-    return dx * dx + dy * dy < Setting.Distance * Setting.Distance && current.time - last.time < Setting.ScrollInterval;
+    let dx = last.data.x - current.data.x;
+    let dy = last.data.y - current.data.y;
+    return (dx * dx + dy * dy < Setting.Distance * Setting.Distance) && (current.time - last.time < Setting.ScrollInterval);
 }
 
 export function compute(): void {

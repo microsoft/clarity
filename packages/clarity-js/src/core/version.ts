@@ -1,2 +1,2 @@
-const version = "0.8.12";
+let version = "0.8.9";
 export default version;

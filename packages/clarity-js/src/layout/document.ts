@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import type { DocumentData } from "@clarity-types/layout";
+import { DocumentData } from "@clarity-types/layout";
 import { FunctionNames } from "@clarity-types/performance";
 import encode from "@src/layout/encode";
 
@@ -16,37 +16,25 @@ export function start(): void {
 
 export function compute(): void {
     compute.dn = FunctionNames.DocumentCompute;
-    const body = document.body;
-    const d = document.documentElement;
-    const bodyClientWidth = body ? body.clientWidth : null;
-    const bodyScrollWidth = body ? body.scrollWidth : null;
-    const bodyOffsetWidth = body ? body.offsetWidth : null;
-    const documentClientWidth = d ? d.clientWidth : null;
-    const documentScrollWidth = d ? d.scrollWidth : null;
-    const documentOffsetWidth = d ? d.offsetWidth : null;
-    const width = Math.max(
-        bodyClientWidth,
-        bodyScrollWidth,
-        bodyOffsetWidth,
-        documentClientWidth,
-        documentScrollWidth,
-        documentOffsetWidth,
-    );
+    let body = document.body;
+    let d = document.documentElement;
+    let bodyClientWidth = body ? body.clientWidth : null;
+    let bodyScrollWidth = body ? body.scrollWidth : null;
+    let bodyOffsetWidth = body ? body.offsetWidth : null;
+    let documentClientWidth = d ? d.clientWidth : null;
+    let documentScrollWidth = d ? d.scrollWidth : null;
+    let documentOffsetWidth = d ? d.offsetWidth : null;
+    let width = Math.max(bodyClientWidth, bodyScrollWidth, bodyOffsetWidth,
+        documentClientWidth, documentScrollWidth, documentOffsetWidth);
 
-    const bodyClientHeight = body ? body.clientHeight : null;
-    const bodyScrollHeight = body ? body.scrollHeight : null;
-    const bodyOffsetHeight = body ? body.offsetHeight : null;
-    const documentClientHeight = d ? d.clientHeight : null;
-    const documentScrollHeight = d ? d.scrollHeight : null;
-    const documentOffsetHeight = d ? d.offsetHeight : null;
-    const height = Math.max(
-        bodyClientHeight,
-        bodyScrollHeight,
-        bodyOffsetHeight,
-        documentClientHeight,
-        documentScrollHeight,
-        documentOffsetHeight,
-    );
+    let bodyClientHeight = body ? body.clientHeight : null;
+    let bodyScrollHeight = body ? body.scrollHeight : null;
+    let bodyOffsetHeight = body ? body.offsetHeight : null;
+    let documentClientHeight = d ? d.clientHeight : null;
+    let documentScrollHeight = d ? d.scrollHeight : null;
+    let documentOffsetHeight = d ? d.offsetHeight : null;
+    let height = Math.max(bodyClientHeight, bodyScrollHeight, bodyOffsetHeight,
+    documentClientHeight, documentScrollHeight, documentOffsetHeight);
 
     // Check that width or height has changed from before, and also that width & height are not null values
     if ((data === null || width !== data.width || height !== data.height) && width !== null && height !== null) {
