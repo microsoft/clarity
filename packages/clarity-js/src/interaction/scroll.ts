@@ -5,7 +5,6 @@ import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
-import throttle from "@src/core/throttle";
 import * as dimension from "@src/data/dimension";
 import { iframe } from "@src/layout/dom";
 import { metadata, target } from "@src/layout/target";
@@ -24,7 +23,7 @@ export function start(): void {
 export function observe(root: Node): void {
     const frame = iframe(root);
     const node = frame ? frame.contentWindow : root === document ? window : root;
-    bind(node, "scroll", throttledRecompute, true);
+    bind(node, "scroll", recompute, true);
 }
 
 function recompute(event: UIEvent = null): void {
@@ -74,8 +73,6 @@ function recompute(event: UIEvent = null): void {
     timeout = setTimeout(process, Setting.LookAhead, Event.Scroll);
 }
 
-const throttledRecompute = throttle(recompute, Setting.Throttle);
-
 function getPositionNode(x: number, y: number): Node {
     let node: Node;
     if ("caretPositionFromPoint" in document) {
@@ -107,7 +104,7 @@ function process(event: Event): void {
 function similar(last: ScrollState, current: ScrollState): boolean {
     const dx = last.data.x - current.data.x;
     const dy = last.data.y - current.data.y;
-    return dx * dx + dy * dy < Setting.Distance * Setting.Distance && current.time - last.time < Setting.ScrollInterval;
+    return dx * dx + dy * dy < Setting.Distance * Setting.Distance && current.time - last.time < Setting.Interval;
 }
 
 export function compute(): void {
