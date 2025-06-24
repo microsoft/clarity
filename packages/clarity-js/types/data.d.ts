@@ -131,7 +131,8 @@ export const enum Metric {
      * @deprecated Move it to dimension as it'll report only last value
      */
     InteractionNextPaint = 37,
-    HistoryClear = 38
+    HistoryClear = 38,
+    AngularZone = 39,
 }
 
 export const enum Dimension {

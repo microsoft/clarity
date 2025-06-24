@@ -9,6 +9,7 @@ import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { set } from "@src/data/variable";
 import * as trackConsent from "@src/data/consent";
+import { Constant as CoreConstant } from "@clarity-types/core";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
@@ -53,6 +54,13 @@ export function start(): void {
   metric.max(Metric.ClientTimestamp, s.ts);
   metric.max(Metric.Playback, BooleanFlag.False);
   metric.max(Metric.Electron, electron);
+
+  const zone = (window as any)?.[CoreConstant.Zone];
+  const isZone = zone && CoreConstant.Symbol in zone;
+
+  if (isZone) {
+    metric.max(Metric.AngularZone, BooleanFlag.True);
+  }
 
   // Capture navigator specific dimensions
   if (navigator) {
