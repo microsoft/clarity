@@ -6,7 +6,6 @@
     border-radius: 24px;
     background: radial-gradient(50% 50% at 50% 50%, #FFC35F 0%, rgba(255, 195, 95, 0) 100%);
     border: 1px solid white;
-    z-index: 2147483647;
 }
 
 .clarity-click-center {

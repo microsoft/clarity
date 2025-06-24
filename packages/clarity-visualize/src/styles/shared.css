@@ -1,6 +1,0 @@
-iframe[data-clarity-unavailable-small], iframe[data-clarity-unavailable], img[data-clarity-blob-hide=sb], img[data-clarity-blob-hide=lb], img[data-clarity-hide=sb], img[data-clarity-hide=lb] {
-    background-color: #FBFBFE;
-    border-style: dashed;
-    border-width: 6px;
-    border-color: #827DFF;
-}
