@@ -1,19 +1,5 @@
 import { Time } from "@clarity-types/core";
-import {
-    BooleanFlag,
-    ConsentData,
-    ConsentSource,
-    ConsentState,
-    Constant,
-    Dimension,
-    type Metadata,
-    type MetadataCallback,
-    type MetadataCallbackOptions,
-    Metric,
-    type Session,
-    Setting,
-    type User,
-} from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, ConsentState, ConsentSource, ConsentData } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import * as core from "@src/core";
 import config from "@src/core/config";
@@ -34,20 +20,22 @@ let defaultStatus: ConsentState = {ad_Storage: Constant.Denied, analytics_Storag
 export function start(): void {
   rootDomain = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
-  const timezone = Intl?.DateTimeFormat()?.resolvedOptions()?.timeZone ?? "";
+  const timezone = Intl?.DateTimeFormat()?.resolvedOptions()?.timeZone ?? '';
   const timezoneOffset = new Date().getTimezoneOffset().toString();
-  const ancestorOrigins = window.location.ancestorOrigins ? Array.from(window.location.ancestorOrigins).toString() : "";
-  const title = document?.title ? document.title : Constant.Empty;
-  electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;       
+  const ancestorOrigins = window.location.ancestorOrigins ? Array.from(window.location.ancestorOrigins).toString() : '';
+  const title = document && document.title ? document.title : Constant.Empty;
+  electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
+
   // Populate ids for this page
-  const s = session();
-  const u = user();
-  const projectId = config.projectId || hash(location.host);
+  let s = session();
+  let u = user();
+  let projectId = config.projectId || hash(location.host);
   data = { projectId, userId: u.id, sessionId: s.session, pageNum: s.count };    
+
   // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
-  config.upload =
-      config.track && typeof config.upload === "string" && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;       
+  config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;      
+  
   // Log page metadata as dimensions
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);
@@ -61,32 +49,32 @@ export function start(): void {
   dimension.log(Dimension.CookieVersion, u.version.toString());
   dimension.log(Dimension.AncestorOrigins, ancestorOrigins);
   dimension.log(Dimension.Timezone, timezone);
-  dimension.log(Dimension.TimezoneOffset, timezoneOffset);       
+  dimension.log(Dimension.TimezoneOffset, timezoneOffset);   
+
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);
   metric.max(Metric.Playback, BooleanFlag.False);
   metric.max(Metric.Electron, electron);     
+
   // Capture navigator specific dimensions
   if (navigator) {
-      dimension.log(Dimension.Language, navigator.language);
-      metric.max(Metric.HardwareConcurrency, navigator.hardwareConcurrency);
-      metric.max(Metric.MaxTouchPoints, navigator.maxTouchPoints);
-      // biome-ignore lint/suspicious/noExplicitAny: not all browsers support navigator.deviceMemory
-      metric.max(Metric.DeviceMemory, Math.round((<any>navigator).deviceMemory));
-      userAgentData();
+    dimension.log(Dimension.Language, navigator.language);
+    metric.max(Metric.HardwareConcurrency, navigator.hardwareConcurrency);
+    metric.max(Metric.MaxTouchPoints, navigator.maxTouchPoints);
+    metric.max(Metric.DeviceMemory, Math.round((<any>navigator).deviceMemory));
+    userAgentData();
   }      
   if (screen) {
-      metric.max(Metric.ScreenWidth, Math.round(screen.width));
-      metric.max(Metric.ScreenHeight, Math.round(screen.height));
-      metric.max(Metric.ColorDepth, Math.round(screen.colorDepth));
+    metric.max(Metric.ScreenWidth, Math.round(screen.width));
+    metric.max(Metric.ScreenHeight, Math.round(screen.height));
+    metric.max(Metric.ColorDepth, Math.round(screen.colorDepth));
   }      
   // Read cookies specified in configuration
-  for (const key of config.cookies) {
-      const value = getCookie(key);
-      if (value) {
-          set(key, value);
-      }
-  }      
+  for (let key of config.cookies) {
+    let value = getCookie(key);
+    if (value) { set(key, value); }
+  }  
+
   // Track consent config
   consentStatus = {
     ad_Storage: config.track ? Constant.Granted : Constant.Denied,
@@ -113,34 +101,33 @@ function userAgentData(): void {
 }
 
 export function stop(): void {
-    rootDomain = null;
-    data = null;
-    consentStatus = null;
-    for (const cb of callbacks) {
-        cb.called = false;
-    }
+  rootDomain = null;
+  data = null;
+  consentStatus = null;
+  callbacks.forEach(cb => { cb.called = false; });
 }
 
 export function metadata(cb: MetadataCallback, wait = true, recall = false, consentInfo = false): void {
-    const upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
-    let called = false;
+  const upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  let called = false;
   
-    // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
-    // directly execute the callback in addition to adding to our list as we only process callbacks at the moment
-    // we go through the upgrading flow.
-    if (data && (upgraded || wait === false)) {
-        // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
-        cb(data, !config.lean, consentInfo? consentStatus : undefined);
-        called = true;
-    }
-    if (recall || !called) {
-        callbacks.push({ callback: cb, wait, recall, called, consentInfo });
-    }
+  // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
+  // directly execute the callback in addition to adding to our list as we only process callbacks at the moment
+  // we go through the upgrading flow.
+  if (data && (upgraded || wait === false)) {
+    // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
+    cb(data, !config.lean, consentInfo? consentStatus : undefined);
+    called = true;
+  }
+  if (recall || !called) {
+    callbacks.push({ callback: cb, wait, recall, called, consentInfo });
+  }
 }
 
 export function id(): string {
   return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
 }
+
 //TODO: Remove this function once consentv2 is fully released
 export function consent(status = true): void {
   if (!status) {
@@ -209,8 +196,8 @@ function tab(): string {
 }
 
 export function callback(consentUpdate:boolean = false): void {
-    const upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-    processCallback(upgrade, consentUpdate);
+  let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
+  processCallback(upgrade, consentUpdate);
 }
 
 export function save(): void {
@@ -222,23 +209,23 @@ export function save(): void {
 }
 
 function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): void {
-    if (callbacks.length > 0) {
-        for (let i = 0; i < callbacks.length; i++) {
-            const cb = callbacks[i];
-            if (
-                cb.callback && 
-                ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
-                (!cb.wait || upgrade)       
-            ) {
-                cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
-                cb.called = true;
-                if (!cb.recall) {
-                    callbacks.splice(i, 1);
-                    i--;
-                }
-            }
-        }
+  if (callbacks.length > 0) {
+    for (let i = 0; i < callbacks.length; i++) {
+    const cb = callbacks[i];
+    if (
+      cb.callback && 
+      ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
+      (!cb.wait || upgrade)       
+    ) {
+      cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
+      cb.called = true;
+      if (!cb.recall) {
+        callbacks.splice(i, 1);
+        i--;
+      }
     }
+    }
+  }
 }
 
 function supported(target: Window | Document, api: string): boolean {
