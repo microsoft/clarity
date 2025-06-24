@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { type PointerState, Setting } from "@clarity-types/interaction";
+import { PointerState, Setting } from "@clarity-types/interaction";
 import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
@@ -34,47 +34,45 @@ export function observe(root: Node): void {
 
 function mouse(event: Event, root: Node, evt: MouseEvent): void {
     mouse.dn = FunctionNames.PointerMouse;
-    const frame = iframe(root);
-    const d = frame ? frame.contentDocument.documentElement : document.documentElement;
-    let x = "pageX" in evt ? Math.round(evt.pageX) : "clientX" in evt ? Math.round((evt as MouseEvent).clientX + d.scrollLeft) : null;
-    let y = "pageY" in evt ? Math.round(evt.pageY) : "clientY" in evt ? Math.round((evt as MouseEvent).clientY + d.scrollTop) : null;
+    let frame = iframe(root);
+    let d = frame ? frame.contentDocument.documentElement : document.documentElement;
+    let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
+    let y = "pageY" in evt ? Math.round(evt.pageY) : ("clientY" in evt ? Math.round(evt["clientY"] + d.scrollTop) : null);
     // In case of iframe, we adjust (x,y) to be relative to top parent's origin
     if (frame) {
-        const distance = offset(frame);
+        let distance = offset(frame);
         x = x ? x + Math.round(distance.x) : x;
         y = y ? y + Math.round(distance.y) : y;
     }
 
     // Check for null values before processing this event
-    if (x !== null && y !== null) {
-        handler({ time: time(evt), event, data: { target: target(evt), x, y } });
-    }
+    if (x !== null && y !== null) { handler({ time: time(evt), event, data: { target: target(evt), x, y } }); }
 }
 
 function touch(event: Event, root: Node, evt: TouchEvent): void {
     touch.dn = FunctionNames.PointerTouch;
-    const frame = iframe(root);
-    const d = frame ? frame.contentDocument.documentElement : document.documentElement;
-    const touches = evt.changedTouches;
+    let frame = iframe(root);
+    let d = frame ? frame.contentDocument.documentElement : document.documentElement;
+    let touches = evt.changedTouches;
 
-    const t = time(evt);
+    let t = time(evt);
     if (touches) {
         for (let i = 0; i < touches.length; i++) {
-            const entry = touches[i];
-            let x = "clientX" in entry ? Math.round(entry.clientX + d.scrollLeft) : null;
-            let y = "clientY" in entry ? Math.round(entry.clientY + d.scrollTop) : null;
+            let entry = touches[i];
+            let x = "clientX" in entry ? Math.round(entry["clientX"] + d.scrollLeft) : null;
+            let y = "clientY" in entry ? Math.round(entry["clientY"] + d.scrollTop) : null;
             x = x && frame ? x + Math.round(frame.offsetLeft) : x;
             y = y && frame ? y + Math.round(frame.offsetTop) : y;
 
             // We cannot rely on identifier to determine primary touch as its value doesn't always start with 0.
             // Safari/Webkit uses the address of the UITouch object as the identifier value for each touch point.
-            const id = "identifier" in entry ? entry.identifier : undefined;
+            const id = "identifier" in entry ? entry["identifier"] : undefined;
 
-            switch (event) {
+            switch(event) {
                 case Event.TouchStart:
                     if (activeTouchPointIds.size === 0) {
                         // Track presence of primary touch separately to handle scenarios when same id is repeated
-                        hasPrimaryTouch = true;
+                        hasPrimaryTouch = true;  
                         primaryTouchId = id;
                     }
                     activeTouchPointIds.add(id);
@@ -87,15 +85,11 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             const isPrimary = hasPrimaryTouch && primaryTouchId === id;
 
             // Check for null values before processing this event
-            if (x !== null && y !== null) {
-                handler({ time: t, event, data: { target: target(evt), x, y, id, isPrimary } });
-            }
+            if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y, id, isPrimary } }); }
 
             // Reset primary touch point id once touch event ends
             if (event === Event.TouchCancel || event === Event.TouchEnd) {
-                if (primaryTouchId === id) {
-                    hasPrimaryTouch = false;
-                }
+                if (primaryTouchId === id) { hasPrimaryTouch = false; }
             }
         }
     }
@@ -105,18 +99,15 @@ function handler(current: PointerState): void {
     switch (current.event) {
         case Event.MouseMove:
         case Event.MouseWheel:
-        case Event.TouchMove: {
-            const length = state.length;
-            const last = length > 1 ? state[length - 2] : null;
-            if (last && similar(last, current)) {
-                state.pop();
-            }
+        case Event.TouchMove:
+            let length = state.length;
+            let last = length > 1 ? state[length - 2] : null;
+            if (last && similar(last, current)) { state.pop(); }
             state.push(current);
 
             clearTimeout(timeout);
             timeout = setTimeout(process, Setting.LookAhead, current.event);
             break;
-        }
         default:
             state.push(current);
             process(current.event);
@@ -133,19 +124,17 @@ export function reset(): void {
 }
 
 function similar(last: PointerState, current: PointerState): boolean {
-    const dx = last.data.x - current.data.x;
-    const dy = last.data.y - current.data.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const gap = current.time - last.time;
-    const match = current.data.target === last.data.target;
-    const sameId = current.data.id !== undefined ? current.data.id === last.data.id : true;
-    return current.event === last.event && match && distance < Setting.Distance && gap < Setting.Interval && sameId;
+    let dx = last.data.x - current.data.x;
+    let dy = last.data.y - current.data.y;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+    let gap = current.time - last.time;
+    let match = current.data.target === last.data.target;
+    let sameId = current.data.id !== undefined ? current.data.id === last.data.id : true;
+    return current.event === last.event && match && distance < Setting.Distance && gap < Setting.PointerInterval && sameId;
 }
 
 export function stop(): void {
     clearTimeout(timeout);
     // Send out any pending pointer events in the pipeline
-    if (state.length > 0) {
-        process(state[state.length - 1].event);
-    }
+    if (state.length > 0) { process(state[state.length - 1].event); }
 }

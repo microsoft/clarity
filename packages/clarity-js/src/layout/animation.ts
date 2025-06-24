@@ -1,29 +1,30 @@
 import { Event } from "@clarity-types/data";
-import { AnimationOperation, type AnimationState } from "@clarity-types/layout";
-import * as core from "@src/core";
+import { AnimationOperation, AnimationState } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import { shortid } from "@src/data/metadata";
-import { getId } from "@src/layout/dom";
 import encode from "@src/layout/encode";
+import { getId } from "@src/layout/dom";
+import * as core from "@src/core";
 
 export let state: AnimationState[] = [];
 let elementAnimate: (keyframes: Keyframe[] | PropertyIndexedKeyframes, options?: number | KeyframeAnimationOptions) => Animation = null;
-const animationPlay: () => void = null;
-const animationPause: () => void = null;
-const animationCommitStyles: () => void = null;
-const animationCancel: () => void = null;
-const animationFinish: () => void = null;
-const animationId = "clarityAnimationId";
-const operationCount = "clarityOperationCount";
+let animationPlay: () => void = null;
+let animationPause: () => void = null;
+let animationCommitStyles: () => void = null;
+let animationCancel: () => void = null;
+let animationFinish: () => void = null;
+const animationId = 'clarityAnimationId';
+const operationCount = 'clarityOperationCount';
 const maxOperations = 20;
 
 export function start(): void {
     if (
-        window.Animation?.prototype &&
-        window.KeyframeEffect &&
-        window.KeyframeEffect.prototype &&
-        window.KeyframeEffect.prototype.getKeyframes &&
-        window.KeyframeEffect.prototype.getTiming
+        window["Animation"] && 
+        window["Animation"].prototype && 
+        window["KeyframeEffect"] && 
+        window["KeyframeEffect"].prototype && 
+        window["KeyframeEffect"].prototype.getKeyframes &&
+        window["KeyframeEffect"].prototype.getTiming
     ) {
         reset();
         overrideAnimationHelper(animationPlay, "play");
@@ -33,39 +34,33 @@ export function start(): void {
         overrideAnimationHelper(animationFinish, "finish");
         if (elementAnimate === null) {
             elementAnimate = Element.prototype.animate;
-            Element.prototype.animate = function (...args): Animation {
-                const createdAnimation = elementAnimate.apply(this, args);
+            Element.prototype.animate = function(): Animation {
+                var createdAnimation = elementAnimate.apply(this, arguments);
                 trackAnimationOperation(createdAnimation, "play");
                 return createdAnimation;
-            };
+            }
         }
         if (document.getAnimations) {
-            for (const animation of document.getAnimations()) {
+            for (var animation of document.getAnimations()) {
                 if (animation.playState === "finished") {
                     trackAnimationOperation(animation, "finish");
-                } else if (animation.playState === "paused" || animation.playState === "idle") {
+                }
+                else if (animation.playState === "paused" || animation.playState === "idle") {
                     trackAnimationOperation(animation, "pause");
-                } else if (animation.playState === "running") {
+                }
+                else if (animation.playState === "running") {
                     trackAnimationOperation(animation, "play");
                 }
             }
         }
-    }
+    }    
 }
 
 export function reset(): void {
     state = [];
 }
 
-function track(
-    time: number,
-    id: string,
-    operation: AnimationOperation,
-    keyFrames?: string,
-    timing?: string,
-    targetId?: number,
-    timeline?: string,
-): void {
+function track(time: number, id: string, operation: AnimationOperation, keyFrames?: string, timing?: string, targetId?: number, timeline?: string): void {
     state.push({
         time,
         event: Event.Animation,
@@ -75,8 +70,8 @@ function track(
             keyFrames,
             timing,
             targetId,
-            timeline,
-        },
+            timeline
+        }
     });
 
     encode(Event.Animation);
@@ -88,30 +83,29 @@ export function stop(): void {
 
 function overrideAnimationHelper(functionToOverride: () => void, name: string) {
     if (functionToOverride === null) {
-        // biome-ignore lint/style/noParameterAssign: function intentionally reassigns parameter for shimming
-        functionToOverride = Animation.prototype[name];
-        Animation.prototype[name] = function (...args): void {
-            trackAnimationOperation(this, name);
-            functionToOverride.apply(this, args);
-        };
+      functionToOverride = Animation.prototype[name];
+      Animation.prototype[name] = function(): void {
+        trackAnimationOperation(this, name);
+        return functionToOverride.apply(this, arguments);
+      }
     }
-}
+  }
 
 function trackAnimationOperation(animation: Animation, name: string) {
     if (core.active()) {
-        const effect = <KeyframeEffect>animation.effect;
-        const target = effect?.target ? getId(effect.target) : null;
+        let effect = <KeyframeEffect>animation.effect;
+        let target = effect?.target ? getId(effect.target) : null;
         if (target !== null && effect.getKeyframes && effect.getTiming) {
             if (!animation[animationId]) {
                 animation[animationId] = shortid();
                 animation[operationCount] = 0;
-
-                const keyframes = effect.getKeyframes();
-                const timing = effect.getTiming();
+                
+                let keyframes = effect.getKeyframes();
+                let timing = effect.getTiming();
                 track(time(), animation[animationId], AnimationOperation.Create, JSON.stringify(keyframes), JSON.stringify(timing), target);
             }
 
-            if (animation[operationCount]++ < maxOperations) {
+            if (animation[operationCount]++ < maxOperations)  {
                 let operation: AnimationOperation = null;
                 switch (name) {
                     case "play":
@@ -134,6 +128,6 @@ function trackAnimationOperation(animation: Animation, name: string) {
                     track(time(), animation[animationId], operation);
                 }
             }
-        }
+        }            
     }
 }

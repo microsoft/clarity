@@ -1,6 +1,6 @@
-import type { BooleanFlag } from "@clarity-types/data";
+import { BooleanFlag } from "@clarity-types/data";
 import { Time } from "./core";
-import type { Event, Target } from "./data";
+import { Event, Target } from "./data";
 
 /* Enum */
 
@@ -8,22 +8,23 @@ export const enum BrowsingContext {
     Self = 0,
     Blank = 1,
     Parent = 2,
-    Top = 3,
+    Top = 3
 }
 
 export const enum Setting {
     LookAhead = 500, // 500ms
     InputLookAhead = 1000, // 1s
     Distance = 20, // 20 pixels
-    Interval = 25, // 25 milliseconds
-    // biome-ignore lint/style/useLiteralEnumMembers: Time.Second is a const enum, it is compiled to a number
+    ScrollInterval = 50, // 25 milliseconds
+    PointerInterval = 25, // 25 milliseconds
+    Throttle = 25, // 25 milliseconds
     TimelineSpan = 2 * Time.Second, // 2 seconds
 }
 
 export const enum Clipboard {
     Cut = 0,
     Copy = 1,
-    Paste = 2,
+    Paste = 2
 }
 
 /* Helper Interfaces */
