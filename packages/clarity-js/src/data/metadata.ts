@@ -34,7 +34,8 @@ export function start(): void {
 
   // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
-  config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload; 
+  config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;
+
   // Log page metadata as dimensions
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);
@@ -210,19 +211,19 @@ export function save(): void {
 function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): void {
   if (callbacks.length > 0) {
     for (let i = 0; i < callbacks.length; i++) {
-     const cb = callbacks[i];
-     if (
-       cb.callback && 
-       ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
-       (!cb.wait || upgrade)       
-     ) {
-       cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
-       cb.called = true;
-       if (!cb.recall) {
-         callbacks.splice(i, 1);
-         i--;
-       }
-     }
+      const cb = callbacks[i];
+      if (
+        cb.callback && 
+        ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
+        (!cb.wait || upgrade)       
+      ) {
+        cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
+        cb.called = true;
+        if (!cb.recall) {
+          callbacks.splice(i, 1);
+          i--;
+        }
+      }
     }
   }
 }
