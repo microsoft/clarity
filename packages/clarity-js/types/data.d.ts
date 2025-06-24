@@ -347,8 +347,6 @@ export const enum Constant {
     SHA256 = "SHA-256",
     Electron = "Electron",
     Caret = "^",
-    Zone = "Zone",
-    Symbol = "__symbol__",
 }
 
 export const enum XMLReadyState {
