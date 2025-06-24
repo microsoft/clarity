@@ -1,6 +1,6 @@
-import { type Config, Time } from "@clarity-types/core";
+import { Config, Time } from "@clarity-types/core";
 
-const config: Config = {
+let config: Config = {
     projectId: null,
     delay: 1 * Time.Second,
     lean: false,

@@ -1,4 +1,4 @@
-import type { Token } from "@clarity-types/data";
+import {Constant, Token} from "@clarity-types/data";
 
 // Following code takes an array of tokens and transforms it to optimize for repeating tokens and make it efficient to send over the wire
 // The way it works is that it iterate over all tokens and checks if the current token was already seen in the tokens array so far
@@ -6,20 +6,18 @@ import type { Token } from "@clarity-types/data";
 // E.g. If tokens array is: ["hello", "world", "coding", "language", "world", "language", "example"]
 // Then the resulting tokens array after following code execution would be: ["hello", "world", "coding", "language", [1, 3], "example"]
 // Where [1,3] points to tokens[1] => "world" and tokens[3] => "language"
-export default function (tokens: Token[]): Token[] {
-    const output: Token[] = [];
-    const lookup: { [key: string]: number } = {};
+export default function(tokens: Token[]): Token[] {
+    let output: Token[] = [];
+    let lookup: {[key: string]: number} = {};
     let pointer = 0;
     let reference = null;
     for (let i = 0; i < tokens.length; i++) {
         // Only optimize for string values
-        if (typeof tokens[i] === "string") {
-            const token = tokens[i] as string;
-            const index = lookup[token] || -1;
+        if (typeof tokens[i] === Constant.String) {
+            let token = tokens[i] as string;
+            let index = lookup[token] || -1;
             if (index >= 0) {
-                if (reference) {
-                    reference.push(index);
-                } else {
+                if (reference) { reference.push(index); } else {
                     reference = [index];
                     output.push(reference);
                     pointer++;

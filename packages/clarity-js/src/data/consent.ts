@@ -4,7 +4,7 @@ import * as dimension from "@src/data/dimension";
 const enum ConsentType {
     None = 0,
     Implicit = 1,
-    General = 2,
+    General = 2
 }
 
 export function config(track: boolean): void {

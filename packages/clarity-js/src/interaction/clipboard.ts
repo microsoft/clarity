@@ -1,11 +1,11 @@
 import { Event } from "@clarity-types/data";
-import { Clipboard, type ClipboardState } from "@clarity-types/interaction";
+import { Clipboard, ClipboardState } from "@clarity-types/interaction";
 import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
-import { target } from "@src/layout/target";
 import encode from "./encode";
+import { target } from "@src/layout/target";
 
 export let state: ClipboardState[] = [];
 

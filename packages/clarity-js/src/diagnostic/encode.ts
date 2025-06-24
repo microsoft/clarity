@@ -1,4 +1,4 @@
-import { Event, type Token } from "@clarity-types/data";
+import { Event, Token } from "@clarity-types/data";
 import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import { queue } from "@src/data/upload";
@@ -7,7 +7,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as script from "@src/diagnostic/script";
 
 export default async function (type: Event): Promise<void> {
-    const tokens: Token[] = [time(), type];
+    let tokens: Token[] = [time(), type];
 
     switch (type) {
         case Event.ScriptError:
