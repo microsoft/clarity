@@ -1,5 +1,6 @@
-import type { Config, Module } from "@clarity-types/core";
+import { Config, Module } from "@clarity-types/core";
 import { Constant } from "@clarity-types/data";
+import * as queue from "@src/queue";
 import * as core from "@src/core";
 import measure from "@src/core/measure";
 import * as task from "@src/core/task";
@@ -9,7 +10,6 @@ import * as diagnostic from "@src/diagnostic";
 import * as interaction from "@src/interaction";
 import * as layout from "@src/layout";
 import * as performance from "@src/performance";
-import * as queue from "@src/queue";
 export { version };
 export { consent, event, identify, set, upgrade, metadata, signal } from "@src/data";
 export { hashText } from "@src/layout";
@@ -17,21 +17,17 @@ export { hashText } from "@src/layout";
 const modules: Module[] = [diagnostic, layout, interaction, performance];
 
 export function start(config: Config = null): void {
-    // Check that browser supports required APIs and we do not attempt to start Clarity multiple times
-    if (core.check()) {
-        core.config(config);
-        core.start();
-        data.start();
-        for (const x of modules) {
-            measure(x.start)();
-        }
+  // Check that browser supports required APIs and we do not attempt to start Clarity multiple times
+  if (core.check()) {
+    core.config(config);
+    core.start();
+    data.start();
+    modules.forEach(x => measure(x.start)());
 
-        // If it's an internal call to start, without explicit configuration,
-        // re-process any newly accumulated items in the queue
-        if (config === null) {
-            queue.process();
-        }
-    }
+    // If it's an internal call to start, without explicit configuration,
+    // re-process any newly accumulated items in the queue
+    if (config === null) { queue.process(); }
+  }
 }
 
 // By default Clarity is asynchronous and will yield by looking for requestIdleCallback.
@@ -40,28 +36,26 @@ export function start(config: Config = null): void {
 // we do allow external clients to manually pause Clarity for that short burst of time and minimize
 // performance impact even further. For reference, we are talking single digit milliseconds optimization here, not seconds.
 export function pause(): void {
-    if (core.active()) {
-        data.event(Constant.Clarity, Constant.Pause);
-        task.pause();
-    }
+  if (core.active()) {
+    data.event(Constant.Clarity, Constant.Pause);
+    task.pause();
+  }
 }
 
 // This is how external clients can get out of pause state, and resume Clarity to continue monitoring the page
 export function resume(): void {
-    if (core.active()) {
-        task.resume();
-        data.event(Constant.Clarity, Constant.Resume);
-    }
+  if (core.active()) {
+    task.resume();
+    data.event(Constant.Clarity, Constant.Resume);
+  }
 }
 
 export function stop(): void {
-    if (core.active()) {
-        // Stop modules in the reverse order of their initialization and start queuing up items again
-        for (const x of modules.slice().reverse()) {
-            measure(x.stop)();
-        }
-        data.stop();
-        core.stop();
-        queue.setup();
-    }
+  if (core.active()) {
+    // Stop modules in the reverse order of their initialization and start queuing up items again
+    modules.slice().reverse().forEach(x => measure(x.stop)());
+    data.stop();
+    core.stop();
+    queue.setup();
+  }
 }

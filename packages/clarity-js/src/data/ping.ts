@@ -1,4 +1,4 @@
-import { Event, type PingData, Setting } from "@clarity-types/data";
+import { Event, PingData, Setting } from "@clarity-types/data";
 import { suspend } from "@src/core";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
@@ -15,22 +15,18 @@ export function start(): void {
 }
 
 export function reset(): void {
-    if (timeout) {
-        clearTimeout(timeout);
-    }
+    if (timeout) { clearTimeout(timeout); }
     timeout = setTimeout(ping, interval);
     last = time();
 }
 
 function ping(): void {
-    const now = time();
+    let now = time();
     data = { gap: now - last };
     encode(Event.Ping);
     if (data.gap < Setting.PingTimeout) {
         timeout = setTimeout(ping, interval);
-    } else {
-        suspend();
-    }
+    } else { suspend(); }
 }
 
 export function stop(): void {
