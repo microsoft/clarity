@@ -89,7 +89,7 @@ function handler(entries: IntersectionObserverEntry[]): void {
         // that cannot ever be seen by the user. In some cases, websites will have a multiple copy of the same region
         // like search box - one for desktop, and another for mobile. In those cases, CSS media queries determine which one should be visible.
         // Also, if these regions ever become non-zero width or height (through AJAX, user action or orientation change) - we will automatically start monitoring them from that point onwards
-        if (regionMap.has(target) && rect.width + rect.height > 0 && viewport.width > 0 && viewport.height > 0) {
+        if (regionMap.has(target) && rect.width + rect.height > 0 && viewport && viewport.width > 0 && viewport.height > 0) {
             let id = target ? dom.getId(target) : null;
             let data = id in regions ? regions[id] : { id, name: regionMap.get(target), interaction: InteractionState.None, visibility: RegionVisibility.Rendered };
             
