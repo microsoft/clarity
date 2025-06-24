@@ -32,80 +32,70 @@ let consentStatus: ConsentState = null;
 let defaultStatus: ConsentState = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied};
 
 export function start(): void {
-    rootDomain = null;
-    const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
-    const timezone = Intl?.DateTimeFormat()?.resolvedOptions()?.timeZone ?? "";
-    const timezoneOffset = new Date().getTimezoneOffset().toString();
-    const ancestorOrigins = window.location.ancestorOrigins ? Array.from(window.location.ancestorOrigins).toString() : "";
-    const title = document?.title ? document.title : Constant.Empty;
-    electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
-
-    // Populate ids for this page
-    const s = session();
-    const u = user();
-    const projectId = config.projectId || hash(location.host);
-    data = { projectId, userId: u.id, sessionId: s.session, pageNum: s.count };
-
-    // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
-    config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
-    config.upload =
-        config.track && typeof config.upload === "string" && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;
-
-    // Log page metadata as dimensions
-    dimension.log(Dimension.UserAgent, ua);
-    dimension.log(Dimension.PageTitle, title);
-    dimension.log(Dimension.Url, scrub.url(location.href, !!electron));
-    dimension.log(Dimension.Referrer, document.referrer);
-    dimension.log(Dimension.TabId, tab());
-    dimension.log(Dimension.PageLanguage, document.documentElement.lang);
-    dimension.log(Dimension.DocumentDirection, document.dir);
-    dimension.log(Dimension.DevicePixelRatio, `${window.devicePixelRatio}`);
-    dimension.log(Dimension.Dob, u.dob.toString());
-    dimension.log(Dimension.CookieVersion, u.version.toString());
-    dimension.log(Dimension.AncestorOrigins, ancestorOrigins);
-    dimension.log(Dimension.Timezone, timezone);
-    dimension.log(Dimension.TimezoneOffset, timezoneOffset);
-
-    // Capture additional metadata as metrics
-    metric.max(Metric.ClientTimestamp, s.ts);
-    metric.max(Metric.Playback, BooleanFlag.False);
-    metric.max(Metric.Electron, electron);
-
-    // Capture navigator specific dimensions
-    if (navigator) {
-        dimension.log(Dimension.Language, navigator.language);
-        metric.max(Metric.HardwareConcurrency, navigator.hardwareConcurrency);
-        metric.max(Metric.MaxTouchPoints, navigator.maxTouchPoints);
-        // biome-ignore lint/suspicious/noExplicitAny: not all browsers support navigator.deviceMemory
-        metric.max(Metric.DeviceMemory, Math.round((<any>navigator).deviceMemory));
-        userAgentData();
-    }
-
-    if (screen) {
-        metric.max(Metric.ScreenWidth, Math.round(screen.width));
-        metric.max(Metric.ScreenHeight, Math.round(screen.height));
-        metric.max(Metric.ColorDepth, Math.round(screen.colorDepth));
-    }
-
-    // Read cookies specified in configuration
-    for (const key of config.cookies) {
-        const value = getCookie(key);
-        if (value) {
-            set(key, value);
-        }
-    }
-
-    // Track consent config
-    consentStatus = {
-      ad_Storage: config.track ? Constant.Granted : Constant.Denied,
-      analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
-    }
-
-    const consent = getConsentData(consentStatus, ConsentSource.Implicit);
-    trackConsent.config(consent);
-
-    // Track ids using a cookie if configuration allows it
-    track(u);
+  rootDomain = null;
+  const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
+  const timezone = Intl?.DateTimeFormat()?.resolvedOptions()?.timeZone ?? "";
+  const timezoneOffset = new Date().getTimezoneOffset().toString();
+  const ancestorOrigins = window.location.ancestorOrigins ? Array.from(window.location.ancestorOrigins).toString() : "";
+  const title = document?.title ? document.title : Constant.Empty;
+  electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;       
+  // Populate ids for this page
+  const s = session();
+  const u = user();
+  const projectId = config.projectId || hash(location.host);
+  data = { projectId, userId: u.id, sessionId: s.session, pageNum: s.count };    
+  // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
+  config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
+  config.upload =
+      config.track && typeof config.upload === "string" && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;       
+  // Log page metadata as dimensions
+  dimension.log(Dimension.UserAgent, ua);
+  dimension.log(Dimension.PageTitle, title);
+  dimension.log(Dimension.Url, scrub.url(location.href, !!electron));
+  dimension.log(Dimension.Referrer, document.referrer);
+  dimension.log(Dimension.TabId, tab());
+  dimension.log(Dimension.PageLanguage, document.documentElement.lang);
+  dimension.log(Dimension.DocumentDirection, document.dir);
+  dimension.log(Dimension.DevicePixelRatio, `${window.devicePixelRatio}`);
+  dimension.log(Dimension.Dob, u.dob.toString());
+  dimension.log(Dimension.CookieVersion, u.version.toString());
+  dimension.log(Dimension.AncestorOrigins, ancestorOrigins);
+  dimension.log(Dimension.Timezone, timezone);
+  dimension.log(Dimension.TimezoneOffset, timezoneOffset);       
+  // Capture additional metadata as metrics
+  metric.max(Metric.ClientTimestamp, s.ts);
+  metric.max(Metric.Playback, BooleanFlag.False);
+  metric.max(Metric.Electron, electron);     
+  // Capture navigator specific dimensions
+  if (navigator) {
+      dimension.log(Dimension.Language, navigator.language);
+      metric.max(Metric.HardwareConcurrency, navigator.hardwareConcurrency);
+      metric.max(Metric.MaxTouchPoints, navigator.maxTouchPoints);
+      // biome-ignore lint/suspicious/noExplicitAny: not all browsers support navigator.deviceMemory
+      metric.max(Metric.DeviceMemory, Math.round((<any>navigator).deviceMemory));
+      userAgentData();
+  }      
+  if (screen) {
+      metric.max(Metric.ScreenWidth, Math.round(screen.width));
+      metric.max(Metric.ScreenHeight, Math.round(screen.height));
+      metric.max(Metric.ColorDepth, Math.round(screen.colorDepth));
+  }      
+  // Read cookies specified in configuration
+  for (const key of config.cookies) {
+      const value = getCookie(key);
+      if (value) {
+          set(key, value);
+      }
+  }      
+  // Track consent config
+  consentStatus = {
+    ad_Storage: config.track ? Constant.Granted : Constant.Denied,
+    analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
+  }      
+  const consent = getConsentData(consentStatus, ConsentSource.Implicit);
+  trackConsent.config(consent);      
+  // Track ids using a cookie if configuration allows it
+  track(u);
 
 }
 
@@ -239,7 +229,7 @@ function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): 
                 cb.callback && 
                 ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
                 (!cb.wait || upgrade)       
-        ) {
+            ) {
                 cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
                 cb.called = true;
                 if (!cb.recall) {
