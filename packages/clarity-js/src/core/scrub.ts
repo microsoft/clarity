@@ -41,7 +41,13 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                     case "srcset":
                     case "title":
                     case "alt":
-                        return privacy === Privacy.TextImage ? Data.Constant.Empty : value;
+                        if (privacy === Privacy.TextImage) {
+                            if (hint === 'src' && value?.startsWith('blob:')) {
+                                return 'blob:';
+                            }
+                            return Data.Constant.Empty;
+                        }
+                        return value;
                     case "value":
                     case "click":
                     case "input":
