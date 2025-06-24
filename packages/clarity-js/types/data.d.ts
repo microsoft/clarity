@@ -200,7 +200,6 @@ export const enum Code {
     Config = 8,
     FunctionExecutionTime = 9,
     LeanLimit = 10,
-    AngularZone = 11,
 }
 
 export const enum Severity {
