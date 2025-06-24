@@ -30,12 +30,11 @@ export function start(): void {
   let s = session();
   let u = user();
   let projectId = config.projectId || hash(location.host);
-  data = { projectId, userId: u.id, sessionId: s.session, pageNum: s.count };    
+  data = { projectId, userId: u.id, sessionId: s.session, pageNum: s.count };
 
   // Override configuration based on what's in the session storage, unless it is blank (e.g. using upload callback, like in devtools)
   config.lean = config.track && s.upgrade !== null ? s.upgrade === BooleanFlag.False : config.lean;
-  config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload;      
-  
+  config.upload = config.track && typeof config.upload === Constant.String && s.upload && s.upload.length > Constant.HTTPS.length ? s.upload : config.upload; 
   // Log page metadata as dimensions
   dimension.log(Dimension.UserAgent, ua);
   dimension.log(Dimension.PageTitle, title);
@@ -49,12 +48,12 @@ export function start(): void {
   dimension.log(Dimension.CookieVersion, u.version.toString());
   dimension.log(Dimension.AncestorOrigins, ancestorOrigins);
   dimension.log(Dimension.Timezone, timezone);
-  dimension.log(Dimension.TimezoneOffset, timezoneOffset);   
+  dimension.log(Dimension.TimezoneOffset, timezoneOffset);
 
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);
   metric.max(Metric.Playback, BooleanFlag.False);
-  metric.max(Metric.Electron, electron);     
+  metric.max(Metric.Electron, electron);
 
   // Capture navigator specific dimensions
   if (navigator) {
@@ -63,17 +62,19 @@ export function start(): void {
     metric.max(Metric.MaxTouchPoints, navigator.maxTouchPoints);
     metric.max(Metric.DeviceMemory, Math.round((<any>navigator).deviceMemory));
     userAgentData();
-  }      
+  }
+
   if (screen) {
     metric.max(Metric.ScreenWidth, Math.round(screen.width));
     metric.max(Metric.ScreenHeight, Math.round(screen.height));
     metric.max(Metric.ColorDepth, Math.round(screen.colorDepth));
-  }      
+  }
+
   // Read cookies specified in configuration
   for (let key of config.cookies) {
     let value = getCookie(key);
     if (value) { set(key, value); }
-  }  
+  }
 
   // Track consent config
   consentStatus = {
@@ -84,7 +85,6 @@ export function start(): void {
   trackConsent.config(consent);      
   // Track ids using a cookie if configuration allows it
   track(u);
-
 }
 
 function userAgentData(): void {
@@ -107,10 +107,9 @@ export function stop(): void {
   callbacks.forEach(cb => { cb.called = false; });
 }
 
-export function metadata(cb: MetadataCallback, wait = true, recall = false, consentInfo = false): void {
-  const upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
+export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boolean = false, consentInfo: boolean = false): void {
+  let upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let called = false;
-  
   // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
   // directly execute the callback in addition to adding to our list as we only process callbacks at the moment
   // we go through the upgrading flow.
@@ -211,19 +210,19 @@ export function save(): void {
 function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): void {
   if (callbacks.length > 0) {
     for (let i = 0; i < callbacks.length; i++) {
-    const cb = callbacks[i];
-    if (
-      cb.callback && 
-      ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
-      (!cb.wait || upgrade)       
-    ) {
-      cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
-      cb.called = true;
-      if (!cb.recall) {
-        callbacks.splice(i, 1);
-        i--;
-      }
-    }
+     const cb = callbacks[i];
+     if (
+       cb.callback && 
+       ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
+       (!cb.wait || upgrade)       
+     ) {
+       cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
+       cb.called = true;
+       if (!cb.recall) {
+         callbacks.splice(i, 1);
+         i--;
+       }
+     }
     }
   }
 }

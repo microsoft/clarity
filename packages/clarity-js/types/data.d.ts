@@ -5,11 +5,11 @@ export type DecodedToken = (any | any[]);
 
 export type MetadataCallback = (data: Metadata, playback: boolean, consentStatus?: ConsentState) => void;
 export interface MetadataCallbackOptions {
-  callback: MetadataCallback;
-  wait: boolean;
-  recall: boolean;
-  called: boolean;
-  consentInfo: boolean;
+    callback: MetadataCallback;
+    wait: boolean;
+    recall: boolean;
+    called: boolean;
+    consentInfo: boolean;
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
