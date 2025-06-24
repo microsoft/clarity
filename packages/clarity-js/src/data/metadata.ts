@@ -246,10 +246,9 @@ function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): 
             const cb = callbacks[i];
             if (
                 cb.callback && 
-                (!cb.called || (cb.consentInfo && consentUpdate)) && 
-                (!cb.wait || upgrade) && 
-                (!consentUpdate || cb.consentInfo) // If consentUpdate is true, we only call callbacks that have consentInfo set to true
-            ) {
+                ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
+                (!cb.wait || upgrade)       
+        ) {
                 cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
                 cb.called = true;
                 if (!cb.recall) {
