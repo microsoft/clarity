@@ -99,8 +99,10 @@ export function decode(tokens: Data.Token[]): DataEvent {
                     }
                 }
             }
-
             return { time, event, data: extract };
+        case Data.Event.Consent:
+            let consent: Data.ConsentData = { source: tokens[2] as number, ad_Storage: tokens[3] as number, analytics_Storage: tokens[4] as number};
+            return { time, event, data: consent };
     }
     return null;
 }
