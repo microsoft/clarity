@@ -1,5 +1,5 @@
 import { Time } from "@clarity-types/core";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, ConsentState, ConsentSource, ConsentData } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import * as core from "@src/core";
 import config from "@src/core/config";
@@ -15,8 +15,6 @@ export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let rootDomain = null;
-let consentStatus: ConsentState = null;
-let defaultStatus: ConsentState = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied};
 
 export function start(): void {
   rootDomain = null;
@@ -86,12 +84,8 @@ export function start(): void {
   }
 
   // Track consent config
-  consentStatus = {
-    ad_Storage: config.track ? Constant.Granted : Constant.Denied,
-    analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
-  }      
-  const consent = getConsentData(consentStatus, ConsentSource.Implicit);
-  trackConsent.config(consent);      
+  trackConsent.config(config.track);
+
   // Track ids using a cookie if configuration allows it
   track(u);
 }
@@ -112,11 +106,10 @@ function userAgentData(): void {
 export function stop(): void {
   rootDomain = null;
   data = null;
-  consentStatus = null;
   callbacks.forEach(cb => { cb.called = false; });
 }
 
-export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boolean = false, consentInfo: boolean = false): void {
+export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boolean = false): void {
   let upgraded = config.lean ? BooleanFlag.False : BooleanFlag.True;
   let called = false;
   // if caller hasn't specified that they want to skip waiting for upgrade but we've already upgraded, we need to
@@ -124,11 +117,11 @@ export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boo
   // we go through the upgrading flow.
   if (data && (upgraded || wait === false)) {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
-    cb(data, !config.lean, consentInfo? consentStatus : undefined);
+    cb(data, !config.lean);
     called = true;
   }
   if (recall || !called) {
-    callbacks.push({ callback: cb, wait, recall, called, consentInfo });
+    callbacks.push({ callback: cb, wait, recall, called });
   }
 }
 
@@ -136,27 +129,8 @@ export function id(): string {
   return data ? [data.userId, data.sessionId, data.pageNum].join(Constant.Dot) : Constant.Empty;
 }
 
-//TODO: Remove this function once consentv2 is fully released
-export function consent(status = true): void {
+export function consent(status: boolean = true): void {
   if (!status) {
-    consentv2();
-    return;
-  }
-  
-  consentv2({ ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
-  trackConsent.consent();
-}
-
-export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.API): void {
-  consentStatus = {
-    ad_Storage: normalizeConsent(consentState.ad_Storage),
-    analytics_Storage: normalizeConsent(consentState.analytics_Storage)
-  };
-
-  callback(true);
-  const consentData = getConsentData(consentStatus, source);
-  
-  if (!consentData.analytics_Storage) {
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
@@ -169,23 +143,8 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    trackConsent.consentv2(consentData);
     trackConsent.consent();
   }
-}
-
-function getConsentData(consentState: ConsentState, source : ConsentSource): ConsentData {
-  let consent: ConsentData = {
-    source: source,
-    ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
-    analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
-  };
-
-  return consent;
-}
-
-function normalizeConsent(value: unknown): string {
-  return typeof value === 'string' ? value.toLowerCase() : Constant.Denied;
 }
 
 export function clear(): void {
@@ -203,9 +162,9 @@ function tab(): string {
   return id;
 }
 
-export function callback(consentUpdate:boolean = false): void {
+export function callback(): void {
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-  processCallback(upgrade, consentUpdate);
+  processCallback(upgrade);
 }
 
 export function save(): void {
@@ -216,16 +175,12 @@ export function save(): void {
   setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Pipe), Setting.SessionExpire);
 }
 
-function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): void {
+function processCallback(upgrade: BooleanFlag) {
   if (callbacks.length > 0) {
     for (let i = 0; i < callbacks.length; i++) {
       const cb = callbacks[i];
-      if (
-        cb.callback && 
-        ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
-        (!cb.wait || upgrade)       
-      ) {
-        cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
+      if (cb.callback && !cb.called && (!cb.wait || upgrade)) {
+        cb.callback(data, !config.lean);
         cb.called = true;
         if (!cb.recall) {
           callbacks.splice(i, 1);
