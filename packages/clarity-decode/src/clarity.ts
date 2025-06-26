@@ -1,6 +1,6 @@
 import { Data, version } from "clarity-js";
 import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
-import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent } from "../types/data";
+import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent, ConsentEvent } from "../types/data";
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ChangeEvent, ClickEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
 import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
@@ -188,6 +188,10 @@ export function decode(input: string): DecodedPayload {
                 if (payload.extract === undefined) { payload.extract = []; }
                     payload.extract.push(data.decode(entry) as ExtractEvent);
                     break;
+            case Data.Event.Consent:
+                if (payload.consent === undefined) { payload.consent = []; }
+                payload.consent.push(data.decode(entry) as ConsentEvent);
+                break;
             default:
                 console.error(`No handler for Event: ${JSON.stringify(entry)}`);
                 break;

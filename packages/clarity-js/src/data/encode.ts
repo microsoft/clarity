@@ -1,6 +1,7 @@
 import { Event, Token } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
+import * as consent from "@src/data/consent";
 import * as custom from "@src/data/custom";
 import * as dimension from "@src/data/dimension";
 import * as limit from "@src/data/limit";
@@ -136,5 +137,12 @@ export default function(event: Event): void {
             
             extract.reset();
             queue(tokens, false);
+        
+        case Event.Consent: 
+            tokens.push(consent.data.source);
+            tokens.push(consent.data.ad_Storage);
+            tokens.push(consent.data.analytics_Storage);
+            queue(tokens);
+            break;
     }
 }

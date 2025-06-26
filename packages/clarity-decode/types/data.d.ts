@@ -29,6 +29,7 @@ export interface SummaryEvent extends PartialEvent { data: Data.SummaryData; }
 export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
 export interface ExtractEvent extends PartialEvent { data: Data.ExtractData; }
+export interface ConsentEvent extends PartialEvent { data: Data.ConsentData; }
 export interface DataEvent extends PartialEvent {
     data: Data.BaselineData |
     Data.DimensionData | 
@@ -40,7 +41,8 @@ export interface DataEvent extends PartialEvent {
     Data.SummaryData |
     Data.UpgradeData |
     Data.UploadData | 
-    Data.ExtractData;
+    Data.ExtractData |
+    Data.ConsentData;
 }
 
 export type DecodedEvent = DataEvent | DiagnosticEvent | InteractionEvent | LayoutEvent | PerformanceEvent;
@@ -78,6 +80,7 @@ export interface DecodedPayload {
     variable?: VariableEvent[];
     custom?: CustomEvent[];
     extract?: ExtractEvent[];
+    consent?: ConsentEvent[];
 }
 
 export interface DecodedVersion {
