@@ -12,6 +12,7 @@ interface Clarity {
   resume: () => void;
   upgrade: (key: string) => void;
   consent: () => void;
+  consentv2: () => void;
   event: (name: string, value: string) => void;
   set: (variable: string, value: string | string[]) => void;
   identify: (userId: string, sessionId?: string, pageId?: string, userHint?: string) => void;

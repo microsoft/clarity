@@ -3,12 +3,13 @@ export type Target = (number | Node);
 export type Token = (string | number | number[] | string[] | (string | number)[]);
 export type DecodedToken = (any | any[]);
 
-export type MetadataCallback = (data: Metadata, playback: boolean) => void;
+export type MetadataCallback = (data: Metadata, playback: boolean, consentStatus?: ConsentState) => void;
 export interface MetadataCallbackOptions {
     callback: MetadataCallback,
     wait: boolean,
     recall: boolean,
-    called: boolean
+    called: boolean,
+    consentInfo: boolean
 }
 export type SignalCallback = (data: ClaritySignal) => void
 
@@ -71,6 +72,7 @@ export const enum Event {
     Animation = 44,
     StyleSheetAdoption = 45,
     StyleSheetUpdate = 46,
+    Consent = 47,
 
     // Apps specific events
     WebViewDiscover = 100,
@@ -347,6 +349,8 @@ export const enum Constant {
     SHA256 = "SHA-256",
     Electron = "Electron",
     Caret = "^",
+    Granted = "granted",
+    Denied = "denied",
 }
 
 export const enum XMLReadyState {
@@ -357,6 +361,10 @@ export const enum XMLReadyState {
     Done = 4
 }
 
+export const enum ConsentSource{
+    Implicit = 0,
+    API = 1
+}
 
 /* Helper Interfaces */
 
@@ -514,4 +522,15 @@ export interface PerformanceEventTiming extends PerformanceEntry {
 export interface Interaction {
     id: number;
     latency: number;
+}
+
+export interface ConsentState {
+    ad_Storage?: string;
+    analytics_Storage?: string;
+}
+
+export interface ConsentData {
+    source: ConsentSource;
+    ad_Storage: BooleanFlag;
+    analytics_Storage: BooleanFlag;
 }
