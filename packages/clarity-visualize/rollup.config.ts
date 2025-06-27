@@ -3,7 +3,9 @@ import resolve from "@rollup/plugin-node-resolve";
 import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import { importAsString } from 'rollup-plugin-string-import';
-import pkg from "./package.json" assert { type: 'json' };
+import { readFileSync } from "fs";
+
+const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
 
 function wrapWithBackground(svg){
   return `background: url("data:image/svg+xml,${svg}") no-repeat center center;`;
