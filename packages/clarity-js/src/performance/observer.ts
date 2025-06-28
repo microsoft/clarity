@@ -99,10 +99,17 @@ export function stop(): void {
     if (observer) { observer.disconnect(); }
     observer = null;
     interaction.resetInteractions();
+    anchorCache = null;
 }
 
+// Cached anchor element for optimal performance & memory management
+let anchorCache: HTMLAnchorElement | null = null;
+
 function host(url: string): string {
-    let a = document.createElement("a");
-    a.href = url;
-    return a.host;
+    if (!anchorCache) {
+        anchorCache = document.createElement("a");
+    }
+
+    anchorCache.href = url;
+    return anchorCache.host;
 }
