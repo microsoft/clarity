@@ -111,6 +111,10 @@ function updateVersionInJson(fileContent: string, newVersion: string): string {
         "clarity-visualize"
     ];
 
+    // Detect original line ending style to preserve it
+    const hasWindowsLineEndings = fileContent.includes('\r\n');
+    const lineEnding = hasWindowsLineEndings ? '\r\n' : '\n';
+
     const json = JSON.parse(fileContent);
 
     for (const fieldName of versionFieldNames) {
@@ -128,8 +132,8 @@ function updateVersionInJson(fileContent: string, newVersion: string): string {
     return JSON
         // format json with 2 spaces indentation
         .stringify(json, null, 2)
-        // replace LF with CRLF to maintain the current line endings
-        .replace(/\n/g, '\r\n');
+        // preserve original line ending style
+        .replace(/\n/g, lineEnding);
 }
 
 const addVersionFilesToGit = async (versionSourceFile: string, jsonFilesToUpdate: string[]): Promise<void> => {
