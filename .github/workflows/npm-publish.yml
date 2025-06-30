@@ -9,6 +9,9 @@ on:
     paths:
       - 'packages/clarity-js/src/core/version.ts'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -59,3 +62,17 @@ jobs:
         working-directory: ./packages/clarity-visualize
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(node -p "const fs = require('fs'); const content = fs.readFileSync('./packages/clarity-js/src/core/version.ts', 'utf8'); content.match(/version = \"([^\"]+)\"/)[1]")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Create Git tag
+        if: success()
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
