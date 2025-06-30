@@ -33,6 +33,10 @@ function recompute(event: UIEvent = null): void {
     let de = document.documentElement;
     let element = event ? target(event) : de;
 
+    // In some edge cases, it's possible for target to be null.
+    // In those cases, we cannot proceed with scroll event instrumentation.
+    if (!element) { return; }
+
     // If the target is a Document node, then identify corresponding documentElement and window for this document
     if (element && element.nodeType === Node.DOCUMENT_NODE) {
         let frame = iframe(element);

@@ -134,6 +134,10 @@ async function upload(final: boolean = false): Promise<void> {
     // could inject function arguments for internal tracking (likely stack traces for script errors).
     // For these edge cases, we want to ensure that an injected object (e.g. {"key": "value"}) isn't mistaken to be true.
     let last = final === true;
+    
+    // In some cases envelope has null data because it's part of the shutdown process while there's one upload call queued which might introduce runtime error
+    if(!envelope.data) return;
+
     let e = JSON.stringify(envelope.envelope(last));
     let a = `[${analysis.join()}]`;
 
