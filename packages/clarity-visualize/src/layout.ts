@@ -627,8 +627,6 @@ export class LayoutHelper {
                                 }
                                 node.setAttribute(Constant.Hide, size);
                         }
-                    } else if (tag === Constant.ImageTag && attribute.indexOf("src") === 0 && ((v === null || v.length === 0 || v?.startsWith('blob:')))) {
-                        
                     }
                     else {
                         node.setAttribute(attribute, v);
