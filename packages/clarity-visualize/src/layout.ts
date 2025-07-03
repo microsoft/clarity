@@ -627,8 +627,7 @@ export class LayoutHelper {
                                 }
                                 node.setAttribute(Constant.Hide, size);
                         }
-                    }
-                    else {
+                    } else {
                         node.setAttribute(attribute, v);
                     }
                 } catch (ex) {
