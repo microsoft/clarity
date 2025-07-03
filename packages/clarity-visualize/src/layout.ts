@@ -670,7 +670,6 @@ export class LayoutHelper {
             this.getIframeUnavailableCss() +
             this.getBlobUnavailableCss() +
             this.getBackgroundCss() +
-            `${Constant.IFrameTag}[${Constant.UnavailableSmall}] { ${iframeUnavailableSvgSmall} }` +
             `*[${Constant.Suspend}] { filter: grayscale(100%); }` +
             `body { font-size: initial; }
             ${this.getMobileCustomStyle()}`;
