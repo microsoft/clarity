@@ -627,7 +627,10 @@ export class LayoutHelper {
                                 }
                                 node.setAttribute(Constant.Hide, size);
                         }
-                    } else {
+                    } else if (tag === Constant.ImageTag && attribute.indexOf("src") === 0 && ((v === null || v.length === 0 || v?.startsWith('blob:')))) {
+                        
+                    }
+                    else {
                         node.setAttribute(attribute, v);
                     }
                 } catch (ex) {
@@ -670,7 +673,6 @@ export class LayoutHelper {
             this.getIframeUnavailableCss() +
             this.getBlobUnavailableCss() +
             this.getBackgroundCss() +
-            `${Constant.IFrameTag}[${Constant.UnavailableSmall}] { ${iframeUnavailableSvgSmall} }` +
             `*[${Constant.Suspend}] { filter: grayscale(100%); }` +
             `body { font-size: initial; }
             ${this.getMobileCustomStyle()}`;
