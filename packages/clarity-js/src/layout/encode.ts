@@ -33,7 +33,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 tokens.push(r.data.interaction);
                 tokens.push(r.data.visibility);
                 tokens.push(r.data.name);
-                queue(tokens);
+                queue(tokens, false);
             }
             region.reset();
             break;
@@ -51,7 +51,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.operation);
                 tokens.push(entry.data.cssRules);
-                queue(tokens);
+                queue(tokens, false);
             }
             style.reset();
             break;
