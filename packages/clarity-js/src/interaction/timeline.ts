@@ -43,9 +43,13 @@ export function track(time: number,
 }
 
 export function compute(): void {
+    if (!envelope.data) {
+        return;
+    }
+
     const temp = [];
     updates = [];
-    let max = (envelope?.data?.start || 0) + (envelope?.data?.duration || 0);
+    let max = (envelope.data.start || 0) + (envelope.data.duration || 0);
     let min = Math.max(max - Setting.TimelineSpan, 0);
 
     for (let s of state) {
