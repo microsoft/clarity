@@ -45,57 +45,59 @@ export function start(): void {
 }
 
 export function queue(tokens: Token[], transmit: boolean = true): void {
-    if (active) {
-        let now = time();
-        let type = tokens.length > 1 ? tokens[1] : null;
-        let event = JSON.stringify(tokens);
+    if (!active) {
+        return;
+    }
 
-        if (!config.lean) {
-            leanLimit = false;
-        } else if (!leanLimit && playbackBytes + event.length > Setting.PlaybackBytesLimit) {
-            internal.log(Code.LeanLimit, Severity.Info);
-            leanLimit = true;
-        }
+    let now = time();
+    let type = tokens.length > 1 ? tokens[1] : null;
+    let event = JSON.stringify(tokens);
 
-        switch (type) {
-            case Event.Discover:
-                if (leanLimit) { break; }
-                discoverBytes += event.length;
-            case Event.Box:
-            case Event.Mutation:
-            case Event.Snapshot:
-            case Event.StyleSheetAdoption:
-            case Event.StyleSheetUpdate:
-                if (leanLimit) { break; }
-                playbackBytes += event.length;
-                playback.push(event);
-                break;
-            default:
-                analysis.push(event);
-                break;
-        }
+    if (!config.lean) {
+        leanLimit = false;
+    } else if (!leanLimit && playbackBytes + event.length > Setting.PlaybackBytesLimit) {
+        internal.log(Code.LeanLimit, Severity.Info);
+        leanLimit = true;
+    }
 
-        // Increment event count metric
-        metric.count(Metric.EventCount);
+    switch (type) {
+        case Event.Discover:
+            if (leanLimit) { break; }
+            discoverBytes += event.length;
+        case Event.Box:
+        case Event.Mutation:
+        case Event.Snapshot:
+        case Event.StyleSheetAdoption:
+        case Event.StyleSheetUpdate:
+            if (leanLimit) { break; }
+            playbackBytes += event.length;
+            playback.push(event);
+            break;
+        default:
+            analysis.push(event);
+            break;
+    }
 
-        // Following two checks are precautionary and act as a fail safe mechanism to get out of unexpected situations.
-        // Check 1: If for any reason the upload hasn't happened after waiting for 2x the config.delay time,
-        // reset the timer. This allows Clarity to attempt an upload again.
-        let gap = delay();
-        if (now - queuedTime > (gap * 2)) {
-            clearTimeout(timeout);
-            timeout = null;
-        }
+    // Increment event count metric
+    metric.count(Metric.EventCount);
 
-        // Transmit Check: When transmit is set to true (default), it indicates that we should schedule an upload
-        // However, in certain scenarios - like metric calculation - which are triggered as part of an existing upload
-        // We enrich the data going out with the existing upload. In these cases, call to upload comes with 'transmit' set to false.
-        if (transmit && timeout === null) {
-            if (type !== Event.Ping) { ping.reset(); }
-            timeout = setTimeout(upload, gap);
-            queuedTime = now;
-            limit.check(playbackBytes);
-        }
+    // Following two checks are precautionary and act as a fail safe mechanism to get out of unexpected situations.
+    // Check 1: If for any reason the upload hasn't happened after waiting for 2x the config.delay time,
+    // reset the timer. This allows Clarity to attempt an upload again.
+    let gap = delay();
+    if (now - queuedTime > (gap * 2)) {
+        clearTimeout(timeout);
+        timeout = null;
+    }
+
+    // Transmit Check: When transmit is set to true (default), it indicates that we should schedule an upload
+    // However, in certain scenarios - like metric calculation - which are triggered as part of an existing upload
+    // We enrich the data going out with the existing upload. In these cases, call to upload comes with 'transmit' set to false.
+    if (transmit && timeout === null) {
+        if (type !== Event.Ping) { ping.reset(); }
+        timeout = setTimeout(upload, gap);
+        queuedTime = now;
+        limit.check(playbackBytes);
     }
 }
 
@@ -114,6 +116,10 @@ export function stop(): void {
 }
 
 async function upload(final: boolean = false): Promise<void> {
+    if (!active) {
+        return;
+    }
+
     timeout = null;
 
     // Check if we can send playback bytes over the wire or not
