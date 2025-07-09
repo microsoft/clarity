@@ -19,7 +19,7 @@ export default function(event: Event): void {
     switch (event) {
         case Event.Baseline: {
             const b = baseline.state;
-            if (b) {
+            if (b && b.data) {
                 tokens = [b.time, b.event];
                 tokens.push(b.data.visible);
                 tokens.push(b.data.docWidth);
@@ -129,7 +129,7 @@ export default function(event: Event): void {
         }
         case Event.Extract: {
             const extractKeys = extract.keys;
-            extractKeys.forEach((e => {
+            extractKeys.forEach(e => {
                 tokens.push(e);
                 const token = []
                 for (const d in extract.data[e]) {
@@ -138,7 +138,7 @@ export default function(event: Event): void {
                     token.push(extract.data[e][d]);
                 }
                 tokens.push(token);
-            }));
+            });
             
             extract.reset();
             queue(tokens, false);
