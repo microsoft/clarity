@@ -63,10 +63,12 @@ export default function(event: Event): void {
             queue(tokens);
             break;
         case Event.Upload:
-            tokens.push(track.sequence);
-            tokens.push(track.attempts);
-            tokens.push(track.status);
-            queue(tokens, false);
+            if (track) {
+                tokens.push(track.sequence);
+                tokens.push(track.attempts);
+                tokens.push(track.status);
+                queue(tokens, false);
+            }
             break;
         case Event.Custom:
             // not all custom events have a key - if it wasn't passed server handles just value
