@@ -1,5 +1,5 @@
 import { Code, Constant, Dimension, Metric, Severity, PerformanceEventTiming } from "@clarity-types/data";
-import { FunctionNames } from "@clarity-types/performance";
+import { FunctionNames, NavigatorConnection } from "@clarity-types/performance";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -15,7 +15,7 @@ const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTa
 
 export function start(): void {
     // Capture connection properties, if available
-    if (navigator && "connection" in navigator) {
+    if (navigator && "connection" in navigator && navigator.connection) {
         dimension.log(Dimension.ConnectionType, navigator["connection"]["effectiveType"]);
     }
 
