@@ -125,6 +125,7 @@ export function compute(): void {
 
 export function stop(): void {
     clearTimeout(timeout);
+    throttledRecompute.cleanup();
     state = [];
     initialTop = null;
     initialBottom = null;

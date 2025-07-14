@@ -3,14 +3,14 @@
  * every specified duration in milliseconds, ensuring the last event is not lost.
  * @param func - The function to throttle.
  * @param duration - The duration in milliseconds to wait before allowing the next execution.
- * @returns A throttled version of the provided function.
+ * @returns A throttled version of the provided function with a cleanup method.
  */
-export default function throttle<T extends (...args: any[]) => void>(func: T, duration: number): T {
+export default function throttle<T extends (...args: any[]) => void>(func: T, duration: number): T & { cleanup: () => void } {
   let lastExecutionTime = 0;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let lastArgs: Parameters<T> | null = null;
 
-  return function (...args: Parameters<T>) {
+  function throttledFunction(...args: Parameters<T>) {
     const now = performance.now();
     const timeSinceLastExecution = now - lastExecutionTime;
 
@@ -31,5 +31,16 @@ export default function throttle<T extends (...args: any[]) => void>(func: T, du
       lastExecutionTime = now;
       func.apply(this, args);
     }
-  } as T;
+  }
+
+  // Add cleanup method to clear pending timeouts
+  throttledFunction.cleanup = function () {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+      lastArgs = null;
+    }
+  };
+
+  return throttledFunction as T & { cleanup: () => void };
 }
