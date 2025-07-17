@@ -22,6 +22,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             };
             return { time, event, data: pointerData };
         case Data.Event.Click:
+        case Data.Event.ContextMenu:
             let clickHashes = (tokens[12] as string).split(Data.Constant.Dot);
             let clickData: ClickData = {
                 target: tokens[2] as number,

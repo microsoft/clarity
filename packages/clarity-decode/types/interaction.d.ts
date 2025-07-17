@@ -18,6 +18,7 @@ export interface ClickVizualizationData {
 export interface InputEvent extends PartialEvent { data: Interaction.InputData; }
 export interface ChangeEvent extends PartialEvent { data: Interaction.ChangeData; }
 export interface ClickEvent extends PartialEvent { data: ClickData; }
+export interface ContextMenuEvent extends PartialEvent { data: ClickData; }
 export interface ClipboardEvent extends PartialEvent { data: Interaction.ClipboardData; }
 export interface PointerEvent extends PartialEvent { data: Interaction.PointerData; }
 export interface ResizeEvent extends PartialEvent { data: Interaction.ResizeData; }
