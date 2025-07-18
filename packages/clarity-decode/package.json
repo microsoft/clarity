@@ -1,6 +1,6 @@
 {
   "name": "clarity-decode",
-  "version": "0.8.19",
+  "version": "0.8.20",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
   "author": "Microsoft Corp.",
   "license": "MIT",
@@ -26,17 +26,22 @@
     "url": "https://github.com/Microsoft/clarity/issues"
   },
   "dependencies": {
-    "clarity-js": "^0.8.19"
+    "clarity-js": "^0.8.20"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^24.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-terser": "^0.4.0",
     "@rollup/plugin-typescript": "^11.0.0",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^10.0.0",
+    "chai": "^4.3.0",
     "del-cli": "^5.0.0",
     "husky": "^8.0.0",
     "lint-staged": "^13.1.0",
+    "mocha": "^10.2.0",
     "rollup": "^3.0.0",
+    "ts-mocha": "^10.0.0",
     "ts-node": "^10.1.0",
     "tslint": "^6.1.3",
     "typescript": "^4.3.5"
@@ -45,6 +50,8 @@
     "build": "yarn build:clean && yarn build:main",
     "build:main": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "build:clean": "del-cli build/*",
+    "pretest": "yarn build",
+    "test": "mocha test/decode.test.js",
     "tslint": "tslint --project ./",
     "tslint:fix": "tslint --fix --project ./ --force"
   },

@@ -2,7 +2,7 @@ import { Data, version } from "clarity-js";
 import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
 import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent, ConsentEvent } from "../types/data";
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
-import { ChangeEvent, ClickEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
+import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
 import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
 import { DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
 import { NavigationEvent } from "../types/performance";
@@ -100,6 +100,11 @@ export function decode(input: string): DecodedPayload {
                 if (payload.click === undefined) { payload.click = []; }
                 let clickEntry = interaction.decode(entry) as ClickEvent;
                 payload.click.push(clickEntry);
+                break;
+            case Data.Event.ContextMenu:
+                if (payload.contextMenu === undefined) { payload.contextMenu = []; }
+                let contextMenuEntry = interaction.decode(entry) as ContextMenuEvent;
+                payload.contextMenu.push(contextMenuEntry);
                 break;
             case Data.Event.Clipboard:
                 if (payload.clipboard === undefined) { payload.clipboard = []; }

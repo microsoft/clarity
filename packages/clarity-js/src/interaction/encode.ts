@@ -53,6 +53,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             pointer.reset();
             break;
         case Event.Click:
+        case Event.ContextMenu:
             for (let entry of click.state) {
                 let cTarget = metadata(entry.data.target as Node, entry.event, entry.data.text);
                 tokens = [entry.time, entry.event];
