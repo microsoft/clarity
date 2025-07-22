@@ -1,5 +1,5 @@
 import { Code, Constant, Dimension, Metric, Severity, PerformanceEventTiming } from "@clarity-types/data";
-import { FunctionNames, NavigatorConnection } from "@clarity-types/performance";
+import { FunctionNames } from "@clarity-types/performance";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
