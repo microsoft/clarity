@@ -304,6 +304,7 @@ function response(payload: string): void {
                 if (parts.length > 1) { signalsEvent(parts[1]); }
                 break;
             case Constant.Snapshot:
+                config.lean = false; // Disable lean mode to ensure we can send playback information to server.
                 snapshot();
                 break;
         }
