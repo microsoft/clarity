@@ -237,6 +237,9 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
                 //    2: Safari will terminate pending XHR requests with status code 0 if the user navigates away from the page
                 // In any case, we switch the upload URL to fallback configuration (if available) before re-trying one more time
                 if (xhr.status === 0) { config.upload = config.fallback ? config.fallback : config.upload; }
+                // Capture the status code and number of attempts so we can report it back to the server
+                track = { sequence, attempts: transitData.attempts, status: xhr.status };
+                encode(Event.Upload);
                 // In all other cases, re-attempt sending the same data
                 // For retry we always fallback to string payload, even though we may have attempted
                 // sending zipped payload earlier
