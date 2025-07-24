@@ -319,6 +319,7 @@ export const enum Constant {
     Action = "ACTION",
     Signal = "SIGNAL",
     Extract = "EXTRACT",
+    Snapshot = "SNAPSHOT",
     UserHint = "userHint",
     UserType = "userType",
     UserId = "userId",

@@ -20,6 +20,7 @@ import * as extract from "@src/data/extract";
 import * as style from "@src/layout/style";
 import { report } from "@src/core/report";
 import { signalsEvent } from "@src/data/signal";
+import { snapshot } from "@src/insight/snapshot";
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -304,6 +305,10 @@ function response(payload: string): void {
                 break;
             case Constant.Signal:
                 if (parts.length > 1) { signalsEvent(parts[1]); }
+                break;
+            case Constant.Snapshot:
+                config.lean = false; // Disable lean mode to ensure we can send playback information to server.
+                snapshot();
                 break;
         }
     }
