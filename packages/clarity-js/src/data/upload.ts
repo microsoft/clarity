@@ -187,8 +187,16 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             try {
                 // Navigator needs to be bound to sendBeacon before it is used to avoid errors in some browsers
                 dispatched = navigator.sendBeacon.bind(navigator)(url, payload);
-                if (dispatched) { done(sequence); }
-            } catch { /* do nothing - and we will automatically fallback to XHR below */ }
+                if (dispatched) { 
+                    done(sequence); 
+                } else {
+                    // If sendBeacon fails, we report the error and continue with XHR upload
+                    report(new Error(`${Constant.BeaconError}: ${payload.length}`));
+                }
+            } catch(error) {
+                // If sendBeacon fails, we report the error and continue with XHR upload
+                report(new Error(`${Constant.BeaconError}: ${error?.message?.substring(0, 50)} : ${payload.length}`));
+            }
         }
 
         // Before initiating XHR upload, we check if the data has already been uploaded using sendBeacon
