@@ -35,7 +35,7 @@ export function observe(root: Node): void {
 function mouse(event: Event, root: Node, evt: MouseEvent): void {
     mouse.dn = FunctionNames.PointerMouse;
     let frame = iframe(root);
-    let d = frame ? frame.contentDocument.documentElement : document.documentElement;
+    let d = frame && frame.contentDocument ? frame.contentDocument.documentElement : document.documentElement;
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
     let y = "pageY" in evt ? Math.round(evt.pageY) : ("clientY" in evt ? Math.round(evt["clientY"] + d.scrollTop) : null);
     // In case of iframe, we adjust (x,y) to be relative to top parent's origin
@@ -52,7 +52,7 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
 function touch(event: Event, root: Node, evt: TouchEvent): void {
     touch.dn = FunctionNames.PointerTouch;
     let frame = iframe(root);
-    let d = frame ? frame.contentDocument.documentElement : document.documentElement;
+    let d = frame && frame.contentDocument ? frame.contentDocument.documentElement : document.documentElement;
     let touches = evt.changedTouches;
 
     let t = time(evt);

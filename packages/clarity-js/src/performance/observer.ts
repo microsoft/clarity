@@ -15,7 +15,7 @@ const types: string[] = [Constant.Navigation, Constant.Resource, Constant.LongTa
 
 export function start(): void {
     // Capture connection properties, if available
-    if (navigator && "connection" in navigator) {
+    if (navigator && navigator["connection"]) {
         dimension.log(Dimension.ConnectionType, navigator["connection"]["effectiveType"]);
     }
 
