@@ -183,7 +183,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
         // The advantage to using sendBeacon is that browser can decide to upload asynchronously, improving chances of success
         // However, we don't want to rely on it for every payload, since we have no ability to retry if the upload failed.
         // Also, in case of sendBeacon, we do not have a way to alter HTTP headers and therefore can't send compressed payload
-        if (beacon && "sendBeacon" in navigator) {
+        if (beacon && navigator && navigator["sendBeacon"]) {
             try {
                 // Navigator needs to be bound to sendBeacon before it is used to avoid errors in some browsers
                 dispatched = navigator.sendBeacon.bind(navigator)(url, payload);
