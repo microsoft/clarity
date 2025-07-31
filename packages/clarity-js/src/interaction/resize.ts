@@ -3,6 +3,7 @@ import { ResizeData, Setting } from "@clarity-types/interaction";
 import { FunctionNames } from "@clarity-types/performance";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { bind } from "@src/core/event";
+import throttle from "@src/core/throttle";
 import encode from "./encode";
 import { schedule } from "@src/core/task";
 
@@ -10,9 +11,11 @@ export let data: ResizeData;
 let timeout: number = null;
 let initialStateLogged = false;
 
+const throttledRecompute = throttle(recompute, Setting.LookAhead);
+
 export function start(): void {
     initialStateLogged = false;
-    bind(window, "resize", recompute);
+    bind(window, "resize", throttledRecompute);
     recompute();
 }
 
@@ -41,6 +44,7 @@ function process(event: Event): void {
 export function reset(): void {
     data = null;
     clearTimeout(timeout);
+    throttledRecompute.cleanup();
 }
 
 export function stop(): void {
