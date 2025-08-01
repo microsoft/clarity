@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
 import { ResizeData, Setting } from "@clarity-types/interaction";
-import { FunctionNames } from "@clarity-types/performance";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { bind } from "@src/core/event";
 import encode from "./encode";
@@ -17,7 +16,6 @@ export function start(): void {
 }
 
 function recompute(): void {
-    recompute.dn = FunctionNames.ResizeRecompute;
     let de = document.documentElement;
     // window.innerWidth includes width of the scrollbar and is not a true representation of the viewport width.
     // Therefore, when possible, use documentElement's clientWidth property.

@@ -353,7 +353,6 @@ export const enum Constant {
     Caret = "^",
     Granted = "granted",
     Denied = "denied",
-    BeaconError = "BeaconError",
 }
 
 export const enum XMLReadyState {

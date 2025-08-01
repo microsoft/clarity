@@ -1,7 +1,6 @@
 import { Priority, Task, Timer } from "@clarity-types/core";
 import { Code, Event, Metric, Severity } from "@clarity-types/data";
 import { Constant, MutationHistory, MutationRecordWithTime, MutationQueue, Setting, Source } from "@clarity-types/layout";
-import { FunctionNames } from "@clarity-types/performance";
 import api from "@src/core/api";
 import * as core from "@src/core";
 import * as event from "@src/core/event";
@@ -35,7 +34,6 @@ let observedNodes: WeakMap<Node, MutationObserver> = new WeakMap<Node, MutationO
 const IGNORED_ATTRIBUTES = ["data-google-query-id", "data-load-complete", "data-google-container-id"];
 
 export function start(): void {
-  start.dn = FunctionNames.MutationStart;
   observers = new Set();
   queue = [];
   timeout = null;
@@ -107,7 +105,6 @@ export function disconnect(n: Node): void {
 }
 
 function handle(m: MutationRecord[]): void {
-  handle.dn = FunctionNames.MutationHandle;
   // Queue up mutation records for asynchronous processing
   let now = time();
   summary.track(Event.Mutation, now);
@@ -328,7 +325,6 @@ function trigger(): void {
 }
 
 function generate(target: Node, type: MutationRecordType): void {
-  generate.dn = FunctionNames.MutationGenerate;
   measure(handle)([
     {
       addedNodes: [target],
