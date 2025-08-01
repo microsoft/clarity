@@ -5,6 +5,14 @@ import encode from "./encode";
 export let data: ConsentData = null;
 let updateConsent: boolean = true;
 
+export function start(): void {
+    updateConsent = true;
+}
+
+export function stop(): void {
+    updateConsent = true;
+}
+
 const enum ConsentType {
     None = 0,
     Implicit = 1,
