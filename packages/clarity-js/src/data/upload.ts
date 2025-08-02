@@ -189,13 +189,9 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
                 dispatched = navigator.sendBeacon.bind(navigator)(url, payload);
                 if (dispatched) { 
                     done(sequence); 
-                } else {
-                    // If sendBeacon fails, we report the error and continue with XHR upload
-                    report(new Error(`${Constant.BeaconError}: ${payload.length}`));
                 }
             } catch(error) {
-                // If sendBeacon fails, we report the error and continue with XHR upload
-                report(new Error(`${Constant.BeaconError}: ${error?.message?.substring(0, 50)} : ${payload.length}`));
+                // If sendBeacon fails, we do nothing and continue with XHR upload
             }
         }
 

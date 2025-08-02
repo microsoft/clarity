@@ -1,5 +1,4 @@
 import { Code, Constant, Dimension, Metric, Severity, PerformanceEventTiming } from "@clarity-types/data";
-import { FunctionNames } from "@clarity-types/performance";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import measure from "@src/core/measure";
@@ -31,7 +30,6 @@ export function start(): void {
 }
 
 function observe(): void {
-    observe.dn = FunctionNames.ObserverObserve;
     // Some browsers will throw an error for unsupported entryType, e.g. "layout-shift"
     // In those cases, we log it as a warning and continue with rest of the Clarity processing
     try {
@@ -53,7 +51,6 @@ function observe(): void {
 }
 
 function handle(entries: PerformanceObserverEntryList): void {
-    handle.dn = FunctionNames.ObserverHandle;
     process(entries.getEntries());
 }
 

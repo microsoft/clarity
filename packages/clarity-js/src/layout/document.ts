@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
 import { DocumentData } from "@clarity-types/layout";
-import { FunctionNames } from "@clarity-types/performance";
 import encode from "@src/layout/encode";
 
 export let data: DocumentData;
@@ -15,7 +14,6 @@ export function start(): void {
 }
 
 export function compute(): void {
-    compute.dn = FunctionNames.DocumentCompute;
     let body = document.body;
     let d = document.documentElement;
     let bodyClientWidth = body ? body.clientWidth : null;

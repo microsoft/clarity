@@ -1,4 +1,3 @@
-import { FunctionNames } from "@clarity-types/performance";
 import * as discover from "@src/layout/discover";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
@@ -12,7 +11,6 @@ import config from "@src/core/config";
 export { hashText } from "@src/layout/dom";
 
 export function start(): void {
-    start.dn = FunctionNames.LayoutStart;
     // The order below is important 
     // and is determined by interdependencies of modules
     doc.start();

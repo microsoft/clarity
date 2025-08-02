@@ -1,6 +1,5 @@
 import { Event, Setting } from "@clarity-types/data";
 import { InteractionState, RegionData, RegionState, RegionQueue, RegionVisibility } from "@clarity-types/layout";
-import { FunctionNames } from "@clarity-types/performance";
 import { time } from "@src/core/time";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
@@ -60,7 +59,6 @@ export function track(id: number, event: Event): void {
 }
 
 export function compute(): void {
-    compute.dn = FunctionNames.RegionCompute;
     // Process any regions where we couldn't resolve an "id" for at the time of last intersection observer event
     // This could happen in cases where elements are not yet processed by Clarity's virtual DOM but browser reports a change, regardless.
     // For those cases we add them to the queue and re-process them below

@@ -1,6 +1,5 @@
 import { Constant, Event, Setting } from "@clarity-types/data";
 import { ChangeState } from "@clarity-types/interaction";
-import { FunctionNames } from "@clarity-types/performance";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import hash from "@src/core/hash";
@@ -21,7 +20,6 @@ export function observe(root: Node): void {
 }
 
 function recompute(evt: UIEvent): void {
-    recompute.dn = FunctionNames.ChangeRecompute;
     let element = target(evt) as HTMLInputElement;
     if (element) {
         let value = element.value;

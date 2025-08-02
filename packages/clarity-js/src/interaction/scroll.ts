@@ -1,6 +1,5 @@
 import { Constant, Dimension, Event } from "@clarity-types/data";
 import { ScrollState, Setting } from "@clarity-types/interaction";
-import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -28,7 +27,6 @@ export function observe(root: Node): void {
 }
 
 function recompute(event: UIEvent = null): void {
-    recompute.dn = FunctionNames.ScrollRecompute;
     let w = window as Window;
     let de = document.documentElement;
     let element = event ? target(event) : de;
@@ -112,7 +110,6 @@ function similar(last: ScrollState, current: ScrollState): boolean {
 }
 
 export function compute(): void {
-    compute.dn = FunctionNames.ScrollCompute;
     if (initialTop) {
         const top = metadata(initialTop, null);
         dimension.log(Dimension.InitialScrollTop, top?.hash?.join(Constant.Dot));

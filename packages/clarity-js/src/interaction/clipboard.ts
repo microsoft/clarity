@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
 import { Clipboard, ClipboardState } from "@clarity-types/interaction";
-import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -20,7 +19,6 @@ export function observe(root: Node): void {
 }
 
 function recompute(action: Clipboard, evt: UIEvent): void {
-    recompute.dn = FunctionNames.ClipboardRecompute;
     state.push({ time: time(evt), event: Event.Clipboard, data: { target: target(evt), action } });
     schedule(encode.bind(this, Event.Clipboard));
 }

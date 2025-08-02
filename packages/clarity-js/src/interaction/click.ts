@@ -1,7 +1,6 @@
 import { BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
 import { BrowsingContext, ClickState, TextInfo } from "@clarity-types/interaction";
 import { Box } from "@clarity-types/layout";
-import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -23,7 +22,6 @@ export function observe(root: Node): void {
 }
 
 function handler(event: Event, root: Node, evt: MouseEvent): void {
-    handler.dn = FunctionNames.ClickHandler;
     let frame = iframe(root);
     let d = frame && frame.contentDocument ? frame.contentDocument.documentElement : document.documentElement;
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);

@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
 import { PointerState, Setting } from "@clarity-types/interaction";
-import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -33,7 +32,6 @@ export function observe(root: Node): void {
 }
 
 function mouse(event: Event, root: Node, evt: MouseEvent): void {
-    mouse.dn = FunctionNames.PointerMouse;
     let frame = iframe(root);
     let d = frame && frame.contentDocument ? frame.contentDocument.documentElement : document.documentElement;
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
@@ -50,7 +48,6 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
 }
 
 function touch(event: Event, root: Node, evt: TouchEvent): void {
-    touch.dn = FunctionNames.PointerTouch;
     let frame = iframe(root);
     let d = frame && frame.contentDocument ? frame.contentDocument.documentElement : document.documentElement;
     let touches = evt.changedTouches;
