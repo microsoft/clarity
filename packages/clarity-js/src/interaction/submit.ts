@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
 import { SubmitState } from "@clarity-types/interaction";
-import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -18,7 +17,6 @@ export function observe(root: Node): void {
 }
 
 function recompute(evt: UIEvent): void {
-    recompute.dn = FunctionNames.SubmitRecompute;
     state.push({ time: time(evt), event: Event.Submit, data: { target: target(evt) } });
     schedule(encode.bind(this, Event.Submit));
 }

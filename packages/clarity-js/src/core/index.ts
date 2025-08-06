@@ -1,6 +1,5 @@
 import { Config } from "@clarity-types/core";
 import { Constant } from "@clarity-types/data";
-import { FunctionNames } from "@clarity-types/performance";
 import configuration from "@src/core/config";
 import * as event from "@src/core/event";
 import * as history from "@src/core/history";
@@ -77,7 +76,6 @@ export function suspend(): void {
 }
 
 function restart(): void {
-    restart.dn = FunctionNames.Restart;
     clarity.start();
     custom.event(Constant.Clarity, Constant.Restart);
 }

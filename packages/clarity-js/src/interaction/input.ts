@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
 import { InputData, InputState, Setting } from "@clarity-types/interaction";
-import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -21,7 +20,6 @@ export function observe(root: Node): void {
 }
 
 function recompute(evt: UIEvent): void {
-    recompute.dn = FunctionNames.InputRecompute;
     let input = target(evt) as HTMLInputElement;
     let value = get(input);
     if (input && input.type && value) {

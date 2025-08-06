@@ -1,5 +1,4 @@
 import { BooleanFlag, Code, Constant, Metric, Setting, Severity } from "@clarity-types/data";
-import { FunctionNames } from "@clarity-types/performance";
 import * as clarity from "@src/clarity";
 import * as core from "@src/core"
 import { bind } from "@src/core/event";
@@ -49,7 +48,6 @@ function check(): boolean {
 }
 
 function compute(): void {
-    compute.dn = FunctionNames.HistoryCompute;
     count = 0; // Reset the counter
     if (url !== getCurrentUrl()) {
         // If the url changed, start tracking it as a new page

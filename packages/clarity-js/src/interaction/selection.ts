@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
 import { SelectionData, Setting } from "@clarity-types/interaction";
-import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
@@ -20,7 +19,6 @@ export function observe(root: Node): void {
 }
 
 function recompute(root: Node): void {
-    recompute.dn = FunctionNames.SelectionRecompute;
     let doc = root.nodeType === Node.DOCUMENT_NODE ? root as Document : document;
     let current = doc.getSelection();
 
