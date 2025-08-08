@@ -84,6 +84,7 @@ export const enum Event {
     BackGesture = 105,
     WebViewStatus = 106,
     AppInstallReferrer = 107
+    // 200-300 reserved for internal use
 }
 
 export const enum Metric {
@@ -320,6 +321,7 @@ export const enum Constant {
     Signal = "SIGNAL",
     Extract = "EXTRACT",
     Snapshot = "SNAPSHOT",
+    Module = "MODULE",
     UserHint = "userHint",
     UserType = "userType",
     UserId = "userId",
