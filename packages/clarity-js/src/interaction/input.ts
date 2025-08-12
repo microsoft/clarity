@@ -1,4 +1,4 @@
-import { Event } from "@clarity-types/data";
+import { BooleanFlag, Event } from "@clarity-types/data";
 import { InputData, InputState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
@@ -32,7 +32,7 @@ function recompute(evt: UIEvent): void {
                 break;
         }
 
-        let data: InputData = { target: input, value: v, type: t };
+        let data: InputData = { target: input, value: v, type: t, trust: evt.isTrusted ? BooleanFlag.True : BooleanFlag.False };
 
         // If last entry in the queue is for the same target node as the current one, remove it so we can later swap it with current data.
         if (state.length > 0 && (state[state.length - 1].data.target === data.target)) { state.pop(); }

@@ -97,6 +97,7 @@ export interface InputData {
     target: Target;
     value: string;
     type?: string;
+    trust: BooleanFlag;
 }
 
 export interface SubmitData {

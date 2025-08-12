@@ -48,7 +48,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let resizeData: Interaction.ResizeData = { width: tokens[2] as number, height: tokens[3] as number };
             return { time, event, data: resizeData };
         case Data.Event.Input:
-            let inputData: Interaction.InputData = { target: tokens[2] as number, value: tokens[3] as string };
+            let inputData: Interaction.InputData = { target: tokens[2] as number, value: tokens[3] as string, trust: tokens.length > 4 ? tokens[4] as number : Data.BooleanFlag.True };
             return { time, event, data: inputData };
         case Data.Event.Selection:
             let selectionData: Interaction.SelectionData = {
