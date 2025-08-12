@@ -109,6 +109,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 tokens = [entry.time, entry.event];
                 tokens.push(iTarget.id);
                 tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy, false, entry.data.type));
+                tokens.push(entry.data.trust);
                 queue(tokens);
             }
             input.reset();
