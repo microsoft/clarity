@@ -24,7 +24,6 @@ export function register(stopCallback: () => void): void {
 }
 
 export function dynamicEvent(url: string): void {
-  if (!active) return;
   load(url);
 }
 
