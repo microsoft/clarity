@@ -10,11 +10,15 @@ import * as diagnostic from "@src/diagnostic";
 import * as interaction from "@src/interaction";
 import * as layout from "@src/layout";
 import * as performance from "@src/performance";
+import * as dynamic from "@src/core/dynamic";
 export { version };
-export { consent, consentv2,  event, identify, set, upgrade, metadata, signal } from "@src/data";
+export { consent, consentv2, event, identify, set, upgrade, metadata, signal } from "@src/data";
+export { queue } from "@src/data/upload";
+export { register } from "@src/core/dynamic";
+export { time } from "@src/core/time";
 export { hashText } from "@src/layout";
 
-const modules: Module[] = [diagnostic, layout, interaction, performance];
+const modules: Module[] = [diagnostic, layout, interaction, performance, dynamic];
 
 export function start(config: Config = null): void {
   // Check that browser supports required APIs and we do not attempt to start Clarity multiple times
