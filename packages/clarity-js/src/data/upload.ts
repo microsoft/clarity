@@ -150,13 +150,19 @@ async function upload(final: boolean = false): Promise<void> {
     let a = `[${analysis.join()}]`;
 
     let p = sendPlaybackBytes ? `[${playback.join()}]` : Constant.Empty;
+    
+    // For final (beacon) payloads, If size is too large, we need to remove playback data
+    if (last && p.length > 0 && (e.length + a.length + p.length > Setting.MaxBeaconPayloadBytes)) {
+        p = Constant.Empty;
+    }
+
     let encoded: EncodedPayload = {e, a, p};
 
     // Get the payload ready for sending over the wire
     // We also attempt to compress the payload if it is not the last payload and the browser supports it
     // In all other cases, we continue to send back string value
     let payload = stringify(encoded);
-    let zipped = last ? null : await compress(payload)
+    let zipped = last ? null : await compress(payload);
     metric.sum(Metric.TotalBytes, zipped ? zipped.length : payload.length);
     send(payload, zipped, envelope.data.sequence, last);
 
