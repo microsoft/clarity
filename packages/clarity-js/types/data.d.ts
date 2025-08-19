@@ -266,6 +266,7 @@ export const enum Setting {
     ChecksumPrecision = 28, // n-bit integer to represent token hash
     UploadTimeout = 15000, // Timeout in ms for XHR requests
     LongTask = 30, // Long Task threshold in ms
+    MaxBeaconPayloadBytes = 64 * 1024, // 64KB: Cap the beacon payload to a maximum of 64KB
 }
 
 export const enum Character {
