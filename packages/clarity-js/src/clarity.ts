@@ -17,7 +17,7 @@ export { queue } from "@src/data/upload";
 export { register } from "@src/core/dynamic";
 export { time } from "@src/core/time";
 export { hashText } from "@src/layout";
-export * as measure from "@src/core/measure";
+export { measure };
 const modules: Module[] = [diagnostic, layout, interaction, performance, dynamic];
 
 export function start(config: Config = null): void {
