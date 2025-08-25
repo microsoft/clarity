@@ -3,6 +3,7 @@ import * as baseline from "@src/data/baseline";
 import * as consent from "@src/data/consent";
 import * as envelope from "@src/data/envelope";
 import * as dimension from "@src/data/dimension";
+import * as googleConsent from "@src/data/gcmconsent";
 import * as metadata from "@src/data/metadata";
 import { Module } from "@clarity-types/core";
 import * as metric from "@src/data/metric";
@@ -19,7 +20,7 @@ export { upgrade } from "@src/data/upgrade";
 export { set, identify } from "@src/data/variable";
 export { signal } from "@src/data/signal";
 
-const modules: Module[] = [baseline, dimension, variable, limit, summary, consent, metadata, envelope, upload, ping, upgrade, extract];
+const modules: Module[] = [baseline, dimension, variable, limit, summary, consent, googleConsent, metadata, envelope, upload, ping, upgrade, extract];
 
 export function start(): void {
     // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure

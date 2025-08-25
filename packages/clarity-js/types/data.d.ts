@@ -227,6 +227,12 @@ export const enum BooleanFlag {
     True = 1
 }
 
+export const enum GCMConsent {
+    Unknown = 0,
+    Granted = 1,
+    Denied = 2
+}
+
 export const enum IframeStatus {
     Unknown = 0,
     TopFrame = 1,
@@ -370,7 +376,8 @@ export const enum XMLReadyState {
 
 export const enum ConsentSource{
     Implicit = 0,
-    API = 1
+    API = 1,
+    GCM = 2
 }
 
 /* Helper Interfaces */
@@ -540,4 +547,9 @@ export interface ConsentData {
     source: ConsentSource;
     ad_Storage: BooleanFlag;
     analytics_Storage: BooleanFlag;
+}
+
+export interface gcmConsentState {
+    ad_Storage: GCMConsent;
+    analytics_Storage: GCMConsent;
 }
