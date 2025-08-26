@@ -16,6 +16,7 @@ import * as submit from "@src/interaction/submit";
 import * as timeline from "@src/interaction/timeline";
 import * as unload from "@src/interaction/unload";
 import * as visibility from "@src/interaction/visibility";
+import * as focus from "@src/interaction/focus";
 
 export default async function (type: Event, ts: number = null): Promise<void> {
     let t = ts || time();
@@ -193,5 +194,12 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             baseline.visibility(t, v.visible);
             visibility.reset();
             break;
+        case Event.Focus: {
+            let f = focus.data;
+            tokens.push(f.focused);
+            queue(tokens, false);
+            focus.reset();
+            break;
+        }
     }
 }

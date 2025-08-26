@@ -40,5 +40,6 @@ export interface InteractionEvent extends PartialEvent {
     Interaction.SubmitData |
     TimelineData |
     Interaction.UnloadData |
-    Interaction.VisibilityData;
+    Interaction.VisibilityData |
+    Interaction.FocusData;
 }

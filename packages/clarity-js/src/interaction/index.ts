@@ -10,6 +10,7 @@ import * as submit from "@src/interaction/submit";
 import * as timeline from "@src/interaction/timeline";
 import * as unload from "@src/interaction/unload";
 import * as visibility from "@src/interaction/visibility";
+import * as focus from "@src/interaction/focus";
 
 export function start(): void {
     timeline.start();
@@ -19,6 +20,7 @@ export function start(): void {
     input.start();
     resize.start();
     visibility.start();
+    focus.start();
     scroll.start();
     selection.start();
     change.start();
@@ -34,6 +36,7 @@ export function stop(): void {
     input.stop();
     resize.stop();
     visibility.stop();
+    focus.stop();
     scroll.stop();
     selection.stop();
     change.stop();

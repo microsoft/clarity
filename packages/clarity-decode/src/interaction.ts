@@ -95,6 +95,9 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
         case Data.Event.Visibility:
             let visibleData: Interaction.VisibilityData = { visible: tokens[2] as string };
             return { time, event, data: visibleData };
+        case Data.Event.Focus:
+            let focusData: Interaction.FocusData = { focused: tokens[2] as number };
+            return { time, event, data: focusData };
         case Data.Event.Unload:
             let unloadData: Interaction.UnloadData = { name: tokens[2] as string, persisted: tokens[3] as number };
             return { time, event, data: unloadData };
