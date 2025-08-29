@@ -74,6 +74,7 @@ export const enum Event {
     StyleSheetUpdate = 46,
     Consent = 47,
     ContextMenu = 48,
+    Focus = 49,
 
     // Apps specific events
     WebViewDiscover = 100,
