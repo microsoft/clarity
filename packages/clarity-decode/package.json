@@ -1,8 +1,8 @@
 {
-  "name": "clarity-decode",
+  "name": "test-release-moemen-decode",
   "version": "0.8.27",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
-  "author": "Microsoft Corp.",
+  "author": "Moemen",
   "license": "MIT",
   "main": "build/clarity.decode.js",
   "module": "build/clarity.decode.module.js",

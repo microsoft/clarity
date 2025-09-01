@@ -1,8 +1,8 @@
 {
-  "name": "clarity-visualize",
+  "name": "test-release-moemen-visualize",
   "version": "0.8.27",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
-  "author": "Microsoft Corp.",
+  "author": "Moemen",
   "license": "MIT",
   "main": "build/clarity.visualize.js",
   "module": "build/clarity.visualize.module.js",
