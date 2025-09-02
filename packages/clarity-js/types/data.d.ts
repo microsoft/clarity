@@ -364,6 +364,8 @@ export const enum Constant {
     Caret = "^",
     Granted = "granted",
     Denied = "denied",
+    AdStorage = "ad_storage",
+    AnalyticsStorage = "analytics_storage",
 }
 
 export const enum XMLReadyState {

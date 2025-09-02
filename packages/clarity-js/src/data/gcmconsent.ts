@@ -4,36 +4,32 @@ import { consentv2 } from "./metadata";
 
 export let consentState: ConsentState = {};
 
-export function start(){
+export function start() {
     if (window.google_tag_data?.ics?.addListener) {
         window.google_tag_data.ics.addListener(
-            ["ad_storage", "analytics_storage"],
+            [Constant.AdStorage, Constant.AnalyticsStorage],
             gcmConsent
         );
     }
 }
 
-export function stop(){
-    reset();
-}
-
-export function reset(){
+export function stop() {
     consentState = {};
 }
 
 function gcmConsent(): void {
     const ics = window.google_tag_data?.ics;
-    if (!ics?.getConsentState) { 
+    if (!ics?.getConsentState) {
         return;
     }
 
     const analytics_storage = ics.getConsentState("analytics_storage");
     const ad_storage = ics.getConsentState("ad_storage");
-    consentState = getConsentState({ad_Storage: ad_storage, analytics_Storage: analytics_storage});
+    consentState = getConsentState({ ad_Storage: ad_storage, analytics_Storage: analytics_storage });
     consentv2(consentState, ConsentSource.GCM);
 }
 
-function getConsentState ( googleConsent: gcmConsentState): ConsentState {
+function getConsentState(googleConsent: gcmConsentState): ConsentState {
     const consentState: ConsentState = {
         ad_Storage: googleConsent.ad_Storage === GCMConsent.Granted ? Constant.Granted : Constant.Denied,
         analytics_Storage: googleConsent.analytics_Storage === GCMConsent.Granted ? Constant.Granted : Constant.Denied,
