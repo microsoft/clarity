@@ -17,7 +17,7 @@ export function start(): void {
 }
 
 export function observe(root: Node): void {
-    // bind(root, "click", handler.bind(this, Event.Click, root), true);
+    bind(root, "click", handler.bind(this, Event.Click, root), true);
     bind(root, "contextmenu", handler.bind(this, Event.ContextMenu, root), true);
 }
 

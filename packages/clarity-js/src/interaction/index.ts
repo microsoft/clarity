@@ -42,7 +42,7 @@ export function stop(): void {
 }
 
 export function observe(root: Node): void {
-    scroll.observe(root);
+    // scroll.observe(root);
     // Only monitor following interactions if the root node is a document
     // In case of shadow DOM, following events automatically bubble up to the parent document.
     if (root.nodeType === Node.DOCUMENT_NODE) {
