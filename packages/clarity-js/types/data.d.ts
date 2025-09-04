@@ -557,7 +557,7 @@ export interface ConsentData {
     analytics_Storage: BooleanFlag;
 }
 
-export interface gcmConsentState {
+export interface GCMConsentState {
     ad_Storage: GCMConsent;
     analytics_Storage: GCMConsent;
 }
