@@ -376,7 +376,7 @@ export const enum XMLReadyState {
     Done = 4
 }
 
-export const enum ConsentSource{
+export const enum ConsentSource {
     Implicit = 0,
     API = 1,
     GCM = 2
@@ -543,6 +543,12 @@ export interface Interaction {
 export interface ConsentState {
     ad_Storage?: string;
     analytics_Storage?: string;
+}
+
+export const enum ConsentType {
+    None = 0,
+    Implicit = 1,
+    General = 2
 }
 
 export interface ConsentData {

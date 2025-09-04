@@ -1,23 +1,48 @@
-import { ConsentData, Dimension, Event } from "@clarity-types/data";
+import { ConsentData, ConsentSource, ConsentState, ConsentType, Constant, Dimension, Event, GCMConsent, gcmConsentState } from "@clarity-types/data";
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
+import { consentv2 } from "./metadata";
 
 export let data: ConsentData = null;
 let updateConsent: boolean = true;
+let consentState: ConsentState = {};
 
 export function start(): void {
     updateConsent = true;
+    if (window.google_tag_data?.ics?.addListener) {
+        window.google_tag_data.ics.addListener(
+            [Constant.AdStorage, Constant.AnalyticsStorage],
+            processConsent
+        );
+    }
 }
 
 export function stop(): void {
     updateConsent = true;
+    consentState = {};
 }
 
-const enum ConsentType {
-    None = 0,
-    Implicit = 1,
-    General = 2
+function processConsent(): void {
+    const ics = window.google_tag_data?.ics;
+    if (!ics?.getConsentState) {
+        return;
+    }
+
+    const analytics_storage = ics.getConsentState(Constant.AnalyticsStorage);
+    const ad_storage = ics.getConsentState(Constant.AdStorage);
+    consentState = getConsentState({ ad_Storage: ad_storage, analytics_Storage: analytics_storage });
+    consentv2(consentState, ConsentSource.GCM);
 }
+
+function getConsentState(googleConsent: gcmConsentState): ConsentState {
+    const consentState: ConsentState = {
+        ad_Storage: googleConsent.ad_Storage === GCMConsent.Granted ? Constant.Granted : Constant.Denied,
+        analytics_Storage: googleConsent.analytics_Storage === GCMConsent.Granted ? Constant.Granted : Constant.Denied,
+    };
+
+    return consentState;
+}
+
 
 export function config(consent: ConsentData): void {
     trackConsent(consent.analytics_Storage ? ConsentType.Implicit : ConsentType.None);
@@ -33,7 +58,7 @@ function trackConsent(consent: ConsentType): void {
     dimension.log(Dimension.Consent, consent.toString());
 }
 
-export function consentv2(consent: ConsentData): void {
+export function trackConsentv2(consent: ConsentData): void {
     data = consent;
     encode(Event.Consent);
 }
