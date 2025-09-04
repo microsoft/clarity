@@ -7,6 +7,10 @@ declare global {
             };
         };
     }
+
+    interface Function {
+        dn?: number;
+    }
 }
 
 export { };
