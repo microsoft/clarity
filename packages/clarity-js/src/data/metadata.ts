@@ -169,7 +169,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    trackConsent.consentv2(consentData);
+    trackConsent.trackConsentv2(consentData);
     trackConsent.consent();
   }
 }

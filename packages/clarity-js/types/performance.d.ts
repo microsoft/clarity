@@ -29,9 +29,3 @@ export interface NavigationData {
     encodedSize: number;
     decodedSize: number;
 }
-
-declare global {
-  interface Function {
-    dn?: number;
-  }
-}
