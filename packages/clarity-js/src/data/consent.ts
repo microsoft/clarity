@@ -5,7 +5,6 @@ import { consentv2 } from "./metadata";
 
 export let data: ConsentData = null;
 let updateConsent: boolean = true;
-let consentState: ConsentState = {};
 
 export function start(): void {
     updateConsent = true;
@@ -19,7 +18,6 @@ export function start(): void {
 
 export function stop(): void {
     updateConsent = true;
-    consentState = {};
 }
 
 function processConsent(): void {
@@ -30,7 +28,7 @@ function processConsent(): void {
 
     const analytics_storage = ics.getConsentState(Constant.AnalyticsStorage);
     const ad_storage = ics.getConsentState(Constant.AdStorage);
-    consentState = getConsentState({ ad_Storage: ad_storage, analytics_Storage: analytics_storage });
+    const consentState = getConsentState({ ad_Storage: ad_storage, analytics_Storage: analytics_storage });
     consentv2(consentState, ConsentSource.GCM);
 }
 
