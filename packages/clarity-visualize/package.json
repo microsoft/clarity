@@ -1,6 +1,6 @@
 {
   "name": "test-release-moemen-visualize",
-  "version": "0.8.27",
+  "version": "0.8.28",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
   "author": "Moemen",
   "license": "MIT",
