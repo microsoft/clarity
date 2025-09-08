@@ -1,6 +1,6 @@
 {
-  "name": "test-release-js",
-  "version": "0.8.29-beta",
+  "name": "test-release-js-1",
+  "version": "0.8.30-beta",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
   "author": "Moemen",
   "license": "MIT",
