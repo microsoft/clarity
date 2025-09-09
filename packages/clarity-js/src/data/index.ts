@@ -18,6 +18,7 @@ export { consent, consentv2, metadata } from "@src/data/metadata";
 export { upgrade } from "@src/data/upgrade";
 export { set, identify } from "@src/data/variable";
 export { signal } from "@src/data/signal";
+export { max as maxMetric } from "@src/data/metric";
 
 const modules: Module[] = [baseline, dimension, variable, limit, summary, consent, metadata, envelope, upload, ping, upgrade, extract];
 
