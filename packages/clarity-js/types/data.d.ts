@@ -139,6 +139,7 @@ export const enum Metric {
     InteractionNextPaint = 37,
     HistoryClear = 38,
     AngularZone = 39,
+    // 200-300 reserved for internal use
 }
 
 export const enum Dimension {
