@@ -21,7 +21,7 @@
     "bump-version": "ts-node scripts/bump-version.ts"
   },
   "devDependencies": {
-    "lerna": "^6.4.1",
+    "lerna": "^8.2.3",
     "parse-url": "^8.1.0"
   },
   "resolutions": {
