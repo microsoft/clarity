@@ -447,29 +447,46 @@ export interface BaselineState {
 /* Event Data */
 export interface BaselineData {
     visible: BooleanFlag;
-    docWidth: number;
-    docHeight: number;
-    screenWidth: number;
-    screenHeight: number;
-    scrollX: number;
-    scrollY: number;
-    pointerX: number;
-    pointerY: number;
-    activityTime: number;
-    scrollTime: number;
-    pointerTime?: number;
+    // Document Width
+    docW: number;
+    // Document Height
+    docH: number;
+    // Screen Width
+    scrW: number;
+    // Screen Height
+    scrH: number;
+    // Scroll X
+    srlX: number;
+    // Scroll Y
+    srlY: number;
+    // Pointer X
+    ptrX: number;
+    // Pointer Y
+    ptrY: number;
+    // Activity Time
+    tActivity: number;
+    // Scroll Time
+    tSrl: number;
+    // Pointer Time
+    tPtr?: number;
     moveX?: number;
     moveY?: number;
-    moveTime?: number;
+    // Move Time
+    tMove?: number;
     downX?: number;
     downY?: number;
-    downTime?: number;
+    // Down Time
+    tDown?: number;
     upX?: number;
     upY?: number;
-    upTime?: number;
-    pointerPrevX?: number;
-    pointerPrevY?: number;
-    pointerPrevTime?: number;
+    // Up Time
+    tUp?: number;
+    // Previous Pointer X
+    ptrPrevX?: number;
+    // Previous Pointer Y
+    ptrPrevY?: number;
+    // Previous Pointer Time
+    tPtrPrev?: number;
 }
 
 export interface IdentityData {
