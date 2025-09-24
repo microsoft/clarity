@@ -244,6 +244,10 @@ export class LayoutHelper {
         }
     }
 
+    public customElement = (event: DecodedLayout.CustomElementEvent): void => {
+        this.state.window.customElements.define(event.data.name, class extends (this.state.window as typeof window).HTMLElement {});
+    }
+
     private setDocumentStyles(documentId: number, styleIds: string[]) {
         let targetDocument = documentId === -1 ? this.state.window.document : this.element(documentId) as Document;
 

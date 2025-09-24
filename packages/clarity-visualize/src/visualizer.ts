@@ -223,6 +223,9 @@ export class Visualizer implements VisualizerType {
                 case Data.Event.Animation:
                     this.layout.animateChange(entry as Layout.AnimationEvent);
                     break;
+                case Data.Event.CustomElement:
+                    this.layout.customElement(entry as Layout.CustomElementEvent);
+                    break;
             }
         }
 

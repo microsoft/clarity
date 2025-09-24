@@ -14,6 +14,7 @@ import * as dom from "@src/layout/dom";
 import * as region from "@src/layout/region";
 import * as style from "@src/layout/style";
 import * as animation from "@src/layout/animation";
+import * as custom from "@src/layout/custom";
 
 export default async function (type: Event, timer: Timer = null, ts: number = null): Promise<void> {
     let eventTime = ts || time()
@@ -119,6 +120,12 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 if (type === Event.Mutation) { baseline.activity(eventTime); }
                 queue(tokenize(tokens), !config.lean);
             }
+            break;
+        case Event.CustomElement:
+            for (let element of custom.elements) {
+                queue([eventTime, Event.CustomElement, element]);
+            }
+            custom.reset();
             break;
     }
 }

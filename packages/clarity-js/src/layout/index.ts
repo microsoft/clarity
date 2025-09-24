@@ -5,6 +5,7 @@ import * as mutation from "@src/layout/mutation";
 import * as region from "@src/layout/region";
 import * as style from "@src/layout/style";
 import * as animation from "@src/layout/animation";
+import * as custom from "@src/layout/custom";
 import { bind } from "@src/core/event";
 import config from "@src/core/config";
 
@@ -27,6 +28,7 @@ export function start(): void {
     discover.start();
     style.start();
     animation.start();
+    custom.start();
 }
 
 export function stop(): void {
@@ -36,4 +38,5 @@ export function stop(): void {
     doc.stop();
     style.stop();
     animation.stop();
+    custom.stop();
 }
