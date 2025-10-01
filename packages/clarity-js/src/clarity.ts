@@ -15,6 +15,7 @@ export { version };
 export { consent, consentv2, event, identify, set, upgrade, metadata, signal, maxMetric } from "@src/data";
 export { queue } from "@src/data/upload";
 export { register } from "@src/core/dynamic";
+export { schedule } from "@src/core/task";
 export { time } from "@src/core/time";
 export { hashText } from "@src/layout";
 export { measure };
