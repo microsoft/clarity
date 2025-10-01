@@ -72,6 +72,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
         case Event.StyleSheetAdoption:
         case Event.StyleSheetUpdate:
         case Event.Animation:
+        case Event.CustomElement:
             if (leanLimit) { break; }
             playbackBytes += event.length;
             playback.push(event);

@@ -76,6 +76,7 @@ export const enum Event {
     ContextMenu = 48,
     // 49 is reserved for internal use
     Focus = 50,
+    CustomElement = 51,
 
     // Apps specific events
     WebViewDiscover = 100,

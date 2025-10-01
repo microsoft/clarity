@@ -46,6 +46,10 @@ export interface AnimationData {
     targetId?: number;
 }
 
+export interface CustomElementData {
+    name: string;
+}
+
 export const enum RegionVisibility {
     Rendered = 0,
     Visible = 10,

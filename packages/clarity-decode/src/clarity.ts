@@ -4,7 +4,7 @@ import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadE
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
 import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
-import { DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
+import { CustomElementEvent, DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
 import { NavigationEvent } from "../types/performance";
 
 import * as data from "./data";
@@ -197,6 +197,9 @@ export function decode(input: string): DecodedPayload {
                 if (payload.consent === undefined) { payload.consent = []; }
                 payload.consent.push(data.decode(entry) as ConsentEvent);
                 break;
+            case Data.Event.CustomElement:
+                if (payload.customElement === undefined) { payload.customElement = []; }
+                payload.customElement.push(layout.decode(entry) as CustomElementEvent);
             default:
                 console.error(`No handler for Event: ${JSON.stringify(entry)}`);
                 break;

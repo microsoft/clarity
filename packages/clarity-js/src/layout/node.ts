@@ -7,6 +7,7 @@ import * as internal from "@src/diagnostic/internal";
 import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
+import * as custom from "@src/layout/custom";
 import { checkDocumentStyles } from "@src/layout/style";
 import { electron } from "@src/data/metadata";
 
@@ -200,6 +201,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     dom[call](node, parent, mediaTag, source);
                     break;
                 default:
+                    custom.check(element.localName);
                     let data = { tag, attributes };
                     if (element.shadowRoot) { child = element.shadowRoot; }
                     dom[call](node, parent, data, source);

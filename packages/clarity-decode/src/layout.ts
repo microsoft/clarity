@@ -108,6 +108,9 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             domData.push(process(node, tagIndex));
 
             return { time, event, data: domData };
+        case Data.Event.CustomElement:
+            let customElement: Layout.CustomElementData = { name: tokens[2] as string };
+            return { time, event, data: customElement };
     }
     return null;
 }
