@@ -18,122 +18,122 @@ export function reset(): void {
     if (update) {
         state = { time: time(), event: Event.Baseline, data: {
             visible: buffer.visible,
-            docWidth: buffer.docWidth,
-            docHeight: buffer.docHeight,
-            screenWidth: buffer.screenWidth,
-            screenHeight: buffer.screenHeight,
-            scrollX: buffer.scrollX,
-            scrollY: buffer.scrollY,
-            pointerX: buffer.pointerX,
-            pointerY: buffer.pointerY,
-            activityTime: buffer.activityTime,
-            scrollTime: buffer.scrollTime,
-            pointerTime: buffer.pointerTime,
+            docW: buffer.docW,
+            docH: buffer.docH,
+            scrW: buffer.scrW,
+            scrH: buffer.scrH,
+            srlX: buffer.srlX,
+            srlY: buffer.srlY,
+            ptrX: buffer.ptrX,
+            ptrY: buffer.ptrY,
+            tActivity: buffer.tActivity,
+            tSrl: buffer.tSrl,
+            tPtr: buffer.tPtr,
             moveX: buffer.moveX,
             moveY: buffer.moveY,
-            moveTime: buffer.moveTime,
+            tMove: buffer.tMove,
             downX: buffer.downX,
             downY: buffer.downY,
-            downTime: buffer.downTime,
+            tDown: buffer.tDown,
             upX: buffer.upX,
             upY: buffer.upY,
-            upTime: buffer.upTime,
-            pointerPrevX: buffer.pointerPrevX,
-            pointerPrevY: buffer.pointerPrevY,
-            pointerPrevTime: buffer.pointerPrevTime,
+            tUp: buffer.tUp,
+            ptrPrevX: buffer.ptrPrevX,
+            ptrPrevY: buffer.ptrPrevY,
+            tPtrPrev: buffer.tPtrPrev,
           }
         };
     }
     buffer = buffer ? buffer : {
         visible: BooleanFlag.True,
-        docWidth: 0,
-        docHeight: 0,
-        screenWidth: 0,
-        screenHeight: 0,
-        scrollX: 0,
-        scrollY: 0,
-        pointerX: 0,
-        pointerY: 0,
-        activityTime: 0,
-        scrollTime: 0,
-        pointerTime: undefined,
+        docW: 0,
+        docH: 0,
+        scrW: 0,
+        scrH: 0,
+        srlX: 0,
+        srlY: 0,
+        ptrX: 0,
+        ptrY: 0,
+        tActivity: 0,
+        tSrl: 0,
+        tPtr: undefined,
         moveX: undefined,
         moveY: undefined,
-        moveTime: undefined,
+        tMove: undefined,
         downX: undefined,
         downY: undefined,
-        downTime: undefined,
+        tDown: undefined,
         upX: undefined,
         upY: undefined,
-        upTime: undefined,
-        pointerPrevX: undefined,
-        pointerPrevY: undefined,
-        pointerPrevTime: undefined,
+        tUp: undefined,
+        ptrPrevX: undefined,
+        ptrPrevY: undefined,
+        tPtrPrev: undefined,
     };
 }
 
 export function track(event: Event, x: number, y: number, time?: number): void {
     switch (event) {
         case Event.Document:
-            buffer.docWidth = x;
-            buffer.docHeight = y;
+            buffer.docW = x;
+            buffer.docH = y;
             break;
         case Event.Resize:
-            buffer.screenWidth = x;
-            buffer.screenHeight = y;
+            buffer.scrW = x;
+            buffer.scrH = y;
             break;
         case Event.Scroll:
-            buffer.scrollX = x;
-            buffer.scrollY = y;
-            buffer.scrollTime = time;
+            buffer.srlX = x;
+            buffer.srlY = y;
+            buffer.tSrl = time;
             break;
         case Event.MouseMove:
             buffer.moveX = x;
             buffer.moveY = y;
-            buffer.moveTime = time;
-            buffer.pointerPrevX = buffer.pointerX;
-            buffer.pointerPrevY = buffer.pointerY;
-            buffer.pointerPrevTime = buffer.pointerTime;
-            buffer.pointerX = x;
-            buffer.pointerY = y;
-            buffer.pointerTime = time;
+            buffer.tMove = time;
+            buffer.ptrPrevX = buffer.ptrX;
+            buffer.ptrPrevY = buffer.ptrY;
+            buffer.tPtrPrev = buffer.tPtr;
+            buffer.ptrX = x;
+            buffer.ptrY = y;
+            buffer.tPtr = time;
             break;
         case Event.MouseDown:
             buffer.downX = x;
             buffer.downY = y;
-            buffer.downTime = time;
-            buffer.pointerPrevX = buffer.pointerX;
-            buffer.pointerPrevY = buffer.pointerY;
-            buffer.pointerPrevTime = buffer.pointerTime;
-            buffer.pointerX = x;
-            buffer.pointerY = y;
-            buffer.pointerTime = time;
+            buffer.tDown = time;
+            buffer.ptrPrevX = buffer.ptrX;
+            buffer.ptrPrevY = buffer.ptrY;
+            buffer.tPtrPrev = buffer.tPtr;
+            buffer.ptrX = x;
+            buffer.ptrY = y;
+            buffer.tPtr = time;
             break;
         case Event.MouseUp:
             buffer.upX = x;
             buffer.upY = y;
-            buffer.upTime = time;
-            buffer.pointerPrevX = buffer.pointerX;
-            buffer.pointerPrevY = buffer.pointerY;
-            buffer.pointerPrevTime = buffer.pointerTime;
-            buffer.pointerX = x;
-            buffer.pointerY = y;
-            buffer.pointerTime = time;
+            buffer.tUp = time;
+            buffer.ptrPrevX = buffer.ptrX;
+            buffer.ptrPrevY = buffer.ptrY;
+            buffer.tPtrPrev = buffer.tPtr;
+            buffer.ptrX = x;
+            buffer.ptrY = y;
+            buffer.tPtr = time;
             break;
         default:
-            buffer.pointerPrevX = buffer.pointerX;
-            buffer.pointerPrevY = buffer.pointerY;
-            buffer.pointerPrevTime = buffer.pointerTime;
-            buffer.pointerX = x;
-            buffer.pointerY = y;
-            buffer.pointerTime = time;
+            buffer.ptrPrevX = buffer.ptrX;
+            buffer.ptrPrevY = buffer.ptrY;
+            buffer.tPtrPrev = buffer.tPtr;
+            buffer.ptrX = x;
+            buffer.ptrY = y;
+            buffer.tPtr = time;
             break;
     }
     update = true;
 }
 
 export function activity(t: number): void {
-    buffer.activityTime = t;
+    buffer.tActivity = t;
 }
 
 export function visibility(t: number, visible: string): void {
