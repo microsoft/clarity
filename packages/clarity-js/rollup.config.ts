@@ -96,5 +96,19 @@ export default [
       terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
+  },
+  {
+    input: "src/agent/index.ts",
+    output: [ { file: pkg.livechat, format: "iife", exports: "named" } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      resolve(),
+      typescript(),
+      terser({output: {comments: false}}),
+      commonjs({ include: ["node_modules/**"] })
+    ]
   }
 ];

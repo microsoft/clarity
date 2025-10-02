@@ -7,6 +7,9 @@ declare global {
                 getConsentState: (key: string) => any;
             };
         };
+        LiveChatWidget?: {
+            on: (eventName: string, callback: (data: any) => void) => void;
+        };
     }
 
     interface Function {
