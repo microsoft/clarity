@@ -13,10 +13,6 @@ export const enum AuthorType {
     Human
 }
 
-export interface AgentData {
-    messages: AuthorType[];
-}
-
 export const enum Visibility {
     Maximized = "maximized",
     Minimized = "minimized",

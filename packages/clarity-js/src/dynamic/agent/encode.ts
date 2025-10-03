@@ -1,7 +1,5 @@
 import { Event, Token } from "@clarity-types/data";
-import { data } from "./index";
-import { reset } from "./livechat";
-import { Action, AuthorType } from "@clarity-types/agent";
+import { Action} from "@clarity-types/agent";
 
 export default function (event: Action): void {
     const t = (window as any).clarity("time");
@@ -12,16 +10,9 @@ export default function (event: Action): void {
         case Action.AgentHidden:
         case Action.AgentMaximized:
         case Action.AgentMinimized:
-            tokens.push(event);
-            break;
         case Action.AgentMessage:
         case Action.HumanMessage:
-            if (data.messages) {
-                for (const author of data.messages) {
-                    tokens.push(author === AuthorType.Agent ? Action.AgentMessage : Action.HumanMessage);
-                }
-            }
-            reset();
+            tokens.push(event);
             break;
     }
     console.log("tokens:", tokens);
