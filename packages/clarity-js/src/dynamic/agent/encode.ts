@@ -15,7 +15,6 @@ export default function (event: Action): void {
             tokens.push(event);
             break;
     }
-    console.log("tokens:", tokens);
     queueTokens(tokens);
 }
 
