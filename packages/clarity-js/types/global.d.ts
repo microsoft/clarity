@@ -8,6 +8,7 @@ declare global {
             };
         };
         LiveChatWidget?: {
+            off(eventName: string, callback: (data: any) => void): unknown;
             on: (eventName: string, callback: (data: any) => void) => void;
         };
     }

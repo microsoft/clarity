@@ -77,7 +77,7 @@ export const enum Event {
     // 49 is reserved for internal use
     Focus = 50,
     CustomElement = 51,
-    Agent = 52,
+    Chat = 52,
 
     // Apps specific events
     WebViewDiscover = 100,

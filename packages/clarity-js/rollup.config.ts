@@ -98,7 +98,7 @@ export default [
     ]
   },
   {
-    input: "src/agent/index.ts",
+    input: "src/dynamic/agent/index.ts",
     output: [ { file: pkg.livechat, format: "iife", exports: "named" } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }

@@ -1,4 +1,4 @@
-export const enum AgentEvent {
+export const enum Action {
     AgentOnline,
     AgentOffline,
     AgentHidden,
@@ -26,4 +26,18 @@ export const enum Visibility {
 export const enum Availability {
     Online = "online",
     Offline = "offline"
+}
+
+export interface VisibilityEvent {
+    visibility: Visibility;
+}
+
+export interface AvailabilityEvent {
+    availability: Availability;
+}
+
+export interface NewEvent {
+    author: {
+        type: string;
+    };
 }
