@@ -1,4 +1,4 @@
-import {Action, Visibility, Availability, VisibilityEvent, AvailabilityEvent, NewEvent } from "@clarity-types/agent";
+import { Action, Visibility, Availability, VisibilityEvent, AvailabilityEvent, NewEvent } from "@clarity-types/agent";
 import encode from "./encode";
 
 function onVisible(event: VisibilityEvent): void {
@@ -42,9 +42,9 @@ export function start(): void {
 }
 
 export function stop(): void {
-  if (window.LiveChatWidget) {
+    if (window.LiveChatWidget) {
         window.LiveChatWidget.off('visibility_changed', onVisible);
-        window.LiveChatWidget.off('availability_changed', onAvail)
+        window.LiveChatWidget.off('availability_changed', onAvail);
         window.LiveChatWidget.off('new_event', onEvent);
     }
 }
