@@ -9,8 +9,8 @@ export const enum Action {
 }
 
 export const enum AuthorType {
-  Agent,
-  Human,
+  Agent = "agent",
+  Customer = "customer",
 }
 
 export const enum Visibility {
@@ -34,6 +34,6 @@ export interface AvailabilityEvent {
 
 export interface NewEvent {
   author: {
-    type: string;
+    type: AuthorType;
   };
 }
