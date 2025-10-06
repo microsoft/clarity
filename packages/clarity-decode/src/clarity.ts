@@ -200,6 +200,7 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.CustomElement:
                 if (payload.customElement === undefined) { payload.customElement = []; }
                 payload.customElement.push(layout.decode(entry) as CustomElementEvent);
+                break;
             default:
                 console.error(`No handler for Event: ${JSON.stringify(entry)}`);
                 break;
