@@ -1,4 +1,4 @@
-import { Constant, Event, Token } from "@clarity-types/data";
+import { BooleanFlag, Constant, Event, Token } from "@clarity-types/data";
 import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
@@ -189,9 +189,10 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             break;
         case Event.Visibility:
             let v = visibility.data;
-            tokens.push(v.visible);
+            const visible = v.visible === "visible" ? BooleanFlag.True : BooleanFlag.False;
+            tokens.push(visible);
             queue(tokens);
-            baseline.visibility(t, v.visible);
+            baseline.visibility(t, visible);
             visibility.reset();
             break;
         case Event.Focus: {

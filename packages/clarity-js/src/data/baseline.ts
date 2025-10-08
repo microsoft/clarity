@@ -136,8 +136,8 @@ export function activity(t: number): void {
     buffer.activityTime = t;
 }
 
-export function visibility(t: number, visible: string): void {
-    buffer.visible = visible === "visible" ? BooleanFlag.True : BooleanFlag.False;
+export function visibility(t: number, visible: BooleanFlag): void {
+    buffer.visible = visible;
     if (!buffer.visible) {
         activity(t);
     }
