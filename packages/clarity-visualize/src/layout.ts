@@ -245,7 +245,9 @@ export class LayoutHelper {
     }
 
     public customElement = (event: DecodedLayout.CustomElementEvent): void => {
-        this.state.window.customElements.define(event.data.name, class extends (this.state.window as typeof window).HTMLElement {});
+        if (!this.state.window.customElements.get(event.data.name)) {
+            this.state.window.customElements.define(event.data.name, class extends (this.state.window as typeof window).HTMLElement {});
+        }
     }
 
     private setDocumentStyles(documentId: number, styleIds: string[]) {

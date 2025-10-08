@@ -67,6 +67,9 @@ export class Visualizer implements VisualizerType {
                         case Data.Event.StyleSheetUpdate:
                             this.layout.styleChange(entry as Layout.StyleSheetEvent);
                             break;
+                        case Data.Event.CustomElement:
+                            this.layout.customElement(entry as Layout.CustomElementEvent);
+                            break;
                         case Data.Event.Mutation:
                             let domEvent = entry as Layout.DomEvent;
                             this.renderTime = domEvent.time;
