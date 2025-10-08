@@ -189,10 +189,9 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             break;
         case Event.Visibility:
             let v = visibility.data;
-            const visible = v.visible === "visible" ? BooleanFlag.True : BooleanFlag.False;
-            tokens.push(visible);
+            tokens.push(v.visible);
             queue(tokens);
-            baseline.visibility(t, visible);
+            baseline.visibility(t, v.visible);
             visibility.reset();
             break;
         case Event.Focus: {
