@@ -202,7 +202,9 @@ export function decode(input: string): DecodedPayload {
                 payload.customElement.push(layout.decode(entry) as CustomElementEvent);
                 break;
             default:
-                console.error(`No handler for Event: ${JSON.stringify(entry)}`);
+                if (typeof entry[1] === "number" && entry[1] < 200) {
+                    console.error(`No handler for Event: ${JSON.stringify(entry)}`);
+                }
                 break;
         }
     }
