@@ -4,6 +4,7 @@ import type { Interaction } from "clarity-decode"
 import { LayoutHelper } from "./layout";
 import pointerSvg from "./styles/pointer/pointerIcon.svg";
 import clickStyle from "./styles/pointer/click.css";
+import { BooleanFlag } from "clarity-decode/types/data";
 import { ClickVizualizationData } from "clarity-decode/types/interaction";
 
 export class InteractionHelper {
@@ -78,7 +79,7 @@ export class InteractionHelper {
 
     public visibility = (event: Interaction.VisibilityEvent): void => {
         let doc = this.state.window.document;
-        if (doc && doc.documentElement && event.data.visible !== Constant.Visible) {
+        if (doc && doc.documentElement && event.data.visible === BooleanFlag.False) {
             // if the website has styles on the <html> node then we need to save the reference to them before we change them
             // to indicate the window was hidden. This is to ensure that we can restore the original styles when the window is visible again.
             const bg = doc.documentElement.style.backgroundColor;

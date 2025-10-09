@@ -164,7 +164,7 @@ export interface UnloadData {
 }
 
 export interface VisibilityData {
-    visible: string;
+    visible: BooleanFlag;
 }
 
 export interface FocusData {
