@@ -1,4 +1,4 @@
-import { BooleanFlag, Constant, Event, Token } from "@clarity-types/data";
+import { Constant, Event, Token } from "@clarity-types/data";
 import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
