@@ -9,13 +9,18 @@ chrome.runtime.onMessage.addListener(function(message: any): void {
 });
 
 chrome.runtime.sendMessage({ action: "activate" }, function(response: any): void {
+  // Check for errors (e.g., service worker not available)
+  if (chrome.runtime.lastError) {
+    // Service worker might not be ready yet, that's okay
+    return;
+  }
   if (response && response.success) {
     activate();
   }
 });
 
 function activate(): void {
-  setup(chrome.extension.getURL('clarity.js'));
+  setup(chrome.runtime.getURL('clarity.js'));
 }
 
 function setup(url: string): void {
@@ -31,17 +36,19 @@ function setup(url: string): void {
           case "wireup":
             chrome.storage.sync.get({ clarity: { showText: true, leanMode: false } }, (items: any) => {
               let c = config();
-              let script = document.createElement("script");
-              script.innerText = wireup({
+              let settings = {
+                lean: items.clarity.leanMode,
                 regions: c.regions,
                 fraud: c.fraud,
                 mask: c.mask,
                 unmask: c.unmask,
                 drop: c.drop,
-                showText: items.clarity.showText,
-                leanMode: items.clarity.leanMode
-              });
-              document.body.appendChild(script);
+                content: items.clarity.showText,
+                projectId: "devtools"
+              };
+              // Send configuration to clarity.js via postMessage (no inline script needed)
+              // Note: upload callback will be set by clarity.js itself
+              window.postMessage({ action: "clarity-start", settings: settings }, "*");
             });
             break;
           case "upload":
@@ -54,27 +61,13 @@ function setup(url: string): void {
   
 }
 
-function wireup(settings: any): string {
-  let code = ((): void => {
-    window["clarity"]("start", {
-      delay: 500,
-      lean: "$__leanMode__$",
-      regions: "$__regions__$",
-      fraud: "$__fraud__$",
-      drop: "$__drop__$",
-      mask: "$__mask__$",
-      unmask: "$__unmask__$",
-      content: "$__showText__$",
-      upload: (data: string): void => { window.postMessage({ action: "upload", payload: data }, "*"); },
-      projectId: "devtools"
-    });
-  }).toString();
-  Object.keys(settings).forEach(s => code = code.replace(`"$__${s}__$"`, JSON.stringify(settings[s])));
-  return `(${code})();`;
-}
-
 function upload(data: string): void {
   chrome.runtime.sendMessage({ action: "payload", payload: data }, function(response: any): void {
+    // Check for errors (e.g., service worker not available)
+    if (chrome.runtime.lastError) {
+      console.warn("Background service worker not available:", chrome.runtime.lastError.message);
+      return;
+    }
     if (!(response && response.success)) {
       console.warn("Payload failure, dev tools likely not open.");
     }
