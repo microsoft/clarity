@@ -3,14 +3,48 @@ import { Visualizer } from "clarity-visualize";
 
 let visualize = new Visualizer();
 let activeTabId = chrome.devtools.inspectedWindow.tabId;
-let background = chrome.runtime.connect({ name: "panel" });
-background.postMessage({ action: "init", tabId: activeTabId });
+let background: chrome.runtime.Port | null = null;
 let sessionId = "";
 let pageNum = 0;
 let events: Data.DecodedEvent[] = [];
 let eJson: string[][] = []; // Encoded JSON for the whole session
 let pJson: string[] = []; // Encoded JSON for the page
 let dJson: Data.DecodedPayload[] = []; // Decoded JSON for the page
+
+// Connect to background with retry logic for service worker timing issues
+function connectWithRetry(retries: number = 5, delay: number = 100): void {
+    try {
+        background = chrome.runtime.connect({ name: "panel" });
+
+        // Set up message listener
+        background.onMessage.addListener(handleMessage);
+
+        // Set up disconnect handler to retry on failure
+        background.onDisconnect.addListener(() => {
+            if (chrome.runtime.lastError && retries > 0) {
+                console.log('Connection disconnected, retrying...', chrome.runtime.lastError.message);
+                background = null;
+                setTimeout(() => connectWithRetry(retries - 1, delay * 2), delay);
+            } else if (chrome.runtime.lastError) {
+                console.error('Failed to connect to background service worker after multiple attempts');
+            }
+        });
+
+        // Send init message after successful connection
+        background.postMessage({ action: "init", tabId: activeTabId });
+
+    } catch (error) {
+        if (retries > 0) {
+            console.log('Connection error, retrying...', error);
+            setTimeout(() => connectWithRetry(retries - 1, delay * 2), delay);
+        } else {
+            console.error('Failed to connect to background service worker after multiple attempts', error);
+        }
+    }
+}
+
+// Initialize connection
+connectWithRetry();
 
 const enum Mode {
     Encoded = 0,
@@ -51,7 +85,12 @@ function save(mode: Mode): void {
     a.click();
 }
 
-background.onMessage.addListener(function(message: any): void {
+function handleMessage(message: any): void {
+    // Ignore keepalive messages
+    if (message && message.action === "keepalive") {
+        return;
+    }
+
     // Handle responses from the background page, if any
     if (message && message.payload) {
         let decoded = decode(message.payload);
@@ -62,7 +101,7 @@ background.onMessage.addListener(function(message: any): void {
         events = events.concat(merged.events).sort(sort);
         visualize.dom(merged.dom);
     }
-});
+}
 
 function replay(): void {
     // Execute only if there are events to render
