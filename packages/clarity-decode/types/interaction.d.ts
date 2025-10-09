@@ -28,6 +28,7 @@ export interface SubmitEvent extends PartialEvent { data: Interaction.SubmitData
 export interface TimelineEvent extends PartialEvent { data: TimelineData; }
 export interface UnloadEvent extends PartialEvent { data: Interaction.UnloadData; }
 export interface VisibilityEvent extends PartialEvent { data: Interaction.VisibilityData; }
+export interface FocusEvent extends PartialEvent { data: Interaction.FocusData; }
 export interface InteractionEvent extends PartialEvent {
     data: ClickData |
     Interaction.ChangeData |

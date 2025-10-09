@@ -3,7 +3,7 @@ import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEv
 import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent, ConsentEvent } from "../types/data";
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
-import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
+import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent } from "../types/interaction";
 import { CustomElementEvent, DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
 import { NavigationEvent } from "../types/performance";
 
@@ -149,6 +149,10 @@ export function decode(input: string): DecodedPayload {
                 if (payload.visibility === undefined) { payload.visibility = []; }
                 payload.visibility.push(interaction.decode(entry) as VisibilityEvent);
                 break;
+            case Data.Event.Focus:
+                if (payload.focus === undefined) { payload.focus = []; }
+                payload.focus.push(interaction.decode(entry) as FocusEvent);
+                break;
             case Data.Event.Box:
                 /* Deprecated - Intentionally, no-op. For backward compatibility. */
                 break;
@@ -202,7 +206,9 @@ export function decode(input: string): DecodedPayload {
                 payload.customElement.push(layout.decode(entry) as CustomElementEvent);
                 break;
             default:
-                console.error(`No handler for Event: ${JSON.stringify(entry)}`);
+                if (typeof entry[1] === "number" && entry[1] < 200) {
+                    console.error(`No handler for Event: ${JSON.stringify(entry)}`);
+                }
                 break;
         }
     }
