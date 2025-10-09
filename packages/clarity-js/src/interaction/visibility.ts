@@ -1,4 +1,4 @@
-import { Event } from "@clarity-types/data";
+import { BooleanFlag, Event } from "@clarity-types/data";
 import { VisibilityData } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { time } from "@src/core/time";
@@ -12,8 +12,11 @@ export function start(): void {
 }
 
 function recompute(evt: UIEvent = null): void {
-    data = { visible: "visibilityState" in document ? document.visibilityState : "default" };
-    encode(Event.Visibility, time(evt));
+    if ("visibilityState" in document) {
+        const visible = document.visibilityState === "visible" ? BooleanFlag.True : BooleanFlag.False;
+        data = { visible };
+        encode(Event.Visibility, time(evt));
+    }
 }
 
 export function reset(): void {

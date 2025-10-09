@@ -93,7 +93,12 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             };
             return { time, event, data: timelineData };
         case Data.Event.Visibility:
-            let visibleData: Interaction.VisibilityData = { visible: tokens[2] as string };
+            let visibleData: Interaction.VisibilityData;
+            if (typeof tokens[2] === "number") {
+                visibleData = { visible: tokens[2] as number };
+            } else {
+                visibleData = { visible: (tokens[2] as string) === "visible" ? Data.BooleanFlag.True : Data.BooleanFlag.False };
+            }
             return { time, event, data: visibleData };
         case Data.Event.Focus:
             let focusData: Interaction.FocusData = { focused: tokens[2] as number };
