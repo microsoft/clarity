@@ -253,6 +253,9 @@ export const enum Setting {
     PingTimeout = 5 * Time.Minute, // 5 Minutes
     SummaryInterval = 100, // Same events within 100ms will be collapsed into single summary
     ClickText = 25, // Maximum number of characters to send as part of Click event's text field
+    ClickClass = 50, // Maximum number of characters to send as part of Click event's class name
+    ClickTag = 10, // Maximum number of characters to send as part of Click event's tag
+    ClickId = 25, // Maximum number of characters to send as part of Click event's id
     PayloadLimit = 128, // Do not allow more than specified payloads per page
     PageLimit = 128, // Do not allow more than 128 pages in a session
     ShutdownLimit = 2 * Time.Hour, // Shutdown instrumentation after specified time
