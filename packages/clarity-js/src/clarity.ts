@@ -12,7 +12,7 @@ import * as layout from "@src/layout";
 import * as performance from "@src/performance";
 import * as dynamic from "@src/core/dynamic";
 export { version };
-export { consent, consentv2, event, identify, set, upgrade, metadata, signal, maxMetric } from "@src/data";
+export { consent, consentv2, event, identify, set, upgrade, metadata, signal, maxMetric, dlog } from "@src/data";
 export { queue } from "@src/data/upload";
 export { register } from "@src/core/dynamic";
 export { schedule } from "@src/core/task";

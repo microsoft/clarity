@@ -183,6 +183,7 @@ export const enum Dimension {
     TimezoneOffset = 35,
     Consent = 36,
     InteractionNextPaint = 37
+    // 200-300 reserved for internal use
 }
 
 export const enum Check {
