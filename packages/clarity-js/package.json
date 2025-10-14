@@ -11,6 +11,7 @@
   "insight": "build/clarity.insight.js",
   "performance": "build/clarity.performance.js",
   "livechat": "build/clarity.livechat.js",
+  "tidio": "build/clarity.tidio.js",
   "types": "types/index.d.ts",
   "keywords": [
     "clarity",
