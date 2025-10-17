@@ -62,14 +62,14 @@ export function trackConsentv2(consent: ConsentData): void {
     encode(Event.Consent);
 }
 
-// Compute function is called every upload, but we only want to send consent data once.
+// Compute function is called every upload, but we only want to send consent data once or if consent is updated.
 export function compute(): void {
     if (updateConsent) {
         encode(Event.Consent);
         updateConsent = false;
 
         const ics = window.google_tag_data?.ics;
-        if(ics?.usedUpdate){
+        if (ics?.usedUpdate) {
             processConsent();
         }
     }
