@@ -9,7 +9,7 @@ import {
 } from "@clarity-types/agent";
 import encode from "./encode";
 
-function onVisible(event: VisibilityEvent): void {
+function visible(event: VisibilityEvent): void {
   const visibility = event.visibility;
   switch (visibility) {
     case Visibility.Maximized:
@@ -24,12 +24,12 @@ function onVisible(event: VisibilityEvent): void {
   }
 }
 
-function onAvail(event: AvailabilityEvent): void {
+function avail(event: AvailabilityEvent): void {
   const isOnline = event.availability === Availability.Online;
   encode(isOnline ? Action.AgentOnline : Action.AgentOffline);
 }
 
-function onEvent(event: NewEvent): void {
+function message(event: NewEvent): void {
   if (event.author.type === AuthorType.Agent) {
     encode(Action.AgentMessage);
   } else {
@@ -39,9 +39,9 @@ function onEvent(event: NewEvent): void {
 
 export function start(): void {
   if (window.LiveChatWidget) {
-    window.LiveChatWidget.on("visibility_changed", onVisible);
-    window.LiveChatWidget.on("new_event", onEvent);
-    window.LiveChatWidget.on("availability_changed", onAvail);
+    window.LiveChatWidget.on("visibility_changed", visible);
+    window.LiveChatWidget.on("new_event", message);
+    window.LiveChatWidget.on("availability_changed", avail);
   }
   // Register stop callback with main Clarity
   if (typeof window !== "undefined" && (window as any).clarity) {
@@ -51,8 +51,8 @@ export function start(): void {
 
 export function stop(): void {
   if (window.LiveChatWidget) {
-    window.LiveChatWidget.off("visibility_changed", onVisible);
-    window.LiveChatWidget.off("availability_changed", onAvail);
-    window.LiveChatWidget.off("new_event", onEvent);
+    window.LiveChatWidget.off("visibility_changed", visible);
+    window.LiveChatWidget.off("availability_changed", avail);
+    window.LiveChatWidget.off("new_event", message);
   }
 }

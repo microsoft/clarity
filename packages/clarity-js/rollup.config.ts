@@ -105,6 +105,30 @@ export default [
       warn(message);
     },
     plugins: [
+      alias({
+        entries: [
+          { find: /@src\/dynamic\/agent\/tidio.*/, replacement: '@src/dynamic/agent/blank' }
+        ]
+      }),
+      resolve(),
+      typescript(),
+      terser({output: {comments: false}}),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/dynamic/agent/index.ts",
+    output: [ { file: pkg.tidio, format: "iife", exports: "named" } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: /@src\/dynamic\/agent\/livechat.*/, replacement: '@src/dynamic/agent/blank' }
+        ]
+      }),
       resolve(),
       typescript(),
       terser({output: {comments: false}}),
