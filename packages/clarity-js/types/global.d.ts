@@ -5,6 +5,7 @@ declare global {
       ics: {
         addListener: (keys: string[], callback: () => void) => void;
         getConsentState: (key: string) => any;
+        usedUpdate: boolean;
       };
     };
     LiveChatWidget?: {
