@@ -8,8 +8,9 @@ let updateConsent: boolean = true;
 
 export function start(): void {
     updateConsent = true;
-    if (window.google_tag_data?.ics?.addListener) {
-        window.google_tag_data.ics.addListener(
+    const ics = window.google_tag_data?.ics;
+    if (ics?.addListener) {
+        ics.addListener(
             [Constant.AdStorage, Constant.AnalyticsStorage],
             processConsent
         );
@@ -66,5 +67,10 @@ export function compute(): void {
     if (updateConsent) {
         encode(Event.Consent);
         updateConsent = false;
+
+        const ics = window.google_tag_data?.ics;
+        if(ics?.usedUpdate){
+            processConsent();
+        }
     }
 }
