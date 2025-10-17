@@ -1,7 +1,7 @@
 import { Action } from "@clarity-types/agent";
 import encode from "./encode";
 
-let isActive = true;
+let isActive = false;
 
 function open() {
   if (!isActive) return;
@@ -29,6 +29,7 @@ export function start(): void {
     window.tidioChatApi.on("close", close);
     window.tidioChatApi.on("messageFromVisitor", human);
     window.tidioChatApi.on("messageFromOperator", agent);
+    isActive = true;
   }
   // Register stop callback with main Clarity
   if (typeof window !== "undefined" && (window as any).clarity) {
