@@ -3,32 +3,32 @@ import encode from "./encode";
 
 let isActive = true;
 
-function onOpen() {
+function open() {
   if (!isActive) return;
   encode(Action.AgentMaximized);
 }
 
-function onClose() {
+function close() {
   if (!isActive) return;
   encode(Action.AgentMinimized);
 }
 
-function onMessageFromVisitor() {
+function human() {
   if (!isActive) return;
   encode(Action.HumanMessage);
 }
 
-function onMessageFromOperator() {
+function agent() {
   if (!isActive) return;
   encode(Action.AgentMessage);
 }
 
 export function start(): void {
   if (window.tidioChatApi) {
-    window.tidioChatApi.on("open", onOpen);
-    window.tidioChatApi.on("close", onClose);
-    window.tidioChatApi.on("messageFromVisitor", onMessageFromVisitor);
-    window.tidioChatApi.on("messageFromOperator", onMessageFromOperator);
+    window.tidioChatApi.on("open", open);
+    window.tidioChatApi.on("close", close);
+    window.tidioChatApi.on("messageFromVisitor", human);
+    window.tidioChatApi.on("messageFromOperator", agent);
   }
   // Register stop callback with main Clarity
   if (typeof window !== "undefined" && (window as any).clarity) {
