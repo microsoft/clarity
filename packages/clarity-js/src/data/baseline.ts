@@ -41,6 +41,7 @@ export function reset(): void {
             pointerPrevX: buffer.pointerPrevX,
             pointerPrevY: buffer.pointerPrevY,
             pointerPrevTime: buffer.pointerPrevTime,
+            modules: buffer.modules,
           }
         };
     }
@@ -69,6 +70,7 @@ export function reset(): void {
         pointerPrevX: undefined,
         pointerPrevY: undefined,
         pointerPrevTime: undefined,
+        modules: null,
     };
 }
 
@@ -141,6 +143,11 @@ export function visibility(t: number, visible: BooleanFlag): void {
     if (!buffer.visible) {
         activity(t);
     }
+    update = true;
+}
+
+export function dynamic(modules: Set<number>): void {
+    buffer.modules = Array.from(modules);
     update = true;
 }
 
