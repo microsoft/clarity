@@ -10,7 +10,7 @@
   "extended": "build/clarity.extended.js",
   "insight": "build/clarity.insight.js",
   "performance": "build/clarity.performance.js",
-  "livechat": "build/dynamic/clarity.livechat.js",
+  "livechat": "build/clarity.livechat.js",
   "tidio": "build/dynamic/clarity.tidio.js",
   "crisp": "build/dynamic/clarity.crisp.js",
   "types": "types/index.d.ts",
