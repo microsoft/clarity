@@ -5,10 +5,14 @@ declare global {
       ics: {
         addListener: (keys: string[], callback: () => void) => void;
         getConsentState: (key: string) => any;
+        usedUpdate: boolean;
       };
     };
     LiveChatWidget?: {
       off(eventName: string, callback: (data: any) => void): unknown;
+      on: (eventName: string, callback: (data: any) => void) => void;
+    };
+    tidioChatApi?: {
       on: (eventName: string, callback: (data: any) => void) => void;
     };
   }
