@@ -14,6 +14,11 @@ declare global {
     tidioChatApi?: {
       on: (eventName: string, callback: (data: any) => void) => void;
     };
+    $crisp?: {
+      push: (
+        args: [action: string, eventName: string, callback: (data: any) => void]
+      ) => void;
+    };
   }
 
   interface Function {
