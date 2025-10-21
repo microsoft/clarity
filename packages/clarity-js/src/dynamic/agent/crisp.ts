@@ -6,7 +6,6 @@ function open() {
 }
 
 function close() {
-  console.log("Chat closed");
   encode(Action.AgentMinimized);
 }
 
