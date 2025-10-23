@@ -88,7 +88,8 @@ export default [
           { find: /@src\/interaction.*/, replacement: '@src/performance/blank' },
           { find: /@src\/layout.*/, replacement: '@src/performance/blank' },
           { find: /@src\/diagnostic.*/, replacement: '@src/performance/blank' },
-          { find: /@src\/data\/(extract|baseline|summary)/, replacement: '@src/performance/blank' }
+          { find: /@src\/data\/(extract|baseline|summary)/, replacement: '@src/performance/blank' },
+          { find: /@src\/core\/dynamic/, replacement: '@src/performance/blank' }
         ]
       }),
       resolve(),

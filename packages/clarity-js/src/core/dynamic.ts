@@ -1,8 +1,13 @@
+import { Constant } from "@clarity-types/layout";
+import * as baseline from "@src/data/baseline";
+
 let stopCallbacks: (() => void)[] = [];
 let active = false;
+let modules: Set<number> = null;
 
 export function start(): void {
   active = true;
+  modules = new Set<number>();
 }
 
 export function stop(): void {
@@ -23,13 +28,24 @@ export function register(stopCallback: () => void): void {
   }
 }
 
-export function dynamicEvent(url: string): void {
-  load(url);
+export function event(signal: string): void {
+  if (!active) return;
+
+  const parts = signal ? signal.split(" ") : [Constant.Empty];
+  const m = parts.length > 1 ? parseInt(parts[1], 10) : null;
+  if (m && modules.has(m)) {
+    return;
+  }
+
+  load(parts[0]);
+
+  if (m) {
+    modules.add(m);
+    baseline.dynamic(modules);
+  }
 }
 
 function load(url: string): void {
-  if (!active) return;
-
   try {
     const script = document.createElement("script");
     script.src = url;
