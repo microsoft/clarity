@@ -21,7 +21,7 @@ import * as style from "@src/layout/style";
 import { report } from "@src/core/report";
 import { signalsEvent } from "@src/data/signal";
 import { snapshot } from "@src/insight/snapshot";
-import { dynamicEvent } from "@src/core/dynamic";
+import * as dynamic from "@src/core/dynamic";
 
 let discoverBytes: number = 0;
 let playbackBytes: number = 0;
@@ -321,7 +321,7 @@ function response(payload: string): void {
                 break;
             case Constant.Module:
                 if (parts.length > 1) {
-                    dynamicEvent(parts[1]);
+                    dynamic.event(parts[1]);
                 }
                 break;
             case Constant.Snapshot:

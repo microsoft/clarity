@@ -473,6 +473,7 @@ export interface BaselineData {
     pointerPrevX?: number;
     pointerPrevY?: number;
     pointerPrevTime?: number;
+    modules: number[];
 }
 
 export interface IdentityData {

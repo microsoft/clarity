@@ -73,6 +73,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 pointerPrevX: tokenLength > 23 ? tokens[23] as number: null,
                 pointerPrevY: tokenLength > 24 ? tokens[24] as number: null,
                 pointerPrevTime: tokenLength > 25 ? tokens[25] as number: null,
+                modules: tokenLength > 26 ? tokens[26] as number[]: null,
             }
             return { time, event, data: baselineData };
         case Data.Event.Variable:

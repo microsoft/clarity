@@ -8,9 +8,8 @@ let updateConsent: boolean = true;
 
 export function start(): void {
     updateConsent = true;
-    const ics = window.google_tag_data?.ics;
-    if (ics?.addListener) {
-        ics.addListener(
+    if (window.google_tag_data?.ics?.addListener) {
+        window.google_tag_data.ics.addListener(
             [Constant.AdStorage, Constant.AnalyticsStorage],
             processConsent
         );
@@ -62,15 +61,10 @@ export function trackConsentv2(consent: ConsentData): void {
     encode(Event.Consent);
 }
 
-// Compute function is called every upload, but we only want to send consent data once or if consent is updated.
+// Compute function is called every upload, but we only want to send consent data once.
 export function compute(): void {
     if (updateConsent) {
         encode(Event.Consent);
         updateConsent = false;
-
-        const ics = window.google_tag_data?.ics;
-        if (ics?.usedUpdate) {
-            processConsent();
-        }
     }
 }

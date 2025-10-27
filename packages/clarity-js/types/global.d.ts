@@ -5,7 +5,6 @@ declare global {
       ics: {
         addListener: (keys: string[], callback: () => void) => void;
         getConsentState: (key: string) => any;
-        usedUpdate: boolean;
       };
     };
     LiveChatWidget?: {
@@ -14,6 +13,11 @@ declare global {
     };
     tidioChatApi?: {
       on: (eventName: string, callback: (data: any) => void) => void;
+    };
+    $crisp?: {
+      push: (
+        args: [action: string, eventName: string, callback: (data: any) => void]
+      ) => void;
     };
   }
 

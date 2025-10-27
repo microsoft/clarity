@@ -45,6 +45,7 @@ export default function(event: Event): void {
                 tokens.push(b.data.pointerPrevX);
                 tokens.push(b.data.pointerPrevY);
                 tokens.push(b.data.pointerPrevTime);
+                tokens.push(b.data.modules);
                 queue(tokens, false);
             }
             baseline.reset();

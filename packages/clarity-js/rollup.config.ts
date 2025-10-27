@@ -88,7 +88,8 @@ export default [
           { find: /@src\/interaction.*/, replacement: '@src/performance/blank' },
           { find: /@src\/layout.*/, replacement: '@src/performance/blank' },
           { find: /@src\/diagnostic.*/, replacement: '@src/performance/blank' },
-          { find: /@src\/data\/(extract|baseline|summary)/, replacement: '@src/performance/blank' }
+          { find: /@src\/data\/(extract|baseline|summary)/, replacement: '@src/performance/blank' },
+          { find: /@src\/core\/dynamic/, replacement: '@src/performance/blank' }
         ]
       }),
       resolve(),
@@ -107,7 +108,8 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: /@src\/dynamic\/agent\/tidio.*/, replacement: '@src/dynamic/agent/blank' }
+          { find: /@src\/dynamic\/agent\/tidio.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/crisp.*/, replacement: '@src/dynamic/agent/blank' }
         ]
       }),
       resolve(),
@@ -126,7 +128,28 @@ export default [
     plugins: [
       alias({
         entries: [
-          { find: /@src\/dynamic\/agent\/livechat.*/, replacement: '@src/dynamic/agent/blank' }
+          { find: /@src\/dynamic\/agent\/livechat.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/crisp.*/, replacement: '@src/dynamic/agent/blank' }
+        ]
+      }),
+      resolve(),
+      typescript(),
+      terser({output: {comments: false}}),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/dynamic/agent/index.ts",
+    output: [ { file: pkg.crisp, format: "iife", exports: "named" } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: /@src\/dynamic\/agent\/livechat.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/tidio.*/, replacement: '@src/dynamic/agent/blank' }
         ]
       }),
       resolve(),
