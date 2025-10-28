@@ -148,11 +148,19 @@ export function consent(status = true): void {
 }
 
 export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.API): void {
-  consentStatus = {
+  const updatedStatus = {
     ad_Storage: normalizeConsent(consentState.ad_Storage),
     analytics_Storage: normalizeConsent(consentState.analytics_Storage)
   };
 
+  if (
+    updatedStatus.ad_Storage === consentStatus.ad_Storage &&
+    updatedStatus.analytics_Storage === consentStatus.analytics_Storage
+  ) {
+    return;
+  }
+
+  consentStatus = updatedStatus;
   callback(true);
   const consentData = getConsentData(consentStatus, source);
   
