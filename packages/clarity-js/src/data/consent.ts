@@ -5,9 +5,9 @@ import { consentv2 } from "./metadata";
 
 export let data: ConsentData = null;
 let updateConsent: boolean = true;
-const ics = window.google_tag_data?.ics;
 
 export function start(): void {
+    const ics = window.google_tag_data?.ics;
     updateConsent = true;
     if (ics?.addListener) {
         ics.addListener(
@@ -67,6 +67,7 @@ export function compute(): void {
     if (updateConsent) {
         encode(Event.Consent);
         updateConsent = false;
+        const ics = window.google_tag_data?.ics;
         if(ics?.usedUpdate){
             processConsent();
         }
