@@ -126,6 +126,8 @@ export interface ClickData {
     hash: string;
     trust: number;
     isFullText: BooleanFlag;
+    w: number;
+    h: number;
 }
 
 export interface TextInfo {

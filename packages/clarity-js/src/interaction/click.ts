@@ -70,6 +70,8 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 hash: null,
                 trust: evt.isTrusted ? BooleanFlag.True : BooleanFlag.False,
                 isFullText: textInfo.isFullText,
+                w: l ? l.w : 0,
+                h: l ? l.h : 0
             }
         });
         schedule(encode.bind(this, event));
