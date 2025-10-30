@@ -68,7 +68,7 @@ export function compute(): void {
         encode(Event.Consent);
         updateConsent = false;
         const ics = window.google_tag_data?.ics;
-        if(ics?.usedUpdate){
+        if (ics?.usedUpdate) {
             processConsent();
         }
     }
