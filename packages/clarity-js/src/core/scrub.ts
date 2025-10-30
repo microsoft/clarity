@@ -101,15 +101,32 @@ export function url(input: string, electron: boolean = false, truncate: boolean 
         result = `${Data.Constant.HTTPS}${Data.Constant.Electron}`;
     } else {
         let drop = config.drop;
+        let keep = config.keep;
         if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
             let [path, query] = input.split("?");
             let swap = Data.Constant.Dropped;
             result = path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
         }
-    }
+        // If there are any "keep" parameters, we need to move them to the front of the query string so they are not truncated
+        if (keep && keep.length > 0 && input && input.indexOf("?") > 0) {
+            let [path, query] = result.split("?");
+            let kept: string[] = [];
+            let others: string[] = [];
+            query.split("&").forEach(p => {
+                if (keep.some(x => p.indexOf(`${x}=`) === 0)) {
+                    kept.push(p);
+                } else {
+                    others.push(p);
+                }
+            });
+            if (kept.length > 0) {
+                result = path + "?" + kept.concat(others).join("&");
+            }
+        }
 
-    if (truncate) {
-        result = result.substring(0, maxUrlLength);
+        if (truncate) {
+            result = result.substring(0, maxUrlLength);
+        }
     }
     return result;
 }
