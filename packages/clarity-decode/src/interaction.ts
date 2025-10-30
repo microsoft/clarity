@@ -39,6 +39,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 hashBeta: clickHashes.length > 0 ? clickHashes[1] : null,
                 trust: tokens.length > 13 ? tokens[13] as number : Data.BooleanFlag.True,
                 isFullText: tokens.length > 14 ? tokens[14] as number : null,
+                w: tokens.length > 15 ? tokens[15] as number : 0,
+                h: tokens.length > 16 ? tokens[16] as number : 0
             };
             return { time, event, data: clickData };
         case Data.Event.Clipboard:
