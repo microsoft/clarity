@@ -124,6 +124,7 @@ export interface Config {
     track?: boolean;
     content?: boolean;
     drop?: string[];
+    keep?: string[];
     mask?: string[];
     unmask?: string[];
     regions?: Region[];
