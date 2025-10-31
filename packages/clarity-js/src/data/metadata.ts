@@ -86,9 +86,11 @@ export function start(): void {
   }
 
   // Track consent config
-  consentStatus = {
-    ad_Storage: config.track ? Constant.Granted : Constant.Denied,
-    analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
+  if (consentStatus === null) {
+    consentStatus = {
+      ad_Storage: config.track ? Constant.Granted : Constant.Denied,
+      analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
+    }
   }
   const consent = getConsentData(consentStatus, ConsentSource.Implicit);
   trackConsent.config(consent);
@@ -112,7 +114,6 @@ function userAgentData(): void {
 export function stop(): void {
   rootDomain = null;
   data = null;
-  consentStatus = null;
   callbacks.forEach(cb => { cb.called = false; });
 }
 
