@@ -109,7 +109,7 @@ export function url(input: string, electron: boolean = false, truncate: boolean 
         }
         // If there are any "keep" parameters, we need to move them to the front of the query string so they are not truncated
         if (keep && keep.length > 0 && input && input.indexOf("?") > 0) {
-            let [path, query] = result.split("?");
+            let [path, query] = input.split("?");
             let kept: string[] = [];
             let others: string[] = [];
             query.split("&").forEach(p => {
