@@ -90,7 +90,7 @@ export function start(): void {
     consentStatus = {
       ad_Storage: config.track ? Constant.Granted : Constant.Denied,
       analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
-    }
+    };
   }
   const consent = getConsentData(consentStatus, ConsentSource.Implicit);
   trackConsent.config(consent);
@@ -155,6 +155,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
   };
 
   if (
+    consentStatus &&
     updatedStatus.ad_Storage === consentStatus.ad_Storage &&
     updatedStatus.analytics_Storage === consentStatus.analytics_Storage
   ) {
