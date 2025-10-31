@@ -123,10 +123,9 @@ export function url(input: string, electron: boolean = false, truncate: boolean 
                 result = path + "?" + kept.concat(others).join("&");
             }
         }
-
-        if (truncate) {
-            result = result.substring(0, maxUrlLength);
-        }
+    }
+    if (truncate) {
+        result = result.substring(0, maxUrlLength);
     }
     return result;
 }
