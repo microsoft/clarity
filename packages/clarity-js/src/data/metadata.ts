@@ -170,8 +170,6 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
-    trackConsent.trackConsentv2(consentData);
-    trackConsent.consent();
     clarity.stop();
     window.setTimeout(clarity.start, Setting.RestartDelay);
     return;
