@@ -170,18 +170,21 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
+    trackConsent.trackConsentv2(consentData);
+    trackConsent.consent();
     clarity.stop();
     window.setTimeout(clarity.start, Setting.RestartDelay);
     return;
   }
 
-  if (core.active()) {
+  if (core.active() && consentData.analytics_Storage) {
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    trackConsent.trackConsentv2(consentData);
-    trackConsent.consent();
   }
+
+  trackConsent.trackConsentv2(consentData);
+  trackConsent.consent();
 }
 
 function getConsentData(consentState: ConsentState, source: ConsentSource): ConsentData {
