@@ -133,6 +133,9 @@ export class InteractionHelper {
     };
 
     public pointer = (event: Interaction.PointerEvent): void => {
+        if (!this.state.options.pointer) {
+            return;
+        }
         let data = event.data;
         let type = event.event;
         let doc = this.state.window.document;
