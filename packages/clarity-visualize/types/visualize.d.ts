@@ -63,6 +63,7 @@ export interface Options {
     useproxy?: LinkHandler;
     onclickMismatch?: ClickLogger;
     metadata?: HTMLElement;
+    pointer?: boolean;
     canvas?: boolean;
     keyframes?: boolean;
     mobile?: boolean;
