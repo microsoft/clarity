@@ -149,7 +149,7 @@ export class Visualizer implements VisualizerType {
     public setup = async (target: Window, options: Options): Promise<Visualizer> => {
         this.reset();
         // Infer options
-        options.pointer = "pointer" in options ? options.pointer : false;
+        options.pointer = "pointer" in options ? options.pointer : true;
         options.canvas = "canvas" in options ? options.canvas : true;
         options.keyframes = "keyframes" in options ? options.keyframes : false;
 
