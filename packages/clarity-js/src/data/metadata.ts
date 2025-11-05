@@ -16,7 +16,7 @@ export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let rootDomain = null;
 let consentStatus: ConsentState = null;
-let defaultStatus: ConsentState = {ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied};
+let defaultStatus: ConsentState = { ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied };
 
 export function start(): void {
   rootDomain = null;
@@ -86,12 +86,14 @@ export function start(): void {
   }
 
   // Track consent config
-  consentStatus = {
-    ad_Storage: config.track ? Constant.Granted : Constant.Denied,
-    analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
-  }      
+  if (consentStatus === null) {
+    consentStatus = {
+      ad_Storage: config.track ? Constant.Granted : Constant.Denied,
+      analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
+    };
+  }
   const consent = getConsentData(consentStatus, ConsentSource.Implicit);
-  trackConsent.config(consent);      
+  trackConsent.config(consent);
   // Track ids using a cookie if configuration allows it
   track(u);
 }
@@ -112,7 +114,6 @@ function userAgentData(): void {
 export function stop(): void {
   rootDomain = null;
   data = null;
-  consentStatus = null;
   callbacks.forEach(cb => { cb.called = false; });
 }
 
@@ -124,7 +125,7 @@ export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boo
   // we go through the upgrading flow.
   if (data && (upgraded || wait === false)) {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
-    cb(data, !config.lean, consentInfo? consentStatus : undefined);
+    cb(data, !config.lean, consentInfo ? consentStatus : undefined);
     called = true;
   }
   if (recall || !called) {
@@ -142,21 +143,30 @@ export function consent(status = true): void {
     consentv2();
     return;
   }
-  
+
   consentv2({ ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
   trackConsent.consent();
 }
 
 export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.API): void {
-  consentStatus = {
+  const updatedStatus = {
     ad_Storage: normalizeConsent(consentState.ad_Storage),
     analytics_Storage: normalizeConsent(consentState.analytics_Storage)
   };
 
+  if (
+    consentStatus &&
+    updatedStatus.ad_Storage === consentStatus.ad_Storage &&
+    updatedStatus.analytics_Storage === consentStatus.analytics_Storage
+  ) {
+    return;
+  }
+
+  consentStatus = updatedStatus;
   callback(true);
   const consentData = getConsentData(consentStatus, source);
-  
-  if (!consentData.analytics_Storage) {
+
+  if (!consentData.analytics_Storage && config.track) {
     config.track = false;
     setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
     setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
@@ -165,16 +175,17 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     return;
   }
 
-  if (core.active()) {
+  if (core.active() && consentData.analytics_Storage) {
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    trackConsent.trackConsentv2(consentData);
-    trackConsent.consent();
   }
+
+  trackConsent.trackConsentv2(consentData);
+  trackConsent.consent();
 }
 
-function getConsentData(consentState: ConsentState, source : ConsentSource): ConsentData {
+function getConsentData(consentState: ConsentState, source: ConsentSource): ConsentData {
   let consent: ConsentData = {
     source: source,
     ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
@@ -203,7 +214,7 @@ function tab(): string {
   return id;
 }
 
-export function callback(consentUpdate:boolean = false): void {
+export function callback(consentUpdate: boolean = false): void {
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
   processCallback(upgrade, consentUpdate);
 }
@@ -221,9 +232,9 @@ function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): 
     for (let i = 0; i < callbacks.length; i++) {
       const cb = callbacks[i];
       if (
-        cb.callback && 
+        cb.callback &&
         ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
-        (!cb.wait || upgrade)       
+        (!cb.wait || upgrade)
       ) {
         cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
         cb.called = true;
