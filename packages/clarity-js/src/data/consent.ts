@@ -2,6 +2,7 @@ import { ConsentData, ConsentSource, ConsentState, ConsentType, Constant, Dimens
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
 import { consentv2 } from "./metadata";
+import coreConfig from "@src/core/config";
 
 export let data: ConsentData = null;
 let updateConsent: boolean = true;
@@ -67,9 +68,11 @@ export function compute(): void {
     if (updateConsent) {
         encode(Event.Consent);
         updateConsent = false;
-        const ics = window.google_tag_data?.ics;
-        if (ics?.usedUpdate) {
-            processConsent();
+        if (!coreConfig.track) {
+            const ics = window.google_tag_data?.ics;
+            if (ics?.usedUpdate) {
+                processConsent();
+            }
         }
     }
 }
