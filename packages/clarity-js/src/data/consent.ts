@@ -2,7 +2,7 @@ import { ConsentData, ConsentSource, ConsentState, ConsentType, Constant, Dimens
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
 import { consentv2 } from "./metadata";
-import config from "@src/core/config";
+import CoreConfig from "@src/core/config";
 
 export let data: ConsentData = null;
 let updateConsent: boolean = true;
@@ -44,7 +44,7 @@ function getConsentState(googleConsent: GCMConsentState): ConsentState {
 }
 
 
-export function consentConfig(consent: ConsentData): void {
+export function config(consent: ConsentData): void {
     trackConsent(consent.analytics_Storage ? ConsentType.Implicit : ConsentType.None);
     data = consent;
 }
@@ -68,7 +68,7 @@ export function compute(): void {
     if (updateConsent) {
         encode(Event.Consent);
         updateConsent = false;
-        if (!config.track) {
+        if (!CoreConfig.track) {
             const ics = window.google_tag_data?.ics;
             if (ics?.usedUpdate) {
                 processConsent();

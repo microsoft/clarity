@@ -93,7 +93,7 @@ export function start(): void {
     };
   }
   const consent = getConsentData(consentStatus, ConsentSource.Implicit);
-  trackConsent.consentConfig(consent);
+  trackConsent.config(consent);
   // Track ids using a cookie if configuration allows it
   track(u);
 }
