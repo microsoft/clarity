@@ -1,7 +1,8 @@
-import { BooleanFlag, ConsentData, ConsentSource, ConsentState, ConsentType, Constant, Dimension, Event, GCMConsent, GCMConsentState } from "@clarity-types/data";
+import { ConsentData, ConsentSource, ConsentState, ConsentType, Constant, Dimension, Event, GCMConsent, GCMConsentState } from "@clarity-types/data";
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
 import { consentv2 } from "./metadata";
+import config from "@src/core/config";
 
 export let data: ConsentData = null;
 let updateConsent: boolean = true;
@@ -43,7 +44,7 @@ function getConsentState(googleConsent: GCMConsentState): ConsentState {
 }
 
 
-export function config(consent: ConsentData): void {
+export function consentConfig(consent: ConsentData): void {
     trackConsent(consent.analytics_Storage ? ConsentType.Implicit : ConsentType.None);
     data = consent;
 }
@@ -67,7 +68,7 @@ export function compute(): void {
     if (updateConsent) {
         encode(Event.Consent);
         updateConsent = false;
-        if (data?.analytics_Storage === BooleanFlag.False) {
+        if (!config.track) {
             const ics = window.google_tag_data?.ics;
             if (ics?.usedUpdate) {
                 processConsent();
