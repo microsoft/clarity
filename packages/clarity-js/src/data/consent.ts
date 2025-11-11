@@ -1,4 +1,4 @@
-import { ConsentData, ConsentSource, ConsentState, ConsentType, Constant, Dimension, Event, GCMConsent, GCMConsentState } from "@clarity-types/data";
+import { BooleanFlag, ConsentData, ConsentSource, ConsentState, ConsentType, Constant, Dimension, Event, GCMConsent, GCMConsentState } from "@clarity-types/data";
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
 import { consentv2 } from "./metadata";
@@ -67,9 +67,11 @@ export function compute(): void {
     if (updateConsent) {
         encode(Event.Consent);
         updateConsent = false;
-        const ics = window.google_tag_data?.ics;
-        if (ics?.usedUpdate) {
-            processConsent();
+        if (data?.analytics_Storage === BooleanFlag.False) {
+            const ics = window.google_tag_data?.ics;
+            if (ics?.usedUpdate) {
+                processConsent();
+            }
         }
     }
 }
