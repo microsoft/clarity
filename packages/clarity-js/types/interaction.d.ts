@@ -128,6 +128,9 @@ export interface ClickData {
     isFullText: BooleanFlag;
     w: number;
     h: number;
+    tag: string;
+    class: string;
+    id: string;
 }
 
 export interface TextInfo {
