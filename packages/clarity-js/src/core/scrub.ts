@@ -52,9 +52,9 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                     case "click":
                     case "input":
                     case "change":
-                        return mangleToken(value);
+                        return value;
                     case "placeholder":
-                        return mask(value);
+                        return value;
                 }
                 break;
             case Privacy.Exclude:
