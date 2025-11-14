@@ -1,7 +1,7 @@
 import { ConsentData, ConsentSource, ConsentState, ConsentType, Constant, Dimension, Event, GCMConsent, GCMConsentState } from "@clarity-types/data";
 import * as dimension from "@src/data/dimension";
 import encode from "./encode";
-import { consentv2 } from "./metadata";
+import { consentv2 } from "@src/data/metadata";
 import coreConfig from "@src/core/config";
 
 export let data: ConsentData = null;
