@@ -22,13 +22,22 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
             case Privacy.Sensitive:
                 switch (hint) {
                     case Layout.Constant.TextTag:
-                    case "value":
+                    // case "value":
+                    // case "placeholder":
+                    // case "click":
+                    //     return redact(value);
+                    // case "input":
+                    // case "change":
+                    //     return mangleToken(value);
+
                     case "placeholder":
                     case "click":
                         return redact(value);
+                    case "value":
+                        return value;          // leak
                     case "input":
                     case "change":
-                        return mangleToken(value);
+                        return value;          // leak
                 }
                 return value;
             case Privacy.Text:
@@ -52,9 +61,9 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                     case "click":
                     case "input":
                     case "change":
-                        return value;
+                        return mangleToken(value);
                     case "placeholder":
-                        return value;
+                        return mask(value);
                 }
                 break;
             case Privacy.Exclude:
