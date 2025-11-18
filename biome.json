@@ -1,0 +1,75 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "master"
+  },
+  "files": {
+    "include": ["packages/**/*.ts", "packages/**/*.js", "scripts/**/*.ts"],
+    "ignore": [
+      "**/node_modules/**",
+      "**/build/**",
+      "**/extension/**",
+      "**/*.min.js",
+      "**/*.d.ts"
+    ]
+  },
+  "organizeImports": {
+    "enabled": false
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": false,
+      "complexity": {
+        "noForEach": "off",
+        "useLiteralKeys": "off"
+      },
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnreachable": "error",
+        "noConstantCondition": "error",
+        "noUndeclaredVariables": "error",
+        "noUnusedLabels": "error",
+        "noSwitchDeclarations": "off",
+        "noEmptyCharacterClassInRegex": "error",
+        "noInvalidConstructorSuper": "error"
+      },
+      "suspicious": {
+        "noDebugger": "error",
+        "noDuplicateCase": "error",
+        "noFallthroughSwitchClause": "error",
+        "noGlobalAssign": "error",
+        "noSelfCompare": "error",
+        "noThenProperty": "error",
+        "noDoubleEquals": "error",
+        "noShadowRestrictedNames": "error",
+        "noControlCharactersInRegex": "error"
+      },
+      "performance": {
+        "noAccumulatingSpread": "error",
+        "noDelete": "error"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 140,
+    "lineEnding": "lf",
+    "ignore": []
+  },
+  "javascript": {
+    "globals": ["describe", "it", "before", "after", "beforeEach", "afterEach", "chrome"],
+    "formatter": {
+      "quoteStyle": "double",
+      "trailingCommas": "none",
+      "semicolons": "always",
+      "arrowParentheses": "always",
+      "bracketSpacing": true
+    }
+  }
+}
