@@ -132,7 +132,7 @@ async function processMutation(timer: Timer, mutation: MutationRecord, instance:
     dom.parse(target.ownerDocument);
   }
 
-  if (type && target && target.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) {
+  if (type && target && target.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (target as ShadowRoot).host) {
     dom.parse(target as ShadowRoot);
   }
 

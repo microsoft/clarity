@@ -21,7 +21,7 @@ export function decode(tokens: Data.Token[]): LayoutEvent {
             let increment: number;
             for (let i = 2; i < tokens.length; i += increment) {
                 let region: Layout.RegionData;
-                if (typeof(tokens[i+2]) == Constant.Number) {
+                if (typeof(tokens[i+2]) === Constant.Number) {
                     region = {
                         id: tokens[i] as number,
                         interaction: tokens[i + 1] as number,

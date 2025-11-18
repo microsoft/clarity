@@ -1,4 +1,4 @@
-import { Core, Data, decode, Interaction, Layout } from "clarity-decode";
+import { Core, Data, Interaction, Layout } from "clarity-decode";
 import * as fs from 'fs';
 import * as url from 'url';
 import * as path from 'path';

@@ -80,7 +80,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
             let v = 2; // Start from 3rd index since first two are used for time & event
             let variables: Data.VariableData = {};
             while (v < tokens.length) {
-                variables[tokens[v++] as string] = typeof tokens[v + 1] == Constant.String ? [tokens[v++] as string] : tokens[v++] as string[];
+                variables[tokens[v++] as string] = typeof tokens[v + 1] === Constant.String ? [tokens[v++] as string] : tokens[v++] as string[];
             }
             return { time, event, data: variables };
         case Data.Event.Extract:
@@ -88,7 +88,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
             let extract: Data.ExtractData = {};
             while (e < tokens.length) {
                 // For backward compatibility from version 0.7.4
-                if (typeof(tokens[e + 1]) == Constant.String) {
+                if (typeof(tokens[e + 1]) === Constant.String) {
                     extract[tokens[e++] as string | number] = tokens[e++] as string;
                 }
                 else {

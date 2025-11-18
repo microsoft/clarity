@@ -73,7 +73,7 @@ export function compute(): void {
     try {
         for (let v in variables) {
             let key = parseInt(v);
-            if (validation[key] == Constant.Empty || document.querySelector(validation[key]))
+            if (validation[key] === Constant.Empty || document.querySelector(validation[key]))
             {
                 let variableData = variables[key];
                 for (let v in variableData) {
@@ -128,7 +128,7 @@ export function update(key: number, subkey: number, value: string): void {
     }
     
     if (!isEmpty(hashes[key]) 
-        && (!(subkey in data[key]) || data[key][subkey] != value))
+        && (!(subkey in data[key]) || data[key][subkey] !== value))
     {
         update = true;
     }
@@ -167,7 +167,7 @@ function parse(variable: string): Syntax[] {
 // For instance, for a.b.c, it will first check window["a"]. If it exists, it will recursively look at: window["a"]["b"] and finally,
 // return the value for window["a"]["b"]["c"].
 function evaluate(variable: Syntax[], base: Object = window): any {
-    if (variable.length == 0) { return base; }
+    if (variable.length === 0) { return base; }
     let part = variable.shift();
     let output;
     if (base && base[part.name]) {
@@ -200,12 +200,12 @@ function str(input: string): string {
 function match(base: Object, condition: string): boolean {
     if (condition) {
         let prop = condition.split(":");
-        return prop.length > 1 ? base[prop[0]] == prop[1] : base[prop[0]]
+        return prop.length > 1 ? base[prop[0]] === prop[1] : base[prop[0]]
     }
 
     return true;
 }
 
 function isEmpty(obj: Object): boolean {
-    return Object.keys(obj).length == 0;
+    return Object.keys(obj).length === 0;
 }

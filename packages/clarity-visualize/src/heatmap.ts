@@ -234,7 +234,7 @@ export class HeatmapHelper {
             this.timeout = setTimeout(this.click, Setting.Interval);
         }
         else if (this.scrollData) {
-            if (event.type != 'scroll') {
+            if (event.type !== 'scroll') {
                 if (this.timeout) { clearTimeout(this.timeout); }
                 this.timeout = setTimeout(this.scroll, Setting.Interval);
             }
@@ -289,7 +289,7 @@ export class HeatmapHelper {
                     // Ignore if top element ends up being the canvas element we added for heatmap visualization
                     if (e.tagName === Constant.Canvas || (e.id && e.id.indexOf(Constant.ClarityPrefix) === 0)) { continue; }
                     visibility = e === el;
-                    shadowElement = e.shadowRoot && e.shadowRoot != doc ? e.shadowRoot : null;
+                    shadowElement = e.shadowRoot && e.shadowRoot !== doc ? e.shadowRoot : null;
                     break;
                 }
                 doc = shadowElement;

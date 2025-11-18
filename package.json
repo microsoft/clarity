@@ -1,7 +1,7 @@
 {
   "name": "clarity",
   "private": true,
-  "version": "0.8.43",
+  "version": "0.8.42-beta",
   "repository": "https://github.com/microsoft/clarity.git",
   "author": "Sarvesh Nagpal <sarveshn@microsoft.com>",
   "license": "MIT",
@@ -18,9 +18,15 @@
     "build:visualize": "yarn workspace clarity-visualize build",
     "build:devtools": "yarn workspace clarity-devtools build",
     "test": "yarn workspace clarity-js test",
-    "bump-version": "ts-node scripts/bump-version.ts"
+    "bump-version": "ts-node scripts/bump-version.ts",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "lerna": "^8.2.3",
     "parse-url": "^8.1.0"
   },

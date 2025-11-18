@@ -12,7 +12,7 @@ let currencyRegex = null;
 
 export function text(value: string, hint: string, privacy: Privacy, mangle: boolean = false, type?: string): string {
     if (value) {
-        if (hint == "input" && (type === "checkbox" || type === "radio")) {
+        if (hint === "input" && (type === "checkbox" || type === "radio")) {
             return value;
         }
 
