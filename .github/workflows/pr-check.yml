@@ -22,7 +22,7 @@ jobs:
         run: yarn install
       
       - name: Run Biome check
-        run: yarn check
+        run: yarn run check
       
       - name: Build packages
         run: yarn build
