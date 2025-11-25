@@ -115,6 +115,9 @@ export class InteractionHelper {
                 case "radio":
                     el.checked = data.value === "true";
                     break;
+                case "file":
+                    // We cannot set value for files, only allowed to be an empty string when programatically set
+                    break;
                 default:
                     el.value = data.value;
                     break;

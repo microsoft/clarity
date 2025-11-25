@@ -171,68 +171,72 @@ export class Visualizer implements VisualizerType {
         return this;
     }
 
-    public render = async (events: DecodedData.DecodedEvent[]): Promise<void> => {
+    public render = (events: DecodedData.DecodedEvent[]): void => {
         if (this.state === null) { throw new Error(`Initialize visualization by calling "setup" prior to making this call.`); }
         let time = 0;
-        for (let entry of events) {
-            time = entry.time;
-            this.interaction.clearOldClickVisualizations(time);
-            switch (entry.event) {
-                case Data.Event.Metric:
-                    this.data.metric(entry as DecodedData.MetricEvent);
-                    break;
-                case Data.Event.Dimension:
-                    if(entry.data[Dimension.InteractionNextPaint]){
+        for (const entry of events) {
+            try {
+                time = entry.time;
+                this.interaction.clearOldClickVisualizations(time);
+                switch (entry.event) {
+                    case Data.Event.Metric:
                         this.data.metric(entry as DecodedData.MetricEvent);
-                    }
-                    break;
-                case Data.Event.Region:
-                    this.data.region(entry as Layout.RegionEvent);
-                    break;
-                case Data.Event.Mutation:
-                case Data.Event.Snapshot:
-                    await this.layout.markup(entry as Layout.DomEvent);
-                    break;
-                case Data.Event.MouseDown:
-                case Data.Event.MouseUp:
-                case Data.Event.MouseMove:
-                case Data.Event.MouseWheel:
-                case Data.Event.Click:
-                case Data.Event.DoubleClick:
-                case Data.Event.TouchStart:
-                case Data.Event.TouchCancel:
-                case Data.Event.TouchEnd:
-                case Data.Event.TouchMove:
-                    this.interaction.pointer(entry as Interaction.PointerEvent);
-                    break;
-                case Data.Event.Visibility:
-                    this.interaction.visibility(entry as Interaction.VisibilityEvent);
-                    break;
-                case Data.Event.Input:
-                    this.interaction.input(entry as Interaction.InputEvent);
-                    break;
-                case Data.Event.Selection:
-                    this.interaction.selection(entry as Interaction.SelectionEvent);
-                    break;
-                case Data.Event.Resize:
-                    this.interaction.resize(entry as Interaction.ResizeEvent);
-                    break;
-                case Data.Event.Scroll:
-                    this.interaction.scroll(entry as Interaction.ScrollEvent);
-                    break;
-                case Data.Event.StyleSheetAdoption:
-                case Data.Event.StyleSheetUpdate:
-                    this.layout.styleChange(entry as Layout.StyleSheetEvent);
-                    break;                
-                case Data.Event.Animation:
-                    this.layout.animateChange(entry as Layout.AnimationEvent);
-                    break;
-                case Data.Event.CustomElement:
-                    this.layout.customElement(entry as Layout.CustomElementEvent);
-                    break;
+                        break;
+                    case Data.Event.Dimension:
+                        if(entry.data[Dimension.InteractionNextPaint]){
+                            this.data.metric(entry as DecodedData.MetricEvent);
+                        }
+                        break;
+                    case Data.Event.Region:
+                        this.data.region(entry as Layout.RegionEvent);
+                        break;
+                    case Data.Event.Mutation:
+                    case Data.Event.Snapshot:
+                        this.layout.markup(entry as Layout.DomEvent);
+                        break;
+                    case Data.Event.MouseDown:
+                    case Data.Event.MouseUp:
+                    case Data.Event.MouseMove:
+                    case Data.Event.MouseWheel:
+                    case Data.Event.Click:
+                    case Data.Event.DoubleClick:
+                    case Data.Event.TouchStart:
+                    case Data.Event.TouchCancel:
+                    case Data.Event.TouchEnd:
+                    case Data.Event.TouchMove:
+                        this.interaction.pointer(entry as Interaction.PointerEvent);
+                        break;
+                    case Data.Event.Visibility:
+                        this.interaction.visibility(entry as Interaction.VisibilityEvent);
+                        break;
+                    case Data.Event.Input:
+                        this.interaction.input(entry as Interaction.InputEvent);
+                        break;
+                    case Data.Event.Selection:
+                        this.interaction.selection(entry as Interaction.SelectionEvent);
+                        break;
+                    case Data.Event.Resize:
+                        this.interaction.resize(entry as Interaction.ResizeEvent);
+                        break;
+                    case Data.Event.Scroll:
+                        this.interaction.scroll(entry as Interaction.ScrollEvent);
+                        break;
+                    case Data.Event.StyleSheetAdoption:
+                    case Data.Event.StyleSheetUpdate:
+                        this.layout.styleChange(entry as Layout.StyleSheetEvent);
+                        break;                
+                    case Data.Event.Animation:
+                        this.layout.animateChange(entry as Layout.AnimationEvent);
+                        break;
+                    case Data.Event.CustomElement:
+                        this.layout.customElement(entry as Layout.CustomElementEvent);
+                        break;
+                }
+            }
+            catch (e) {
+                this._state.options.logerror?.(e);
             }
         }
-
         if (events.length > 0) {
             // Update pointer trail at the end of every frame
             this.interaction.trail(time);
