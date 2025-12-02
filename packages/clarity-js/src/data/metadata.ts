@@ -16,7 +16,7 @@ export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let rootDomain = null;
 let consentStatus: ConsentState = null;
-let defaultStatus: ConsentState = { ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied };
+let defaultStatus: ConsentState = { source: ConsentSource.API, ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied };
 
 export function start(): void {
   rootDomain = null;
@@ -88,11 +88,12 @@ export function start(): void {
   // Track consent config
   if (consentStatus === null) {
     consentStatus = {
+      source: ConsentSource.Implicit,
       ad_Storage: config.track ? Constant.Granted : Constant.Denied,
       analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
     };
   }
-  const consent = getConsentData(consentStatus, ConsentSource.Implicit);
+  const consent = getConsentData(consentStatus);
   trackConsent.config(consent);
   // Track ids using a cookie if configuration allows it
   track(u);
@@ -150,6 +151,7 @@ export function consent(status = true): void {
 
 export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.API): void {
   const updatedStatus = {
+    source: source,
     ad_Storage: normalizeConsent(consentState.ad_Storage),
     analytics_Storage: normalizeConsent(consentState.analytics_Storage)
   };
@@ -164,7 +166,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
 
   consentStatus = updatedStatus;
   callback(true);
-  const consentData = getConsentData(consentStatus, source);
+  const consentData = getConsentData(consentStatus);
 
   if (!consentData.analytics_Storage && config.track) {
     config.track = false;
@@ -185,9 +187,9 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
   trackConsent.consent();
 }
 
-function getConsentData(consentState: ConsentState, source: ConsentSource): ConsentData {
+function getConsentData(consentState: ConsentState): ConsentData {
   let consent: ConsentData = {
-    source: source,
+    source: consentState.source,
     ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
     analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
   };
