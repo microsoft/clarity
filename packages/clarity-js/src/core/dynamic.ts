@@ -1,5 +1,7 @@
 import { Constant } from "@clarity-types/layout";
+import { Constant as DataConstant } from "@clarity-types/data";
 import * as baseline from "@src/data/baseline";
+import { report } from "@src/core/report";
 
 let stopCallbacks: (() => void)[] = [];
 let active = false;
@@ -37,19 +39,23 @@ export function event(signal: string): void {
     return;
   }
 
-  load(parts[0]);
-
-  if (m) {
-    modules.add(m);
-    baseline.dynamic(modules);
-  }
+  load(parts[0], m);
 }
 
-function load(url: string): void {
+function load(url: string, mid: number | null): void {
   try {
     const script = document.createElement("script");
     script.src = url;
     script.async = true;
+    script.onload = () => {
+      if (mid) {
+        modules.add(mid);
+        baseline.dynamic(modules);
+      }
+    };
+    script.onerror = () => {
+      report(new Error(`${DataConstant.Module}: ${url}`));
+    };
     document.head.appendChild(script);
   } catch (error) {
     // Do nothing
