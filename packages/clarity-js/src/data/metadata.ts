@@ -86,6 +86,7 @@ export function start(): void {
   }
 
   // Track consent config
+  // If consent status is not already set, initialize it based on project configuration. Otherwise, use the existing consent status.
   if (consentStatus === null) {
     consentStatus = {
       source: ConsentSource.Implicit,
