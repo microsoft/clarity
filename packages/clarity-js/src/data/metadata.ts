@@ -189,7 +189,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
 
 function getConsentData(consentState: ConsentState): ConsentData {
   let consent: ConsentData = {
-    source: consentState.source ?? ConsentSource.Implicit,
+    source: consentState.source,
     ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
     analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
   };
