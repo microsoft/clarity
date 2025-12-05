@@ -549,6 +549,7 @@ export interface Interaction {
 }
 
 export interface ConsentState {
+    source?: ConsentSource;
     ad_Storage?: string;
     analytics_Storage?: string;
 }
