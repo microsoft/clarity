@@ -41,6 +41,8 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                     case "srcset":
                     case "title":
                     case "alt":
+                    case "href":
+                    case "xlink:href":
                         if (privacy === Privacy.TextImage) {
                             if (hint === 'src' && value?.startsWith('blob:')) {
                                 return 'blob:';
