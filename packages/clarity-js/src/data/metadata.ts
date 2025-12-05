@@ -86,6 +86,7 @@ export function start(): void {
   }
 
   // Track consent config
+  // If consent status is not already set, initialize it based on project configuration. Otherwise, use the existing consent status.
   if (consentStatus === null) {
     consentStatus = {
       source: ConsentSource.Implicit,
@@ -152,8 +153,8 @@ export function consent(status = true): void {
 export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.API): void {
   const updatedStatus = {
     source: consentState.source ?? source,
-    ad_Storage: normalizeConsent(consentState.ad_Storage),
-    analytics_Storage: normalizeConsent(consentState.analytics_Storage)
+    ad_Storage: normalizeConsent(consentState.ad_Storage, consentStatus?.ad_Storage),
+    analytics_Storage: normalizeConsent(consentState.analytics_Storage, consentStatus?.analytics_Storage),
   };
 
   if (
@@ -197,8 +198,8 @@ function getConsentData(consentState: ConsentState): ConsentData {
   return consent;
 }
 
-function normalizeConsent(value: unknown): string {
-  return typeof value === 'string' ? value.toLowerCase() : Constant.Denied;
+function normalizeConsent(value: unknown, fallback: string = Constant.Denied): string {
+  return typeof value === 'string' ? value.toLowerCase() : fallback;
 }
 
 export function clear(): void {
