@@ -151,7 +151,7 @@ export function consent(status = true): void {
 
 export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.API): void {
   const updatedStatus = {
-    source: source,
+    source: consentState.source ?? source,
     ad_Storage: normalizeConsent(consentState.ad_Storage),
     analytics_Storage: normalizeConsent(consentState.analytics_Storage)
   };
