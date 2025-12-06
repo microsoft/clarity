@@ -358,7 +358,7 @@ function getCookie(key: string, limit = false): string {
 function decodeCookieValue(value: string): [boolean, string] {
   try {
     let decodedValue = decodeURIComponent(value);
-    return [decodedValue != value, decodedValue];
+    return [decodedValue !== value, decodedValue];
   }
   catch {
   }
@@ -373,7 +373,7 @@ function encodeCookieValue(value: string): string {
 function setCookie(key: string, value: string, time: number): void {
   // only write cookies if we are currently in a cookie writing mode (and they are supported)
   // OR if we are trying to write an empty cookie (i.e. clear the cookie value out)
-  if ((config.track || value == Constant.Empty) && ((navigator && navigator.cookieEnabled) || supported(document, Constant.Cookie))) {
+  if ((config.track || value === Constant.Empty) && ((navigator && navigator.cookieEnabled) || supported(document, Constant.Cookie))) {
     // Some browsers automatically url encode cookie values if they are not url encoded.
     // We therefore encode and decode cookie values ourselves.
     let encodedValue = encodeCookieValue(value);

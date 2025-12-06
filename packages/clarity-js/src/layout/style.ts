@@ -96,7 +96,7 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
     }
     if (!arraysEqual(currentStyleSheets, styleSheetMap[documentId])) {
         // Using -1 to signify the root document node as we don't track that as part of our nodeMap
-        trackStyleAdoption(timestamp, documentNode == document ? -1 : getId(documentNode), StyleSheetOperation.SetAdoptedStyles, currentStyleSheets);
+        trackStyleAdoption(timestamp, documentNode === document ? -1 : getId(documentNode), StyleSheetOperation.SetAdoptedStyles, currentStyleSheets);
         styleSheetMap[documentId] = currentStyleSheets;
         styleTimeMap[documentId] = timestamp;
     }
@@ -104,7 +104,7 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
 
 export function compute(): void {
     for (var documentNode of documentNodes) {
-        var docId = documentNode == document ? -1 : getId(documentNode);
+        var docId = documentNode === document ? -1 : getId(documentNode);
         let ts = docId in styleTimeMap ? styleTimeMap[docId] : null;
         checkDocumentStyles(documentNode, ts);
     }

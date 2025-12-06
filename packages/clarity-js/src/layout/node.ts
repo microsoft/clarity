@@ -178,7 +178,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     if (electron && attributes['rel'] === Constant.StyleSheet) {
                         for (var styleSheetIndex in Object.keys(document.styleSheets)) {
                             var currentStyleSheet = document.styleSheets[styleSheetIndex];
-                            if (currentStyleSheet.ownerNode == element) {
+                            if (currentStyleSheet.ownerNode === element) {
                                 let syntheticStyleData = { tag: "STYLE", attributes, value: getCssRules(currentStyleSheet) };
                                 dom[call](node, parent, syntheticStyleData, source);
                                 break;

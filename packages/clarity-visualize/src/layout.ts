@@ -513,7 +513,7 @@ export class LayoutHelper {
             // We log the warning on non-standard markup but continue with the visualization
             console.warn(`Exception encountered while creating element ${tag}: ${ex}`);
             return doc.createElement(Constant.UnknownTag);
-        };
+        }
     }
 
     private insertAfter = (data: DecodedLayout.DomData, parent: Node, node: Node, previous: Node): void => {

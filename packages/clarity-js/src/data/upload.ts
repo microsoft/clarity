@@ -63,6 +63,7 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
     }
 
     switch (type) {
+        // biome-ignore lint/suspicious/noFallthroughSwitchClause: Intentional fallthrough to also track in playback
         case Event.Discover:
             if (leanLimit) { break; }
             discoverBytes += event.length;
