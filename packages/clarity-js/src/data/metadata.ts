@@ -160,6 +160,9 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     updatedStatus.ad_Storage === consentStatus.ad_Storage &&
     updatedStatus.analytics_Storage === consentStatus.analytics_Storage
   ) {
+    consentStatus.source = updatedStatus.source;
+    trackConsent.trackConsentv2(getConsentData(consentStatus));
+    trackConsent.consent();
     return;
   }
 
