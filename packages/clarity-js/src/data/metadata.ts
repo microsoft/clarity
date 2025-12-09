@@ -191,8 +191,9 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
 function getConsentData(consentState: ConsentState): ConsentData {
   let consent: ConsentData = {
     source: consentState.source ?? ConsentSource.Implicit,
-    ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
-    analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
+    //TODO: Add consentStatus as fallback once https://github.com/microsoft/clarity/pull/992/files is merged.
+    ad_Storage: consentValue(consentState.ad_Storage),
+    analytics_Storage: consentValue(consentState.analytics_Storage)
   };
 
   return consent;
@@ -200,6 +201,10 @@ function getConsentData(consentState: ConsentState): ConsentData {
 
 function normalizeConsent(value: unknown, fallback: string = Constant.Denied): string {
   return typeof value === 'string' ? value.toLowerCase() : fallback;
+}
+
+function consentValue(value: string, fallback: BooleanFlag = BooleanFlag.False): BooleanFlag {
+  return value === Constant.Granted ? BooleanFlag.True : value === Constant.Denied ? BooleanFlag.False : fallback;
 }
 
 export function clear(): void {
