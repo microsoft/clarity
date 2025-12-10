@@ -1,25 +1,24 @@
-import { Time } from "@clarity-types/core";
-import { BooleanFlag, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, User, Setting, ConsentState, ConsentSource, ConsentData } from "@clarity-types/data";
+import { Constant as CoreConstant, Time } from "@clarity-types/core";
+import { BooleanFlag, ConsentData, ConsentSource, ConsentState, Constant, Dimension, Metadata, MetadataCallback, MetadataCallbackOptions, Metric, Session, Setting, User } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
 import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
 import * as scrub from "@src/core/scrub";
+import * as trackConsent from "@src/data/consent";
+import { getCookie, setCookie } from "@src/data/cookie";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
+import { supported } from "@src/data/util";
 import { set } from "@src/data/variable";
-import * as trackConsent from "@src/data/consent";
-import { Constant as CoreConstant } from "@clarity-types/core";
 
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
-let rootDomain = null;
 let consentStatus: ConsentState = null;
 let defaultStatus: ConsentState = { source: ConsentSource.API, ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied };
 
 export function start(): void {
-  rootDomain = null;
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const timezone = (typeof Intl !== 'undefined' && Intl?.DateTimeFormat()?.resolvedOptions()?.timeZone) ?? '';
   const timezoneOffset = new Date().getTimezoneOffset().toString();
@@ -114,7 +113,6 @@ function userAgentData(): void {
 }
 
 export function stop(): void {
-  rootDomain = null;
   data = null;
   callbacks.forEach(cb => { cb.called = false; });
 }
@@ -171,8 +169,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
 
   if (!consentData.analytics_Storage && config.track) {
     config.track = false;
-    setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
-    setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
+    clear(true);
     clarity.stop();
     window.setTimeout(clarity.start, Setting.RestartDelay);
     return;
@@ -202,9 +199,14 @@ function normalizeConsent(value: unknown, fallback: string = Constant.Denied): s
   return typeof value === 'string' ? value.toLowerCase() : fallback;
 }
 
-export function clear(): void {
+export function clear(all: boolean = false): void {
   // Clear any stored information in the cookie that tracks session information so we can restart fresh the next time
-  setCookie(Constant.SessionKey, Constant.Empty, 0);
+  setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
+
+  // Clear user cookie as well if all flag is set
+  if (all) {
+    setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
+  }
 }
 
 function tab(): string {
@@ -248,10 +250,6 @@ function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): 
       }
     }
   }
-}
-
-function supported(target: Window | Document, api: string): boolean {
-  try { return !!target[api]; } catch { return false; }
 }
 
 function track(u: User, consent: BooleanFlag = null): void {
@@ -321,91 +319,3 @@ function user(): User {
   return output;
 }
 
-function getCookie(key: string, limit = false): string {
-  if (supported(document, Constant.Cookie)) {
-    let cookies: string[] = document.cookie.split(Constant.Semicolon);
-    if (cookies) {
-      for (let i = 0; i < cookies.length; i++) {
-        let pair: string[] = cookies[i].split(Constant.Equals);
-        if (pair.length > 1 && pair[0] && pair[0].trim() === key) {
-          // Some browsers automatically url encode cookie values if they are not url encoded.
-          // We therefore encode and decode cookie values ourselves.
-          // For backwards compatability we need to consider 3 cases:
-          // * Cookie was previously not encoded by Clarity and browser did not encode it
-          // * Cookie was previously not encoded by Clarity and browser encoded it once or more
-          // * Cookie was previously encoded by Clarity and browser did not encode it
-          let [isEncoded, decodedValue] = decodeCookieValue(pair[1]);
-
-          while (isEncoded) {
-            [isEncoded, decodedValue] = decodeCookieValue(decodedValue);
-          }
-
-          // If we are limiting cookies, check if the cookie value is limited
-          if (limit) {
-            return decodedValue.endsWith(`${Constant.Tilde}1`)
-              ? decodedValue.substring(0, decodedValue.length - 2)
-              : null;
-          }
-
-          return decodedValue;
-        }
-      }
-    }
-  }
-  return null;
-}
-
-function decodeCookieValue(value: string): [boolean, string] {
-  try {
-    let decodedValue = decodeURIComponent(value);
-    return [decodedValue != value, decodedValue];
-  }
-  catch {
-  }
-
-  return [false, value];
-}
-
-function encodeCookieValue(value: string): string {
-  return encodeURIComponent(value);
-}
-
-function setCookie(key: string, value: string, time: number): void {
-  // only write cookies if we are currently in a cookie writing mode (and they are supported)
-  // OR if we are trying to write an empty cookie (i.e. clear the cookie value out)
-  if ((config.track || value == Constant.Empty) && ((navigator && navigator.cookieEnabled) || supported(document, Constant.Cookie))) {
-    // Some browsers automatically url encode cookie values if they are not url encoded.
-    // We therefore encode and decode cookie values ourselves.
-    let encodedValue = encodeCookieValue(value);
-
-    let expiry = new Date();
-    expiry.setDate(expiry.getDate() + time);
-    let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
-    let cookie = `${key}=${encodedValue}${Constant.Semicolon}${expires}${Constant.Path}`;
-    try {
-      // Attempt to get the root domain only once and fall back to writing cookie on the current domain.
-      if (rootDomain === null) {
-        let hostname = location.hostname ? location.hostname.split(Constant.Dot) : [];
-        // Walk backwards on a domain and attempt to set a cookie, until successful
-        for (let i = hostname.length - 1; i >= 0; i--) {
-          rootDomain = `.${hostname[i]}${rootDomain ? rootDomain : Constant.Empty}`;
-          // We do not wish to attempt writing a cookie on the absolute last part of the domain, e.g. .com or .net.
-          // So we start attempting after second-last part, e.g. .domain.com (PASS) or .co.uk (FAIL)
-          if (i < hostname.length - 1) {
-            // Write the cookie on the current computed top level domain
-            document.cookie = `${cookie}${Constant.Semicolon}${Constant.Domain}${rootDomain}`;
-            // Once written, check if the cookie exists and its value matches exactly with what we intended to set
-            // Checking for exact value match helps us eliminate a corner case where the cookie may already be present with a different value
-            // If the check is successful, no more action is required and we can return from the function since rootDomain cookie is already set
-            // If the check fails, continue with the for loop until we can successfully set and verify the cookie
-            if (getCookie(key) === value) { return; }
-          }
-        }
-        // Finally, if we were not successful and gone through all the options, play it safe and reset rootDomain to be empty
-        // This forces our code to fall back to always writing cookie to the current domain
-        rootDomain = Constant.Empty;
-      }
-    } catch { rootDomain = Constant.Empty; }
-    document.cookie = rootDomain ? `${cookie}${Constant.Semicolon}${Constant.Domain}${rootDomain}` : cookie;
-  }
-}
