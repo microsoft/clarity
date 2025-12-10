@@ -6,7 +6,7 @@ import config from "@src/core/config";
 import hash from "@src/core/hash";
 import * as scrub from "@src/core/scrub";
 import * as trackConsent from "@src/data/consent";
-import { getCookie, setCookie } from "@src/data/cookie";
+import { COOKIE_SEP, getCookie, setCookie } from "@src/data/cookie";
 import * as dimension from "@src/data/dimension";
 import * as metric from "@src/data/metric";
 import { supported } from "@src/data/util";
@@ -229,7 +229,7 @@ export function save(): void {
   let ts = Math.round(Date.now());
   let upload = config.upload && typeof config.upload === Constant.String ? (config.upload as string).replace(Constant.HTTPS, Constant.Empty) : Constant.Empty;
   let upgrade = config.lean ? BooleanFlag.False : BooleanFlag.True;
-  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(Constant.Caret), Setting.SessionExpire);
+  setCookie(Constant.SessionKey, [data.sessionId, ts, data.pageNum, upgrade, upload].join(COOKIE_SEP), Setting.SessionExpire);
 }
 
 function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): void {
@@ -264,7 +264,7 @@ function track(u: User, consent: BooleanFlag = null): void {
   // To avoid cookie churn, write user id cookie only once every day
   if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent || u.dob !== dob) {
     let cookieParts = [data.userId, Setting.CookieVersion, end.toString(36), consent, dob];
-    setCookie(Constant.CookieKey, cookieParts.join(Constant.Caret), Setting.Expire);
+    setCookie(Constant.CookieKey, cookieParts.join(COOKIE_SEP), Setting.Expire);
   }
 }
 

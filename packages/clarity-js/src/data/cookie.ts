@@ -3,6 +3,7 @@ import config from "@src/core/config";
 import { decodeCookieValue, encodeCookieValue, supported } from "@src/data/util";
 
 let rootDomain = null;
+export const COOKIE_SEP = Constant.Caret;
 
 export function start() {
   rootDomain = null;
