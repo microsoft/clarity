@@ -22,7 +22,8 @@
   },
   "devDependencies": {
     "lerna": "^8.2.3",
-    "parse-url": "^8.1.0"
+    "parse-url": "^8.1.0",
+    "ts-node": "^10.1.0"
   },
   "resolutions": {
     "parse-url": "^8.1.0"
