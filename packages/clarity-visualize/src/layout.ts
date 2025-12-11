@@ -452,6 +452,13 @@ export class LayoutHelper {
                     this.setAttributes(iframeElement, node);
                     insert(node, parent, iframeElement, pivot);
                     break;
+                case "SCRIPT":
+                    {
+                        node.id = -1; // We want to ensure children of script tags are not processed
+                        node.value = null; // We don't want to set any potential script content
+                        this.insertDefaultElement(node, parent, pivot, doc, insert);
+                        break;
+                    }
                 default:
                     this.insertDefaultElement(node, parent, pivot, doc, insert);
                     break;
