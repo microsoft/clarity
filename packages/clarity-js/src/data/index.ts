@@ -13,6 +13,7 @@ import * as upgrade from "@src/data/upgrade";
 import * as upload from "@src/data/upload";
 import * as variable from "@src/data/variable";
 import * as extract from "@src/data/extract";
+import * as cookie from "@src/data/cookie";
 export { event } from "@src/data/custom";
 export { consent, consentv2, metadata } from "@src/data/metadata";
 export { upgrade } from "@src/data/upgrade";
@@ -21,7 +22,7 @@ export { signal } from "@src/data/signal";
 export { max as maxMetric } from "@src/data/metric";
 export { log as dlog } from "@src/data/dimension";
 
-const modules: Module[] = [baseline, dimension, variable, limit, summary, consent, metadata, envelope, upload, ping, upgrade, extract];
+const modules: Module[] = [baseline, dimension, variable, limit, summary, cookie, consent, metadata, envelope, upload, ping, upgrade, extract];
 
 export function start(): void {
     // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
