@@ -16,7 +16,7 @@ export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let consentStatus: ConsentState = null;
-let defaultStatus: ConsentState = { source: ConsentSource.API, ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied };
+let defaultStatus: ConsentState = { source: ConsentSource.Default, ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied };
 
 export function start(): void {
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
@@ -140,15 +140,15 @@ export function id(): string {
 //TODO: Remove this function once consentv2 is fully released
 export function consent(status = true): void {
   if (!status) {
-    consentv2();
+    consentv2({ source: ConsentSource.APIv1, ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied });
     return;
   }
 
-  consentv2({ ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
+  consentv2({ source: ConsentSource.APIv1, ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
   trackConsent.consent();
 }
 
-export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.API): void {
+export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.APIv2): void {
   const updatedStatus = {
     source: consentState.source ?? source,
     ad_Storage: normalizeConsent(consentState.ad_Storage, consentStatus?.ad_Storage),
@@ -160,6 +160,9 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     updatedStatus.ad_Storage === consentStatus.ad_Storage &&
     updatedStatus.analytics_Storage === consentStatus.analytics_Storage
   ) {
+    consentStatus.source = updatedStatus.source;
+    trackConsent.trackConsentv2(getConsentData(consentStatus));
+    trackConsent.consent();
     return;
   }
 
