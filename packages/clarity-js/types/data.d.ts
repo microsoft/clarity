@@ -386,7 +386,8 @@ export const enum XMLReadyState {
 export const enum ConsentSource {
     Implicit = 0,
     API = 1,
-    GCM = 2
+    GCM = 2,
+    Cookie = 3
 }
 
 /* Helper Interfaces */

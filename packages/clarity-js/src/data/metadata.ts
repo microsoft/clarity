@@ -88,7 +88,7 @@ export function start(): void {
   // If consent status is not already set, initialize it based on project configuration. Otherwise, use the existing consent status.
   if (consentStatus === null) {
     consentStatus = {
-      source: ConsentSource.Implicit,
+      source: u.consent ? ConsentSource.Cookie : ConsentSource.Implicit,
       ad_Storage: config.track ? Constant.Granted : Constant.Denied,
       analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
     };
