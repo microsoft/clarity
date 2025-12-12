@@ -88,9 +88,9 @@ export function start(): void {
   // If consent status is not already set, initialize it based on project configuration. Otherwise, use the existing consent status.
   if (consentStatus === null) {
     consentStatus = {
-      source: ConsentSource.Implicit,
-      ad_Storage: config.track ? Constant.Granted : Constant.Denied,
-      analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
+      source: u.consent || u.ad_consent ? ConsentSource.Cookie : ConsentSource.Implicit,
+      ad_Storage: u.ad_consent || (config.track && consentStatus.source != ConsentSource.Cookie) ? Constant.Granted : Constant.Denied,
+      analytics_Storage: u.consent || config.track ? Constant.Granted : Constant.Denied,
     };
   }
   const consent = getConsentData(consentStatus);
@@ -177,7 +177,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
 
   if (core.active() && consentData.analytics_Storage) {
     config.track = true;
-    track(user(), BooleanFlag.True);
+    track(user(), consentData.analytics_Storage, consentData.ad_Storage);
     save();
   }
 
@@ -252,9 +252,10 @@ function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): 
   }
 }
 
-function track(u: User, consent: BooleanFlag = null): void {
+function track(u: User, consent: BooleanFlag = null, ad_consent: BooleanFlag = null): void {
   // If consent is not explicitly specified, infer it from the user object
   consent = consent === null ? u.consent : consent;
+  ad_consent = ad_consent === null ? u.ad_consent : ad_consent;
   // Convert time precision into days to reduce number of bytes we have to write in a cookie
   // E.g. Math.ceil(1628735962643 / (24*60*60*1000)) => 18852 (days) => ejo in base36 (13 bytes => 3 bytes)
   let end = Math.ceil((Date.now() + (Setting.Expire * Time.Day)) / Time.Day);
@@ -262,8 +263,8 @@ function track(u: User, consent: BooleanFlag = null): void {
   let dob = u.dob === 0 ? (config.dob === null ? 0 : config.dob) : u.dob;
 
   // To avoid cookie churn, write user id cookie only once every day
-  if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent || u.dob !== dob) {
-    let cookieParts = [data.userId, Setting.CookieVersion, end.toString(36), consent, dob];
+  if (u.expiry === null || Math.abs(end - u.expiry) >= Setting.CookieInterval || u.consent !== consent || u.ad_consent != ad_consent || u.dob !== dob) {
+    let cookieParts = [data.userId, Setting.CookieVersion, end.toString(36), consent, ad_consent, dob];
     setCookie(Constant.CookieKey, cookieParts.join(COOKIE_SEP), Setting.Expire);
   }
 }
@@ -299,7 +300,7 @@ function num(string: string, base: number = 10): number {
 }
 
 function user(): User {
-  let output: User = { id: shortid(), version: 0, expiry: null, consent: BooleanFlag.False, dob: 0 };
+  let output: User = { id: shortid(), version: 0, expiry: null, consent: BooleanFlag.False, ad_consent: BooleanFlag.False, dob: 0 };
   let cookie = getCookie(Constant.CookieKey, !config.includeSubdomains);
   if (cookie && cookie.length > 0) {
     // Splitting and looking up first part for forward compatibility, in case we wish to store additional information in a cookie
@@ -310,7 +311,8 @@ function user(): User {
     if (parts.length > 2) { output.expiry = num(parts[2], 36); }
     // Check if we have explicit consent to track this user
     if (parts.length > 3 && num(parts[3]) === 1) { output.consent = BooleanFlag.True; }
-    if (parts.length > 4 && num(parts[1]) > 1) { output.dob = num(parts[4]); }
+    if (parts.length > 4 && num(parts[4]) === 1) { output.ad_consent = BooleanFlag.True; }
+    if (parts.length > 5 && num(parts[1]) > 1) { output.dob = num(parts[5]); }
     // Set track configuration to true for this user if we have explicit consent, regardless of project setting
     config.track = config.track || output.consent === BooleanFlag.True;
     // Get user id from cookie only if we tracking is enabled, otherwise fallback to a random id
