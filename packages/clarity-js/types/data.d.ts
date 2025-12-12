@@ -386,7 +386,8 @@ export const enum XMLReadyState {
 export const enum ConsentSource {
     Implicit = 0,
     API = 1,
-    GCM = 2
+    GCM = 2,
+    Cookie = 3
 }
 
 /* Helper Interfaces */
@@ -423,6 +424,7 @@ export interface User {
     version: number;
     expiry: number;
     consent: BooleanFlag;
+    ad_consent: BooleanFlag;
     dob: number;
 }
 
