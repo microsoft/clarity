@@ -17,10 +17,12 @@
     "build:decode": "yarn workspace clarity-decode build",
     "build:visualize": "yarn workspace clarity-visualize build",
     "build:devtools": "yarn workspace clarity-devtools build",
-    "test": "yarn workspace clarity-js test",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
     "bump-version": "ts-node scripts/bump-version.ts"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "lerna": "^8.2.3",
     "parse-url": "^8.1.0",
     "ts-node": "^10.1.0"
