@@ -153,12 +153,13 @@ This script (scripts/bump-version.ts):
 
 **Workflow:** `.github/workflows/npm-publish.yml`
 - **Trigger:** Push to master branch with changes to `packages/clarity-js/src/core/version.ts`
-- **Build job:** (Currently disabled with `if: false`) Runs on Node.js 22.17.0
+- **Status:** Currently non-functional - the build job is disabled with `if: false`, and since the publish job depends on it with `needs: build`, the entire workflow is effectively disabled
+- **Build job (when enabled):** Would run on Node.js 22.17.0
   - yarn install
   - yarn build
   - yarn test
   - File size checks for each package
-- **Publish job:** Runs on Node.js 18.20.6
+- **Publish job (when enabled):** Would run on Node.js 18.20.6 after successful build
   - Publishes clarity-js, clarity-decode, clarity-visualize to npm
   - Creates git tag for the release
 
