@@ -11,6 +11,17 @@ Clarity is an open-source TypeScript behavioral analytics library for tracking u
 
 **Stack:** TypeScript, Rollup, TSLint, Mocha/Chai, Lerna, Yarn workspaces
 
+## clarity-js Performance & Bundle Size Priorities
+
+**Critical:** clarity-js has two top priorities that must guide all development decisions:
+
+1. **Performance** - As an analytics library running on diverse websites, clarity-js must not hurt website performance or impact metrics like INP (Interaction to Next Paint) or PLT (Page Load Time). Balance data collection needs with:
+   - Avoid blocking the main thread
+   - Minimize network requests
+   - Reduce payload size
+
+2. **Bundle Size** - Small bundle size is crucial for loading clarity-js quickly and starting data collection as soon as possible. Every byte matters.
+
 ## Build & Development Commands
 
 ### Installation
@@ -106,6 +117,10 @@ Updates `version.ts`, all `package.json`, `lerna.json`, and stages files. Then c
 - If changing clarity-js APIs used by other packages, rebuild all from root
 - Follow TSLint rules: typedefs required, max 140 chars, `let`/`const` only, `as` assertions
 - Build configs in `rollup.config.ts` generate multiple formats (CJS, ESM, IIFE)
+
+**clarity-js specific considerations:**
+- **Always prioritize performance and bundle size** - avoid blocking main thread, minimize network requests, keep bundle small
+- Check bundle size impact after changes (CI runs size checks with <2% growth threshold)
 
 **Import style for clarity-js:**
 - Use `@src/<path>` aliases for cross-module imports (e.g., `from "@src/data/cookie"`, `from "@src/data/metadata"`)
