@@ -107,4 +107,8 @@ Updates `version.ts`, all `package.json`, `lerna.json`, and stages files. Then c
 - Follow TSLint rules: typedefs required, max 140 chars, `let`/`const` only, `as` assertions
 - Build configs in `rollup.config.ts` generate multiple formats (CJS, ESM, IIFE)
 
+**Import style for clarity-js:**
+- Use `@src/<path>` aliases for cross-module imports (e.g., `from "@src/data/cookie"`, `from "@src/data/metadata"`)
+- Exception: `encode.ts` files use relative imports (e.g., `from "./encode"`)
+
 **Trust these instructions** - validated by testing. Only search if you need specifics not covered here or encounter undocumented errors.
