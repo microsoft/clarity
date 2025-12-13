@@ -1,9 +1,8 @@
-const { assert } = require('chai');
+import { test, expect } from '@playwright/test';
+import { decode } from 'clarity-decode';
 
-const { decode } = require('../build/clarity.decode.js');
-
-describe('decode function', () => {
-    it('should decode a simple payload', () => {
+test.describe('decode function', () => {
+    test('should decode a simple payload', () => {
         // This is a very simple test that focuses on basic decoding functionality
         const testPayload = {
           e: ["0.8.20", 1, 0, 506, "devtools", "1mtqiaz", "1c27tix", 2, 0, 0, 0, "https://test.com/"],
@@ -26,16 +25,16 @@ describe('decode function', () => {
 
         const result = decode(input);
         
-        assert.isObject(result);
-        assert.isNumber(result.timestamp);
-        assert.isObject(result.envelope);
-        assert.equal(result.envelope.version, "0.8.20");
-        assert.equal(result.visibility[0].data.visible, 1);
-        assert.equal(result.contextMenu[0].data.target, 488);
-        assert.equal(result.contextMenu[0].data.button, 2);
+        expect(typeof result).toBe('object');
+        expect(typeof result.timestamp).toBe('number');
+        expect(typeof result.envelope).toBe('object');
+        expect(result.envelope.version).toBe("0.8.20");
+        expect(result.visibility[0].data.visible).toBe(1);
+        expect(result.contextMenu[0].data.target).toBe(488);
+        expect(result.contextMenu[0].data.button).toBe(2);
     });
 
-    it('visibility event should be backward compatible to support string values', () => {
+    test('visibility event should be backward compatible to support string values', () => {
         // This is a very simple test that focuses on basic decoding functionality
         const testPayload = {
           e: ["0.8.20", 1, 0, 506, "devtools", "1mtqiaz", "1c27tix", 2, 0, 0, 0, "https://test.com/"],
@@ -54,10 +53,10 @@ describe('decode function', () => {
 
         const result = decode(input);
         
-        assert.isObject(result);
-        assert.isNumber(result.timestamp);
-        assert.isObject(result.envelope);
-        assert.equal(result.envelope.version, "0.8.20");
-        assert.equal(result.visibility[0].data.visible, 1);
+        expect(typeof result).toBe('object');
+        expect(typeof result.timestamp).toBe('number');
+        expect(typeof result.envelope).toBe('object');
+        expect(result.envelope.version).toBe("0.8.20");
+        expect(result.visibility[0].data.visible).toBe(1);
     });
 });

@@ -97,31 +97,6 @@ Edit Clarity:
 Go to 'File -> Open Folder' and select the 'clarity' folder that you just cloned.
 ```
 
-Debug Tests
-
-To debug tests from Visual Studio Code, create "launch.json" in your root project folder:
-```
-{
-  "version": "0.2.0",
-  "configurations": [
-      {
-          "name": "Clarity Tests",
-          "type": "node",
-          "request": "launch",
-          "cwd": "${workspaceFolder}/packages/clarity-js",
-          "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/ts-mocha",
-          "runtimeArgs": [
-              "-p",
-              "test/tsconfig.test.json",
-              "${file}"
-          ],
-          "protocol": "inspector"
-      }
-
-  ]
-}
-```
-
 ### Text Editor TSLint Plugin
 
 TSLint plugin will read Clarity's TSLint configuration and highlight any TSLint errors immediately as you edit your code.
