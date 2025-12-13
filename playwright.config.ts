@@ -35,17 +35,26 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      name: 'unit',
+      testMatch: /.*\/unit\/.*\.test\.ts/,
+      use: {},
+    },
+
+    {
       name: 'chromium',
+      testMatch: /.*\/e2e\/.*\.test\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
 
     {
       name: 'firefox',
+      testMatch: /.*\/e2e\/.*\.test\.ts/,
       use: { ...devices['Desktop Firefox'] },
     },
 
     {
       name: 'webkit',
+      testMatch: /.*\/e2e\/.*\.test\.ts/,
       use: { ...devices['Desktop Safari'] },
     },
 
