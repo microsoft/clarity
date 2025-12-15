@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import {pathToFileURL } from 'url';
+import { pathToFileURL } from 'url';
 import { resolve } from 'path';
 import { Page } from 'playwright';
 import { Core, Data, Layout } from "clarity-decode";
@@ -15,10 +15,7 @@ export async function markup(page: Page, file: string, override?: Core.Config): 
     const htmlPath = resolve(__dirname, `../html/${file}`);
     const htmlFileUrl = pathToFileURL(htmlPath).toString();
     const html = readFileSync(htmlPath, 'utf8');
-    await Promise.all([
-        page.goto(htmlFileUrl),
-        page.waitForNavigation()
-    ]);
+    await page.goto(htmlFileUrl);
     await page.setContent(html.replace("</body>", `
         <script>
           window.payloads = [];
@@ -104,7 +101,7 @@ function config(override?: Core.Config): string {
         unmask: [],
         upload: (payload: string) => { window.payloads.push(payload); window.clarity("upgrade", "test"); },
         ...override,
-    }
+    };
 
     // Serialize configuration
     let output = "";
