@@ -4,19 +4,19 @@ import { decode } from 'clarity-decode';
 
 test.describe('Masking Tests', () => {
     test('should mask sensitive content by default', async ({ page }) => {
-        let encoded: string[] = await markup(page, "core.html");
-        let decoded = encoded.map(x => decode(x));
-        let heading = text(decoded, "one");
-        let address = text(decoded, "two");
-        let email = node(decoded, "attributes", "eml", "id");
-        let password = node(decoded, "attributes", "pwd", "id");
-        let search = node(decoded, "attributes", "search", "id");
-        let card = node(decoded, "attributes", "cardnum", "id");
-        let option = text(decoded, "option1");
-        let textarea = text(decoded, "textarea");
-        let click = clicks(decoded)[0];
-        let input = inputs(decoded)[0];
-        let group = changes(decoded);
+        const encoded: string[] = await markup(page, "core.html");
+        const decoded = encoded.map(x => decode(x));
+        const heading = text(decoded, "one");
+        const address = text(decoded, "two");
+        const email = node(decoded, "attributes", "eml", "id");
+        const password = node(decoded, "attributes", "pwd", "id");
+        const search = node(decoded, "attributes", "search", "id");
+        const card = node(decoded, "attributes", "cardnum", "id");
+        const option = text(decoded, "option1");
+        const textarea = text(decoded, "textarea");
+        const click = clicks(decoded)[0];
+        const input = inputs(decoded)[0];
+        const group = changes(decoded);
         
         // Non-sensitive fields continue to pass through with sensitive bits masked off
         expect(heading).toBe("Thanks for your order #▫▪▪▫▫▫▪▪");
@@ -45,17 +45,17 @@ test.describe('Masking Tests', () => {
     });
 
     test('should mask all text in strict mode', async ({ page }) => {
-        let encoded: string[] = await markup(page, "core.html", { content: false });
-        let decoded = encoded.map(x => decode(x));
-        let heading = text(decoded, "one");
-        let address = text(decoded, "two");
-        let email = node(decoded, "attributes", "eml", "id");
-        let password = node(decoded, "attributes", "pwd", "id");
-        let search = node(decoded, "attributes", "search", "id");
-        let card = node(decoded, "attributes", "cardnum", "id");
-        let click = clicks(decoded)[0];
-        let input = inputs(decoded)[0];
-        let option = text(decoded, "option1");
+        const encoded: string[] = await markup(page, "core.html", { content: false });
+        const decoded = encoded.map(x => decode(x));
+        const heading = text(decoded, "one");
+        const address = text(decoded, "two");
+        const email = node(decoded, "attributes", "eml", "id");
+        const password = node(decoded, "attributes", "pwd", "id");
+        const search = node(decoded, "attributes", "search", "id");
+        const card = node(decoded, "attributes", "cardnum", "id");
+        const click = clicks(decoded)[0];
+        const input = inputs(decoded)[0];
+        const option = text(decoded, "option1");
 
         // All fields are randomized and masked
         expect(heading).toBe("• ••••• ••••• ••••• ••••• •••••");
@@ -72,17 +72,17 @@ test.describe('Masking Tests', () => {
     });
 
     test('should unmask non-sensitive text in relaxed mode', async ({ page }) => {
-        let encoded: string[] = await markup(page, "core.html", { unmask: ["body"] });
-        let decoded = encoded.map(x => decode(x));
-        let heading = text(decoded, "one");
-        let address = text(decoded, "two");
-        let email = node(decoded, "attributes", "eml", "id");
-        let password = node(decoded, "attributes", "pwd", "id");
-        let search = node(decoded, "attributes", "search", "id");
-        let card = node(decoded, "attributes", "cardnum", "id");
-        let click = clicks(decoded)[0];
-        let input = inputs(decoded)[0];
-        let option = text(decoded, "option1");
+        const encoded: string[] = await markup(page, "core.html", { unmask: ["body"] });
+        const decoded = encoded.map(x => decode(x));
+        const heading = text(decoded, "one");
+        const address = text(decoded, "two");
+        const email = node(decoded, "attributes", "eml", "id");
+        const password = node(decoded, "attributes", "pwd", "id");
+        const search = node(decoded, "attributes", "search", "id");
+        const card = node(decoded, "attributes", "cardnum", "id");
+        const click = clicks(decoded)[0];
+        const input = inputs(decoded)[0];
+        const option = text(decoded, "option1");
 
         // Text flows through unmasked for non-sensitive fields, with exception of input fields
         expect(heading).toBe("Thanks for your order #2AB700GH");
@@ -101,11 +101,11 @@ test.describe('Masking Tests', () => {
     });
 
     test('should respect mask config even in relaxed mode', async ({ page }) => {
-        let encoded: string[] = await markup(page, "core.html", { mask: ["#mask"], unmask: ["body"] });
-        let decoded = encoded.map(x => decode(x));
-        let subtree = text(decoded, "child");
-        let click = clicks(decoded)[0];
-        let input = inputs(decoded)[0];
+        const encoded: string[] = await markup(page, "core.html", { mask: ["#mask"], unmask: ["body"] });
+        const decoded = encoded.map(x => decode(x));
+        const subtree = text(decoded, "child");
+        const click = clicks(decoded)[0];
+        const input = inputs(decoded)[0];
         
         // Masked sub-trees continue to stay masked
         expect(subtree).toBe("••••• •••••");

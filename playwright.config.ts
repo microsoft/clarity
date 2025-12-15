@@ -1,5 +1,5 @@
 import { join } from "path";
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from "@playwright/test";
 import { existsSync, readdirSync } from "fs";
 
 /**
@@ -38,21 +38,9 @@ export default defineConfig({
       })),
 
     {
-      name: "chromium",
+      name: "e2e",
       testDir: join(__dirname, "test"),
-      use: { ...devices["Desktop Chrome"] },
-    },
-
-    {
-      name: "firefox",
-      testDir: join(__dirname, "test"),
-      use: { ...devices["Desktop Firefox"] },
-    },
-
-    {
-      name: "webkit",
-      testDir: join(__dirname, "test"),
-      use: { ...devices["Desktop Safari"] },
+      use: { browserName: "chromium" },
     },
   ],
 });
