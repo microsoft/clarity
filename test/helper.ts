@@ -12,14 +12,14 @@ declare global {
 }
 
 export async function markup(page: Page, file: string, override?: Core.Config): Promise<string[]> {
-    const htmlPath = resolve(__dirname, `../html/${file}`);
+    const htmlPath = resolve(__dirname, `./html/${file}`);
     const htmlFileUrl = pathToFileURL(htmlPath).toString();
     const html = readFileSync(htmlPath, 'utf8');
     await page.goto(htmlFileUrl);
     await page.setContent(html.replace("</body>", `
         <script>
           window.payloads = [];
-          ${readFileSync(resolve(__dirname, `../../packages/clarity-js/build/clarity.min.js`), 'utf8')};
+          ${readFileSync(resolve(__dirname, `../packages/clarity-js/build/clarity.min.js`), 'utf8')};
           clarity("start", ${config(override)});
         </script>
         </body>
