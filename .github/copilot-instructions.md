@@ -99,7 +99,7 @@ Updates `version.ts`, all `package.json`, `lerna.json`, and stages files. Then c
 
 ## Environment
 
-**Node.js:** 18+ required (workflow: 18.20.6 publish, 22.17.0 build)
+**Node.js:** 22+ required (workflow: 22.17.0 publish, 22.17.0 build)
 **Package manager:** Yarn only (has yarn.lock, uses workspaces) - install globally: `npm i -g yarn`
 
 ## Common Issues
