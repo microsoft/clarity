@@ -96,7 +96,6 @@ Updates `version.ts`, all `package.json`, `lerna.json`, and stages files. Then c
 **Workflow:** `.github/workflows/npm-publish.yml` (currently disabled - build job has `if: false`, blocks publish)
 - **Trigger:** Master push with `version.ts` changes
 - **Build job:** Node 22.17.0 - install, build, test, size checks (<2% growth vs previous)
-- **Publish job:** Node 18.20.6 - publishes 3 packages to npm, creates git tag
 
 ## Environment
 
