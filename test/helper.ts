@@ -1,8 +1,8 @@
 import { readFileSync } from 'fs';
 import { pathToFileURL } from 'url';
 import { resolve } from 'path';
-import { Page } from 'playwright';
-import { Core, Data, Layout } from "clarity-decode";
+import type { Page } from '@playwright/test';
+import type { Core, Data, Layout } from "clarity-decode";
 
 declare global {
     interface Window {
@@ -82,7 +82,7 @@ export function node(decoded: Data.DecodedPayload[], key: keyof Layout.DomData, 
 export function text(decoded: Data.DecodedPayload[], id: string): string | null {
     const parent = node(decoded, "attributes", id, "id");
     if (parent) {
-        const child = node(decoded, "parent", parent.id, "*T");
+        const child = node(decoded, "parent", parent.id, undefined, "*T");
         if (child && child.value) {
             return child.value;
         }

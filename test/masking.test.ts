@@ -38,7 +38,7 @@ test.describe('Masking Tests', () => {
         expect(group[0].data.type).toBe("search");
         expect(group[0].data.value).toBe("••••• •••• •••• ••••");
         expect(group[0].data.checksum).toBe("oxedq");
-        // Password change - we should capture placholder value and empty hash
+        // Password change - we should capture placeholder value and empty hash
         expect(group[1].data.type).toBe("password");
         expect(group[1].data.value).toBe("••••");
         expect(group[1].data.checksum).toBe("");
