@@ -49,6 +49,7 @@
     "build": "yarn build:clean && yarn build:main",
     "build:main": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "build:clean": "del-cli build/*",
+    "test": "playwright test --config ../../playwright.config.ts --project=clarity-js",
     "tslint": "tslint --project ./",
     "tslint:fix": "tslint --fix --project ./ --force"
   },
