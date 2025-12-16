@@ -10,6 +10,8 @@ let retryCount = 0;
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 200;
 let isReconnecting = false;
+let disconnectListener: (() => void) | null = null;
+let messageListener: ((message: { action?: string; payload?: string }) => void) | null = null;
 
 let sessionId = "";
 let pageNum = 0;
@@ -53,6 +55,12 @@ function connectToBackground(): void {
     try {
         if (background) {
             try {
+                if (disconnectListener) {
+                    background.onDisconnect.removeListener(disconnectListener);
+                }
+                if (messageListener) {
+                    background.onMessage.removeListener(messageListener);
+                }
                 background.disconnect();
             } catch (e) {
                 // Ignore disconnect errors
@@ -62,7 +70,7 @@ function connectToBackground(): void {
         background = chrome.runtime.connect({ name: "panel" });
         console.log('[Clarity DevTools] Panel: Connected to background, port name:', background.name);
         
-        background.onDisconnect.addListener(() => {
+        disconnectListener = () => {
             console.log('[Clarity DevTools] Panel: Background connection disconnected');
             isReconnecting = false;
             
@@ -73,9 +81,11 @@ function connectToBackground(): void {
             } else {
                 console.error('[Clarity DevTools] Panel: Max reconnection attempts reached');
             }
-        });
+        };
+        background.onDisconnect.addListener(disconnectListener);
 
-        background.onMessage.addListener(handleMessage);
+        messageListener = handleMessage;
+        background.onMessage.addListener(messageListener);
         
         console.log('[Clarity DevTools] Panel: Sending init message for tab', activeTabId);
         background.postMessage({ action: "init", tabId: activeTabId });

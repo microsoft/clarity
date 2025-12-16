@@ -37,43 +37,52 @@ async function activate(): Promise<void> {
     return;
   }
   
+  // Set flag immediately to prevent race condition
+  isActivated = true;
   console.log('[Clarity DevTools] Content: Activating Clarity tracking...');
 
   if (document.body) {
-    setup(chrome.runtime.getURL('clarity.js'));
-    isActivated = true;
-    console.log('[Clarity DevTools] Content: Clarity activated successfully');
+    if (!setup(chrome.runtime.getURL('clarity.js'))) {
+      isActivated = false; // Reset if setup fails
+      console.error('[Clarity DevTools] Content: Clarity activation failed');
+    } else {
+      console.log('[Clarity DevTools] Content: Clarity activated successfully');
+    }
   } else {
     if (document.readyState === 'loading') {
       await new Promise<void>(resolve => {
         document.addEventListener('DOMContentLoaded', () => {
-          setup(chrome.runtime.getURL('clarity.js'));
-          isActivated = true;
+          if (!setup(chrome.runtime.getURL('clarity.js'))) {
+            isActivated = false; // Reset if setup fails
+          }
           resolve();
         }, { once: true });
       });
     } else {
       await new Promise(resolve => setTimeout(resolve, 100));
-      setup(chrome.runtime.getURL('clarity.js'));
-      isActivated = true;
+      if (!setup(chrome.runtime.getURL('clarity.js'))) {
+        isActivated = false; // Reset if setup fails
+      }
     }
   }
 }
 
-function setup(url: string): void {
+function setup(url: string): boolean {
   if (!document.body) {
-    console.error('Clarity DevTools: document.body not available');
-    return;
+    console.error('[Clarity DevTools] Content: document.body not available, setup failed');
+    return false;
+  }
+  
+  // Only set up once - if already set up, return success
+  if (messageListener) {
+    console.log('[Clarity DevTools] Content: Message listener already registered, skipping setup');
+    return true;
   }
   
   const script = document.createElement("script");
   script.setAttribute('type', 'text/javascript');
   script.setAttribute('src', url);
   document.body.appendChild(script);
-  
-  if (messageListener) {
-    window.removeEventListener("message", messageListener);
-  }
   
   messageListener = function(event: MessageEvent): void {
       if (event.source === window && event.data?.action) {
@@ -106,6 +115,7 @@ function setup(url: string): void {
   };
   
   window.addEventListener("message", messageListener);
+  return true;
 }
 
 async function upload(data: string): Promise<void> {

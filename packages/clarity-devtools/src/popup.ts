@@ -1,7 +1,12 @@
-(async function(): Promise<void> {
+async function init(): Promise<void> {
     let state = { showText: true, leanMode : false };
     let showText = (document.getElementById("showText") as HTMLInputElement);
     let leanMode = (document.getElementById("leanMode") as HTMLInputElement);
+
+    if (!showText || !leanMode) {
+        console.error('[Clarity DevTools] Popup: DOM elements not found');
+        return;
+    }
 
     try {
         const items = await chrome.storage.sync.get({clarity: state});
@@ -36,4 +41,10 @@
         showText.checked = update.showText;
         leanMode.checked = update.leanMode;
     }
-})();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}

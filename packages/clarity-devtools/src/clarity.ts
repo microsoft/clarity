@@ -5,6 +5,7 @@ import { clarity, version, helper } from "clarity-js";
     if (typeof window !== "undefined") {
         const w = window as any;
         const c = 'clarity';
+        let isStarted = false;
 
         // Stop any existing instance of clarity-js
         if (w[c]) { w[c]("stop"); }
@@ -18,8 +19,15 @@ import { clarity, version, helper } from "clarity-js";
         window.postMessage({ action: "wireup" }, "*");
 
         // V3 CSP: Listen for settings via CustomEvent (replaces inline script injection)
-        window.addEventListener('clarity-devtools-settings', (event: any) => {
+        const settingsHandler = (event: any) => {
+            if (isStarted) {
+                console.log('[Clarity DevTools] Clarity: Already started, ignoring duplicate settings event');
+                return;
+            }
+            
             const settings = event.detail;
+            isStarted = true;
+            
             w[c]("start", {
                 delay: 500,
                 lean: settings.leanMode,
@@ -32,6 +40,8 @@ import { clarity, version, helper } from "clarity-js";
                 upload: (data: string): void => { window.postMessage({ action: "upload", payload: data }, "*"); },
                 projectId: "devtools"
             });
-        });
+        };
+        
+        window.addEventListener('clarity-devtools-settings', settingsHandler, { once: true });
     }
 })();
