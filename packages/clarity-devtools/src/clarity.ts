@@ -16,5 +16,22 @@ import { clarity, version, helper } from "clarity-js";
 
         // Notify developer tools that clarity-js is wired up
         window.postMessage({ action: "wireup" }, "*");
+
+        // V3 CSP: Listen for settings via CustomEvent (replaces inline script injection)
+        window.addEventListener('clarity-devtools-settings', (event: any) => {
+            const settings = event.detail;
+            w[c]("start", {
+                delay: 500,
+                lean: settings.leanMode,
+                regions: settings.regions,
+                fraud: settings.fraud,
+                drop: settings.drop,
+                mask: settings.mask,
+                unmask: settings.unmask,
+                content: settings.showText,
+                upload: (data: string): void => { window.postMessage({ action: "upload", payload: data }, "*"); },
+                projectId: "devtools"
+            });
+        });
     }
 })();

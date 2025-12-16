@@ -1,82 +1,129 @@
 import config from "./config";
 
-chrome.runtime.onMessage.addListener(function(message: any): void {
+let isActivated = false;
+let messageListener: ((event: MessageEvent) => void) | null = null;
+
+chrome.runtime.onMessage.addListener(function(message: { action: string; message?: string }): void {
   if (message.action === "activate") {
+    console.log('[Clarity DevTools] Content: Received activate message from background');
     activate();
   } else if (message.action === "warn") {
     console.warn(message.message);
   }
 });
 
-chrome.runtime.sendMessage({ action: "activate" }, function(response: any): void {
-  if (response && response.success) {
-    activate();
+(async function initializeContentScript(): Promise<void> {
+  try {
+    const response = await chrome.runtime.sendMessage({ action: "activate" });
+    console.log('[Clarity DevTools] Content: Initialization check, DevTools connected:', response?.success);
+    if (response?.success) {
+      console.log('[Clarity DevTools] Content: Activating immediately (DevTools already open)');
+      activate();
+    } else {
+      console.log('[Clarity DevTools] Content: Waiting for DevTools to open...');
+    }
+  } catch (error) {
+    if (chrome.runtime?.lastError || !chrome.runtime?.id) {
+      console.log('[Clarity DevTools] Content: Extension context invalidated');
+    } else {
+      console.error('[Clarity DevTools] Content: Error during initialization:', error);
+    }
   }
-});
+})();
 
-function activate(): void {
-  setup(chrome.extension.getURL('clarity.js'));
+async function activate(): Promise<void> {
+  if (isActivated) {
+    console.log('[Clarity DevTools] Content: Already activated, skipping');
+    return;
+  }
+  
+  console.log('[Clarity DevTools] Content: Activating Clarity tracking...');
+
+  if (document.body) {
+    setup(chrome.runtime.getURL('clarity.js'));
+    isActivated = true;
+    console.log('[Clarity DevTools] Content: Clarity activated successfully');
+  } else {
+    if (document.readyState === 'loading') {
+      await new Promise<void>(resolve => {
+        document.addEventListener('DOMContentLoaded', () => {
+          setup(chrome.runtime.getURL('clarity.js'));
+          isActivated = true;
+          resolve();
+        }, { once: true });
+      });
+    } else {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setup(chrome.runtime.getURL('clarity.js'));
+      isActivated = true;
+    }
+  }
 }
 
 function setup(url: string): void {
-  // Execute script in the webpage context
-  let script = document.createElement("script");
+  if (!document.body) {
+    console.error('Clarity DevTools: document.body not available');
+    return;
+  }
+  
+  const script = document.createElement("script");
   script.setAttribute('type', 'text/javascript');
   script.setAttribute('src', url);
   document.body.appendChild(script);
   
-  window.addEventListener("message", function(event: MessageEvent): void {
-      if (event.source === window && event.data.action) {
+  if (messageListener) {
+    window.removeEventListener("message", messageListener);
+  }
+  
+  messageListener = function(event: MessageEvent): void {
+      if (event.source === window && event.data?.action) {
         switch (event.data.action) {
           case "wireup":
-            chrome.storage.sync.get({ clarity: { showText: true, leanMode: false } }, (items: any) => {
-              let c = config();
-              let script = document.createElement("script");
-              script.innerText = wireup({
-                regions: c.regions,
-                fraud: c.fraud,
-                mask: c.mask,
-                unmask: c.unmask,
-                drop: c.drop,
-                showText: items.clarity.showText,
-                leanMode: items.clarity.leanMode
-              });
-              document.body.appendChild(script);
-            });
+            (async () => {
+              try {
+                const items = await chrome.storage.sync.get({ clarity: { showText: true, leanMode: false } });
+                const cfg = config();
+                const settings = {
+                  regions: cfg.regions,
+                  fraud: cfg.fraud,
+                  mask: cfg.mask,
+                  unmask: cfg.unmask,
+                  drop: cfg.drop,
+                  showText: items.clarity.showText,
+                  leanMode: items.clarity.leanMode
+                };
+                window.dispatchEvent(new CustomEvent('clarity-devtools-settings', { detail: settings }));
+              } catch (error) {
+                console.error('[Clarity DevTools] Content: Error loading settings:', error);
+              }
+            })();
             break;
           case "upload":
             upload(event.data.payload);
             break;
         }
       }
-  });
-
+  };
   
+  window.addEventListener("message", messageListener);
 }
 
-function wireup(settings: any): string {
-  let code = ((): void => {
-    window["clarity"]("start", {
-      delay: 500,
-      lean: "$__leanMode__$",
-      regions: "$__regions__$",
-      fraud: "$__fraud__$",
-      drop: "$__drop__$",
-      mask: "$__mask__$",
-      unmask: "$__unmask__$",
-      content: "$__showText__$",
-      upload: (data: string): void => { window.postMessage({ action: "upload", payload: data }, "*"); },
-      projectId: "devtools"
-    });
-  }).toString();
-  Object.keys(settings).forEach(s => code = code.replace(`"$__${s}__$"`, JSON.stringify(settings[s])));
-  return `(${code})();`;
-}
-
-function upload(data: string): void {
-  chrome.runtime.sendMessage({ action: "payload", payload: data }, function(response: any): void {
+async function upload(data: string): Promise<void> {
+  if (!chrome.runtime?.id) {
+    console.log('[Clarity DevTools] Content: Extension context invalidated, skipping upload');
+    return;
+  }
+  
+  try {
+    const response = await chrome.runtime.sendMessage({ action: "payload", payload: data });
     if (!(response && response.success)) {
-      console.warn("Payload failure, dev tools likely not open.");
+      console.debug('[Clarity DevTools] Content: DevTools panel not connected, payload not forwarded');
     }
-  });
+  } catch (error) {
+    if (chrome.runtime?.lastError || !chrome.runtime?.id) {
+      console.log('[Clarity DevTools] Content: Extension context invalidated');
+    } else {
+      console.error('[Clarity DevTools] Content: Error uploading payload:', error);
+    }
+  }
 }

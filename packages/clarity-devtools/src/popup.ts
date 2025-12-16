@@ -1,21 +1,20 @@
-(function(): void {
-    // Initialize configuration
+(async function(): Promise<void> {
     let state = { showText: true, leanMode : false };
     let showText = (document.getElementById("showText") as HTMLInputElement);
     let leanMode = (document.getElementById("leanMode") as HTMLInputElement);
 
-    // Read from default storage
-    chrome.storage.sync.get({clarity: state}, function(items: any): void {
+    try {
+        const items = await chrome.storage.sync.get({clarity: state});
         state = items.clarity;
         redraw(state);
-    });
+    } catch (error) {
+        console.error('[Clarity DevTools] Popup: Error loading settings:', error);
+    }
 
-    // Listen for changes
     showText.addEventListener("click", toggle);
     leanMode.addEventListener("click", toggle);
 
-    function toggle(cb: any): void {
-        // Update state
+    async function toggle(cb: any): Promise<void> {
         switch (cb.target.id) {
             case "showText":
                 state.showText = !state.showText;
@@ -25,10 +24,12 @@
                 break;
         }
 
-        // Update storage
-        chrome.storage.sync.set({clarity: state}, () => {
+        try {
+            await chrome.storage.sync.set({clarity: state});
             redraw(state);
-        });
+        } catch (error) {
+            console.error('[Clarity DevTools] Popup: Error saving settings:', error);
+        }
     }
 
     function redraw(update: any): void {

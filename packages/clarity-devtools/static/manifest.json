@@ -1,10 +1,10 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Microsoft Clarity Developer Tools",
   "description": "Clarity helps you understand how users are interacting with your website.",
   "version": "0.8.46",
   "version_name": "0.8.46",
-  "minimum_chrome_version": "50",
+  "minimum_chrome_version": "88",
   "devtools_page": "devtools.html",
   "icons": {
     "16": "icon-16.png",
@@ -12,7 +12,7 @@
     "48": "icon-48.png",
     "128": "icon-128.png"
   },
-  "browser_action": {
+  "action": {
     "default_icon": "icon.png",
     "default_title": "Microsoft Clarity Developer Tools",
     "default_popup": "popup.html"
@@ -29,18 +29,23 @@
     }
   ],
   "web_accessible_resources": [
-    "clarity.js"
+    {
+      "resources": ["clarity.js"],
+      "matches": ["<all_urls>"]
+    }
   ],
   "background": {
-    "scripts": [
-      "background.js"
-    ],
-    "persistent": false
+    "service_worker": "background.js"
   },
   "permissions": [
-    "http://*/*",
-    "https://*/*",
     "storage",
     "tabs"
-  ]
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }
