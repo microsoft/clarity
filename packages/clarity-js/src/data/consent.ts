@@ -30,12 +30,13 @@ function processConsent(): void {
 
     const analytics_storage = ics.getConsentState(Constant.AnalyticsStorage);
     const ad_storage = ics.getConsentState(Constant.AdStorage);
-    const consentState = getConsentState({ ad_Storage: ad_storage, analytics_Storage: analytics_storage });
-    consentv2(consentState, ConsentSource.GCM);
+    const consentState = getGcmConsentState({ ad_Storage: ad_storage, analytics_Storage: analytics_storage });
+    consentv2(consentState);
 }
 
-function getConsentState(googleConsent: GCMConsentState): ConsentState {
+function getGcmConsentState(googleConsent: GCMConsentState): ConsentState {
     const consentState: ConsentState = {
+        source: ConsentSource.GCM,
         ad_Storage: googleConsent.ad_Storage === GCMConsent.Granted ? Constant.Granted : Constant.Denied,
         analytics_Storage: googleConsent.analytics_Storage === GCMConsent.Granted ? Constant.Granted : Constant.Denied,
     };
