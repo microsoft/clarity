@@ -1,6 +1,6 @@
-# This workflow runs Playwright tests on pull requests to the master branch
+# This workflow runs checks on PRs targeting the master branch
 
-name: Playwright Tests
+name: PR Checks
 on:
   pull_request:
     branches: [ master ]

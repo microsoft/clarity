@@ -7,6 +7,6 @@
             "@clarity-types/*": ["types/*"]
         }
     },
-    "include":["src/**/*.ts", "types/**/*.d.ts", "rollup.config.ts"],
+    "include":["src/**/*.ts", "types/**/*.d.ts", "test/**/*.ts", "rollup.config.ts"],
     "exclude": ["node_modules", "build"]
 }

@@ -80,6 +80,20 @@ On Ubuntu, if you run into errors, it may be because you are missing the libfont
 sudo apt-get install libfontconfig
 ```
 
+### Testing Clarity
+
+Clarity uses `@playwright/test` for testing. You can find end-to-end tests under `test/` and per-package tests under `packages/<package-name>/test/`.
+
+To run tests, make sure `yarn install` and `yarn build` have been executed successfully, and that Playwright's chromium browser is installed by running:
+```
+npx playwright install chromium
+```
+
+To run Playwright's UI for better reporting, watch mode, etc:
+```
+yarn test:ui
+```
+
 ### Debugging Clarity
 Use [clarity-devtools](https://github.com/microsoft/clarity/tree/master/packages/clarity-devtools) to debug Clarity against any live website.
 
@@ -96,6 +110,8 @@ Edit Clarity:
 ```
 Go to 'File -> Open Folder' and select the 'clarity' folder that you just cloned.
 ```
+
+To debug tests from Visual Studio Code, install the [Playwright Test for VSCode](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) extension.
 
 ### Text Editor TSLint Plugin
 
