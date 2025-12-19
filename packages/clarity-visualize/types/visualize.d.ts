@@ -199,7 +199,7 @@ export const enum Constant {
     NewPassword = "new-password",
     StyleSheet = "stylesheet",
     OriginalBackgroundColor = "data-clarity-background-color",
-    OriginalOpacity = "data-clarity-opacity"
+    OriginalOpacity = "data-clarity-opacity",
 }
 
 export const enum Setting {
