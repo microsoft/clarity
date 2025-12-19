@@ -641,7 +641,7 @@ export class LayoutHelper {
                                 node.setAttribute(Constant.Hide, size);
                         }
                     } else {
-                        node.setAttribute(attribute, v);
+                        node.setAttribute(attribute, this.isSuspiciousAttribute(attribute, v) ? Constant.Empty : v);
                     }
                 } catch (ex) {
                     console.warn("Node: " + node + " | " + JSON.stringify(attributes));
@@ -669,6 +669,23 @@ export class LayoutHelper {
             node.setAttribute(Constant.AutoComplete, Constant.NewPassword);
         }
     }
+
+    private isSuspiciousAttribute(name: string, value: string): boolean {
+        // Block event handlers entirely
+        if (name.startsWith('on')) {
+            return true;
+        }
+        
+        // Check for JavaScript protocols and dangerous patterns
+        const dangerous = [
+            /^\s*javascript:/i,
+            /^\s*data:text\/html/i,
+            /^\s*vbscript:/i
+        ];
+        
+        return dangerous.some(pattern => pattern.test(value));
+    }
+
 
     private getMobileCustomStyle = (): string => {
         if(this.isMobile){
