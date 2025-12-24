@@ -12,7 +12,8 @@ test.describe('BFCache Tests', () => {
             window.clarity('stop');
         });
 
-        await page.waitForTimeout(100);
+        // Record the current payload count
+        const initialCount = await page.evaluate('window.payloads.length') as number;
         
         // Simulate bfcache restoration by dispatching a pageshow event with persisted=true
         await page.evaluate(() => {
@@ -20,8 +21,12 @@ test.describe('BFCache Tests', () => {
             window.dispatchEvent(event);
         });
 
-        // Wait for event processing
-        await page.waitForTimeout(500);
+        // Wait for at least one new payload to be added after the bfcache event
+        await page.waitForFunction(
+            (count) => window.payloads && window.payloads.length > count,
+            initialCount,
+            { timeout: 5000 }
+        );
 
         // Get all payloads including the new one
         const allPayloads = await page.evaluate('window.payloads') as string[];
