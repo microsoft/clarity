@@ -395,7 +395,20 @@ export const enum ConsentSource {
     // 100-255 Reserved for CMP integration, both internal and external
     ClarityShopifyPixel = 100,
     ClarityShopifyApp = 101,
-    UET = 102
+    UET = 102,
+
+    //CMPs
+    CmpMyAgilePrivacy = 150,
+    CmpUserCentrics = 151,
+    CmpCookiebot = 152,
+    CmpAxeptio = 153,
+    CmpCookiehub = 154,
+    CmpCookieYes = 155,
+    CmpWebTofee = 156,
+    CmpWPConsent = 157,
+    CmpSeersAI = 158,
+    // Reserved to indicate an unknown consent source
+    Unknown = 255,
 }
 
 /* Helper Interfaces */

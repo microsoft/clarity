@@ -190,7 +190,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
 
 function getConsentData(consentState: ConsentState): ConsentData {
   let consent: ConsentData = {
-    source: consentState.source ?? ConsentSource.Implicit,
+    source: consentState.source ?? ConsentSource.Unknown,
     ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
     analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
   };
@@ -204,11 +204,11 @@ function normalizeConsent(value: unknown, fallback: string = Constant.Denied): s
 
 export function clear(all: boolean = false): void {
   // Clear any stored information in the cookie that tracks session information so we can restart fresh the next time
-  setCookie(Constant.SessionKey, Constant.Empty, -Number.MAX_VALUE);
+  setCookie(Constant.SessionKey, Constant.Empty, 0);
 
   // Clear user cookie as well if all flag is set
   if (all) {
-    setCookie(Constant.CookieKey, Constant.Empty, -Number.MAX_VALUE);
+    setCookie(Constant.CookieKey, Constant.Empty, 0);
   }
 }
 
