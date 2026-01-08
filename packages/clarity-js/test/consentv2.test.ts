@@ -3,8 +3,9 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 /**
- * Consent API tests - Tests the actual production consent functionality
- * by loading clarity.js in a real browser context.
+ * Consent API tests - Tests the production consent functionality by loading
+ * the built clarity.min.js in a browser context. This approach tests the actual
+ * artifact that ships to users rather than individual source modules.
  */
 
 const Constant = {
@@ -12,18 +13,49 @@ const Constant = {
     Denied: "denied",
 } as const;
 
+// Timeout constants for async consent operations
+const CONSENT_CALLBACK_TIMEOUT = 2000;
+const COOKIE_SETUP_DELAY = 500;
+
 // Use the minified browser build which properly exposes window.clarity
 const clarityJsPath = join(__dirname, "../build/clarity.min.js");
 
+/**
+ * Sets up a cookie mock for data: URLs which don't support cookies natively.
+ * Handles both cookie setting and deletion (via max-age or empty values).
+ */
+function setupCookieMock() {
+    let cookieStore = "";
+    Object.defineProperty(document, "cookie", {
+        get: () => cookieStore,
+        set: (value: string) => {
+            if (value.includes("max-age=-") || value.includes("=;") || value.includes("=^;")) {
+                const cookieName = value.split("=")[0];
+                const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
+                cookieStore = cookies.join("; ");
+            } else {
+                const cookieName = value.split("=")[0];
+                const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
+                cookies.push(value.split(";")[0]);
+                cookieStore = cookies.filter(c => c).join("; ");
+            }
+        },
+        configurable: true
+    });
+}
+
 test.describe("consentv2 - Production API", () => {
     test.beforeEach(async ({ page }) => {
-        // Use data URL to create a simple page
         await page.goto("data:text/html,<!DOCTYPE html><html><head></head><body></body></html>");
 
-        // Inject clarity.min.js into the page (exposes window.clarity automatically)
+        // Expose timeout constants to the page context
+        await page.evaluate(({ timeout, delay }) => {
+            (window as any).CONSENT_CALLBACK_TIMEOUT = timeout;
+            (window as any).COOKIE_SETUP_DELAY = delay;
+        }, { timeout: CONSENT_CALLBACK_TIMEOUT, delay: COOKIE_SETUP_DELAY });
+
         const clarityJs = readFileSync(clarityJsPath, "utf-8");
         await page.evaluate((code) => {
-            // Execute the minified build which sets up window.clarity
             eval(code);
         }, clarityJs);
     });
@@ -59,7 +91,7 @@ test.describe("consentv2 - Production API", () => {
                     if (!consentInfo) {
                         resolve({ hasConsent: false, consent: null });
                     }
-                }, 2000);
+                }, (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -112,7 +144,7 @@ test.describe("consentv2 - Production API", () => {
                     if (!consentInfo) {
                         resolve({ hasConsent: false, consent: null });
                     }
-                }, 2000);
+                }, (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -127,25 +159,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 explicit denial: track=false → denied/denied remains without cookies", async ({ page }) => {
-        await page.evaluate(() => {
-            let cookieStore = "";
-            Object.defineProperty(document, "cookie", {
-                get: () => cookieStore,
-                set: (value: string) => {
-                    if (value.includes("max-age=-") || value.includes("=;") || value.includes("=^;")) {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookieStore = cookies.join("; ");
-                    } else {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookies.push(value.split(";")[0]);
-                        cookieStore = cookies.filter(c => c).join("; ");
-                    }
-                },
-                configurable: true
-            });
-        });
+        await page.evaluate(setupCookieMock);
 
         // Start with track=false (implicit denied), then explicitly deny via consentv2
         const result = await page.evaluate(() => {
@@ -172,9 +186,9 @@ test.describe("consentv2 - Production API", () => {
                             });
                         }
                     }, false, false, true);
-                }, 500);
+                }, (window as any).COOKIE_SETUP_DELAY);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -188,25 +202,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 mixed consent: track=false → denied analytics, granted ads no cookies", async ({ page }) => {
-        await page.evaluate(() => {
-            let cookieStore = "";
-            Object.defineProperty(document, "cookie", {
-                get: () => cookieStore,
-                set: (value: string) => {
-                    if (value.includes("max-age=-") || value.includes("=;") || value.includes("=^;")) {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookieStore = cookies.join("; ");
-                    } else {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookies.push(value.split(";")[0]);
-                        cookieStore = cookies.filter(c => c).join("; ");
-                    }
-                },
-                configurable: true
-            });
-        });
+        await page.evaluate(setupCookieMock);
 
         const result = await page.evaluate(() => {
             return new Promise((resolve) => {
@@ -232,7 +228,7 @@ test.describe("consentv2 - Production API", () => {
                     }
                 }, false, false, true);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -246,25 +242,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 mixed consent: track=false → granted analytics, denied ads sets cookies", async ({ page }) => {
-        await page.evaluate(() => {
-            let cookieStore = "";
-            Object.defineProperty(document, "cookie", {
-                get: () => cookieStore,
-                set: (value: string) => {
-                    if (value.includes("max-age=-") || value.includes("=;") || value.includes("=^;")) {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookieStore = cookies.join("; ");
-                    } else {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookies.push(value.split(";")[0]);
-                        cookieStore = cookies.filter(c => c).join("; ");
-                    }
-                },
-                configurable: true
-            });
-        });
+        await page.evaluate(setupCookieMock);
 
         // Start with track=false, then grant analytics but deny ads
         const result = await page.evaluate(() => {
@@ -291,9 +269,9 @@ test.describe("consentv2 - Production API", () => {
                             });
                         }
                     }, false, false, true);
-                }, 500);
+                }, (window as any).COOKIE_SETUP_DELAY);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -306,26 +284,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 grants consent: track=false → granted/granted sets cookies", async ({ page }) => {
-        // Set up cookie mock
-        await page.evaluate(() => {
-            let cookieStore = "";
-            Object.defineProperty(document, "cookie", {
-                get: () => cookieStore,
-                set: (value: string) => {
-                    if (value.includes("max-age=-") || value.includes("=;") || value.includes("=^;")) {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookieStore = cookies.join("; ");
-                    } else {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookies.push(value.split(";")[0]);
-                        cookieStore = cookies.filter(c => c).join("; ");
-                    }
-                },
-                configurable: true
-            });
-        });
+        await page.evaluate(setupCookieMock);
 
         // Start with track=false (implicit denied)
         const initialConsent = await page.evaluate(() => {
@@ -342,7 +301,7 @@ test.describe("consentv2 - Production API", () => {
                     }
                 }, false, false, true);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -370,7 +329,7 @@ test.describe("consentv2 - Production API", () => {
                     }
                 }, false, false, true);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -422,7 +381,7 @@ test.describe("consentv2 - Production API", () => {
                     if (!consentInfo) {
                         resolve({ hasConsent: false, consent: null });
                     }
-                }, 2000);
+                }, (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -437,29 +396,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 revokes consent: track=true → denied/denied deletes cookies", async ({ page }) => {
-        // Set up cookie mock before starting clarity
-        await page.evaluate(() => {
-            // Mock document.cookie to handle cookie operations in data: URL
-            let cookieStore = "";
-            Object.defineProperty(document, "cookie", {
-                get: () => cookieStore,
-                set: (value: string) => {
-                    // Handle cookie deletion (when value is empty or has negative max-age)
-                    if (value.includes("max-age=-") || value.includes("=;") || value.includes("=^;")) {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookieStore = cookies.join("; ");
-                    } else {
-                        // Add or update cookie
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookies.push(value.split(";")[0]); // Just store name=value part
-                        cookieStore = cookies.filter(c => c).join("; ");
-                    }
-                },
-                configurable: true
-            });
-        });
+        await page.evaluate(setupCookieMock);
 
         // Step 1: Start with track=true and verify initial granted state
         const initialConsent = await page.evaluate(() => {
@@ -478,7 +415,7 @@ test.describe("consentv2 - Production API", () => {
                     }
                 }, false, false, true);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -511,7 +448,7 @@ test.describe("consentv2 - Production API", () => {
                     }
                 }, false, false, true);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -527,25 +464,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 mixed consent: track=true → granted analytics, denied ads keeps cookies", async ({ page }) => {
-        await page.evaluate(() => {
-            let cookieStore = "";
-            Object.defineProperty(document, "cookie", {
-                get: () => cookieStore,
-                set: (value: string) => {
-                    if (value.includes("max-age=-") || value.includes("=;") || value.includes("=^;")) {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookieStore = cookies.join("; ");
-                    } else {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookies.push(value.split(";")[0]);
-                        cookieStore = cookies.filter(c => c).join("; ");
-                    }
-                },
-                configurable: true
-            });
-        });
+        await page.evaluate(setupCookieMock);
 
         const result = await page.evaluate(() => {
             return new Promise((resolve) => {
@@ -571,7 +490,7 @@ test.describe("consentv2 - Production API", () => {
                     }
                 }, false, false, true);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -585,25 +504,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 mixed consent: track=true → denied analytics, granted ads deletes cookies", async ({ page }) => {
-        await page.evaluate(() => {
-            let cookieStore = "";
-            Object.defineProperty(document, "cookie", {
-                get: () => cookieStore,
-                set: (value: string) => {
-                    if (value.includes("max-age=-") || value.includes("=;") || value.includes("=^;")) {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookieStore = cookies.join("; ");
-                    } else {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookies.push(value.split(";")[0]);
-                        cookieStore = cookies.filter(c => c).join("; ");
-                    }
-                },
-                configurable: true
-            });
-        });
+        await page.evaluate(setupCookieMock);
 
         // Start with track=true, then deny analytics but grant ads
         const result = await page.evaluate(() => {
@@ -630,9 +531,9 @@ test.describe("consentv2 - Production API", () => {
                             });
                         }
                     }, false, false, true);
-                }, 500);
+                }, (window as any).COOKIE_SETUP_DELAY);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -646,25 +547,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 maintains consent: track=true → granted/granted keeps cookies", async ({ page }) => {
-        await page.evaluate(() => {
-            let cookieStore = "";
-            Object.defineProperty(document, "cookie", {
-                get: () => cookieStore,
-                set: (value: string) => {
-                    if (value.includes("max-age=-") || value.includes("=;") || value.includes("=^;")) {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookieStore = cookies.join("; ");
-                    } else {
-                        const cookieName = value.split("=")[0];
-                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
-                        cookies.push(value.split(";")[0]);
-                        cookieStore = cookies.filter(c => c).join("; ");
-                    }
-                },
-                configurable: true
-            });
-        });
+        await page.evaluate(setupCookieMock);
 
         // Start with track=true (implicit granted)
         const initialConsent = await page.evaluate(() => {
@@ -688,9 +571,9 @@ test.describe("consentv2 - Production API", () => {
                             });
                         }
                     }, false, false, true);
-                }, 500);
+                }, (window as any).COOKIE_SETUP_DELAY);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
@@ -722,7 +605,7 @@ test.describe("consentv2 - Production API", () => {
                     }
                 }, false, false, true);
 
-                setTimeout(() => resolve(null), 2000);
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
             });
         });
 
