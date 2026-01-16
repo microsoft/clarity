@@ -1,7 +1,8 @@
-import { Constant } from "@clarity-types/layout";
 import { Constant as DataConstant } from "@clarity-types/data";
-import * as baseline from "@src/data/baseline";
+import { Constant } from "@clarity-types/layout";
+import config from "@src/core/config";
 import { report } from "@src/core/report";
+import * as baseline from "@src/data/baseline";
 
 let stopCallbacks: (() => void)[] = [];
 let active = false;
@@ -10,6 +11,10 @@ let modules: Set<number> = null;
 export function start(): void {
   active = true;
   modules = new Set<number>();
+
+  if (config.modules && config.modules.length > 0) {
+    config.modules.forEach((m) => { event(m); });
+  }
 }
 
 export function stop(): void {

@@ -2,6 +2,10 @@
 import {promises as fs} from 'fs';
 import * as path from 'path';
 import {exec} from 'child_process';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 type VersionPart = 'major' | 'minor' | 'patch';
 
@@ -140,7 +144,7 @@ const addVersionFilesToGit = async (versionSourceFile: string, jsonFilesToUpdate
     const filesToGitAdd = [versionSourceFile, ...jsonFilesToUpdate];
     const filesToGitAddStr = filesToGitAdd.map(file => `"${getFullFilePath(file)}"`).join(' ');
 
-    exec(`git add ${filesToGitAddStr}`, (error, stdout, stderr) => {
+    exec(`git add ${filesToGitAddStr}`, (error, _stdout, stderr) => {
         if (stderr) {
             console.error(`Git command error output: ${stderr}`);
         }
