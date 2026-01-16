@@ -1,4 +1,4 @@
-import { Constant, Dimension, Event } from "@clarity-types/data";
+import { BooleanFlag, Constant, Dimension, Event } from "@clarity-types/data";
 import { ScrollState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
@@ -55,8 +55,9 @@ function recompute(event: UIEvent = null): void {
     const endYPosition = height - yOffset;
     const top = getPositionNode(xPosition, startYPosition);
     const bottom = getPositionNode(xPosition, endYPosition);
+    const trust = event && event.isTrusted ? BooleanFlag.True : BooleanFlag.False;
 
-    let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y, top, bottom} };
+    let current: ScrollState = { time: time(event), event: Event.Scroll, data: {target: element, x, y, top, bottom, trust} };
 
     // We don't send any scroll events if this is the first event and the current position is top (0,0)
     if ((event === null && x === 0 && y === 0) || (x === null || y === null)) {

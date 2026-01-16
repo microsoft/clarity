@@ -82,7 +82,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 x: tokens[3] as number,
                 y: tokens[4] as number,
                 top: tokens.length > 5 ? tokens[5] as string : null,
-                bottom: tokens.length > 6 ? tokens[6] as string : null
+                bottom: tokens.length > 6 ? tokens[6] as string : null,
+                trust: tokens.length > 7 ? tokens[7] as number : Data.BooleanFlag.True
             };
             return { time, event, data: scrollData };
         case Data.Event.Timeline:

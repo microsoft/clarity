@@ -154,6 +154,7 @@ export interface ScrollData {
     y: number;
     top: Node | string;
     bottom: Node | string;
+    trust: BooleanFlag;
 }
 
 export interface SelectionData {
