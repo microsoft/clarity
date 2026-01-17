@@ -24,6 +24,7 @@ let config: Config = {
     throttleDom: true,
     conversions: false,
     includeSubdomains: true,
+    modules: [],
 };
 
 export default config;
