@@ -8,6 +8,8 @@ import { decode } from 'clarity-decode';
 // Constants
 const HTML_PATH = resolve(__dirname, '../../../test/html/core.html');
 const CLARITY_SCRIPT_PATH = resolve(__dirname, '../build/clarity.min.js');
+// IMPORTANT: This must match Data.Constant.Dropped in clarity-js/types/data.d.ts
+// If you see test failures with unexpected masked values, verify this constant is in sync
 const DROPPED_VALUE = "*na*";
 const MAX_URL_LENGTH = 255;
 
@@ -141,7 +143,9 @@ test.describe("Core Utilities - Scrub URL (E2E)", () => {
             expect(url).toContain("safe=ok");
         });
 
-        test("should not drop parameters that only contain drop string as substring", async ({ page }) => {
+        test("should only drop parameters with exact name match, not substrings", async ({ page }) => {
+            // Drop uses exact key matching: "secret" matches only the parameter named "secret",
+            // not "mysecret" or "secretkey" which merely contain "secret" as a substring
             const url = await runClarityAndGetUrl(page, {
                 queryString: "?mysecret=visible&secret=hidden&secretkey=also-visible",
                 drop: ["secret"]
@@ -210,6 +214,51 @@ test.describe("Core Utilities - Scrub URL (E2E)", () => {
             expect(url).toContain(`param=${DROPPED_VALUE}`);
             const queryString = getQueryString(url!);
             expect(queryString.startsWith(`param=${DROPPED_VALUE}`)).toBe(true);
+        });
+
+        test("should leave URL unchanged when keep parameters do not exist", async ({ page }) => {
+            // When keep is specified but none of the keep parameters exist in the URL,
+            // the URL should remain unchanged (no parameters moved to front)
+            const url = await runClarityAndGetUrl(page, {
+                queryString: "?a=1&b=2&c=3",
+                keep: ["nonexistent", "alsonotpresent"]
+            });
+            expect(url).not.toBeNull();
+            const queryString = getQueryString(url!);
+            // Parameters should remain in original order
+            expect(queryString).toBe("a=1&b=2&c=3");
+        });
+    });
+
+    test.describe("Duplicate parameter handling", () => {
+        test("should drop all instances of a dropped parameter with duplicate names", async ({ page }) => {
+            // URLs can have multiple parameters with the same name (e.g., ?tag=a&tag=b)
+            // All instances of a dropped parameter should have their values masked
+            const url = await runClarityAndGetUrl(page, {
+                queryString: "?tag=first&other=value&tag=second&tag=third",
+                drop: ["tag"]
+            });
+            expect(url).not.toBeNull();
+            // Count occurrences of dropped value - should be 3
+            const matches = url!.match(new RegExp(`tag=${DROPPED_VALUE.replace(/\*/g, '\\*')}`, 'g'));
+            expect(matches).not.toBeNull();
+            expect(matches!.length).toBe(3);
+            expect(url).toContain("other=value");
+        });
+
+        test("should move all instances of keep parameters to front preserving their order", async ({ page }) => {
+            // When a keep parameter appears multiple times, all instances should be moved
+            // to the front while preserving their relative order
+            const url = await runClarityAndGetUrl(page, {
+                queryString: "?other=x&keep=first&middle=y&keep=second&end=z",
+                keep: ["keep"]
+            });
+            expect(url).not.toBeNull();
+            const queryString = getQueryString(url!);
+            // Both "keep" params should be at the front
+            expect(queryString.startsWith("keep=first")).toBe(true);
+            expect(queryString.indexOf("keep=first")).toBeLessThan(queryString.indexOf("keep=second"));
+            expect(queryString.indexOf("keep=second")).toBeLessThan(queryString.indexOf("other=x"));
         });
     });
 
@@ -289,10 +338,10 @@ test.describe("Core Utilities - Scrub URL (E2E)", () => {
 
         test("should calculate length correctly after drop shortens parameter values", async ({ page }) => {
             // Long password value that gets replaced with short "*na*"
-            // Original: password=verylongpasswordvalue123456 (30+ chars)
+            // Original: password=<100 char value> (109 chars total with key=)
             // After drop: password=*na* (13 chars)
             // This should NOT trigger unnecessary truncation
-            const longPassword = "a]".repeat(50); // 100 chars
+            const longPassword = "x".repeat(100);
             const url = await runClarityAndGetUrl(page, {
                 queryString: `?user=test&password=${longPassword}&action=login`,
                 drop: ["password"]
