@@ -97,110 +97,148 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
 }
 
 export function url(input: string, electron: boolean = false, truncate: boolean = false): string {
-    let result = input;
     // Replace the URL for Electron apps so we don't send back file:/// URL
     if (electron) {
-        result = `${Data.Constant.HTTPS}${Data.Constant.Electron}`;
-    } else {
-        let drop = config.drop;
-        let keep = config.keep;
-        let queryIndex = input ? input.indexOf("?") : -1;
-
-        if (queryIndex > 0) {
-            let path = input.substring(0, queryIndex);
-            let queryAndHash = input.substring(queryIndex + 1);
-            // Separate hash fragment from query string
-            let hashIndex = queryAndHash.indexOf("#");
-            let query = hashIndex >= 0 ? queryAndHash.substring(0, hashIndex) : queryAndHash;
-            let hash = hashIndex >= 0 ? queryAndHash.substring(hashIndex) : "";
-
-            // Only process if there's an actual query string
-            if (query.length > 0) {
-                let params = query.split("&");
-
-                // Drop sensitive parameters by replacing their values
-                if (drop && drop.length > 0) {
-                    let swap = Data.Constant.Dropped;
-                    params = params.map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p);
-                }
-
-                // Move keep parameters to the front so they survive truncation
-                if (keep && keep.length > 0) {
-                    let kept: string[] = [];
-                    let others: string[] = [];
-                    params.forEach(p => {
-                        if (keep.some(x => p.indexOf(`${x}=`) === 0)) {
-                            kept.push(p);
-                        } else {
-                            others.push(p);
-                        }
-                    });
-                    if (kept.length > 0) {
-                        params = kept.concat(others);
-                    }
-                }
-
-                result = path + "?" + params.join("&") + hash;
-            }
-        }
+        return `${Data.Constant.HTTPS}${Data.Constant.Electron}`;
     }
-    if (truncate) {
-        result = truncateUrl(result);
-    }
-    return result;
-}
 
-// Truncates URL to maxUrlLength while preserving URL integrity
-// Keep parameters are already moved to the front of the query string, so they are prioritized during truncation
-function truncateUrl(input: string): string {
-    if (input.length <= maxUrlLength) {
+    let drop = config.drop;
+    let keep = config.keep;
+    let hasDrop = drop?.length > 0;
+    let hasKeep = keep?.length > 0;
+
+    // Fast path: no processing needed
+    if (!hasDrop && !hasKeep && !(truncate && input && input.length > maxUrlLength)) {
         return input;
     }
 
-    let queryIndex = input.indexOf("?");
-    // No query string, just truncate (can't do much to preserve integrity)
-    if (queryIndex < 0) {
-        return input.substring(0, maxUrlLength);
+    // Only truncation needed, no drop/keep - use simple truncation
+    if (!hasDrop && !hasKeep) {
+        return truncateUrl(input);
+    }
+
+    let queryIndex = input ? input.indexOf("?") : -1;
+
+    // No query string to process
+    if (queryIndex <= 0) {
+        return truncate && input && input.length > maxUrlLength ? input.substring(0, maxUrlLength) : input;
     }
 
     let path = input.substring(0, queryIndex);
     let queryAndHash = input.substring(queryIndex + 1);
 
-    // Separate hash fragment from query string (hash is dropped during truncation)
+    // Separate hash fragment from query string
     let hashIndex = queryAndHash.indexOf("#");
     let query = hashIndex >= 0 ? queryAndHash.substring(0, hashIndex) : queryAndHash;
+    let hash = hashIndex >= 0 ? queryAndHash.substring(hashIndex) : "";
+
+    // Empty query string
+    if (query.length === 0) {
+        return truncate && input.length > maxUrlLength ? input.substring(0, maxUrlLength) : input;
+    }
+
+    let params = query.split("&");
+    let paramCount = params.length;
+
+    // Process drop: replace sensitive parameter values
+    if (hasDrop) {
+        let swap = Data.Constant.Dropped;
+        for (let i = 0; i < paramCount; i++) {
+            let p = params[i];
+            let eqIndex = p.indexOf("=");
+            if (eqIndex > 0) {
+                let key = p.substring(0, eqIndex);
+                if (drop.indexOf(key) >= 0) {
+                    params[i] = key + "=" + swap;
+                }
+            }
+        }
+    }
+
+    // Process keep: move keep parameters to front (in-place reorder)
+    if (hasKeep) {
+        let writeIndex = 0;
+        // First pass: move keep params to front
+        for (let i = 0; i < paramCount; i++) {
+            let p = params[i];
+            let eqIndex = p.indexOf("=");
+            let key = eqIndex > 0 ? p.substring(0, eqIndex) : p;
+            if (keep.indexOf(key) >= 0) {
+                if (i !== writeIndex) {
+                    // Swap with position at writeIndex
+                    let temp = params[writeIndex];
+                    params[writeIndex] = p;
+                    params[i] = temp;
+                }
+                writeIndex++;
+            }
+        }
+    }
+
+    // Build result - if truncation needed and result would be too long, use smart truncation
+    if (truncate) {
+        // Estimate: path + "?" + params joined + hash
+        let estimatedLength = path.length + 1 + query.length + hash.length;
+        if (estimatedLength > maxUrlLength) {
+            return truncateParams(path, params, paramCount);
+        }
+    }
+
+    return path + "?" + params.join("&") + hash;
+}
+
+// Truncates URL by adding complete parameters until max length is reached
+function truncateParams(path: string, params: string[], paramCount: number): string {
+    // If path alone exceeds max length, just truncate
+    if (path.length >= maxUrlLength) {
+        return path.substring(0, maxUrlLength);
+    }
+
+    let result = path;
+    let len = path.length;
+
+    for (let i = 0; i < paramCount; i++) {
+        let separator = i === 0 ? "?" : "&";
+        let paramLen = params[i].length;
+        let newLen = len + 1 + paramLen; // +1 for separator
+
+        if (newLen <= maxUrlLength) {
+            result = result + separator + params[i];
+            len = newLen;
+        } else {
+            break;
+        }
+    }
+
+    return result;
+}
+
+// Simple truncation for URLs without drop/keep processing
+function truncateUrl(input: string): string {
+    let queryIndex = input.indexOf("?");
+
+    // No query string, just truncate
+    if (queryIndex < 0) {
+        return input.substring(0, maxUrlLength);
+    }
+
+    let path = input.substring(0, queryIndex);
 
     // If path alone exceeds max length, just truncate
     if (path.length >= maxUrlLength) {
         return input.substring(0, maxUrlLength);
     }
 
-    // Handle empty query string
+    let queryAndHash = input.substring(queryIndex + 1);
+    let hashIndex = queryAndHash.indexOf("#");
+    let query = hashIndex >= 0 ? queryAndHash.substring(0, hashIndex) : queryAndHash;
+
     if (query.length === 0) {
         return path.substring(0, maxUrlLength);
     }
 
     let params = query.split("&");
-
-    // Build URL by adding parameters one at a time, stopping before we exceed max length
-    // Keep parameters are prioritized (already moved to front), so they are added first
-    let result = path;
-    let hasParams = false;
-
-    for (let i = 0; i < params.length; i++) {
-        let separator = hasParams ? "&" : "?";
-        let candidate = result + separator + params[i];
-
-        if (candidate.length <= maxUrlLength) {
-            result = candidate;
-            hasParams = true;
-        } else {
-            // Keep params are already at front, so if we can't fit, we stop
-            break;
-        }
-    }
-
-    return result;
+    return truncateParams(path, params, params.length);
 }
 
 function mangleText(value: string): string {
