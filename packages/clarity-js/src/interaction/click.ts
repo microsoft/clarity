@@ -49,8 +49,11 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
         y = Math.round(l.y + (l.h / 2));
     }
 
-    let eX = l ? Math.max(Math.floor(((x - l.x) / l.w) * Setting.ClickPrecision), 0) : 0;
-    let eY = l ? Math.max(Math.floor(((y - l.y) / l.h) * Setting.ClickPrecision), 0) : 0;
+    // Compute relative coordinates and handle edge cases where coordinates are out of bounds
+    // This can happen with CSS-rendered text where the target element bounds are smaller than expected
+    let relativeCoords = computeRelativeCoordinates(t as Element, x, y, l);
+    let eX = relativeCoords.eX;
+    let eY = relativeCoords.eY;
 
     // Check for null values before processing this event
     if (x !== null && y !== null) {
@@ -151,6 +154,36 @@ function layout(element: Element): Box {
         }
     }
     return box;
+}
+
+function computeRelativeCoordinates(element: Element, x: number, y: number, l: Box): { eX: number, eY: number } {
+    // Default values when no layout is available
+    if (!l) {
+        return { eX: 0, eY: 0 };
+    }
+
+    let currentElement = element;
+    let box = l;
+
+    // Compute relative coordinates inline for performance
+    let eX = Math.max(Math.floor(((x - box.x) / box.w) * Setting.ClickPrecision), 0);
+    let eY = Math.max(Math.floor(((y - box.y) / box.h) * Setting.ClickPrecision), 0);
+
+    // Check if coordinates are out of bounds (exceed ClickPrecision)
+    // This can happen with CSS-rendered text where the target bounds are smaller than the parent
+    while ((eX > Setting.ClickPrecision || eY > Setting.ClickPrecision) && currentElement.parentElement) {
+        currentElement = currentElement.parentElement;
+        box = layout(currentElement);
+
+        // If parent has no valid layout, break and use last valid computation
+        if (!box) { break; }
+
+        // Recompute relative coordinates with parent's layout
+        eX = Math.max(Math.floor(((x - box.x) / box.w) * Setting.ClickPrecision), 0);
+        eY = Math.max(Math.floor(((y - box.y) / box.h) * Setting.ClickPrecision), 0);
+    }
+
+    return { eX, eY };
 }
 
 function context(a: HTMLAnchorElement): BrowsingContext {
