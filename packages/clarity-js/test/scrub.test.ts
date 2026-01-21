@@ -272,5 +272,37 @@ test.describe("Core Utilities - Scrub URL (E2E)", () => {
             expect(url!.length).toBeLessThanOrEqual(MAX_URL_LENGTH);
             expect(url).toContain("important=must-keep");
         });
+
+        test("should preserve hash fragment during truncation when it fits", async ({ page }) => {
+            // Create URL that needs truncation but has room for short hash
+            const filler = "x".repeat(180);
+            const url = await runClarityAndGetUrl(page, {
+                queryString: `?data=${filler}&extra=value#nav`
+            });
+            expect(url).not.toBeNull();
+            expect(url!.length).toBeLessThanOrEqual(MAX_URL_LENGTH);
+            // Hash should be preserved if it fits after truncation
+            if (url!.length + 4 <= MAX_URL_LENGTH) { // 4 = "#nav".length
+                expect(url).toContain("#nav");
+            }
+        });
+
+        test("should calculate length correctly after drop shortens parameter values", async ({ page }) => {
+            // Long password value that gets replaced with short "*na*"
+            // Original: password=verylongpasswordvalue123456 (30+ chars)
+            // After drop: password=*na* (13 chars)
+            // This should NOT trigger unnecessary truncation
+            const longPassword = "a]".repeat(50); // 100 chars
+            const url = await runClarityAndGetUrl(page, {
+                queryString: `?user=test&password=${longPassword}&action=login`,
+                drop: ["password"]
+            });
+            expect(url).not.toBeNull();
+            expect(url).toContain("user=test");
+            expect(url).toContain(`password=${DROPPED_VALUE}`);
+            expect(url).toContain("action=login");
+            // All params should be present since after drop the URL is short enough
+            expect(url!.length).toBeLessThanOrEqual(MAX_URL_LENGTH);
+        });
     });
 });

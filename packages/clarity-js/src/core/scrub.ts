@@ -96,6 +96,22 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
     return value;
 }
 
+/**
+ * Processes a URL by applying drop/keep parameter logic and optional truncation.
+ *
+ * @param input - The URL to process
+ * @param electron - If true, returns a placeholder URL for Electron apps (to avoid file:/// URLs)
+ * @param truncate - If true, truncates the URL to maxUrlLength (255 chars) while preserving complete parameters
+ * @returns The processed URL
+ *
+ * Behavior:
+ * - **Drop**: Parameters listed in config.drop have their values replaced with "*na*" for privacy
+ * - **Keep**: Parameters listed in config.keep are moved to the front of the query string,
+ *   ensuring they survive truncation. Their relative order is preserved.
+ * - **Truncation**: When enabled, adds complete parameters one by one until the limit is reached.
+ *   Hash fragments are preserved if they fit within the limit.
+ * - Drop is applied before keep, so a parameter can be both dropped (value masked) and kept (moved to front)
+ */
 export function url(input: string, electron: boolean = false, truncate: boolean = false): string {
     // Replace the URL for Electron apps so we don't send back file:/// URL
     if (electron) {
@@ -177,18 +193,31 @@ export function url(input: string, electron: boolean = false, truncate: boolean 
 
     // Build result - if truncation needed and result would be too long, use smart truncation
     if (truncate) {
-        // Estimate: path + "?" + params joined + hash
-        let estimatedLength = path.length + 1 + query.length + hash.length;
-        if (estimatedLength > maxUrlLength) {
-            return truncateParams(path, params, paramCount);
+        // Calculate actual length after drop/keep processing (params may have changed)
+        let paramsLength = 0;
+        for (let i = 0; i < paramCount; i++) {
+            paramsLength += params[i].length + (i > 0 ? 1 : 0); // +1 for "&" separator between params
+        }
+        let totalLength = path.length + 1 + paramsLength + hash.length; // +1 for "?"
+        if (totalLength > maxUrlLength) {
+            return truncateParams(path, params, paramCount, hash);
         }
     }
 
     return path + "?" + params.join("&") + hash;
 }
 
-// Truncates URL by adding complete parameters until max length is reached
-function truncateParams(path: string, params: string[], paramCount: number): string {
+/**
+ * Truncates a URL by adding complete parameters until max length is reached.
+ * Hash fragment is appended if it fits within the remaining space.
+ *
+ * @param path - The URL path (before "?")
+ * @param params - Array of query parameters (already processed by drop/keep)
+ * @param paramCount - Number of parameters in the array
+ * @param hash - Hash fragment including "#" (e.g., "#section"), or empty string
+ * @returns Truncated URL with complete parameters only
+ */
+function truncateParams(path: string, params: string[], paramCount: number, hash: string = ""): string {
     // If path alone exceeds max length, just truncate
     if (path.length >= maxUrlLength) {
         return path.substring(0, maxUrlLength);
@@ -210,10 +239,21 @@ function truncateParams(path: string, params: string[], paramCount: number): str
         }
     }
 
+    // Append hash fragment if it fits
+    if (hash.length > 0 && len + hash.length <= maxUrlLength) {
+        result = result + hash;
+    }
+
     return result;
 }
 
-// Simple truncation for URLs without drop/keep processing
+/**
+ * Simple truncation for URLs without drop/keep processing.
+ * Preserves complete query parameters and hash fragment if they fit.
+ *
+ * @param input - The URL to truncate
+ * @returns Truncated URL with complete parameters only
+ */
 function truncateUrl(input: string): string {
     let queryIndex = input.indexOf("?");
 
@@ -232,13 +272,14 @@ function truncateUrl(input: string): string {
     let queryAndHash = input.substring(queryIndex + 1);
     let hashIndex = queryAndHash.indexOf("#");
     let query = hashIndex >= 0 ? queryAndHash.substring(0, hashIndex) : queryAndHash;
+    let hash = hashIndex >= 0 ? queryAndHash.substring(hashIndex) : "";
 
     if (query.length === 0) {
         return path.substring(0, maxUrlLength);
     }
 
     let params = query.split("&");
-    return truncateParams(path, params, params.length);
+    return truncateParams(path, params, params.length, hash);
 }
 
 function mangleText(value: string): string {
