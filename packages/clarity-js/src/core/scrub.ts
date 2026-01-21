@@ -104,31 +104,102 @@ export function url(input: string, electron: boolean = false, truncate: boolean 
     } else {
         let drop = config.drop;
         let keep = config.keep;
-        if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
-            let [path, query] = input.split("?");
-            let swap = Data.Constant.Dropped;
-            result = path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
-        }
-        // If there are any "keep" parameters, we need to move them to the front of the query string so they are not truncated
-        if (keep && keep.length > 0 && input && input.indexOf("?") > 0) {
-            let [path, query] = input.split("?");
-            let kept: string[] = [];
-            let others: string[] = [];
-            query.split("&").forEach(p => {
-                if (keep.some(x => p.indexOf(`${x}=`) === 0)) {
-                    kept.push(p);
-                } else {
-                    others.push(p);
+        let queryIndex = input ? input.indexOf("?") : -1;
+
+        if (queryIndex > 0) {
+            let path = input.substring(0, queryIndex);
+            let queryAndHash = input.substring(queryIndex + 1);
+            // Separate hash fragment from query string
+            let hashIndex = queryAndHash.indexOf("#");
+            let query = hashIndex >= 0 ? queryAndHash.substring(0, hashIndex) : queryAndHash;
+            let hash = hashIndex >= 0 ? queryAndHash.substring(hashIndex) : "";
+
+            // Only process if there's an actual query string
+            if (query.length > 0) {
+                let params = query.split("&");
+
+                // Drop sensitive parameters by replacing their values
+                if (drop && drop.length > 0) {
+                    let swap = Data.Constant.Dropped;
+                    params = params.map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p);
                 }
-            });
-            if (kept.length > 0) {
-                result = path + "?" + kept.concat(others).join("&");
+
+                // Move keep parameters to the front so they survive truncation
+                if (keep && keep.length > 0) {
+                    let kept: string[] = [];
+                    let others: string[] = [];
+                    params.forEach(p => {
+                        if (keep.some(x => p.indexOf(`${x}=`) === 0)) {
+                            kept.push(p);
+                        } else {
+                            others.push(p);
+                        }
+                    });
+                    if (kept.length > 0) {
+                        params = kept.concat(others);
+                    }
+                }
+
+                result = path + "?" + params.join("&") + hash;
             }
         }
     }
     if (truncate) {
-        result = result.substring(0, maxUrlLength);
+        result = truncateUrl(result);
     }
+    return result;
+}
+
+// Truncates URL to maxUrlLength while preserving URL integrity
+// Keep parameters are already moved to the front of the query string, so they are prioritized during truncation
+function truncateUrl(input: string): string {
+    if (input.length <= maxUrlLength) {
+        return input;
+    }
+
+    let queryIndex = input.indexOf("?");
+    // No query string, just truncate (can't do much to preserve integrity)
+    if (queryIndex < 0) {
+        return input.substring(0, maxUrlLength);
+    }
+
+    let path = input.substring(0, queryIndex);
+    let queryAndHash = input.substring(queryIndex + 1);
+
+    // Separate hash fragment from query string (hash is dropped during truncation)
+    let hashIndex = queryAndHash.indexOf("#");
+    let query = hashIndex >= 0 ? queryAndHash.substring(0, hashIndex) : queryAndHash;
+
+    // If path alone exceeds max length, just truncate
+    if (path.length >= maxUrlLength) {
+        return input.substring(0, maxUrlLength);
+    }
+
+    // Handle empty query string
+    if (query.length === 0) {
+        return path.substring(0, maxUrlLength);
+    }
+
+    let params = query.split("&");
+
+    // Build URL by adding parameters one at a time, stopping before we exceed max length
+    // Keep parameters are prioritized (already moved to front), so they are added first
+    let result = path;
+    let hasParams = false;
+
+    for (let i = 0; i < params.length; i++) {
+        let separator = hasParams ? "&" : "?";
+        let candidate = result + separator + params[i];
+
+        if (candidate.length <= maxUrlLength) {
+            result = candidate;
+            hasParams = true;
+        } else {
+            // Keep params are already at front, so if we can't fit, we stop
+            break;
+        }
+    }
+
     return result;
 }
 
