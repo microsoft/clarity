@@ -101,6 +101,11 @@ function getQueryString(url: string): string {
         : url.substring(queryStart + 1);
 }
 
+// Helper to escape special regex characters in a string
+function escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 test.describe("Core Utilities - Scrub URL (E2E)", () => {
 
     test.describe("Basic URL handling", () => {
@@ -117,6 +122,24 @@ test.describe("Core Utilities - Scrub URL (E2E)", () => {
             });
             expect(url).not.toBeNull();
             expect(url).not.toContain("?");
+        });
+
+        test("should handle flag parameters without equals sign", async ({ page }) => {
+            // Flag parameters like "?debug" or "?verbose" have no "=" sign
+            // They can be matched by keep (moved to front) but drop has no value to replace
+            const url = await runClarityAndGetUrl(page, {
+                queryString: "?other=value&debug&secret=hidden",
+                drop: ["debug", "secret"],
+                keep: ["debug"]
+            });
+            expect(url).not.toBeNull();
+            const queryString = getQueryString(url!);
+            // "debug" flag should be moved to front (keep works)
+            expect(queryString.startsWith("debug")).toBe(true);
+            // "secret" should be dropped
+            expect(url).toContain(`secret=${DROPPED_VALUE}`);
+            // "debug" has no value so it's preserved as-is (not dropped)
+            expect(queryString).toContain("debug&");
         });
     });
 
@@ -240,7 +263,7 @@ test.describe("Core Utilities - Scrub URL (E2E)", () => {
             });
             expect(url).not.toBeNull();
             // Count occurrences of dropped value - should be 3
-            const matches = url!.match(new RegExp(`tag=${DROPPED_VALUE.replace(/\*/g, '\\*')}`, 'g'));
+            const matches = url!.match(new RegExp(`tag=${escapeRegex(DROPPED_VALUE)}`, 'g'));
             expect(matches).not.toBeNull();
             expect(matches!.length).toBe(3);
             expect(url).toContain("other=value");

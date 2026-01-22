@@ -103,6 +103,11 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
  * @param input - The URL to process (assumed from trusted source like location.href)
  * @param electron - If true, returns a placeholder URL for Electron apps
  * @param truncate - If true, truncates to 255 chars while preserving complete parameters
+ *
+ * Notes:
+ * - Parameter names in drop/keep config should match the URL-encoded form (e.g., "my%20key" not "my key")
+ * - Flag parameters without "=" (e.g., "?flag") can be matched by keep but are not modified by drop
+ * - URLs starting with "?" (no path) are returned as-is or truncated
  */
 export function url(input: string, electron: boolean = false, truncate: boolean = false): string {
     if (electron) {
@@ -164,12 +169,15 @@ export function url(input: string, electron: boolean = false, truncate: boolean 
         }
     }
 
-    // Build result with optional truncation
-    if (truncate) {
+    // Build result
+    let result = path + "?" + params.join("&") + hash;
+
+    // Apply truncation if needed
+    if (truncate && result.length > maxUrlLength) {
         return truncateParams(path, params, n, hash);
     }
 
-    return path + "?" + params.join("&") + hash;
+    return result;
 }
 
 /**
