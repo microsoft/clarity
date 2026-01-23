@@ -16,26 +16,37 @@ export function start(): void {
     bind(window, "popstate", compute);
 
     // Add a proxy to history.pushState function
-    if (pushState === null) { 
-        pushState = history.pushState; 
-        history.pushState = function(): void {
-            pushState.apply(this, arguments);
-            if (core.active() && check()) {
-                compute();
-            }
-        };
+    // Wrap in try-catch to handle Safari iOS where history methods may be readonly
+    if (pushState === null) {
+        try {
+            pushState = history.pushState;
+            history.pushState = function(): void {
+                pushState.apply(this, arguments);
+                if (core.active() && check()) {
+                    compute();
+                }
+            };
+        } catch (e) {
+            // history.pushState is readonly in this environment (e.g., Safari iOS WKWebView)
+            pushState = null;
+        }
     }
 
     // Add a proxy to history.replaceState function
-    if (replaceState === null) 
-    { 
-        replaceState = history.replaceState; 
-        history.replaceState = function(): void {
-            replaceState.apply(this, arguments);
-            if (core.active() && check()) {
-                compute();
-            }
-        };
+    // Wrap in try-catch to handle Safari iOS where history methods may be readonly
+    if (replaceState === null) {
+        try {
+            replaceState = history.replaceState;
+            history.replaceState = function(): void {
+                replaceState.apply(this, arguments);
+                if (core.active() && check()) {
+                    compute();
+                }
+            };
+        } catch (e) {
+            // history.replaceState is readonly in this environment (e.g., Safari iOS WKWebView)
+            replaceState = null;
+        }
     }
 }
 

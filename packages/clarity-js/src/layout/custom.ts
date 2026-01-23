@@ -21,15 +21,20 @@ export function check(tag: string) {
 }
 
 export function start() {
-    window.clarityOverrides = window.clarityOverrides || {};
-    if (window.customElements?.define && !window.clarityOverrides.define) {
-        window.clarityOverrides.define = window.customElements.define;
-        window.customElements.define = function () {
-            if (active()) {
-                register(arguments[0]);
-            }
-            return window.clarityOverrides.define.apply(this, arguments);
-        };
+    // Wrap in try-catch to handle Safari iOS where window properties or customElements.define may be readonly
+    try {
+        window.clarityOverrides = window.clarityOverrides || {};
+        if (window.customElements?.define && !window.clarityOverrides.define) {
+            window.clarityOverrides.define = window.customElements.define;
+            window.customElements.define = function () {
+                if (active()) {
+                    register(arguments[0]);
+                }
+                return window.clarityOverrides.define.apply(this, arguments);
+            };
+        }
+    } catch (e) {
+        // customElements.define or window properties are readonly in this environment (e.g., Safari iOS WKWebView)
     }
 }
 
