@@ -96,40 +96,26 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
     return value;
 }
 
-/**
- * Processes a URL by applying drop/keep parameter logic and optional truncation.
- * Optimized for minimal bundle size and good performance on typical URLs.
- *
- * @param input - The URL to process (assumed from trusted source like location.href)
- * @param electron - If true, returns a placeholder URL for Electron apps
- * @param truncate - If true, truncates to 255 chars while preserving complete parameters
- *
- * Notes:
- * - Parameter names in drop/keep config should match the URL-encoded form (e.g., "my%20key" not "my key")
- * - Flag parameters without "=" (e.g., "?flag") can be matched by keep but are not modified by drop
- * - URLs starting with "?" (no path) are returned as-is or truncated
- */
+/** Processes a URL by applying configured parameter transformations and optional truncation. */
 export function url(input: string, electron: boolean = false, truncate: boolean = false): string {
     if (electron) {
-        return `${Data.Constant.HTTPS}${Data.Constant.Electron}`;
+        return Data.Constant.HTTPS + Data.Constant.Electron;
     }
 
     let drop = config.drop;
     let keep = config.keep;
     let hasDrop = drop?.length > 0;
     let hasKeep = keep?.length > 0;
-    let needsTruncate = truncate && input && input.length > maxUrlLength;
+    let shouldTruncate = truncate && input && input.length > maxUrlLength;
 
-    // Fast path: no processing needed
-    if (!hasDrop && !hasKeep && !needsTruncate) {
+    if (!hasDrop && !hasKeep && !shouldTruncate) {
         return input;
     }
 
     let queryIndex = input ? input.indexOf("?") : -1;
 
-    // No query string - only truncate if needed
     if (queryIndex <= 0) {
-        return needsTruncate ? input.substring(0, maxUrlLength) : input;
+        return shouldTruncate ? input.substring(0, maxUrlLength) : input;
     }
 
     let path = input.substring(0, queryIndex);
@@ -139,27 +125,23 @@ export function url(input: string, electron: boolean = false, truncate: boolean 
     let hash = hashIndex >= 0 ? queryAndHash.substring(hashIndex) : "";
 
     if (query.length === 0) {
-        return needsTruncate ? input.substring(0, maxUrlLength) : input;
+        return shouldTruncate ? input.substring(0, maxUrlLength) : input;
     }
 
     let params = query.split("&");
     let n = params.length;
-    let swap = Data.Constant.Dropped;
     let writeIndex = 0;
 
-    // Single pass: apply drop and identify keep params
     for (let i = 0; i < n; i++) {
         let p = params[i];
         let eqIndex = p.indexOf("=");
         let key = eqIndex > 0 ? p.substring(0, eqIndex) : p;
 
-        // Drop: replace value with placeholder
         if (hasDrop && eqIndex > 0 && drop.indexOf(key) >= 0) {
-            p = key + "=" + swap;
+            p = key + "=" + Data.Constant.Dropped;
             params[i] = p;
         }
 
-        // Keep: move to front, preserving relative order
         if (hasKeep && keep.indexOf(key) >= 0) {
             if (i !== writeIndex) {
                 params[i] = params[writeIndex];
@@ -169,21 +151,16 @@ export function url(input: string, electron: boolean = false, truncate: boolean 
         }
     }
 
-    // Build result
     let result = path + "?" + params.join("&") + hash;
 
-    // Apply truncation if needed
     if (truncate && result.length > maxUrlLength) {
-        return truncateParams(path, params, n, hash);
+        return truncateParams(path, params, hash);
     }
 
     return result;
 }
 
-/**
- * Builds URL from path and params, truncating to maxUrlLength.
- */
-function truncateParams(path: string, params: string[], n: number, hash: string): string {
+function truncateParams(path: string, params: string[], hash: string): string {
     if (path.length >= maxUrlLength) {
         return path.substring(0, maxUrlLength);
     }
@@ -191,7 +168,7 @@ function truncateParams(path: string, params: string[], n: number, hash: string)
     let result = path;
     let len = path.length;
 
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < params.length; i++) {
         let sep = i === 0 ? "?" : "&";
         let newLen = len + 1 + params[i].length;
         if (newLen <= maxUrlLength) {
