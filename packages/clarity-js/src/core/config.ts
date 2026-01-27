@@ -8,6 +8,7 @@ let config: Config = {
     track: true,
     content: true,
     drop: [],
+    keep: [],
     mask: [],
     unmask: [],
     regions: [],
