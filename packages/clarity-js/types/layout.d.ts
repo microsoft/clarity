@@ -94,6 +94,7 @@ export const enum Constant {
     Object = "object",
     Function = "function",
     StyleTag = "STYLE",
+    LinkTag = "LINK",
     InputTag = "INPUT",
     IFrameTag = "IFRAME",
     ImageTag = "IMG",

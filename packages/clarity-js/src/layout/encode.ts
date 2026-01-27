@@ -105,7 +105,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                 case "attributes":
                                     for (let attr in data[key]) {
                                         if (data[key][attr] !== undefined) {
-                                            tokens.push(attribute(attr, data[key][attr], privacy));
+                                            tokens.push(attribute(attr, data[key][attr], privacy, data.tag));
                                         }
                                     }
                                     break;
@@ -149,6 +149,9 @@ function str(input: number): string {
     return input.toString(36);
 }
 
-function attribute(key: string, value: string, privacy: Privacy): string {
+function attribute(key: string, value: string, privacy: Privacy, tag: string): string {
+    if (key === Constant.Href && tag === Constant.LinkTag) {
+        return `${key}=${value}`;
+    }
     return `${key}=${scrub.text(value, key.indexOf(Constant.DataAttribute) === 0 ? Constant.DataAttribute : key, privacy)}`;
 }
