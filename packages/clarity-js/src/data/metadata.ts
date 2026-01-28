@@ -16,7 +16,7 @@ export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let consentStatus: ConsentState = null;
-let configCookiesRead = false;
+let cookiesLogged = false;
 let defaultStatus: ConsentState = { source: ConsentSource.Default, ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied };
 
 export function start(): void {
@@ -89,8 +89,8 @@ export function start(): void {
     };
   }
 
-  // Read cookies specified in configuration only if analytics_Storage is granted
-  if (consentStatus.analytics_Storage === Constant.Granted) { readConfigCookies(); }
+  // Log cookies specified in configuration only if analytics_Storage is granted
+  if (consentStatus.analytics_Storage === Constant.Granted) { logCookies(); }
 
   const consent = getConsentData(consentStatus);
   trackConsent.config(consent);
@@ -111,18 +111,18 @@ function userAgentData(): void {
   } else { dimension.log(Dimension.Platform, navigator.platform); }
 }
 
-function readConfigCookies(): void {
-  if (configCookiesRead) { return; }
+function logCookies(): void {
+  if (cookiesLogged) { return; }
   for (let key of config.cookies) {
     let value = getCookie(key);
     if (value) { set(key, value); }
   }
-  configCookiesRead = true;
+  cookiesLogged = true;
 }
 
 export function stop(): void {
   data = null;
-  configCookiesRead = false;
+  cookiesLogged = false;
   callbacks.forEach(cb => { cb.called = false; });
 }
 
@@ -191,7 +191,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    readConfigCookies();
+    logCookies();
   }
 
   trackConsent.trackConsentv2(consentData);
