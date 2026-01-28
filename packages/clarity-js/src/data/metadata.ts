@@ -16,6 +16,7 @@ export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let consentStatus: ConsentState = null;
+let configCookiesRead = false;
 let defaultStatus: ConsentState = { source: ConsentSource.Default, ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied };
 
 export function start(): void {
@@ -78,12 +79,6 @@ export function start(): void {
     metric.max(Metric.ColorDepth, Math.round(screen.colorDepth));
   }
 
-  // Read cookies specified in configuration
-  for (let key of config.cookies) {
-    let value = getCookie(key);
-    if (value) { set(key, value); }
-  }
-
   // Track consent config
   // If consent status is not already set, initialize it based on project configuration. Otherwise, use the existing consent status.
   if (consentStatus === null) {
@@ -93,6 +88,10 @@ export function start(): void {
       analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
     };
   }
+
+  // Read cookies specified in configuration only if analytics_Storage is granted
+  if (consentStatus.analytics_Storage === Constant.Granted) { readConfigCookies(); }
+
   const consent = getConsentData(consentStatus);
   trackConsent.config(consent);
   // Track ids using a cookie if configuration allows it
@@ -112,8 +111,18 @@ function userAgentData(): void {
   } else { dimension.log(Dimension.Platform, navigator.platform); }
 }
 
+function readConfigCookies(): void {
+  if (configCookiesRead) { return; }
+  for (let key of config.cookies) {
+    let value = getCookie(key);
+    if (value) { set(key, value); }
+  }
+  configCookiesRead = true;
+}
+
 export function stop(): void {
   data = null;
+  configCookiesRead = false;
   callbacks.forEach(cb => { cb.called = false; });
 }
 
@@ -182,6 +191,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
+    readConfigCookies();
   }
 
   trackConsent.trackConsentv2(consentData);
