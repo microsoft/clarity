@@ -1160,5 +1160,77 @@ test.describe("consentv2 - Production API", () => {
         expect(consentResult.clskCookieValue).toBe("");
         expect(consentResult.clckCookieValue).toBe("");
     });
-});
 
+    // ========================
+    // Config cookies tests
+    // ========================
+
+    /**
+     * Helper to run config cookie tests with consistent setup.
+     * Sets up cookie mock with marketing_id=abc123 and returns whether the cookie value appears in payloads.
+     */
+    async function runConfigCookieTest(
+        page: any,
+        options: { track: boolean; grantConsentAfterStart?: boolean }
+    ): Promise<boolean> {
+        const result = await page.evaluate((opts: { track: boolean; grantConsentAfterStart?: boolean }) => {
+            let cookieStore = "marketing_id=abc123";
+            Object.defineProperty(document, "cookie", {
+                get: () => cookieStore,
+                set: (value: string) => {
+                    if (value.includes("max-age=-") || value.includes("=;") || value.includes("=^;")) {
+                        const cookieName = value.split("=")[0];
+                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
+                        cookieStore = cookies.join("; ");
+                    } else {
+                        const cookieName = value.split("=")[0];
+                        const cookies = cookieStore.split("; ").filter(c => !c.startsWith(cookieName + "="));
+                        cookies.push(value.split(";")[0]);
+                        cookieStore = cookies.filter(c => c).join("; ");
+                    }
+                },
+                configurable: true
+            });
+
+            return new Promise((resolve) => {
+                const payloads: string[] = [];
+
+                (window as any).clarity("start", {
+                    projectId: "test",
+                    track: opts.track,
+                    cookies: ["marketing_id"],
+                    upload: (payload: string) => { payloads.push(payload); }
+                });
+
+                if (opts.grantConsentAfterStart) {
+                    (window as any).clarity("consentv2", {
+                        ad_Storage: "granted",
+                        analytics_Storage: "granted"
+                    });
+                }
+
+                setTimeout(() => {
+                    const allPayloads = payloads.join("");
+                    resolve(allPayloads.includes("abc123"));
+                }, (window as any).CONSENT_CALLBACK_TIMEOUT);
+            });
+        }, options);
+
+        return result as boolean;
+    }
+
+    test("config cookies: track=true logs config cookies as variables", async ({ page }) => {
+        const containsCookieValue = await runConfigCookieTest(page, { track: true });
+        expect(containsCookieValue).toBe(true);
+    });
+
+    test("config cookies: track=false does not log config cookies", async ({ page }) => {
+        const containsCookieValue = await runConfigCookieTest(page, { track: false });
+        expect(containsCookieValue).toBe(false);
+    });
+
+    test("config cookies: track=false then consentv2 grants consent logs config cookies", async ({ page }) => {
+        const containsCookieValue = await runConfigCookieTest(page, { track: false, grantConsentAfterStart: true });
+        expect(containsCookieValue).toBe(true);
+    });
+});
