@@ -56,13 +56,6 @@ export const enum RegionVisibility {
     ScrolledToEnd = 13
 }
 
-export const enum Mask {
-    Text = "address,password,contact",
-    Disable = "radio,checkbox,range,button,reset,submit",
-    Exclude = "password,secret,pass,social,ssn,code,hidden",
-    Tags = "INPUT,SELECT,TEXTAREA"
-}
-
 export const enum Constant {
     Empty = "",
     SvgPrefix = "svg:",
