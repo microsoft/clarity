@@ -89,8 +89,7 @@ export function start(): void {
     };
   }
 
-  // Log cookies specified in configuration only if analytics_Storage is granted
-  if (consentStatus.analytics_Storage === Constant.Granted) { logCookies(); }
+  logCookies();
 
   const consent = getConsentData(consentStatus);
   trackConsent.config(consent);
@@ -112,7 +111,8 @@ function userAgentData(): void {
 }
 
 function logCookies(): void {
-  if (cookiesLogged) { return; }
+  // Only log cookies if both analytics_Storage and ad_Storage are granted, and we haven't already logged them
+  if (cookiesLogged || consentStatus?.analytics_Storage !== Constant.Granted || consentStatus?.ad_Storage !== Constant.Granted) { return; }
   for (let key of config.cookies) {
     let value = getCookie(key);
     if (value) { set(key, value); }
@@ -193,9 +193,9 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
-    logCookies();
   }
 
+  logCookies();
   trackConsent.trackConsentv2(consentData);
   trackConsent.consent();
 }
