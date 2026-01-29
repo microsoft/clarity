@@ -16,6 +16,7 @@ export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
 let consentStatus: ConsentState = null;
+let cookiesLogged = false;
 let defaultStatus: ConsentState = { source: ConsentSource.Default, ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied };
 
 export function start(): void {
@@ -78,12 +79,6 @@ export function start(): void {
     metric.max(Metric.ColorDepth, Math.round(screen.colorDepth));
   }
 
-  // Read cookies specified in configuration
-  for (let key of config.cookies) {
-    let value = getCookie(key);
-    if (value) { set(key, value); }
-  }
-
   // Track consent config
   // If consent status is not already set, initialize it based on project configuration. Otherwise, use the existing consent status.
   if (consentStatus === null) {
@@ -93,6 +88,9 @@ export function start(): void {
       analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
     };
   }
+
+  logCookies();
+
   const consent = getConsentData(consentStatus);
   trackConsent.config(consent);
   // Track ids using a cookie if configuration allows it
@@ -112,8 +110,21 @@ function userAgentData(): void {
   } else { dimension.log(Dimension.Platform, navigator.platform); }
 }
 
+function logCookies(): void {
+  // Only log cookies if both analytics_Storage and ad_Storage are granted, and we haven't already logged them
+  if (cookiesLogged || consentStatus?.analytics_Storage !== Constant.Granted || consentStatus?.ad_Storage !== Constant.Granted) { return; }
+  for (let key of config.cookies) {
+    let value = getCookie(key);
+    if (value) { set(key, value); }
+  }
+  cookiesLogged = true;
+}
+
 export function stop(): void {
   data = null;
+  // Reset cookiesLogged so cookies are re-logged on restart. Each session generates new metadata
+  // (sessionId, pageNum), and cookie values need to be recorded in the new session's data stream.
+  cookiesLogged = false;
   callbacks.forEach(cb => { cb.called = false; });
 }
 
@@ -184,6 +195,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     save();
   }
 
+  logCookies();
   trackConsent.trackConsentv2(consentData);
   trackConsent.consent();
 }
