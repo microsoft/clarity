@@ -1,5 +1,8 @@
 /* Helper Interface */
 
+export const enum FunctionNames {
+    ClickSource = 1,
+}
 
 // Reference: https://wicg.github.io/netinfo/#networkinformation-interface
 export interface NavigatorConnection extends EventTarget {

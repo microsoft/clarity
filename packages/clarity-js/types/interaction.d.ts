@@ -11,6 +11,14 @@ export const enum BrowsingContext {
     Top = 3
 }
 
+export const enum ClickSource {
+    Undefined = 0,
+    FirstParty = 1,
+    ThirdParty = 2,
+    Eval = 3,
+    Unknown = 4
+}
+
 export const enum Setting {
     LookAhead = 500, // 500ms
     InputLookAhead = 1000, // 1s
@@ -131,6 +139,7 @@ export interface ClickData {
     tag: string;
     class: string;
     id: string;
+    source: ClickSource;
 }
 
 export interface TextInfo {
