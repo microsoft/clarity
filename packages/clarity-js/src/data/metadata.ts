@@ -122,6 +122,8 @@ function logCookies(): void {
 
 export function stop(): void {
   data = null;
+  // Reset cookiesLogged so cookies are re-logged on restart. Each session generates new metadata
+  // (sessionId, pageNum), and cookie values need to be recorded in the new session's data stream.
   cookiesLogged = false;
   callbacks.forEach(cb => { cb.called = false; });
 }
