@@ -1165,15 +1165,24 @@ test.describe("consentv2 - Production API", () => {
     // Config cookies tests
     // ========================
 
+    interface ConfigCookieTestOptions {
+        track: boolean;
+        grantConsentAfterStart?: boolean;
+        denyConsentAfterStart?: boolean;
+    }
+
+    interface ConfigCookieTestResult {
+        containsCookieValue: boolean;
+        beforeChangeContainsCookie?: boolean;
+        afterChangeContainsCookie?: boolean;
+    }
+
     /**
      * Helper to run config cookie tests with consistent setup.
      * Sets up cookie mock with marketing_id=abc123 and returns whether the cookie value appears in payloads.
      */
-    async function runConfigCookieTest(
-        page: any,
-        options: { track: boolean; grantConsentAfterStart?: boolean }
-    ): Promise<boolean> {
-        const result = await page.evaluate((opts: { track: boolean; grantConsentAfterStart?: boolean }) => {
+    async function runConfigCookieTest(page: any, options: ConfigCookieTestOptions): Promise<ConfigCookieTestResult> {
+        const result = await page.evaluate((opts: ConfigCookieTestOptions) => {
             let cookieStore = "marketing_id=abc123";
             Object.defineProperty(document, "cookie", {
                 get: () => cookieStore,
@@ -1193,44 +1202,77 @@ test.describe("consentv2 - Production API", () => {
             });
 
             return new Promise((resolve) => {
-                const payloads: string[] = [];
+                const payloadsBefore: string[] = [];
+                const payloadsAfter: string[] = [];
+                let phase = "before";
 
                 (window as any).clarity("start", {
                     projectId: "test",
                     track: opts.track,
                     cookies: ["marketing_id"],
-                    upload: (payload: string) => { payloads.push(payload); }
+                    upload: (payload: string) => {
+                        if (phase === "before") {
+                            payloadsBefore.push(payload);
+                        } else {
+                            payloadsAfter.push(payload);
+                        }
+                    }
                 });
 
-                if (opts.grantConsentAfterStart) {
-                    (window as any).clarity("consentv2", {
-                        ad_Storage: "granted",
-                        analytics_Storage: "granted"
-                    });
+                const hasConsentChange = opts.grantConsentAfterStart || opts.denyConsentAfterStart;
+                // For denial tests, use longer delay to ensure initial upload completes before denial
+                const consentChangeDelay = opts.denyConsentAfterStart
+                    ? (window as any).CONSENT_CALLBACK_TIMEOUT / 2
+                    : (window as any).COOKIE_SETUP_DELAY;
+
+                if (hasConsentChange) {
+                    setTimeout(() => {
+                        phase = "after";
+                        const adStorage = opts.grantConsentAfterStart ? "granted" : "denied";
+                        const analyticsStorage = opts.grantConsentAfterStart ? "granted" : "denied";
+                        (window as any).clarity("consentv2", { ad_Storage: adStorage, analytics_Storage: analyticsStorage });
+                    }, consentChangeDelay);
                 }
 
+                // For denial tests, wait longer to allow for restart
+                const totalTimeout = opts.denyConsentAfterStart
+                    ? consentChangeDelay + (window as any).CONSENT_CALLBACK_TIMEOUT
+                    : (window as any).CONSENT_CALLBACK_TIMEOUT;
+
                 setTimeout(() => {
-                    const allPayloads = payloads.join("");
-                    resolve(allPayloads.includes("abc123"));
-                }, (window as any).CONSENT_CALLBACK_TIMEOUT);
+                    const allPayloads = [...payloadsBefore, ...payloadsAfter].join("");
+                    resolve({
+                        containsCookieValue: allPayloads.includes("abc123"),
+                        beforeChangeContainsCookie: payloadsBefore.join("").includes("abc123"),
+                        afterChangeContainsCookie: payloadsAfter.join("").includes("abc123")
+                    });
+                }, totalTimeout);
             });
         }, options);
 
-        return result as boolean;
+        return result as ConfigCookieTestResult;
     }
 
     test("config cookies: track=true logs config cookies as variables", async ({ page }) => {
-        const containsCookieValue = await runConfigCookieTest(page, { track: true });
-        expect(containsCookieValue).toBe(true);
+        const result = await runConfigCookieTest(page, { track: true });
+        expect(result.containsCookieValue).toBe(true);
     });
 
     test("config cookies: track=false does not log config cookies", async ({ page }) => {
-        const containsCookieValue = await runConfigCookieTest(page, { track: false });
-        expect(containsCookieValue).toBe(false);
+        const result = await runConfigCookieTest(page, { track: false });
+        expect(result.containsCookieValue).toBe(false);
     });
 
     test("config cookies: track=false then consentv2 grants consent logs config cookies", async ({ page }) => {
-        const containsCookieValue = await runConfigCookieTest(page, { track: false, grantConsentAfterStart: true });
-        expect(containsCookieValue).toBe(true);
+        const result = await runConfigCookieTest(page, { track: false, grantConsentAfterStart: true });
+        expect(result.containsCookieValue).toBe(true);
+    });
+
+    test("config cookies: track=true then consentv2 denies consent does not log cookies after restart", async ({ page }) => {
+        const result = await runConfigCookieTest(page, { track: true, denyConsentAfterStart: true });
+        // Before denial, cookies should be logged (track=true, implicit granted)
+        expect(result.beforeChangeContainsCookie).toBe(true);
+        // After restart with denied consent, cookies should NOT be logged
+        expect(result.afterChangeContainsCookie).toBe(false);
     });
 });
