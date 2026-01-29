@@ -57,9 +57,10 @@ const clarityJsPath = join(__dirname, "../build/clarity.min.js");
 /**
  * Sets up a cookie mock for data: URLs which don't support cookies natively.
  * Handles both cookie setting and deletion (via max-age or empty values).
+ * @param initialCookieValue - Optional initial cookie value (e.g., "marketing_id=abc123")
  */
-function setupCookieMock() {
-    let cookieStore = "";
+function setupCookieMock(initialCookieValue?: string): void {
+    let cookieStore = initialCookieValue || "";
     Object.defineProperty(document, "cookie", {
         get: () => cookieStore,
         set: (value: string) => {
@@ -101,7 +102,7 @@ test.describe("consentv2 - Production API", () => {
     // ========================
 
     test("implicit denied: track=false results in denied consent", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state (before Clarity starts) - no cookies should exist
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -263,7 +264,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 explicit denial: track=false → denied/denied remains without cookies", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -333,7 +334,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 mixed consent: track=false → denied analytics, granted ads no cookies", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -400,7 +401,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 mixed consent: track=false → granted analytics, denied ads sets cookies", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -468,7 +469,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 grants consent: track=false → granted/granted sets cookies", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -573,7 +574,7 @@ test.describe("consentv2 - Production API", () => {
     // ========================
 
     test("implicit granted: track=true results in granted consent", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -648,7 +649,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 revokes consent: track=true → denied/denied deletes cookies", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -750,7 +751,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 mixed consent: track=true → granted analytics, denied ads keeps cookies", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -817,7 +818,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 mixed consent: track=true → denied analytics, granted ads deletes cookies", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -887,7 +888,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consentv2 maintains consent: track=true → granted/granted keeps cookies", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -998,7 +999,7 @@ test.describe("consentv2 - Production API", () => {
     // ========================
 
     test("consent v1: track=false → consent(true) grants consent and sets cookies", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -1064,7 +1065,7 @@ test.describe("consentv2 - Production API", () => {
     });
 
     test("consent v1: track=true → consent(false) revokes consent and deletes cookies", async ({ page }) => {
-        await page.evaluate(setupCookieMock);
+        await page.evaluate(setupCookieMock as () => void);
 
         // Verify initial state - no cookies before Clarity starts
         const initialState = await page.evaluate(({ sessionKey, cookieKey }) => {
@@ -1160,5 +1161,105 @@ test.describe("consentv2 - Production API", () => {
         expect(consentResult.clskCookieValue).toBe("");
         expect(consentResult.clckCookieValue).toBe("");
     });
-});
 
+    // ========================
+    // Config cookies tests
+    // ========================
+
+    interface ConfigCookieTestOptions {
+        track: boolean;
+        grantConsentAfterStart?: boolean;
+        denyConsentAfterStart?: boolean;
+    }
+
+    interface ConfigCookieTestResult {
+        containsCookieValue: boolean;
+        beforeChangeContainsCookie?: boolean;
+        afterChangeContainsCookie?: boolean;
+    }
+
+    /**
+     * Helper to run config cookie tests with consistent setup.
+     * Sets up cookie mock with marketing_id=abc123 and returns whether the cookie value appears in payloads.
+     */
+    async function runConfigCookieTest(page: any, options: ConfigCookieTestOptions): Promise<ConfigCookieTestResult> {
+        // Set up cookie mock with initial marketing cookie before evaluating test logic
+        await page.evaluate(setupCookieMock as (initialValue: string) => void, "marketing_id=abc123");
+
+        const result = await page.evaluate((opts: ConfigCookieTestOptions) => {
+
+            return new Promise((resolve) => {
+                const payloadsBefore: string[] = [];
+                const payloadsAfter: string[] = [];
+                let phase = "before";
+
+                (window as any).clarity("start", {
+                    projectId: "test",
+                    track: opts.track,
+                    cookies: ["marketing_id"],
+                    upload: (payload: string) => {
+                        if (phase === "before") {
+                            payloadsBefore.push(payload);
+                        } else {
+                            payloadsAfter.push(payload);
+                        }
+                    }
+                });
+
+                const hasConsentChange = opts.grantConsentAfterStart || opts.denyConsentAfterStart;
+                // For denial tests, use longer delay to ensure initial upload completes before denial
+                const consentChangeDelay = opts.denyConsentAfterStart
+                    ? (window as any).CONSENT_CALLBACK_TIMEOUT / 2
+                    : (window as any).COOKIE_SETUP_DELAY;
+
+                if (hasConsentChange) {
+                    setTimeout(() => {
+                        phase = "after";
+                        const adStorage = opts.grantConsentAfterStart ? "granted" : "denied";
+                        const analyticsStorage = opts.grantConsentAfterStart ? "granted" : "denied";
+                        (window as any).clarity("consentv2", { ad_Storage: adStorage, analytics_Storage: analyticsStorage });
+                    }, consentChangeDelay);
+                }
+
+                // For denial tests, wait longer to allow for restart
+                const totalTimeout = opts.denyConsentAfterStart
+                    ? consentChangeDelay + (window as any).CONSENT_CALLBACK_TIMEOUT
+                    : (window as any).CONSENT_CALLBACK_TIMEOUT;
+
+                setTimeout(() => {
+                    const allPayloads = [...payloadsBefore, ...payloadsAfter].join("");
+                    resolve({
+                        containsCookieValue: allPayloads.includes("abc123"),
+                        beforeChangeContainsCookie: payloadsBefore.join("").includes("abc123"),
+                        afterChangeContainsCookie: payloadsAfter.join("").includes("abc123")
+                    });
+                }, totalTimeout);
+            });
+        }, options);
+
+        return result as ConfigCookieTestResult;
+    }
+
+    test("config cookies: track=true logs config cookies as variables", async ({ page }) => {
+        const result = await runConfigCookieTest(page, { track: true });
+        expect(result.containsCookieValue).toBe(true);
+    });
+
+    test("config cookies: track=false does not log config cookies", async ({ page }) => {
+        const result = await runConfigCookieTest(page, { track: false });
+        expect(result.containsCookieValue).toBe(false);
+    });
+
+    test("config cookies: track=false then consentv2 grants consent logs config cookies", async ({ page }) => {
+        const result = await runConfigCookieTest(page, { track: false, grantConsentAfterStart: true });
+        expect(result.containsCookieValue).toBe(true);
+    });
+
+    test("config cookies: track=true then consentv2 denies consent does not log cookies after restart", async ({ page }) => {
+        const result = await runConfigCookieTest(page, { track: true, denyConsentAfterStart: true });
+        // Before denial, cookies should be logged (track=true, implicit granted)
+        expect(result.beforeChangeContainsCookie).toBe(true);
+        // After restart with denied consent, cookies should NOT be logged
+        expect(result.afterChangeContainsCookie).toBe(false);
+    });
+});
