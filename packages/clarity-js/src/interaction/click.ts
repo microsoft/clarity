@@ -1,6 +1,7 @@
 import { BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
-import { BrowsingContext, ClickState, TextInfo } from "@clarity-types/interaction";
+import { BrowsingContext, ClickSource, ClickState, TextInfo } from "@clarity-types/interaction";
 import { Box } from "@clarity-types/layout";
+import { FunctionNames } from "@clarity-types/performance";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -10,6 +11,7 @@ import { target } from "@src/layout/target";
 import encode from "./encode";
 
 const UserInputTags = ["input", "textarea", "radio", "button", "canvas", "select"];
+const VM_PATTERN = /VM\d/;
 export let state: ClickState[] = [];
 
 export function start(): void {
@@ -75,6 +77,7 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 tag: getElementAttribute(t, "tagName").substring(0, Setting.ClickTag),
                 class: getElementAttribute(t, "className").substring(0, Setting.ClickClass),
                 id: getElementAttribute(t, "id").substring(0, Setting.ClickId),
+                source: evt.isTrusted ? ClickSource.Undefined : source()
             }
         });
         schedule(encode.bind(this, event));
@@ -162,6 +165,29 @@ function context(a: HTMLAnchorElement): BrowsingContext {
         }
     }
     return BrowsingContext.Self;
+}
+
+function source(): ClickSource {
+    source.dn = FunctionNames.ClickSource;
+    try {
+        const stack = new Error().stack || "";
+        const origin = location.origin;
+        let result = ClickSource.Unknown;
+
+        for (const line of stack.split("\n")) {
+            if (line.indexOf("://") >= 0) {
+                result = line.indexOf("extension") < 0 && line.indexOf(origin) >= 0
+                    ? ClickSource.FirstParty
+                    : ClickSource.ThirdParty;
+            } else if (line.indexOf("eval") >= 0 || line.indexOf("Function") >= 0 || line.indexOf("<a") >= 0 || VM_PATTERN.test(line)) {
+                result = ClickSource.Eval;
+            }
+        }
+
+        return result;
+    } catch {
+        return ClickSource.Unknown;
+    }
 }
 
 export function reset(): void {

@@ -44,6 +44,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 tag: tokens.length > 17 ? tokens[17] as string : null,
                 class: tokens.length > 18 ? tokens[18] as string : null,
                 id: tokens.length > 19 ? tokens[19] as string : null,
+                source: tokens.length > 20 ? tokens[20] as number : null,
             };
             return { time, event, data: clickData };
         case Data.Event.Clipboard:
