@@ -352,7 +352,7 @@ function proxyStyleRules(win: any): void {
   // by injecting CSS using insertRule API vs. appending text node. A side effect of
   // using javascript API is that it doesn't trigger DOM mutation and therefore we
   // need to override the insertRule API and listen for changes manually.
-  if (win.clarityOverrides.InsertRule === undefined) {
+  if ("CSSStyleSheet" in win && win.CSSStyleSheet && win.CSSStyleSheet.prototype && win.clarityOverrides.InsertRule === undefined) {
     win.clarityOverrides.InsertRule = win.CSSStyleSheet.prototype.insertRule;
     win.CSSStyleSheet.prototype.insertRule = function (): number {
       if (core.active()) {
@@ -362,7 +362,7 @@ function proxyStyleRules(win: any): void {
     };
   }
 
-  if ("CSSMediaRule" in win && win.clarityOverrides.MediaInsertRule === undefined) {
+  if ("CSSMediaRule" in win && win.CSSMediaRule && win.CSSMediaRule.prototype && win.clarityOverrides.MediaInsertRule === undefined) {
     win.clarityOverrides.MediaInsertRule = win.CSSMediaRule.prototype.insertRule;
     win.CSSMediaRule.prototype.insertRule = function (): number {
       if (core.active()) {
@@ -372,7 +372,7 @@ function proxyStyleRules(win: any): void {
     };
   }
 
-  if (win.clarityOverrides.DeleteRule === undefined) {
+  if ("CSSStyleSheet" in win && win.CSSStyleSheet && win.CSSStyleSheet.prototype && win.clarityOverrides.DeleteRule === undefined) {
     win.clarityOverrides.DeleteRule = win.CSSStyleSheet.prototype.deleteRule;
     win.CSSStyleSheet.prototype.deleteRule = function (): void {
       if (core.active()) {
@@ -382,7 +382,7 @@ function proxyStyleRules(win: any): void {
     };
   }
 
-  if ("CSSMediaRule" in win && win.clarityOverrides.MediaDeleteRule === undefined) {
+  if ("CSSMediaRule" in win && win.CSSMediaRule && win.CSSMediaRule.prototype && win.clarityOverrides.MediaDeleteRule === undefined) {
     win.clarityOverrides.MediaDeleteRule = win.CSSMediaRule.prototype.deleteRule;
     win.CSSMediaRule.prototype.deleteRule = function (): void {
       if (core.active()) {
@@ -395,7 +395,7 @@ function proxyStyleRules(win: any): void {
   // Add a hook to attachShadow API calls
   // In case we are unable to add a hook and browser throws an exception,
   // reset attachShadow variable and resume processing like before
-  if (win.clarityOverrides.AttachShadow === undefined) {
+  if ("Element" in win && win.Element && win.Element.prototype && win.clarityOverrides.AttachShadow === undefined) {
     win.clarityOverrides.AttachShadow = win.Element.prototype.attachShadow;
     try {
       win.Element.prototype.attachShadow = function (): ShadowRoot {
