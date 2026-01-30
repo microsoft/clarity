@@ -1,6 +1,6 @@
 import { Privacy } from "@clarity-types/core";
 import { Code, Setting, Severity } from "@clarity-types/data";
-import { Constant, Mask, NodeInfo, NodeMeta, NodeValue, Selector, SelectorInput, Source } from "@clarity-types/layout";
+import { Constant, NodeInfo, NodeMeta, NodeValue, Selector, SelectorInput, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import hash from "@src/core/hash";
@@ -9,6 +9,7 @@ import * as internal from "@src/diagnostic/internal";
 import { removeObserver } from "@src/layout/node";
 import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
+import { MaskTextList, MaskDisableList, MaskExcludeList, MaskTagsList } from "./constants";
 let index: number = 1;
 let nodesMap: Map<Number, Node> = null; // Maps id => node to retrieve further node details using id.
 let values: NodeValue[] = [];
@@ -16,10 +17,10 @@ let updateMap: number[] = [];
 let hashMap: { [hash: string]: number } = {};
 let override = [];
 let unmask = [];
-let maskText = [];
-let maskExclude = [];
-let maskDisable = [];
-let maskTags = [];
+let maskText: string[] = [];
+let maskExclude: string[] = [];
+let maskDisable: string[] = [];
+let maskTags: string[] = [];
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
@@ -44,10 +45,10 @@ function reset(): void {
     hashMap = {};
     override = [];
     unmask = [];
-    maskText = Mask.Text.split(Constant.Comma);
-    maskExclude = Mask.Exclude.split(Constant.Comma);
-    maskDisable = Mask.Disable.split(Constant.Comma);
-    maskTags = Mask.Tags.split(Constant.Comma);
+    maskText = MaskTextList;
+    maskExclude = MaskExcludeList;
+    maskDisable = MaskDisableList;
+    maskTags = MaskTagsList;
     nodesMap = new Map();
     idMap = new WeakMap();
     iframeMap = new WeakMap();

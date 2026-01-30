@@ -7,7 +7,7 @@ import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { target } from "@src/layout/target";
 import encode from "./encode";
-import { Mask } from "@clarity-types/layout";
+import { MaskExcludeList } from "@src/layout/constants";
 
 export let state: ChangeState[] = [];
 
@@ -23,10 +23,10 @@ function recompute(evt: UIEvent): void {
     let element = target(evt) as HTMLInputElement;
     if (element) {
         let value = element.value;
-        let checksum = value && value.length >= Setting.WordLength && config.fraud && Mask.Exclude.indexOf(element.type) === -1 ? hash(value, Setting.ChecksumPrecision) : Constant.Empty;
+        let checksum = value && value.length >= Setting.WordLength && config.fraud && MaskExcludeList.indexOf(element.type) === -1 ? hash(value, Setting.ChecksumPrecision) : Constant.Empty;
         state.push({ time: time(evt), event: Event.Change, data: { target: target(evt), type: element.type, value, checksum } });
         schedule(encode.bind(this, Event.Change));
-    }    
+    }
 }
 
 export function reset(): void {

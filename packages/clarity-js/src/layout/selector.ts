@@ -1,7 +1,8 @@
 import { Character } from "../../types/data";
 import { Constant, Selector, SelectorInput } from "../../types/layout";
+import { ExcludeClassNamesList } from "./constants";
 
-const excludeClassNames = Constant.ExcludeClassNames.split(Constant.Comma);
+const excludeClassNames = ExcludeClassNamesList;
 let selectorMap: { [selector: string]: number[] } = {};
 
 export function reset(): void {
