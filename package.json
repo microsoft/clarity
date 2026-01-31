@@ -19,13 +19,13 @@
     "build:devtools": "yarn workspace clarity-devtools build",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "bump-version": "tsx scripts/bump-version.ts"
+    "bump-version": "ts-node scripts/bump-version.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "lerna": "^8.2.3",
     "parse-url": "^8.1.0",
-    "tsx": "^3.12.7"
+    "ts-node": "^10.1.0"
   },
   "resolutions": {
     "parse-url": "^8.1.0"
