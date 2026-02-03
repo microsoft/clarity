@@ -13,9 +13,9 @@ import * as variable from "@src/data/variable";
 import * as extract from "@src/data/extract";
 import { queue, track } from "./upload";
 
-export default function(event: Event): void {
+export default function (event: Event): void {
     const t = time();
-    let tokens: Token[] = [t, event]; 
+    let tokens: Token[] = [t, event];
     switch (event) {
         case Event.Baseline: {
             const b = baseline.state;
@@ -140,12 +140,12 @@ export default function(event: Event): void {
                 }
                 tokens.push(token);
             });
-            
+
             extract.reset();
             queue(tokens, false);
             break;
         }
-        case Event.Consent: 
+        case Event.Consent:
             tokens.push(consent.data.source);
             tokens.push(consent.data.ad_Storage);
             tokens.push(consent.data.analytics_Storage);

@@ -156,10 +156,12 @@ export function consent(status = true): void {
   }
 
   consentv2({ source: ConsentSource.APIv1, ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
-  trackConsent.consent();
 }
 
 export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.APIv2): void {
+  // Guard against calling consent API when Clarity hasn't started (e.g., due to GPC)
+  if (!core.active()) { return; }
+
   const updatedStatus = {
     source: consentState.source ?? source,
     ad_Storage: normalizeConsent(consentState.ad_Storage, consentStatus?.ad_Storage),

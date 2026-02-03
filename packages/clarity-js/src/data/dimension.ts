@@ -29,7 +29,7 @@ export function log(dimension: Dimension, value: string): void {
             if (data[dimension].length > Setting.CollectionLimit) {
                 if (!limited) {
                     limited = true;
-                    limit.trigger(Check.Collection); 
+                    limit.trigger(Check.Collection);
                 }
                 return;
             }
