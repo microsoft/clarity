@@ -20,7 +20,8 @@ export function stop(): void {
 
 export function log(dimension: Dimension, value: string): void {
     // Check valid value before moving ahead
-    if (value) {
+    // Also check if data is initialized to prevent errors when Clarity hasn't started (e.g., due to GPC)
+    if (value && data !== null) {
         // Ensure received value is casted into a string if it wasn't a string to begin with
         value = `${value}`;
         if (!(dimension in data)) { data[dimension] = []; }
@@ -29,7 +30,7 @@ export function log(dimension: Dimension, value: string): void {
             if (data[dimension].length > Setting.CollectionLimit) {
                 if (!limited) {
                     limited = true;
-                    limit.trigger(Check.Collection); 
+                    limit.trigger(Check.Collection);
                 }
                 return;
             }
