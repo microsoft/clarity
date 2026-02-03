@@ -12,23 +12,25 @@ import config from "@src/core/config";
 export { hashText } from "@src/layout/dom";
 
 export function start(): void {
-    // The order below is important 
+    // The order below is important
     // and is determined by interdependencies of modules
     doc.start();
     region.start();
     dom.start();
     if (config.delayDom) {
-        // Lazy load layout module as part of page load time performance improvements experiment 
+        // Lazy load layout module as part of page load time performance improvements experiment
         bind(window, 'load', () => {
             mutation.start();
         });
     } else {
         mutation.start();
     }
+    // IMPORTANT: Start custom element detection BEFORE discover
+    // This ensures pre-existing custom elements are registered before DOM traversal
+    custom.start();
     discover.start();
     style.start();
     animation.start();
-    custom.start();
 }
 
 export function stop(): void {
