@@ -150,16 +150,12 @@ export function id(): string {
 
 //TODO: Remove this function once consentv2 is fully released
 export function consent(status = true): void {
-  // Guard against calling consent API when Clarity hasn't started (e.g., due to GPC)
-  if (!core.active()) { return; }
-
   if (!status) {
     consentv2({ source: ConsentSource.APIv1, ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied });
     return;
   }
 
   consentv2({ source: ConsentSource.APIv1, ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
-  trackConsent.consent();
 }
 
 export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.APIv2): void {
