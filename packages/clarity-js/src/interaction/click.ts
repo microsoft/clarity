@@ -107,6 +107,17 @@ function text(element: Node): TextInfo {
             // Finally, send only first few characters as specified by the Setting
             output = trimmedText.substring(0, Setting.ClickText);
             isFullText = output.length === trimmedText.length;
+        } else if (element.nodeType === Node.ELEMENT_NODE) {
+            // If no regular text content is found and the element is an HTMLElement, attempt to get text from the 'aria-label' attribute.
+            const htmlElement = element as HTMLElement;
+            const ariaLabel = htmlElement.getAttribute('aria-label');
+
+            // If an 'aria-label' is found, process it similarly
+            if (ariaLabel) {
+                const trimmedAriaLabel = ariaLabel.replace(/\s+/g, Constant.Space).trim();
+                output = trimmedAriaLabel.substring(0, Setting.ClickText);
+                isFullText = output.length === trimmedAriaLabel.length;
+            }
         }
     }
 
