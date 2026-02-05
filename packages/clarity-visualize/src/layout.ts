@@ -245,8 +245,17 @@ export class LayoutHelper {
     }
 
     public customElement = (event: DecodedLayout.CustomElementEvent): void => {
-        if (!this.state.window.customElements.get(event.data.name)) {
-            this.state.window.customElements.define(event.data.name, class extends (this.state.window as typeof window).HTMLElement {});
+        const tagName = event.data.name;
+        if (!this.state.window.customElements.get(tagName)) {
+            try {
+                // Use eval to create class in target window context (avoids ES5 transpilation issues)
+                const EmptyElement = (this.state.window as any).eval(
+                    '(class extends HTMLElement { constructor() { super(); } })'
+                );
+                this.state.window.customElements.define(tagName, EmptyElement);
+            } catch (e) {
+                console.error(`Failed to define custom element ${tagName}:`, e);
+            }
         }
     }
 
