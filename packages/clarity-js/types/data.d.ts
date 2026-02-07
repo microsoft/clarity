@@ -264,6 +264,7 @@ export const enum Setting {
     PlaybackBytesLimit = 10 * 1024 * 1024, // 10MB
     CollectionLimit = 128, // Number of unique entries for dimensions
     ClickPrecision = 32767, // 2^15 - 1
+    ClickParentTraversal = 10, // Maximum number of parent elements to traverse when computing relative click coordinates
     BoxPrecision = 100, // Up to 2 decimal points (e.g. 34.56)
     ScriptErrorLimit = 5, // Do not send the same script error more than 5 times per page
     DimensionLimit = 256, // Do not extract dimensions which are over 256 characters
