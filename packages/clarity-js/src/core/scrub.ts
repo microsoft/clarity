@@ -93,23 +93,93 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
     return value;
 }
 
+/** Processes a URL by applying configured parameter transformations and optional truncation. */
 export function url(input: string, electron: boolean = false, truncate: boolean = false): string {
-    let result = input;
-    // Replace the URL for Electron apps so we don't send back file:/// URL
     if (electron) {
-        result = `${Data.Constant.HTTPS}${Data.Constant.Electron}`;
-    } else {
-        let drop = config.drop;
-        if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
-            let [path, query] = input.split("?");
-            let swap = Data.Constant.Dropped;
-            result = path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
+        return Data.Constant.HTTPS + Data.Constant.Electron;
+    }
+
+    let drop = config.drop;
+    let keep = config.keep;
+    let hasDrop = drop?.length > 0;
+    let hasKeep = keep?.length > 0;
+    let shouldTruncate = truncate && input && input.length > maxUrlLength;
+
+    if (!hasDrop && !hasKeep && !shouldTruncate) {
+        return input;
+    }
+
+    let queryIndex = input ? input.indexOf("?") : -1;
+
+    if (queryIndex <= 0) {
+        return shouldTruncate ? input.substring(0, maxUrlLength) : input;
+    }
+
+    let path = input.substring(0, queryIndex);
+    let queryAndHash = input.substring(queryIndex + 1);
+    let hashIndex = queryAndHash.indexOf("#");
+    let query = hashIndex >= 0 ? queryAndHash.substring(0, hashIndex) : queryAndHash;
+    let hash = hashIndex >= 0 ? queryAndHash.substring(hashIndex) : "";
+
+    if (query.length === 0) {
+        return shouldTruncate ? input.substring(0, maxUrlLength) : input;
+    }
+
+    let params = query.split("&");
+    let n = params.length;
+    let writeIndex = 0;
+
+    for (let i = 0; i < n; i++) {
+        let p = params[i];
+        let eqIndex = p.indexOf("=");
+        let key = eqIndex > 0 ? p.substring(0, eqIndex) : p;
+
+        if (hasDrop && eqIndex > 0 && drop.indexOf(key) >= 0) {
+            p = key + "=" + Data.Constant.Dropped;
+            params[i] = p;
+        }
+
+        if (hasKeep && keep.indexOf(key) >= 0) {
+            if (i !== writeIndex) {
+                params[i] = params[writeIndex];
+                params[writeIndex] = p;
+            }
+            writeIndex++;
         }
     }
 
-    if (truncate) {
-        result = result.substring(0, maxUrlLength);
+    let result = path + "?" + params.join("&") + hash;
+
+    if (truncate && result.length > maxUrlLength) {
+        return truncateParams(path, params, hash);
     }
+
+    return result;
+}
+
+function truncateParams(path: string, params: string[], hash: string): string {
+    if (path.length >= maxUrlLength) {
+        return path.substring(0, maxUrlLength);
+    }
+
+    let result = path;
+    let len = path.length;
+
+    for (let i = 0; i < params.length; i++) {
+        let sep = i === 0 ? "?" : "&";
+        let newLen = len + 1 + params[i].length;
+        if (newLen <= maxUrlLength) {
+            result += sep + params[i];
+            len = newLen;
+        } else {
+            break;
+        }
+    }
+
+    if (hash && len + hash.length <= maxUrlLength) {
+        result += hash;
+    }
+
     return result;
 }
 
