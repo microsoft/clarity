@@ -24,8 +24,8 @@ export function observe(root: Node): void {
 function handler(event: Event, root: Node, evt: MouseEvent): void {
     let frame = iframe(root);
     let d = frame && frame.contentDocument ? frame.contentDocument.documentElement : document.documentElement;
-    let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
-    let y = "pageY" in evt ? Math.round(evt.pageY) : ("clientY" in evt ? Math.round(evt["clientY"] + d.scrollTop) : null);
+    let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + (d?.scrollLeft || 0)) : null);
+    let y = "pageY" in evt ? Math.round(evt.pageY) : ("clientY" in evt ? Math.round(evt["clientY"] + (d?.scrollTop || 0)) : null);
     // In case of iframe, we adjust (x,y) to be relative to top parent's origin
     if (frame) {
         let distance = offset(frame);
