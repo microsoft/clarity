@@ -11,6 +11,7 @@ import * as interaction from "@src/interaction";
 import * as layout from "@src/layout";
 import * as performance from "@src/performance";
 import * as dynamic from "@src/core/dynamic";
+import * as BrandAgent from "@src/brand-agent";
 export { version };
 export { consent, consentv2, event, identify, set, upgrade, metadata, signal, maxMetric, dlog } from "@src/data";
 export { queue } from "@src/data/upload";
@@ -19,7 +20,7 @@ export { schedule } from "@src/core/task";
 export { time } from "@src/core/time";
 export { hashText } from "@src/layout";
 export { measure };
-const modules: Module[] = [diagnostic, layout, interaction, performance, dynamic];
+const modules: Module[] = [diagnostic, layout, interaction, performance, dynamic, BrandAgent];
 
 export function start(config: Config = null): void {
   // Check that browser supports required APIs and we do not attempt to start Clarity multiple times
