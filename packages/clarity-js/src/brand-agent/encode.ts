@@ -7,6 +7,9 @@ export default function (event: BrandAgentClarityEvent): void {
   tokens.push(event.name);
   if (event.chatMessage) {
     tokens.push(event.chatMessage);
+  }
+
+  if (event.conversationId) {
     tokens.push(event.conversationId);
   }
 
