@@ -49,8 +49,9 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
         y = Math.round(l.y + (l.h / 2));
     }
 
-    let eX = l ? Math.max(Math.floor(((x - l.x) / l.w) * Setting.ClickPrecision), 0) : 0;
-    let eY = l ? Math.max(Math.floor(((y - l.y) / l.h) * Setting.ClickPrecision), 0) : 0;
+    let relativeCoords = computeRelativeCoordinates(t as Element, x, y, l);
+    let eX = relativeCoords.eX;
+    let eY = relativeCoords.eY;
 
     // Check for null values before processing this event
     if (x !== null && y !== null) {
@@ -132,7 +133,10 @@ function getElementAttribute(element: Node, attribute: "tagName" | "className" |
 
 function layout(element: Element): Box {
     let box: Box = null;
-    let de = document.documentElement;
+    let doc = element.ownerDocument || document;
+    let de = doc.documentElement;
+    let win = doc.defaultView || window;
+
     if (typeof element.getBoundingClientRect === "function") {
         // getBoundingClientRect returns rectangle relative positioning to viewport
         let rect = element.getBoundingClientRect();
@@ -142,15 +146,51 @@ function layout(element: Element): Box {
             // Also: using Math.floor() instead of Math.round() because in Edge,
             // getBoundingClientRect returns partial pixel values (e.g. 162.5px) and Chrome already
             // floors the value (e.g. 162px). This keeps consistent behavior across browsers.
+            let scrollLeft = "pageXOffset" in win ? win.pageXOffset : de.scrollLeft;
+            let scrollTop = "pageYOffset" in win ? win.pageYOffset : de.scrollTop;
+
             box = {
-                x: Math.floor(rect.left + ("pageXOffset" in window ? window.pageXOffset : de.scrollLeft)),
-                y: Math.floor(rect.top + ("pageYOffset" in window ? window.pageYOffset : de.scrollTop)),
+                x: Math.floor(rect.left + scrollLeft),
+                y: Math.floor(rect.top + scrollTop),
                 w: Math.floor(rect.width),
                 h: Math.floor(rect.height)
             };
+
+            // If this element is inside an iframe, add the iframe's offset to get parent-page coordinates
+            let frame = iframe(doc);
+            if (frame) {
+                let distance = offset(frame);
+                box.x += Math.round(distance.x);
+                box.y += Math.round(distance.y);
+            }
         }
     }
     return box;
+}
+
+function computeRelativeCoordinates(element: Element, x: number, y: number, l: Box): { eX: number, eY: number } {
+    if (!l) return { eX: 0, eY: 0 };
+
+    let box = l;
+    let el = element;
+
+    let eX = Math.max(Math.floor(((x - box.x) / box.w) * Setting.ClickPrecision), 0);
+    let eY = Math.max(Math.floor(((y - box.y) / box.h) * Setting.ClickPrecision), 0);
+
+    // Walk up parent chain if coords exceed bounds (can happen with CSS-rendered text)
+    // Cap iterations to prevent performance issues with deeply nested DOM
+    let iterations = 0;
+    while ((eX > Setting.ClickPrecision || eY > Setting.ClickPrecision) && el.parentElement && iterations < Setting.ClickParentTraversal) {
+        el = el.parentElement;
+        iterations++;
+        box = layout(el);
+        if (!box) continue;
+
+        eX = Math.max(Math.floor(((x - box.x) / box.w) * Setting.ClickPrecision), 0);
+        eY = Math.max(Math.floor(((y - box.y) / box.h) * Setting.ClickPrecision), 0);
+    }
+
+    return { eX, eY };
 }
 
 function context(a: HTMLAnchorElement): BrowsingContext {
