@@ -1,0 +1,89 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "isWizard": false,
+      "basics": {
+        "description": "Deploy Azure Front Door Log Forwarder to send AFD access logs to Clarity for AI Visibility bot detection.",
+        "subscription": {
+          "constraints": {
+            "validations": []
+          }
+        },
+        "resourceGroup": {
+          "allowExisting": true
+        },
+        "location": {
+          "label": "Region",
+          "toolTip": "Select a region that supports Azure Container Apps.",
+          "allowedValues": [
+            "australiaeast",
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastasia",
+            "eastus",
+            "eastus2",
+            "francecentral",
+            "germanywestcentral",
+            "japaneast",
+            "koreacentral",
+            "northcentralus",
+            "northeurope",
+            "southcentralus",
+            "southeastasia",
+            "swedencentral",
+            "uksouth",
+            "westeurope",
+            "westus",
+            "westus2",
+            "westus3"
+          ],
+          "visible": true
+        }
+      }
+    },
+    "basics": [
+      {
+        "name": "frontDoorSelector",
+        "type": "Microsoft.Solutions.ResourceSelector",
+        "label": "Azure Front Door Name",
+        "toolTip": "Select the Azure Front Door profile whose access logs you want to forward to Clarity.",
+        "resourceType": "Microsoft.Cdn/profiles",
+        "constraints": {
+          "required": true
+        },
+        "options": {
+          "filter": {
+            "subscription": "onBasics",
+            "location": "all"
+          }
+        }
+      },
+      {
+        "name": "projectId",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Clarity Project ID",
+        "toolTip": "Your Clarity project ID where bot detection data will be sent.",
+        "placeholder": "abc123xyz",
+        "constraints": {
+          "required": true,
+          "validations": [
+            {
+              "regex": "^.+$",
+              "message": "Project ID is required."
+            }
+          ]
+        }
+      }
+    ],
+    "steps": [],
+    "outputs": {
+      "location": "[location()]",
+      "frontDoorName": "[basics('frontDoorSelector').name]",
+      "projectId": "[basics('projectId')]"
+    }
+  }
+}

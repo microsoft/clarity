@@ -1,0 +1,300 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.40.2.10011",
+      "templateHash": "14740268583630002692"
+    },
+    "name": "Clarity AI Visibility - Front Door Log Forwarder",
+    "description": "Deploy Azure Front Door Log Forwarder to send AFD access logs to Clarity for AI Visibility bot detection."
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "australiaeast",
+        "brazilsouth",
+        "canadacentral",
+        "centralus",
+        "eastasia",
+        "eastus",
+        "eastus2",
+        "francecentral",
+        "germanywestcentral",
+        "japaneast",
+        "koreacentral",
+        "northcentralus",
+        "northeurope",
+        "southcentralus",
+        "southeastasia",
+        "swedencentral",
+        "uksouth",
+        "westeurope",
+        "westus",
+        "westus2",
+        "westus3"
+      ],
+      "metadata": {
+        "description": "Location for the resources. Must be a region that supports Azure Container Apps."
+      }
+    },
+    "frontDoorName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260,
+      "metadata": {
+        "description": "Name of the existing Azure Front Door resource to forward logs from."
+      }
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Your Clarity project ID."
+      }
+    }
+  },
+  "variables": {
+    "namePrefix": "clarityaivisibility"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}sa', variables('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}/{1}', format('{0}sa', variables('namePrefix')), 'default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', format('{0}sa', variables('namePrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}/{1}/{2}', format('{0}sa', variables('namePrefix')), 'default', 'azure-webjobs-eventhub')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', format('{0}sa', variables('namePrefix')), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2023-01-01-preview",
+      "name": "[format('{0}-ehns', variables('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard",
+        "capacity": 1
+      }
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs",
+      "apiVersion": "2023-01-01-preview",
+      "name": "[format('{0}/{1}', format('{0}-ehns', variables('namePrefix')), 'afd-logs')]",
+      "properties": {
+        "partitionCount": 2,
+        "messageRetentionInDays": 1
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces', format('{0}-ehns', variables('namePrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
+      "apiVersion": "2023-01-01-preview",
+      "name": "[format('{0}/{1}/{2}', format('{0}-ehns', variables('namePrefix')), 'afd-logs', 'afd-forwarder')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', format('{0}-ehns', variables('namePrefix')), 'afd-logs')]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}-env', variables('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}-func', variables('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', format('{0}-env', variables('namePrefix')))]",
+        "configuration": {
+          "activeRevisionsMode": "Single",
+          "secrets": [
+            {
+              "name": "storage-connection",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', format('{0}sa', variables('namePrefix')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('{0}sa', variables('namePrefix'))), '2023-01-01').keys[0].value)]"
+            },
+            {
+              "name": "eventhub-connection",
+              "value": "[listKeys(format('{0}/authorizationRules/RootManageSharedAccessKey', resourceId('Microsoft.EventHub/namespaces', format('{0}-ehns', variables('namePrefix')))), '2023-01-01-preview').primaryConnectionString]"
+            }
+          ]
+        },
+        "template": {
+          "containers": [
+            {
+              "name": "function",
+              "image": "ghcr.io/husseinyoussef/afd-log-forwarder:1.2",
+              "resources": {
+                "cpu": "[json('0.5')]",
+                "memory": "1Gi"
+              },
+              "env": [
+                {
+                  "name": "AzureWebJobsStorage",
+                  "secretRef": "storage-connection"
+                },
+                {
+                  "name": "FUNCTIONS_EXTENSION_VERSION",
+                  "value": "~4"
+                },
+                {
+                  "name": "FUNCTIONS_WORKER_RUNTIME",
+                  "value": "dotnet-isolated"
+                },
+                {
+                  "name": "EVENT_HUB_NAME",
+                  "value": "afd-logs"
+                },
+                {
+                  "name": "EVENT_HUB_CONSUMER_GROUP",
+                  "value": "afd-forwarder"
+                },
+                {
+                  "name": "EVENT_HUB_CONNECTION",
+                  "secretRef": "eventhub-connection"
+                },
+                {
+                  "name": "TARGET_HTTP_ENDPOINT",
+                  "value": "[format('https://app-clarity-server-request-ingest-eus2.azurewebsites.net/collect/frontdoor/{0}', parameters('projectId'))]"
+                }
+              ]
+            }
+          ],
+          "scale": {
+            "minReplicas": 0,
+            "maxReplicas": 10,
+            "rules": [
+              {
+                "name": "active-window",
+                "custom": {
+                  "type": "cron",
+                  "metadata": {
+                    "timezone": "UTC",
+                    "start": "15 */12 * * *",
+                    "end": "0 */12 * * *",
+                    "desiredReplicas": "2"
+                  }
+                }
+              },
+              {
+                "name": "cpu-scaling",
+                "custom": {
+                  "type": "cpu",
+                  "metadata": {
+                    "type": "Utilization",
+                    "value": "80"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs/consumergroups', format('{0}-ehns', variables('namePrefix')), 'afd-logs', 'afd-forwarder')]",
+        "[resourceId('Microsoft.App/managedEnvironments', format('{0}-env', variables('namePrefix')))]",
+        "[resourceId('Microsoft.EventHub/namespaces', format('{0}-ehns', variables('namePrefix')))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', format('{0}-ehns', variables('namePrefix')), 'afd-logs')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('{0}sa', variables('namePrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "scope": "[resourceId('Microsoft.Cdn/profiles', parameters('frontDoorName'))]",
+      "name": "forward-to-eventhub",
+      "properties": {
+        "eventHubAuthorizationRuleId": "[format('{0}/authorizationRules/RootManageSharedAccessKey', resourceId('Microsoft.EventHub/namespaces', format('{0}-ehns', variables('namePrefix'))))]",
+        "eventHubName": "afd-logs",
+        "logs": [
+          {
+            "category": "FrontDoorAccessLog",
+            "enabled": true
+          },
+          {
+            "category": "FrontDoorHealthProbeLog",
+            "enabled": false
+          },
+          {
+            "category": "FrontDoorWebApplicationFirewallLog",
+            "enabled": false
+          }
+        ],
+        "metrics": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces', format('{0}-ehns', variables('namePrefix')))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', format('{0}-ehns', variables('namePrefix')), 'afd-logs')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage account name"
+      },
+      "value": "[format('{0}sa', variables('namePrefix'))]"
+    },
+    "eventHubNamespaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Event Hub Namespace name"
+      },
+      "value": "[format('{0}-ehns', variables('namePrefix'))]"
+    },
+    "eventHubName": {
+      "type": "string",
+      "metadata": {
+        "description": "Event Hub name"
+      },
+      "value": "afd-logs"
+    },
+    "containerAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Container App name"
+      },
+      "value": "[format('{0}-func', variables('namePrefix'))]"
+    },
+    "containerAppEnvName": {
+      "type": "string",
+      "metadata": {
+        "description": "Container Apps Environment name"
+      },
+      "value": "[format('{0}-env', variables('namePrefix'))]"
+    },
+    "diagnosticSettingName": {
+      "type": "string",
+      "metadata": {
+        "description": "Diagnostic setting name created on AFD"
+      },
+      "value": "forward-to-eventhub"
+    }
+  }
+}
