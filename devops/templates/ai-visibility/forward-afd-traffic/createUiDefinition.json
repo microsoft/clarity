@@ -67,7 +67,6 @@
         "type": "Microsoft.Common.TextBox",
         "label": "Clarity Project ID",
         "toolTip": "Your Clarity project ID where bot detection data will be sent.",
-        "placeholder": "abc123xyz",
         "constraints": {
           "required": true,
           "validations": [
