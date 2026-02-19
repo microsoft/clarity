@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.40.2.10011",
-      "templateHash": "14740268583630002692"
+      "templateHash": "7802809427925328548"
     },
     "name": "Clarity AI Visibility - Front Door Log Forwarder",
     "description": "Deploy Azure Front Door Log Forwarder to send AFD access logs to Clarity for AI Visibility bot detection."
@@ -13,29 +13,7 @@
   "parameters": {
     "location": {
       "type": "string",
-      "allowedValues": [
-        "australiaeast",
-        "brazilsouth",
-        "canadacentral",
-        "centralus",
-        "eastasia",
-        "eastus",
-        "eastus2",
-        "francecentral",
-        "germanywestcentral",
-        "japaneast",
-        "koreacentral",
-        "northcentralus",
-        "northeurope",
-        "southcentralus",
-        "southeastasia",
-        "swedencentral",
-        "uksouth",
-        "westeurope",
-        "westus",
-        "westus2",
-        "westus3"
-      ],
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for the resources. Must be a region that supports Azure Container Apps."
       }
@@ -102,7 +80,7 @@
       "apiVersion": "2023-01-01-preview",
       "name": "[format('{0}/{1}', format('{0}-ehns', variables('namePrefix')), 'afd-logs')]",
       "properties": {
-        "partitionCount": 2,
+        "partitionCount": 4,
         "messageRetentionInDays": 1
       },
       "dependsOn": [
@@ -187,7 +165,7 @@
           ],
           "scale": {
             "minReplicas": 0,
-            "maxReplicas": 10,
+            "maxReplicas": 4,
             "rules": [
               {
                 "name": "active-window",
@@ -197,17 +175,7 @@
                     "timezone": "UTC",
                     "start": "15 */12 * * *",
                     "end": "0 */12 * * *",
-                    "desiredReplicas": "2"
-                  }
-                }
-              },
-              {
-                "name": "cpu-scaling",
-                "custom": {
-                  "type": "cpu",
-                  "metadata": {
-                    "type": "Utilization",
-                    "value": "80"
+                    "desiredReplicas": "4"
                   }
                 }
               }

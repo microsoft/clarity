@@ -95,7 +95,7 @@ resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2023-01-01-preview' =
   parent: ehNamespace
   name: 'afd-logs'
   properties: {
-    partitionCount: 2
+    partitionCount: 4
     messageRetentionInDays: 1
   }
 }
@@ -137,7 +137,7 @@ resource functionApp 'Microsoft.App/containerApps@2023-05-01' = {
       containers: [
         {
           name: 'function'
-          image: 'ghcr.io/husseinyoussef/afd-log-forwarder:1.2'
+          image: 'ghcr.io/microsoft/afd-log-forwarder:1.0'
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
@@ -176,7 +176,7 @@ resource functionApp 'Microsoft.App/containerApps@2023-05-01' = {
       ]
       scale: {
         minReplicas: 0
-        maxReplicas: 10
+        maxReplicas: 4
         rules: [
           {
             name: 'active-window'
@@ -186,17 +186,7 @@ resource functionApp 'Microsoft.App/containerApps@2023-05-01' = {
                 timezone: 'UTC'
                 start: '15 */12 * * *'
                 end: '0 */12 * * *'
-                desiredReplicas: '2'
-              }
-            }
-          }
-          {
-            name: 'cpu-scaling'
-            custom: {
-              type: 'cpu'
-              metadata: {
-                type: 'Utilization'
-                value: '80'
+                desiredReplicas: '4'
               }
             }
           }
