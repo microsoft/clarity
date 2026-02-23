@@ -60,3 +60,39 @@ test.describe('decode function', () => {
         expect(result.visibility[0].data.visible).toBe(1);
     });
 });
+
+test.describe('BrandAgent event decode', () => {
+    const envelope = ["0.8.54", 1, 0, 506, "devtools", "1mtqiaz", "1c27tix", 2, 0, 0, 0, "https://test.com/"];
+
+    test('should decode a BrandAgent event with all fields', () => {
+        const payload = {
+            e: envelope,
+            a: [
+                [100, 53, "ConversationStarted", "Hello from agent", "conv-abc-123"]
+            ]
+        };
+        const result = decode(JSON.stringify(payload));
+        expect(result.brandAgent).toHaveLength(1);
+        const event = result.brandAgent[0];
+        expect(event.time).toBe(100);
+        expect(event.data.name).toBe("ConversationStarted");
+        expect(event.data.msg).toBe("Hello from agent");
+        expect(event.data.cid).toBe("conv-abc-123");
+    });
+
+    test('should decode a BrandAgent event with empty optional fields', () => {
+        const payload = {
+            e: envelope,
+            a: [
+                [200, 53, "BubbleShown", "", ""]
+            ]
+        };
+        const result = decode(JSON.stringify(payload));
+        expect(result.brandAgent).toHaveLength(1);
+        const event = result.brandAgent[0];
+        expect(event.time).toBe(200);
+        expect(event.data.name).toBe("BubbleShown");
+        expect(event.data.msg).toBe("");
+        expect(event.data.cid).toBe("");
+    });
+});

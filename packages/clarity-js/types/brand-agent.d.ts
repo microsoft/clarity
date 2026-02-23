@@ -1,6 +1,6 @@
 // This should exactly match with Agent JS.
 
-export enum BrandAgentClarityEventName {
+export enum BrandAgentEventName {
   BubbleShown = "BubbleShown",
   NudgeClicked = "NudgeClicked",
   AgentMessageSent = "AgentMessageSent",
@@ -8,8 +8,8 @@ export enum BrandAgentClarityEventName {
   ConversationStarted = "ConversationStarted",
 }
 
-export interface BrandAgentClarityEvent {
-  name: BrandAgentClarityEventName;
-  chatMessage?: string;
-  conversationId?: string;
+export interface BrandAgentData {
+  name: BrandAgentEventName;
+  msg?: string;
+  cid?: string;
 }
