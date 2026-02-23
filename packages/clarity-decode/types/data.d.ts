@@ -4,6 +4,7 @@ import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, 
 import { ScrollEvent, SelectionEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent } from "./interaction";
 import { DocumentEvent, DomEvent, LayoutEvent, RegionEvent, CustomElementEvent } from "./layout";
 import { NavigationEvent, PerformanceEvent } from "./performance";
+import { BrandAgentEvent } from "./brand-agent";
 import { PartialEvent } from "./core";
 
 /* Redeclare enums */
@@ -84,6 +85,7 @@ export interface DecodedPayload {
     extract?: ExtractEvent[];
     consent?: ConsentEvent[];
     customElement?: CustomElementEvent[];
+    brandAgent?: BrandAgentEvent[];
 }
 
 export interface DecodedVersion {

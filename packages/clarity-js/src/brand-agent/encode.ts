@@ -1,23 +1,16 @@
-import { Event, Token } from "@clarity-types/data";
-import { BrandAgentClarityEvent } from "../../types/brand-agent";
+import { Constant, Event, Token } from "@clarity-types/data";
+import { BrandAgentData } from "../../types/brand-agent";
+import { text } from "../core/scrub";
+import { queue } from "../clarity";
+import { Privacy } from "../../types/core";
+import { Layout } from "../../types";
 
-export default function (event: BrandAgentClarityEvent): void {
+export default function (data: BrandAgentData): void {
   const t = (window as any).clarity("time");
   let tokens: Token[] = [t, Event.BrandAgent];
-  tokens.push(event.name);
-  if (event.chatMessage) {
-    tokens.push(event.chatMessage);
-  }
+  tokens.push(data.name);
+  tokens.push(data.msg ? text(data.msg, Layout.Constant.TextTag, Privacy.Sensitive) : Constant.Empty);
+  tokens.push(data.cid || Constant.Empty);
 
-  if (event.conversationId) {
-    tokens.push(event.conversationId);
-  }
-
-  queueTokens(tokens);
-}
-
-function queueTokens(tokens: Token[]) {
-  if (typeof window !== "undefined" && (window as any).clarity) {
-    (window as any).clarity("queue", tokens);
-  }
+  queue(tokens);
 }

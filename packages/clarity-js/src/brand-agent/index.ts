@@ -1,38 +1,34 @@
-import { BrandAgentClarityEvent } from "../../types/brand-agent";
+import { BrandAgentData } from "../../types/brand-agent";
 import encode from "./encode";
 
-export function start(): void {
-  const handlers = new Map<string, Set<(event: any) => void>>(); // Needed here to store callbacks
+const handlers = new Map<string, Set<(e: any) => void>>();
 
+export function start(): void {
   if (!window.BrandAgentClarity) {
     window.BrandAgentClarity = {
-      on(eventName: string, callback: (event: any) => void) {
-        if (!handlers.has(eventName)) {
-          handlers.set(eventName, new Set());
-        }
-        handlers.get(eventName)!.add(callback);
+      on(name: string, cb: (e: any) => void) {
+        if (!handlers.has(name)) { handlers.set(name, new Set()); }
+        handlers.get(name)!.add(cb);
       },
-      off(eventName: string, callback: (event: any) => void) {
-        handlers.get(eventName)?.delete(callback);
+      off(name: string, cb: (e: any) => void) {
+        handlers.get(name)?.delete(cb);
       },
-      emit(eventName: string, event: any) {
-        handlers
-          .get(eventName)
-          ?.forEach((handler: (event: any) => void) => handler(event));
+      emit(name: string, e: any) {
+        handlers.get(name)?.forEach((fn: (e: any) => void) => fn(e));
       },
     };
   }
 
   window.BrandAgentClarity.on("agentEvent", handleAgentEvent);
-
 }
 
 export function stop(): void {
   if (window.BrandAgentClarity) {
     window.BrandAgentClarity.off("agentEvent", handleAgentEvent);
   }
+  handlers.clear();
 }
 
-function handleAgentEvent(event: BrandAgentClarityEvent): void {
-  encode(event);
+function handleAgentEvent(e: BrandAgentData): void {
+  encode(e);
 }
