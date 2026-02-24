@@ -23,6 +23,7 @@ export default [
       { file: pkg.module, format: "es", exports: "named" }
     ],
     plugins: [
+      alias({ entries: [ { find: /@src\/brand-agent.*/, replacement: '@src/brand-agent/blank' } ] }),
       resolve(),
       typescript(),
       commonjs({ include: ["node_modules/**"] })
@@ -40,6 +41,7 @@ export default [
       warn(message);
     },
     plugins: [
+      alias({ entries: [ { find: /@src\/brand-agent.*/, replacement: '@src/brand-agent/blank' } ] }),
       resolve(),
       typescript(),
       terser(terserOpts),
@@ -54,6 +56,7 @@ export default [
       warn(message);
     },
     plugins: [
+      alias({ entries: [ { find: /@src\/brand-agent.*/, replacement: '@src/brand-agent/blank' } ] }),
       resolve(),
       typescript(),
       terser(terserOpts),
@@ -75,7 +78,8 @@ export default [
           { find: '@src/layout/encode', replacement: '@src/insight/encode' },
           { find: /@src\/interaction\/(change|clipboard|input|pointer|selection)/, replacement: '@src/insight/blank' },
           { find: /@src\/layout.*/, replacement: '@src/insight/snapshot' },
-          { find: /@src\/performance.*/, replacement: '@src/insight/blank' }
+          { find: /@src\/performance.*/, replacement: '@src/insight/blank' },
+          { find: /@src\/brand-agent.*/, replacement: '@src/brand-agent/blank' }
         ]
       }),
       resolve(),
@@ -98,7 +102,8 @@ export default [
           { find: /@src\/layout.*/, replacement: '@src/performance/blank' },
           { find: /@src\/diagnostic.*/, replacement: '@src/performance/blank' },
           { find: /@src\/data\/(extract|baseline|summary)/, replacement: '@src/performance/blank' },
-          { find: /@src\/core\/dynamic/, replacement: '@src/performance/blank' }
+          { find: /@src\/core\/dynamic/, replacement: '@src/performance/blank' },
+          { find: /@src\/brand-agent.*/, replacement: '@src/brand-agent/blank' }
         ]
       }),
       resolve(),
@@ -164,6 +169,20 @@ export default [
       resolve(),
       typescript(),
       terser(terserOpts),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/global.ts",
+    output: [ { file: pkg["brand-agent"], format: "iife", exports: "named" } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      resolve(),
+      typescript(),
+      terser({output: {comments: false}}),
       commonjs({ include: ["node_modules/**"] })
     ]
   }
