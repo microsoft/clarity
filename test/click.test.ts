@@ -13,19 +13,23 @@ declare global {
     }
 }
 
-async function setupPage(page: Page): Promise<void> {
+async function setupPage(page: Page, options: Record<string, any> = {}): Promise<void> {
     const htmlPath = resolve(__dirname, `./html/core.html`);
     const htmlFileUrl = pathToFileURL(htmlPath).toString();
     const html = readFileSync(htmlPath, 'utf8');
+    const configOptions = JSON.stringify({
+        "delay": 100,
+        "projectId": "test",
+        ...options
+    });
     await page.goto(htmlFileUrl);
     await page.setContent(html.replace("</body>", `
         <script>
           window.payloads = [];
           ${readFileSync(resolve(__dirname, `../packages/clarity-js/build/clarity.min.js`), 'utf8')};
           clarity("start", {
-            "delay": 100,
-            "upload": (payload) => { window.payloads.push(payload); },
-            "projectId": "test"
+            ...${configOptions},
+            "upload": (payload) => { window.payloads.push(payload); }
           });
         </script>
         </body>
@@ -60,7 +64,7 @@ test.describe('Click Source Detection', () => {
     });
 
     test('should set source to FirstParty (1) or Eval (3) for same-origin script clicks', async ({ page }) => {
-        await setupPage(page);
+        await setupPage(page, { source: true });
 
         await page.evaluate(() => {
             const script = document.createElement('script');
@@ -80,7 +84,7 @@ test.describe('Click Source Detection', () => {
     });
 
     test('should set source to Eval (3) for clicks triggered via eval', async ({ page }) => {
-        await setupPage(page);
+        await setupPage(page, { source: true });
 
         await page.evaluate(() => {
             const script = document.createElement('script');
@@ -100,7 +104,7 @@ test.describe('Click Source Detection', () => {
     });
 
     test('should set source to Eval (3) for clicks triggered via Function constructor', async ({ page }) => {
-        await setupPage(page);
+        await setupPage(page, { source: true });
 
         await page.evaluate(() => {
             const script = document.createElement('script');
