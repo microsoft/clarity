@@ -79,7 +79,7 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 tag: getElementAttribute(t, "tagName").substring(0, Setting.ClickTag),
                 class: getElementAttribute(t, "className").substring(0, Setting.ClickClass),
                 id: getElementAttribute(t, "id").substring(0, Setting.ClickId),
-                source: config.source ? (evt.isTrusted ? ClickSource.Undefined : source()) : ClickSource.Undefined
+                source: config.diagnostics ? (evt.isTrusted ? ClickSource.Undefined : source()) : ClickSource.Undefined
             }
         });
         schedule(encode.bind(this, event));

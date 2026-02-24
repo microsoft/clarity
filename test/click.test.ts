@@ -64,7 +64,7 @@ test.describe('Click Source Detection', () => {
     });
 
     test('should set source to FirstParty (1) or Eval (3) for same-origin script clicks', async ({ page }) => {
-        await setupPage(page, { source: true });
+        await setupPage(page, { diagnostics: true });
 
         await page.evaluate(() => {
             const script = document.createElement('script');
@@ -84,7 +84,7 @@ test.describe('Click Source Detection', () => {
     });
 
     test('should set source to Eval (3) for clicks triggered via eval', async ({ page }) => {
-        await setupPage(page, { source: true });
+        await setupPage(page, { diagnostics: true });
 
         await page.evaluate(() => {
             const script = document.createElement('script');
@@ -104,7 +104,7 @@ test.describe('Click Source Detection', () => {
     });
 
     test('should set source to Eval (3) for clicks triggered via Function constructor', async ({ page }) => {
-        await setupPage(page, { source: true });
+        await setupPage(page, { diagnostics: true });
 
         await page.evaluate(() => {
             const script = document.createElement('script');
