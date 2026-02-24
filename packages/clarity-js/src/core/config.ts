@@ -25,6 +25,7 @@ let config: Config = {
     conversions: false,
     includeSubdomains: true,
     modules: [],
+    source: false,
 };
 
 export default config;

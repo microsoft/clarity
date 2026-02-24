@@ -141,6 +141,7 @@ export interface Config {
     conversions?: boolean;
     includeSubdomains?: boolean;
     modules?: string[];
+    source?: boolean;
 }
 
 export const enum Constant {
