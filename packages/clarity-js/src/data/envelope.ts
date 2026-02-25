@@ -35,7 +35,7 @@ export function envelope(last: boolean): Token[] {
   data.upload = last && "sendBeacon" in navigator ? Upload.Beacon : Upload.Async;
   data.end = last ? BooleanFlag.True : BooleanFlag.False;
   data.applicationPlatform = ApplicationPlatform.WebApp;
-  data.url = scrub.url(location.href);
+  data.url = scrub.url(location.href, !!metadata.electron);
   return [
     data.version,
     data.sequence,
