@@ -106,7 +106,7 @@ const imageMaskedSvg = {
 /* END imageMaskedSvgs */
 
 export class LayoutHelper {
-    static TIMEOUT = 3000;
+    static TIMEOUT = 7000;
 
     primaryHtmlNodeId: number | null = null;
     isMobile: boolean;
