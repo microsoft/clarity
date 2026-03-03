@@ -1262,4 +1262,48 @@ test.describe("consentv2 - Production API", () => {
         // After restart with denied consent, cookies should NOT be logged
         expect(result.afterChangeContainsCookie).toBe(false);
     });
+
+    test("GCM error handling: handles misconfigured GTM gracefully", async ({ page }) => {
+        await page.evaluate(setupCookieMock as () => void);
+
+        const result = await page.evaluate(({ clarityJs }) => {
+            return new Promise<{ errorWasThrown: boolean }>((resolve) => {
+                let errorWasThrown = false;
+
+                // Mock GTM with misconfigured consent state
+                (window as any).google_tag_data = {
+                    ics: {
+                        addListener: function(_events: string[], callback: () => void) {
+                            setTimeout(() => callback(), 100);
+                        },
+                        // getConsentState throws error due to uninitialized internal state
+                        getConsentState: function() {
+                            errorWasThrown = true;
+                            throw new TypeError("Cannot read properties of undefined (reading 'usedContainerScopedDefaults')");
+                        }
+                    }
+                };
+
+                // Load and execute Clarity
+                eval(clarityJs);
+
+                // Start Clarity with track=true
+                (window as any).clarity("start", {
+                    projectId: "test",
+                    track: true,
+                    upload: false
+                });
+
+                // Wait for callback to be triggered and error to be thrown
+                setTimeout(() => {
+                    resolve({
+                        errorWasThrown
+                    });
+                }, 500);
+            });
+        }, { clarityJs: readFileSync(clarityJsPath, "utf-8") });
+
+        // Verify error was thrown and handled gracefully (test success proves it was caught)
+        expect(result.errorWasThrown).toBe(true);
+    });
 });

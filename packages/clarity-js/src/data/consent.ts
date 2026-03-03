@@ -28,10 +28,15 @@ function processConsent(): void {
         return;
     }
 
-    const analytics_storage = ics.getConsentState(Constant.AnalyticsStorage);
-    const ad_storage = ics.getConsentState(Constant.AdStorage);
-    const consentState = getGcmConsentState({ ad_Storage: ad_storage, analytics_Storage: analytics_storage });
-    consentv2(consentState);
+    try {
+        const analytics_storage = ics.getConsentState(Constant.AnalyticsStorage);
+        const ad_storage = ics.getConsentState(Constant.AdStorage);
+        const consentState = getGcmConsentState({ ad_Storage: ad_storage, analytics_Storage: analytics_storage });
+        consentv2(consentState);
+    } catch {
+        // Handle GTM errors gracefully (e.g., misconfigured consent initialization)
+        return;
+    }
 }
 
 function getGcmConsentState(googleConsent: GCMConsentState): ConsentState {
