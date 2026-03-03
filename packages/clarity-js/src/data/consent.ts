@@ -33,8 +33,8 @@ function processConsent(): void {
         const ad_storage = ics.getConsentState(Constant.AdStorage);
         const consentState = getGcmConsentState({ ad_Storage: ad_storage, analytics_Storage: analytics_storage });
         consentv2(consentState);
-    } catch (e) {
-        //Handle any error that might occur while processing consent, but do not block the execution of the service.
+    } catch {
+        // Handle GTM errors gracefully (e.g., misconfigured consent initialization)
         return;
     }
 }
