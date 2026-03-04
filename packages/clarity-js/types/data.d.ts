@@ -414,6 +414,14 @@ export const enum ConsentSource {
     Unknown = 255,
 }
 
+// This should exactly match with Agent JS.
+export enum BrandAgentEventName {
+    BubbleShown,
+    NudgeClicked,
+    AgentMessageSent,
+    UserMessageSent,
+}
+
 /* Helper Interfaces */
 
 export interface Payload {
@@ -594,4 +602,11 @@ export interface ConsentData {
 export interface GCMConsentState {
     ad_Storage: GCMConsent;
     analytics_Storage: GCMConsent;
+}
+
+// This should exactly match with Agent JS.
+export interface BrandAgentData {
+    name: BrandAgentEventName;
+    msg?: string;
+    cid?: string;
 }

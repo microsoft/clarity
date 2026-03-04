@@ -1,4 +1,4 @@
-import { BrandAgentData } from "../../types/brand-agent";
+import { BrandAgentData } from "@clarity-types/data";
 import encode from "./encode";
 
 const handlers = new Map<string, Set<(e: any) => void>>();
@@ -20,6 +20,11 @@ export function start(): void {
   }
 
   window.BrandAgentClarity.on("agentEvent", handleAgentEvent);
+  
+  // Register stop callback with main Clarity
+  if (typeof window !== "undefined" && (window as any).clarity) {
+    (window as any).clarity("register", stop);
+  }
 }
 
 export function stop(): void {
