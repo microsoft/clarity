@@ -4,7 +4,6 @@ import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, 
 import { ScrollEvent, SelectionEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent } from "./interaction";
 import { DocumentEvent, DomEvent, LayoutEvent, RegionEvent, CustomElementEvent } from "./layout";
 import { NavigationEvent, PerformanceEvent } from "./performance";
-import { BrandAgentEvent } from "./brand-agent";
 import { PartialEvent } from "./core";
 
 /* Redeclare enums */
@@ -31,6 +30,8 @@ export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
 export interface ExtractEvent extends PartialEvent { data: Data.ExtractData; }
 export interface ConsentEvent extends PartialEvent { data: Data.ConsentData; }
+export interface BrandAgentEvent extends PartialEvent { data: Data.BrandAgentData; }
+
 export interface DataEvent extends PartialEvent {
     data: Data.BaselineData |
     Data.DimensionData | 
@@ -43,7 +44,8 @@ export interface DataEvent extends PartialEvent {
     Data.UpgradeData |
     Data.UploadData | 
     Data.ExtractData |
-    Data.ConsentData;
+    Data.ConsentData |
+    Data.BrandAgentData;
 }
 
 export type DecodedEvent = DataEvent | DiagnosticEvent | InteractionEvent | LayoutEvent | PerformanceEvent;

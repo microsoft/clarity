@@ -13,7 +13,7 @@
   "livechat": "build/clarity.livechat.js",
   "tidio": "build/dynamic/clarity.tidio.js",
   "crisp": "build/dynamic/clarity.crisp.js",
-  "brand-agent": "build/clarity.brand-agent.js",
+  "brand-agent": "build/dynamic/clarity.brand-agent.js",
   "types": "types/index.d.ts",
   "keywords": [
     "clarity",
