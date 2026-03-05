@@ -200,7 +200,7 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Consent:
                 if (payload.consent === undefined) { payload.consent = []; }
                 payload.consent.push(data.decode(entry) as ConsentEvent);
-                break;            
+                break;
             case Data.Event.CustomElement:
                 if (payload.customElement === undefined) { payload.customElement = []; }
                 payload.customElement.push(layout.decode(entry) as CustomElementEvent);
