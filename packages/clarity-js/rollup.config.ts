@@ -159,8 +159,8 @@ export default [
     ]
   },
   {
-    input: "src/dynamic/brand-agent/index.ts",
-    output: [ { file: pkg["brand-agent"], format: "iife", exports: "named" } ],
+    input: "src/dynamic/brandagent/index.ts",
+    output: [ { file: pkg["brandagent"], format: "iife", exports: "named" } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
