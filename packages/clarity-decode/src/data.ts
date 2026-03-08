@@ -108,8 +108,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
         case Data.Event.BrandAgent:
             let brandAgentData: Data.BrandAgentData = {
                 name: tokens[2] as BrandAgentEventName,
-                msg: tokens[3] as string,
-                cid: tokens[4] as string,
+                cid: tokens[3] as string,
             };
             return { time, event, data: brandAgentData };
     }

@@ -607,6 +607,5 @@ export interface GCMConsentState {
 // This should exactly match with Agent JS.
 export interface BrandAgentData {
     name: BrandAgentEventName;
-    msg?: string;
     cid?: string;
 }
