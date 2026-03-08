@@ -19,7 +19,7 @@ export function start(): void {
     };
   }
 
-  window.BrandAgentClarity.on("agentEvent", handleAgentEvent);
+  window.BrandAgentClarity.on("brandAgentEvent", handleBrandAgentEvent);
   
   // Register stop callback with main Clarity
   if (typeof window !== "undefined" && (window as any).clarity) {
@@ -29,11 +29,11 @@ export function start(): void {
 
 export function stop(): void {
   if (window.BrandAgentClarity) {
-    window.BrandAgentClarity.off("agentEvent", handleAgentEvent);
+    window.BrandAgentClarity.off("brandAgentEvent", handleBrandAgentEvent);
   }
   handlers.clear();
 }
 
-function handleAgentEvent(e: BrandAgentData): void {
+function handleBrandAgentEvent(e: BrandAgentData): void {
   encode(e);
 }
