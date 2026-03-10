@@ -105,7 +105,6 @@ export function url(input: string, electron: boolean = false): string {
             result = path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
         }
     }
-
     return result;
 }
 
