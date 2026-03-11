@@ -95,7 +95,14 @@ export function compute(): void {
                     }
                     let nodes = document.querySelectorAll(selector) as NodeListOf<HTMLElement>;
                     if (nodes) {
-                        let text = Array.from(nodes).map(e => e.textContent).join(Constant.Seperator);
+                        let text = Array.from(nodes).map(e => {
+                            if (e.tagName === "IMG") {
+                                let img = e as HTMLImageElement;
+                                let src = img.getAttribute("src");
+                                return (src ? img.src : null) || img.srcset || Constant.Empty;
+                            }
+                            return e.textContent;
+                        }).join(Constant.Seperator);
                         update(key, selectorKey, (shouldMask ? hash(text).trim() : text).slice(0, Setting.ExtractLimit));
                     }
                 }
