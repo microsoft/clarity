@@ -22,10 +22,10 @@
     "bump-version": "ts-node scripts/bump-version.ts"
   },
   "devDependencies": {
-    "@playwright/test": "^1.57.0",
-    "lerna": "^8.2.3",
+    "@playwright/test": "^1.58.2",
+    "lerna": "^9.0.7",
     "parse-url": "^8.1.0",
-    "ts-node": "^10.1.0"
+    "ts-node": "^10.9.2"
   },
   "resolutions": {
     "parse-url": "^8.1.0"
