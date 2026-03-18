@@ -244,6 +244,12 @@ export const enum IframeStatus {
     Iframe = 2
 }
 
+export const enum ActivationState {
+    Unknown = 0,
+    Inactive = 1,
+    Active = 2
+}
+
 export const enum Setting {
     Expire = 365, // 1 Year
     SessionExpire = 1, // 1 Day

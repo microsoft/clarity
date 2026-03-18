@@ -1,4 +1,4 @@
-import { BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
+import { ActivationState, BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
 import { BrowsingContext, ClickSource, ClickState, TextInfo } from "@clarity-types/interaction";
 import { Box } from "@clarity-types/layout";
 import { FunctionNames } from "@clarity-types/performance";
@@ -79,7 +79,9 @@ function handler(event: Event, root: Node, evt: MouseEvent): void {
                 tag: getElementAttribute(t, "tagName").substring(0, Setting.ClickTag),
                 class: getElementAttribute(t, "className").substring(0, Setting.ClickClass),
                 id: getElementAttribute(t, "id").substring(0, Setting.ClickId),
-                source: config.diagnostics && !evt.isTrusted ? source() : ClickSource.Undefined
+                source: config.diagnostics && !evt.isTrusted ? source() : ClickSource.Undefined,
+                activationState: activation(),
+                interactionId: "interactionId" in evt ? (evt["interactionId"] as number) || 0 : -1,
             }
         });
         schedule(encode.bind(this, event));
@@ -229,6 +231,13 @@ function source(): ClickSource {
     } catch {
         return ClickSource.Unknown;
     }
+}
+
+function activation(): ActivationState {
+    if (typeof navigator !== "undefined" && "userActivation" in navigator && (navigator as any).userActivation) {
+        return (navigator as any).userActivation.isActive ? ActivationState.Active : ActivationState.Inactive;
+    }
+    return ActivationState.Unknown;
 }
 
 export function reset(): void {

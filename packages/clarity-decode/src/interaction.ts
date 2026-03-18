@@ -19,6 +19,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 x: tokens[3] as number,
                 y: tokens[4] as number,
                 id: tokens[5] as number | undefined,
+                interactionId: tokens.length > 6 ? tokens[6] as number : -1,
             };
             return { time, event, data: pointerData };
         case Data.Event.Click:
@@ -45,6 +46,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 class: tokens.length > 18 ? tokens[18] as string : null,
                 id: tokens.length > 19 ? tokens[19] as string : null,
                 source: tokens.length > 20 ? tokens[20] as number : null,
+                activationState: tokens.length > 21 ? tokens[21] as number : 0,
+                interactionId: tokens.length > 22 ? tokens[22] as number : -1,
             };
             return { time, event, data: clickData };
         case Data.Event.Clipboard:

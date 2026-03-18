@@ -118,6 +118,7 @@ export interface PointerData {
     y: number;
     id?: number;
     isPrimary?: boolean;
+    interactionId?: number;
 }
 
 export interface ClickData {
@@ -140,6 +141,8 @@ export interface ClickData {
     class: string;
     id: string;
     source: ClickSource;
+    activationState: number;
+    interactionId: number;
 }
 
 export interface TextInfo {

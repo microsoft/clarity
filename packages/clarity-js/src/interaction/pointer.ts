@@ -44,7 +44,7 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
     }
 
     // Check for null values before processing this event
-    if (x !== null && y !== null) { handler({ time: time(evt), event, data: { target: target(evt), x, y } }); }
+    if (x !== null && y !== null) { handler({ time: time(evt), event, data: { target: target(evt), x, y, interactionId: "interactionId" in evt ? (evt["interactionId"] as number) || 0 : -1 } }); }
 }
 
 function touch(event: Event, root: Node, evt: TouchEvent): void {
@@ -82,7 +82,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             const isPrimary = hasPrimaryTouch && primaryTouchId === id;
 
             // Check for null values before processing this event
-            if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y, id, isPrimary } }); }
+            if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y, id, isPrimary, interactionId: -1 } }); }
 
             // Reset primary touch point id once touch event ends
             if (event === Event.TouchCancel || event === Event.TouchEnd) {

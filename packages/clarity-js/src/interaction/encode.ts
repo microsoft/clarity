@@ -38,13 +38,14 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     tokens.push(pTarget.id);
                     tokens.push(entry.data.x);
                     tokens.push(entry.data.y);
-                    if (entry.data.id !== undefined) { 
-                        tokens.push(entry.data.id); 
+                    if (entry.data.id !== undefined) {
+                        tokens.push(entry.data.id);
 
                         if (entry.data.isPrimary !== undefined) {
                             tokens.push(entry.data.isPrimary.toString());
                         }
                     }
+                    tokens.push(entry.data.interactionId || 0);
                     queue(tokens);
                     if (entry.data.isPrimary === undefined || entry.data.isPrimary) {
                         baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
@@ -78,6 +79,8 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 tokens.push(entry.data.class);
                 tokens.push(entry.data.id);
                 tokens.push(entry.data.source);
+                tokens.push(entry.data.activationState);
+                tokens.push(entry.data.interactionId);
                 queue(tokens);
                 timeline.track(entry.time, entry.event, cHash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
