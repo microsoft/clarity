@@ -88,7 +88,6 @@ packages/
 scripts/
   bump-version.ts         # Version bumping (updates version.ts + all package.json)
   check-file-size.sh      # Bundle size validation
-.github/workflows/npm-publish.yml  # CI/CD (currently disabled)
 playwright.config.ts      # Playwright test configuration
 ```
 
@@ -110,18 +109,11 @@ yarn bump-version --part=minor    # Minor
 yarn bump-version --part=major    # Major
 ```
 
-Updates `version.ts`, all `package.json`, `lerna.json`, and stages files. Then commit, push, create PR. (Note: Auto-publish workflow currently disabled)
-
-## CI/CD Pipeline
-
-**Workflow:** `.github/workflows/npm-publish.yml` (currently disabled - build job has `if: false`, blocks publish)
-- **Trigger:** Master push with `version.ts` changes
-- **Build job:** Node 22.17.0 - install, build, test, size checks (<2% growth vs previous)
-- **Publish job:** Node 18.20.6 - publishes clarity-js, clarity-decode, clarity-visualize to npm
+Updates `version.ts`, all `package.json`, `lerna.json`, and stages files. Then commit, push, create PR.
 
 ## Environment
 
-**Node.js:** 22+ required (workflow: 22.17.0 publish, 22.17.0 build)
+**Node.js:** 22+ required
 **Package manager:** Yarn only (has yarn.lock, uses workspaces) - install globally: `npm i -g yarn`
 
 ## Common Issues

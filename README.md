@@ -27,10 +27,6 @@ We encourage the community to join us in building the best behavioral analytics 
     * Push changes
     * Create PR
 
-3. **Automated Release**
-    * After PR approval and merge
-    * GitHub Actions publishes to npmjs.org automatically
-
 ## Examples
 Here are some example sessions on popular websites visualized to demonstrate the telemetry captured:
 1. CNN (Web)
