@@ -43,9 +43,12 @@ Here are some example sessions on popular websites visualized to demonstrate the
 Clarity handles sensitive data with care. By default sensitive content on the page is masked before uploading to the server. Additionally, Clarity offers several masking configuration options to ensure you are in full control of your data.
 
 ## Claude Code Setup (Optional)
-If you're using [Claude Code](https://claude.ai/claude-code) for development, this repository includes MCP (Model Context Protocol) server configuration for enhanced Git operations.
+If you're using [Claude Code](https://claude.ai/claude-code) for development, this repository includes:
 
-### Prerequisites
+1. **`CLAUDE.md`** - Project context and development guidelines automatically loaded by Claude
+2. **`.mcp.json`** - MCP (Model Context Protocol) server configuration for enhanced Git operations
+
+### Prerequisites for MCP Server
 1. Install Python 3:
    ```bash
    python3 --version  # Verify installation
@@ -71,12 +74,8 @@ Add to your `.claude/settings.local.json`:
 Claude Code will prompt you to approve the MCP server on first use.
 
 ### What It Provides
-Once configured, Claude gains access to powerful Git operations:
-- View commit history and diffs
-- Inspect working tree status
-- Create branches and commits
-- Compare changes between branches
-- And more Git operations through natural language
+- **CLAUDE.md**: Persistent instructions for Claude including build commands, testing, architecture, and coding standards
+- **Git MCP Server**: Enhanced Git operations through natural language (commit history, diffs, branch management, etc.)
 
 ## Improving Clarity
 If you haven't already done so, start contributing by following instructions **[here](https://github.com/microsoft/clarity/blob/master/CONTRIBUTING.md)**.

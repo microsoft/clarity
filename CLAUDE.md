@@ -1,4 +1,4 @@
-# Clarity Repository - Claude Code Context
+# Clarity Development Guidelines
 
 ## Repository Overview
 
