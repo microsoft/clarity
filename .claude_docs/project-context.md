@@ -1,4 +1,4 @@
-# Clarity Repository - Copilot Agent Instructions
+# Clarity Repository - Claude Code Context
 
 ## Repository Overview
 
@@ -9,7 +9,7 @@ Clarity is an open-source TypeScript behavioral analytics library for tracking u
 - **clarity-visualize** (packages/clarity-visualize): Session replay visualization
 - **clarity-devtools** (packages/clarity-devtools): Chrome extension (private)
 
-**Stack:** TypeScript, Rollup, TSLint, Mocha/Chai, Lerna, Yarn workspaces
+**Stack:** TypeScript, Rollup, TSLint, Playwright, Lerna, Yarn workspaces
 
 ## clarity-js Performance & Bundle Size Priorities
 
@@ -39,14 +39,28 @@ yarn build:devtools     # clarity-devtools only
 
 Rollup + TypeScript → multiple formats (CJS, ESM, IIFE minified). Build artifacts auto-cleaned to `build/` or `extension/` (gitignored).
 
+**Build outputs per package:**
+- clarity-js: `clarity.js` (CJS), `clarity.module.js` (ESM), `clarity.min.js` (minified), plus variants: `clarity.extended.js`, `clarity.insight.js`, `clarity.performance.js`, `clarity.livechat.js`, and dynamic module builds (`clarity.tidio.js`, `clarity.crisp.js`)
+- clarity-decode: `clarity.decode.js` (CJS), `clarity.decode.module.js` (ESM), `clarity.decode.min.js` (minified)
+- clarity-visualize: `clarity.visualize.js` (CJS), `clarity.visualize.module.js` (ESM), `clarity.visualize.min.js` (minified)
+- clarity-devtools: Output to `extension/` directory for Chrome extension
+
 ### Testing
 
 ```bash
-yarn test                              # clarity-js only (ts-mocha + Chai, <1s)
-cd packages/clarity-decode && yarn test  # clarity-decode (Mocha, auto-builds first)
+yarn test                                      # Root: Runs Playwright tests (all projects)
+yarn test:ui                                   # Root: Runs Playwright tests in UI mode
+yarn workspace clarity-js test                 # clarity-js only (Playwright with clarity-js project)
+yarn workspace clarity-decode test             # clarity-decode only (Playwright with clarity-decode project)
 ```
 
-Note: clarity-decode tests require build artifacts (automatic via pretest hook).
+Tests use Playwright test runner configured in `playwright.config.ts` at the repo root. Each package has its own Playwright project configuration.
+
+**Test structure:**
+- Per-package tests: `packages/*/test/*.test.ts`
+- Root e2e tests: `test/*.test.ts`
+- Playwright auto-discovers test directories that have both `test/` folder and `package.json`
+- Test helpers: `test/helper.ts` (root), `packages/clarity-js/test/helper.ts` (package-specific)
 
 ### Linting
 
@@ -75,9 +89,16 @@ scripts/
   bump-version.ts         # Version bumping (updates version.ts + all package.json)
   check-file-size.sh      # Bundle size validation
 .github/workflows/npm-publish.yml  # CI/CD (currently disabled)
+playwright.config.ts      # Playwright test configuration
 ```
 
 **Per-package configs:** `tsconfig.json` (ES5 target), `tslint.json`, `rollup.config.ts`, `package.json`
+
+**Common file patterns:**
+- `encode.ts` files: Data encoding logic, found in various modules (use relative imports, not @src alias)
+- `rollup.config.ts`: Per-package build configuration defining output formats
+- `helper.ts`: Test utility functions (root test/ and packages/clarity-js/test/)
+- `version.ts`: Single source of truth for version (packages/clarity-js/src/core/version.ts)
 
 **Dependency chain:** clarity-js → clarity-decode → clarity-visualize → clarity-devtools. Changes to upstream packages may require rebuilding dependents.
 
@@ -96,6 +117,7 @@ Updates `version.ts`, all `package.json`, `lerna.json`, and stages files. Then c
 **Workflow:** `.github/workflows/npm-publish.yml` (currently disabled - build job has `if: false`, blocks publish)
 - **Trigger:** Master push with `version.ts` changes
 - **Build job:** Node 22.17.0 - install, build, test, size checks (<2% growth vs previous)
+- **Publish job:** Node 18.20.6 - publishes clarity-js, clarity-decode, clarity-visualize to npm
 
 ## Environment
 
@@ -105,7 +127,7 @@ Updates `version.ts`, all `package.json`, `lerna.json`, and stages files. Then c
 ## Common Issues
 
 1. **Build fails:** Run `yarn install` first after clone/pull
-2. **clarity-decode tests fail:** Needs build artifacts (auto-builds via pretest)
+2. **Test failures:** Ensure build artifacts exist with `yarn build` before running tests
 3. **Peer dependency warnings:** Expected and safe to ignore
 4. **TSLint errors:** Only fix your changes, use `yarn tslint:fix` for formatting
 5. **clarity-js changes not reflected:** Rebuild all with `yarn build` from root
