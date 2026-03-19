@@ -1,4 +1,4 @@
-# Clarity Repository - Copilot Agent Instructions
+# Clarity Development Guidelines
 
 ## Repository Overview
 
@@ -40,7 +40,7 @@ yarn build:devtools     # clarity-devtools only
 Rollup + TypeScript → multiple formats (CJS, ESM, IIFE minified). Build artifacts auto-cleaned to `build/` or `extension/` (gitignored).
 
 **Build outputs per package:**
-- clarity-js: `clarity.js` (CJS), `clarity.module.js` (ESM), `clarity.min.js` (minified), plus variants: `clarity.extended.js`, `clarity.insight.js`, `clarity.performance.js`, `clarity.livechat.js`, and dynamic agent builds (`clarity.tidio.js`, `clarity.crisp.js`)
+- clarity-js: `clarity.js` (CJS), `clarity.module.js` (ESM), `clarity.min.js` (minified), plus variants: `clarity.extended.js`, `clarity.insight.js`, `clarity.performance.js`, `clarity.livechat.js`, and dynamic module builds (`clarity.tidio.js`, `clarity.crisp.js`)
 - clarity-decode: `clarity.decode.js` (CJS), `clarity.decode.module.js` (ESM), `clarity.decode.min.js` (minified)
 - clarity-visualize: `clarity.visualize.js` (CJS), `clarity.visualize.module.js` (ESM), `clarity.visualize.min.js` (minified)
 - clarity-devtools: Output to `extension/` directory for Chrome extension
