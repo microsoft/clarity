@@ -34,7 +34,7 @@ export function decode(input: string): DecodedPayload {
 
     if (jsonVersion.major !== codeVersion.major ||
         Math.abs(jsonVersion.minor - codeVersion.minor) > 1) {
-        throw new Error(`Invalid version. Actual: ${payload.envelope.version} | Expected: ${version} (+/- 1) | ${input.substr(0, 250)}`);
+        console.warn(`Invalid version. Actual: ${payload.envelope.version} | Expected: ${version} (+/- 1) | ${input.substr(0, 250)}`);
     }
 
     for (let entry of encoded) {
