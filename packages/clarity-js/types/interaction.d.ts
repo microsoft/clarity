@@ -21,7 +21,7 @@ export const enum ClickSource {
 
 export const enum Setting {
     LookAhead = 500, // 500ms
-    InputLookAhead = 1000, // 1s
+    InputLookAhead = 750, // 750ms
     Distance = 20, // 20 pixels
     ScrollInterval = 50, // 25 milliseconds
     PointerInterval = 25, // 25 milliseconds
