@@ -246,13 +246,16 @@ export class InteractionHelper {
         if (this.vnext) {
             // Track elements to remove to avoid modifying Map during iteration
             const elementsToRemove: HTMLElement[] = [];
+
+            // Calculate how many clicks exceed the maximum allowed
+            const excess = Math.max(0, this.visualizedClicks.size - Setting.MaxClicksDisplayed);
             let count = 0;
 
             // Iterate through visualized clicks and mark old ones for removal
             for (const [element, data] of this.visualizedClicks) {
                 count++;
                 const isTooOld = currentTimestamp - data.time > Setting.MaxClickDisplayDuration;
-                const exceedsMaxCount = count <= this.visualizedClicks.size - Setting.MaxClicksDisplayed;
+                const exceedsMaxCount = count <= excess;
 
                 if (isTooOld || exceedsMaxCount) {
                     elementsToRemove.push(element);

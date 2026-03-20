@@ -38,8 +38,8 @@ export class HeatmapHelper {
         // Remove scroll and resize event listeners
         if (this.state && this.state.window) {
             let win = this.state.window;
-            win.removeEventListener("scroll", this.redraw, { passive: true, capture: true } as any);
-            win.removeEventListener("resize", this.redraw, { passive: true, capture: true } as any);
+            win.removeEventListener("scroll", this.redraw, { capture: true });
+            win.removeEventListener("resize", this.redraw, { capture: true });
         }
     }
 
