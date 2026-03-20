@@ -19,7 +19,7 @@ export class InteractionHelper {
     layout: LayoutHelper;
     state: PlaybackState;
     vnext: boolean;
-    visualizedClicks: ClickVizualizationData[] = [];
+    visualizedClicks: Map<HTMLElement, ClickVizualizationData> = new Map();
 
     constructor(state: PlaybackState, layout: LayoutHelper, vnext: boolean) {
         this.state = state;
@@ -177,9 +177,10 @@ export class InteractionHelper {
         switch (type) {
             case Data.Event.Click:
                 title = "Click";
-                this.visualizedClicks.push({
+                const clickElement = this.drawClick(doc, data.x, data.y, title);
+                this.visualizedClicks.set(clickElement, {
                     doc: de,
-                    click: this.drawClick(doc, data.x, data.y, title),
+                    click: clickElement,
                     time: event.time
                 });
                 if (this.state.options.onclickMismatch) {
@@ -195,18 +196,19 @@ export class InteractionHelper {
                         this.state.options.onclickMismatch({
                             time: event.time,
                             x: data.x,
-                            y: data.y, 
+                            y: data.y,
                             nodeId: data.target as number});
                     }
                 }
-                
+
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.DoubleClick:
                 title = "Click";
-                this.visualizedClicks.push({
+                const doubleClickElement = this.drawClick(doc, data.x, data.y, title);
+                this.visualizedClicks.set(doubleClickElement, {
                     doc: de,
-                    click: this.drawClick(doc, data.x, data.y, title),
+                    click: doubleClickElement,
                     time: event.time
                 });
                 p.className = Constant.PointerNone;
@@ -215,9 +217,10 @@ export class InteractionHelper {
             case Data.Event.TouchEnd:
             case Data.Event.TouchCancel:
                 title = "Touch";
-                this.visualizedClicks.push({
+                const touchElement = this.drawTouch(doc, data.x, data.y, title);
+                this.visualizedClicks.set(touchElement, {
                     doc: de,
-                    click: this.drawTouch(doc, data.x, data.y, title),
+                    click: touchElement,
                     time: event.time
                 });
                 p.className = Constant.PointerNone;
@@ -241,17 +244,25 @@ export class InteractionHelper {
 
     public clearOldClickVisualizations = (currentTimestamp: number): void => {
         if (this.vnext) {
-            while(this.visualizedClicks.length > Setting.MaxClicksDisplayed) {
-                const visualizedClick = this.visualizedClicks.shift();
-                this.fadeOutElement(visualizedClick.click, visualizedClick.doc);
+            // Track elements to remove to avoid modifying Map during iteration
+            const elementsToRemove: HTMLElement[] = [];
+            let count = 0;
+
+            // Iterate through visualized clicks and mark old ones for removal
+            for (const [element, data] of this.visualizedClicks) {
+                count++;
+                const isTooOld = currentTimestamp - data.time > Setting.MaxClickDisplayDuration;
+                const exceedsMaxCount = count <= this.visualizedClicks.size - Setting.MaxClicksDisplayed;
+
+                if (isTooOld || exceedsMaxCount) {
+                    elementsToRemove.push(element);
+                    this.fadeOutElement(element, data.doc);
+                }
             }
 
-            var tooOldClicks = this.visualizedClicks.filter(click => currentTimestamp - click.time > Setting.MaxClickDisplayDuration);
-            tooOldClicks.forEach(click => {
-                this.fadeOutElement(click.click, click.doc);
-                this.visualizedClicks.splice(this.visualizedClicks.indexOf(click), 1);
-            });
-        }        
+            // Remove marked elements from the Map
+            elementsToRemove.forEach(element => this.visualizedClicks.delete(element));
+        }
     }
 
     private fadeOutElement = (element: HTMLElement, document: HTMLElement): void => {
