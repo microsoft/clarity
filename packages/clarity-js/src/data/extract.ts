@@ -98,8 +98,7 @@ export function compute(): void {
                         let text = Array.from(nodes).map(e => {
                             if (e.tagName === "IMG") {
                                 let img = e as HTMLImageElement;
-                                let src = img.getAttribute("src");
-                                return src || img.getAttribute("srcset")?.split(",")[0].trim() || Constant.Empty;
+                                return img.src || img.currentSrc || Constant.Empty;
                             }
                             return e.textContent;
                         }).join(Constant.Seperator);
