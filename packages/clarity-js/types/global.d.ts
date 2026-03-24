@@ -17,7 +17,7 @@ declare global {
     };
     $crisp?: {
       push: (
-        args: [action: string, eventName: string, callback: (data: any) => void]
+        args: [action: string, eventName: string, callback?: (data?: any) => void]
       ) => void;
     };
   }

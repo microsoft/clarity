@@ -1,9 +1,12 @@
 import { Action } from "@clarity-types/agent";
 import encode from "./encode";
 
+// Handler function signature for Crisp events
+type CrispEventHandler = (data?: any) => void;
+
 // Proxy pattern state to prevent handler conflicts (GitHub issue #979)
-const handlerRegistry: { [eventName: string]: Function[] } = {};
-let originalPush: Function | null = null;
+const handlerRegistry: { [eventName: string]: CrispEventHandler[] } = {};
+let originalPush: ((args: [string, string, CrispEventHandler?]) => void) | null = null;
 let isProxyInstalled = false;
 // Infinite loop protection
 let isProcessing = false;
@@ -27,6 +30,26 @@ function agent(): void {
 }
 
 /**
+ * Creates a multiplexer function that calls all registered handlers for an event.
+ * @param eventName - The Crisp event name
+ * @returns A multiplexer function that executes all handlers
+ */
+function createMultiplexer(eventName: string): CrispEventHandler {
+  return (data?: any): void => {
+    const handlers = handlerRegistry[eventName];
+    if (!handlers) return;
+
+    for (const handler of handlers) {
+      try {
+        handler(data);
+      } catch (e) {
+        // Silently catch errors to prevent one handler from breaking others
+      }
+    }
+  };
+}
+
+/**
  * Installs a proxy to intercept $crisp.push and maintain a registry of all handlers.
  * This prevents handler conflicts when multiple parties (app code, Clarity, etc.)
  * register handlers for the same Crisp events.
@@ -45,8 +68,8 @@ function installProxy(): boolean {
   originalPush = window.$crisp.push.bind(window.$crisp);
   const registry = handlerRegistry;
 
-  window.$crisp.push = function(args: [string, string, Function?]): void {
-    const [action, eventName, callback] = args;
+  window.$crisp.push = function(args: [string, string, CrispEventHandler?]): void {
+    const [action, eventName, callback]: [string, string, CrispEventHandler?] = args;
 
     // Infinite loop protection: prevent re-entry
     if (isProcessing) {
@@ -83,19 +106,8 @@ function installProxy(): boolean {
           registry[eventName].push(callback);
         }
 
-        // Create a multiplexer that calls all registered handlers
-        const multiplexer = (data?: any): void => {
-          for (const handler of registry[eventName]) {
-            try {
-              handler(data);
-            } catch (e) {
-              // Silently catch errors to prevent one handler from breaking others
-            }
-          }
-        };
-
         // Register the multiplexer with Crisp (replaces previous handler)
-        originalPush!(["on", eventName, multiplexer]);
+        originalPush!(["on", eventName, createMultiplexer(eventName)]);
       } else if (action === "off" && callback) {
         // Remove from registry
         if (registry[eventName]) {
@@ -107,16 +119,7 @@ function installProxy(): boolean {
 
         // Re-register multiplexer with remaining handlers
         if (registry[eventName] && registry[eventName].length > 0) {
-          const multiplexer = (data?: any): void => {
-            for (const handler of registry[eventName]) {
-              try {
-                handler(data);
-              } catch (e) {
-                // Silently catch errors
-              }
-            }
-          };
-          originalPush!(["on", eventName, multiplexer]);
+          originalPush!(["on", eventName, createMultiplexer(eventName)]);
         } else {
           // No handlers left, turn off the event
           originalPush!(args);
@@ -130,7 +133,7 @@ function installProxy(): boolean {
       isProcessing = false;
       callDepth--;
     }
-  } as any;
+  };
 
   isProxyInstalled = true;
   return true;
