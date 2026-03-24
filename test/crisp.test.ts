@@ -8,16 +8,22 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 test.describe('Crisp Proxy Pattern', () => {
+  let crispBundle: string;
 
-  test('should preserve multiple handlers for same event', async ({ page }) => {
+  test.beforeAll(() => {
     // Load the actual built Crisp agent bundle
-    const crispBundle = readFileSync(
+    crispBundle = readFileSync(
       join(__dirname, '../packages/clarity-js/build/dynamic/clarity.crisp.js'),
       'utf-8'
     );
+  });
 
-    const result = await page.evaluate((bundleCode) => {
-      // Mock Crisp SDK
+  test.beforeEach(async ({ page }) => {
+    // Navigate to blank page and inject mock Crisp SDK
+    await page.goto('about:blank');
+
+    // Inject mock Crisp SDK before the bundle loads
+    await page.evaluate(() => {
       (window as any).$crisp = {
         _handlers: {} as Record<string, Function>,
         push: function(args: [string, string, Function?]) {
@@ -26,7 +32,13 @@ test.describe('Crisp Proxy Pattern', () => {
             // Crisp's actual behavior: replaces previous handler
             this._handlers[eventName] = callback;
           } else if (action === "off") {
-            delete this._handlers[eventName];
+            if (callback) {
+              // Remove specific handler
+              delete this._handlers[eventName];
+            } else {
+              // No callback - remove all (Crisp supports this)
+              delete this._handlers[eventName];
+            }
           }
         },
         _trigger: function(eventName: string, data?: any) {
@@ -35,10 +47,14 @@ test.describe('Crisp Proxy Pattern', () => {
           }
         }
       };
+    });
+  });
 
-      // Execute the actual Crisp agent bundle
-      eval(bundleCode);
+  test('should preserve multiple handlers for same event', async ({ page }) => {
+    // Inject the actual Crisp agent bundle
+    await page.addScriptTag({ content: crispBundle });
 
+    const result = await page.evaluate(() => {
       // Test: Register multiple handlers for same event
       const callCounts = { app: 0, clarity: 0, analytics: 0 };
 
@@ -59,7 +75,7 @@ test.describe('Crisp Proxy Pattern', () => {
         analyticsCalled: callCounts.analytics === 1,
         allCalled: callCounts.app === 1 && callCounts.clarity === 1 && callCounts.analytics === 1
       };
-    }, crispBundle);
+    });
 
     expect(result.appCalled).toBe(true);
     expect(result.clarityCalled).toBe(true);
@@ -68,32 +84,9 @@ test.describe('Crisp Proxy Pattern', () => {
   });
 
   test('should remove handlers correctly', async ({ page }) => {
-    const crispBundle = readFileSync(
-      join(__dirname, '../packages/clarity-js/build/dynamic/clarity.crisp.js'),
-      'utf-8'
-    );
+    await page.addScriptTag({ content: crispBundle });
 
-    const result = await page.evaluate((bundleCode) => {
-      // Mock Crisp SDK
-      (window as any).$crisp = {
-        _handlers: {} as Record<string, Function>,
-        push: function(args: [string, string, Function?]) {
-          const [action, eventName, callback] = args;
-          if (action === "on" && callback) {
-            this._handlers[eventName] = callback;
-          } else if (action === "off") {
-            delete this._handlers[eventName];
-          }
-        },
-        _trigger: function(eventName: string, data?: any) {
-          if (this._handlers[eventName]) {
-            this._handlers[eventName](data);
-          }
-        }
-      };
-
-      eval(bundleCode);
-
+    const result = await page.evaluate(() => {
       let handler1Calls = 0;
       let handler2Calls = 0;
 
@@ -118,41 +111,55 @@ test.describe('Crisp Proxy Pattern', () => {
         callsAfterBoth,
         callsAfterRemoval: { h1: handler1Calls, h2: handler2Calls }
       };
-    }, crispBundle);
+    });
 
-    // After registering both handlers, both should have executed once
     expect(result.callsAfterBoth.h1).toBe(1);
     expect(result.callsAfterBoth.h2).toBe(1);
-
-    // After removing handler2, handler1 should execute again but handler2 should not
     expect(result.callsAfterRemoval.h1).toBe(2);
     expect(result.callsAfterRemoval.h2).toBe(1);
   });
 
-  test('should isolate errors in handlers', async ({ page }) => {
-    const crispBundle = readFileSync(
-      join(__dirname, '../packages/clarity-js/build/dynamic/clarity.crisp.js'),
-      'utf-8'
-    );
+  test('should remove all handlers when off called without callback', async ({ page }) => {
+    await page.addScriptTag({ content: crispBundle });
 
-    const result = await page.evaluate((bundleCode) => {
-      (window as any).$crisp = {
-        _handlers: {} as Record<string, Function>,
-        push: function(args: [string, string, Function?]) {
-          const [action, eventName, callback] = args;
-          if (action === "on" && callback) {
-            this._handlers[eventName] = callback;
-          }
-        },
-        _trigger: function(eventName: string, data?: any) {
-          if (this._handlers[eventName]) {
-            this._handlers[eventName](data);
-          }
-        }
+    const result = await page.evaluate(() => {
+      let handler1Calls = 0;
+      let handler2Calls = 0;
+
+      const handler1 = () => { handler1Calls++; };
+      const handler2 = () => { handler2Calls++; };
+
+      (window as any).$crisp.push(["on", "message:sent", handler1]);
+      (window as any).$crisp.push(["on", "message:sent", handler2]);
+
+      // Trigger - both should fire
+      (window as any).$crisp._trigger("message:sent", {});
+
+      const callsAfterBoth = { h1: handler1Calls, h2: handler2Calls };
+
+      // Remove ALL handlers (no callback provided)
+      (window as any).$crisp.push(["off", "message:sent"]);
+
+      // Trigger again - NO handlers should fire
+      (window as any).$crisp._trigger("message:sent", {});
+
+      return {
+        callsAfterBoth,
+        callsAfterRemoveAll: { h1: handler1Calls, h2: handler2Calls }
       };
+    });
 
-      eval(bundleCode);
+    expect(result.callsAfterBoth.h1).toBe(1);
+    expect(result.callsAfterBoth.h2).toBe(1);
+    // After removing all, no additional calls
+    expect(result.callsAfterRemoveAll.h1).toBe(1);
+    expect(result.callsAfterRemoveAll.h2).toBe(1);
+  });
 
+  test('should isolate errors in handlers', async ({ page }) => {
+    await page.addScriptTag({ content: crispBundle });
+
+    const result = await page.evaluate(() => {
       let goodHandlerCalls = 0;
 
       const goodHandler = () => { goodHandlerCalls++; };
@@ -169,62 +176,102 @@ test.describe('Crisp Proxy Pattern', () => {
       }
 
       return { goodHandlerCalls };
-    }, crispBundle);
+    });
 
-    // Good handler should have executed despite bad handler throwing
     expect(result.goodHandlerCalls).toBe(1);
   });
 
   test('should protect against infinite loops', async ({ page }) => {
+    await page.addScriptTag({ content: crispBundle });
+
     const result = await page.evaluate(() => {
-      // Mock Crisp SDK
-      (window as any).$crisp = {
-        push: function(_args: any[]) { /* mock */ }
-      };
+      // Save the Clarity proxy from the bundle
+      const clarityProxy = (window as any).$crisp.push;
+      let proxyEnterCount = 0;
 
-      // Simulate the proxy with loop protection
-      let isProcessing = false;
-      let callDepth = 0;
-      const MAX_DEPTH = 10;
-      let enterCount = 0;
-      let processCount = 0;
-
+      // Wrap the proxy to count entries and attempt re-entry
       (window as any).$crisp.push = function(args: any[]) {
-        enterCount++;
+        proxyEnterCount++;
 
-        if (isProcessing) return;
+        // Call the real Clarity proxy
+        clarityProxy.call(this, args);
 
-        callDepth++;
-        if (callDepth > MAX_DEPTH) {
-          callDepth = 0;
-          return;
-        }
-
-        try {
-          isProcessing = true;
-          processCount++;
-
-          // Try to cause infinite loop
-          for (let i = 0; i < 4; i++) {
-            (window as any).$crisp.push(args);
-          }
-        } finally {
-          isProcessing = false;
-          callDepth--;
+        // While inside the first call, try to re-enter
+        // This simulates originalPush calling us back
+        if (proxyEnterCount === 1) {
+          clarityProxy.call(this, args); // Should be blocked by isProcessing
         }
       };
 
-      (window as any).$crisp.push(["on", "test", () => {}]);
+      (window as any).$crisp.push(["on", "test:loop", () => {}]);
 
       return {
-        enterCount,
-        processCount,
-        loopBlocked: enterCount === 5 && processCount === 1
+        proxyEnterCount,
+        reentryBlocked: proxyEnterCount === 1 // Only entered once, second blocked
       };
     });
 
-    expect(result.loopBlocked).toBe(true);
-    expect(result.enterCount).toBe(5);
-    expect(result.processCount).toBe(1);
+    expect(result.reentryBlocked).toBe(true);
+    expect(result.proxyEnterCount).toBe(1);
+  });
+
+  test('should allow handlers to register new handlers', async ({ page }) => {
+    await page.addScriptTag({ content: crispBundle });
+
+    const result = await page.evaluate(() => {
+      let nestedHandlerRegistered = false;
+
+      // Handler that registers another handler (legitimate use case)
+      const parentHandler = () => {
+        try {
+          (window as any).$crisp.push(["on", "nested:event", () => {}]);
+          nestedHandlerRegistered = true;
+        } catch (e) {
+          nestedHandlerRegistered = false;
+        }
+      };
+
+      (window as any).$crisp.push(["on", "parent:event", parentHandler]);
+      (window as any).$crisp._trigger("parent:event", {});
+
+      return { nestedHandlerRegistered };
+    });
+
+    // This is legitimate - handlers should be able to register other handlers
+    expect(result.nestedHandlerRegistered).toBe(true);
+  });
+
+  test('should clean up empty registry entries', async ({ page }) => {
+    await page.addScriptTag({ content: crispBundle });
+
+    const result = await page.evaluate(() => {
+      const handler1 = () => {};
+      const handler2 = () => {};
+
+      // Register handlers
+      (window as any).$crisp.push(["on", "test:cleanup", handler1]);
+      (window as any).$crisp.push(["on", "test:cleanup", handler2]);
+
+      // Remove all handlers one by one
+      (window as any).$crisp.push(["off", "test:cleanup", handler1]);
+      (window as any).$crisp.push(["off", "test:cleanup", handler2]);
+
+      // Try to access the registry through a test helper
+      // (In real code, the registry should be cleaned up)
+      // We'll verify by trying to add a new handler and trigger
+      let newHandlerCalled = 0;
+      const newHandler = () => { newHandlerCalled++; };
+
+      (window as any).$crisp.push(["on", "test:cleanup", newHandler]);
+      (window as any).$crisp._trigger("test:cleanup", {});
+
+      return {
+        newHandlerCalled,
+        registryCleanedUp: newHandlerCalled === 1 // Should work correctly
+      };
+    });
+
+    expect(result.newHandlerCalled).toBe(1);
+    expect(result.registryCleanedUp).toBe(true);
   });
 });

@@ -10,8 +10,6 @@ let originalPush: ((args: [string, string, CrispEventHandler?]) => void) | null 
 let isProxyInstalled = false;
 // Infinite loop protection
 let isProcessing = false;
-let callDepth = 0;
-const MAX_DEPTH = 10;
 
 function open(): void {
   encode(Action.AgentMaximized);
@@ -73,22 +71,6 @@ function installProxy(): boolean {
 
     // Infinite loop protection: prevent re-entry
     if (isProcessing) {
-      // Already processing a call - break potential loop
-      if (originalPush) {
-        originalPush(args);
-      }
-      return;
-    }
-
-    // Increment depth counter
-    callDepth++;
-
-    // Check depth limit
-    if (callDepth > MAX_DEPTH) {
-      callDepth = 0; // Reset
-      if (originalPush) {
-        originalPush(args);
-      }
       return;
     }
 
@@ -108,20 +90,25 @@ function installProxy(): boolean {
 
         // Register the multiplexer with Crisp (replaces previous handler)
         originalPush!(["on", eventName, createMultiplexer(eventName)]);
-      } else if (action === "off" && callback) {
-        // Remove from registry
-        if (registry[eventName]) {
-          const index = registry[eventName].indexOf(callback);
-          if (index > -1) {
-            registry[eventName].splice(index, 1);
+      } else if (action === "off") {
+        if (callback) {
+          // Remove specific handler from registry
+          if (registry[eventName]) {
+            const index = registry[eventName].indexOf(callback);
+            if (index > -1) {
+              registry[eventName].splice(index, 1);
+            }
           }
+        } else {
+          delete registry[eventName];
         }
 
-        // Re-register multiplexer with remaining handlers
+        // Re-register multiplexer with remaining handlers (if any)
         if (registry[eventName] && registry[eventName].length > 0) {
           originalPush!(["on", eventName, createMultiplexer(eventName)]);
         } else {
-          // No handlers left, turn off the event
+          // No handlers left, clean up and turn off the event
+          delete registry[eventName];
           originalPush!(args);
         }
       } else {
@@ -129,9 +116,8 @@ function installProxy(): boolean {
         originalPush!(args);
       }
     } finally {
-      // Always reset flags, even on error
+      // Always reset flag, even on error
       isProcessing = false;
-      callDepth--;
     }
   };
 
