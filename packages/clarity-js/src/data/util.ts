@@ -9,7 +9,7 @@ export function encodeCookieValue(value: string): string {
 export function decodeCookieValue(value: string): [boolean, string] {
   try {
     let decodedValue = decodeURIComponent(value);
-    return [decodedValue != value, decodedValue];
+    return [decodedValue !== value, decodedValue];
   }
   catch {
   }

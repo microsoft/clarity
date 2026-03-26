@@ -35,7 +35,7 @@ export function active(): boolean {
 
 export function check(): boolean {
     try {
-        let globalPrivacyControlSet = navigator && "globalPrivacyControl" in navigator && navigator['globalPrivacyControl'] == true;
+        let globalPrivacyControlSet = navigator && "globalPrivacyControl" in navigator && navigator['globalPrivacyControl'] === true;
         return status === false &&
             typeof Promise !== "undefined" &&
             window["MutationObserver"] &&
