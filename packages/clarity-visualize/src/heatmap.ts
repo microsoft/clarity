@@ -38,8 +38,8 @@ export class HeatmapHelper {
         // Remove scroll and resize event listeners
         if (this.state && this.state.window) {
             let win = this.state.window;
-            win.removeEventListener("scroll", this.redraw, true);
-            win.removeEventListener("resize", this.redraw, true);
+            win.removeEventListener("scroll", this.redraw, { capture: true });
+            win.removeEventListener("resize", this.redraw, { capture: true });
         }
     }
 
@@ -174,10 +174,10 @@ export class HeatmapHelper {
             canvas.style.position = Constant.Absolute;
             canvas.style.zIndex = `${Setting.ZIndex}`;
             de.appendChild(canvas);
-            win.addEventListener("scroll", this.redraw, true);
-            win.addEventListener("resize", this.redraw, true);
+            win.addEventListener("scroll", this.redraw, { passive: true, capture: true });
+            win.addEventListener("resize", this.redraw, { passive: true, capture: true });
             this.observer = this.state.window["ResizeObserver"] ? new ResizeObserver(this.redraw) : null;
-            
+
             if (this.observer) { this.observer.observe(doc.body); }
         }
 
