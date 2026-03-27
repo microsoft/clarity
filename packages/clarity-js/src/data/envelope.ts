@@ -25,7 +25,7 @@ export function start(): void {
 }
 
 export function stop(): void {
-    data = null;
+  data = null;
 }
 
 export function envelope(last: boolean): Token[] {
@@ -35,7 +35,7 @@ export function envelope(last: boolean): Token[] {
   data.upload = last && "sendBeacon" in navigator ? Upload.Beacon : Upload.Async;
   data.end = last ? BooleanFlag.True : BooleanFlag.False;
   data.applicationPlatform = ApplicationPlatform.WebApp;
-  data.url = scrub.url(location.href);
+  data.url = scrub.url(location.href, false, true);
   return [
     data.version,
     data.sequence,

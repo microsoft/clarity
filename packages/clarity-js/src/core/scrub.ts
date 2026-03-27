@@ -4,6 +4,7 @@ import * as Layout from "@clarity-types/layout";
 import config from "@src/core/config";
 
 const catchallRegex = /\S/gi;
+const maxUrlLength = 2048;
 let unicodeRegex = true;
 let digitRegex = null;
 let letterRegex = null;
@@ -92,7 +93,7 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
     return value;
 }
 
-export function url(input: string, electron: boolean = false): string {
+export function url(input: string, electron: boolean = false, truncate: boolean = false): string {
     let result = input;
     // Replace the URL for Electron apps so we don't send back file:/// URL
     if (electron) {
@@ -104,6 +105,9 @@ export function url(input: string, electron: boolean = false): string {
             let swap = Data.Constant.Dropped;
             result = path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
         }
+    }
+    if (truncate) {
+        result = result.substring(0, maxUrlLength);
     }
     return result;
 }
