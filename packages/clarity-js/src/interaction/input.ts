@@ -17,6 +17,7 @@ export function start(): void {
 
 export function observe(root: Node): void {
     bind(root, "input", recompute, true);
+    bind(root, "keydown", enter, true);
 }
 
 function recompute(evt: UIEvent): void {
@@ -41,6 +42,13 @@ function recompute(evt: UIEvent): void {
 
         clearTimeout(timeout);
         timeout = setTimeout(process, Setting.InputLookAhead, Event.Input);
+    }
+}
+
+function enter(evt: KeyboardEvent): void {
+    if (evt.key === "Enter" && state.length > 0) {
+        clearTimeout(timeout);
+        process(Event.Input);
     }
 }
 
