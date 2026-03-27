@@ -46,7 +46,7 @@ function recompute(evt: UIEvent): void {
 }
 
 function enter(evt: KeyboardEvent): void {
-    if (evt.key === "Enter" && state.length > 0) {
+    if (evt.key === "Enter" && !evt.repeat && state.length > 0) {
         clearTimeout(timeout);
         process(Event.Input);
     }
