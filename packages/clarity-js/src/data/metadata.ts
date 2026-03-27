@@ -335,4 +335,3 @@ function user(): User {
   }
   return output;
 }
-

@@ -33,8 +33,8 @@ TEMP_DIR=$(mktemp -d)
 pushd $TEMP_DIR > /dev/null
 
 # Download previous version from npm
-echo "Downloading previous version $PREV_VERSION..."
-npm pack $PACKAGE_NAME@$PREV_VERSION > /dev/null 2>&1
+echo "Downloading previous version $PREVIOUS_VERSION..."
+npm pack $PACKAGE_NAME@$PREVIOUS_VERSION > /dev/null 2>&1
 
 PREV_PACKAGE=$(find . -name "*.tgz" | head -1)
 
