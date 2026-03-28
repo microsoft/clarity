@@ -1,44 +1,39 @@
-import * as discover from "@src/layout/discover";
-import * as doc from "@src/layout/document";
-import * as dom from "@src/layout/dom";
-import * as mutation from "@src/layout/mutation";
-import * as region from "@src/layout/region";
-import * as style from "@src/layout/style";
-import * as animation from "@src/layout/animation";
-import * as custom from "@src/layout/custom";
+import { start as discStart } from "@src/layout/discover";
+import { start as docStart, stop as docStop } from "@src/layout/document";
+import { start as domStart, stop as domStop } from "@src/layout/dom";
+import { start as mutStart, stop as mutStop } from "@src/layout/mutation";
+import { start as regStart, stop as regStop } from "@src/layout/region";
+import { start as styStart, stop as styStop } from "@src/layout/style";
+import { start as animStart, stop as animStop } from "@src/layout/animation";
+import { start as custStart, stop as custStop } from "@src/layout/custom";
 import { bind } from "@src/core/event";
 import config from "@src/core/config";
 
 export { hashText } from "@src/layout/dom";
 
 export function start(): void {
-    // The order below is important
-    // and is determined by interdependencies of modules
-    doc.start();
-    region.start();
-    dom.start();
+    docStart();
+    regStart();
+    domStart();
     if (config.delayDom) {
-        // Lazy load layout module as part of page load time performance improvements experiment
         bind(window, 'load', () => {
-            mutation.start();
+            mutStart();
         });
     } else {
-        mutation.start();
+        mutStart();
     }
-    // IMPORTANT: Start custom element detection BEFORE discover
-    // This ensures pre-existing custom elements are registered before DOM traversal
-    custom.start();
-    discover.start();
-    style.start();
-    animation.start();
+    custStart();
+    discStart();
+    styStart();
+    animStart();
 }
 
 export function stop(): void {
-    region.stop();
-    dom.stop();
-    mutation.stop();
-    doc.stop();
-    style.stop();
-    animation.stop();
-    custom.stop();
+    regStop();
+    domStop();
+    mutStop();
+    docStop();
+    styStop();
+    animStop();
+    custStop();
 }

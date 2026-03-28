@@ -1,63 +1,61 @@
-import * as change from "@src/interaction/change";
-import * as click from "@src/interaction/click";
-import * as clipboard from "@src/interaction/clipboard";
-import * as input from "@src/interaction/input";
-import * as pointer from "@src/interaction/pointer";
-import * as resize from "@src/interaction/resize";
-import * as scroll from "@src/interaction/scroll";
-import * as selection from "@src/interaction/selection";
-import * as submit from "@src/interaction/submit";
-import * as timeline from "@src/interaction/timeline";
-import * as unload from "@src/interaction/unload";
-import * as visibility from "@src/interaction/visibility";
-import * as focus from "@src/interaction/focus";
-import * as pageshow from "@src/interaction/pageshow";
+import { start as chgStart, stop as chgStop, observe as chgObs } from "@src/interaction/change";
+import { start as clkStart, stop as clkStop, observe as clkObs } from "@src/interaction/click";
+import { start as cbStart, stop as cbStop, observe as cbObs } from "@src/interaction/clipboard";
+import { start as inpStart, stop as inpStop, observe as inpObs } from "@src/interaction/input";
+import { start as ptrStart, stop as ptrStop, observe as ptrObs } from "@src/interaction/pointer";
+import { start as resStart, stop as resStop } from "@src/interaction/resize";
+import { start as scrStart, stop as scrStop, observe as scrObs } from "@src/interaction/scroll";
+import { start as selStart, stop as selStop, observe as selObs } from "@src/interaction/selection";
+import { start as subStart, stop as subStop, observe as subObs } from "@src/interaction/submit";
+import { start as tlStart, stop as tlStop } from "@src/interaction/timeline";
+import { start as unlStart, stop as unlStop } from "@src/interaction/unload";
+import { start as visStart, stop as visStop } from "@src/interaction/visibility";
+import { start as focStart, stop as focStop } from "@src/interaction/focus";
+import { start as pgStart, stop as pgStop } from "@src/interaction/pageshow";
 
 export function start(): void {
-    timeline.start();
-    click.start();
-    clipboard.start();
-    pointer.start();
-    input.start();
-    resize.start();
-    visibility.start();
-    focus.start();
-    pageshow.start();
-    scroll.start();
-    selection.start();
-    change.start();
-    submit.start();
-    unload.start();
+    tlStart();
+    clkStart();
+    cbStart();
+    ptrStart();
+    inpStart();
+    resStart();
+    visStart();
+    focStart();
+    pgStart();
+    scrStart();
+    selStart();
+    chgStart();
+    subStart();
+    unlStart();
 }
 
 export function stop(): void {
-    timeline.stop();
-    click.stop();
-    clipboard.stop();
-    pointer.stop();
-    input.stop();
-    resize.stop();
-    visibility.stop();
-    focus.stop();
-    pageshow.stop();
-    scroll.stop();
-    selection.stop();
-    change.stop();
-    submit.stop();
-    unload.stop()
+    tlStop();
+    clkStop();
+    cbStop();
+    ptrStop();
+    inpStop();
+    resStop();
+    visStop();
+    focStop();
+    pgStop();
+    scrStop();
+    selStop();
+    chgStop();
+    subStop();
+    unlStop();
 }
 
 export function observe(root: Node): void {
-    scroll.observe(root);
-    // Only monitor following interactions if the root node is a document
-    // In case of shadow DOM, following events automatically bubble up to the parent document.
+    scrObs(root);
     if (root.nodeType === Node.DOCUMENT_NODE) {
-        click.observe(root);
-        clipboard.observe(root);
-        pointer.observe(root);
-        input.observe(root);
-        selection.observe(root);
-        change.observe(root);
-        submit.observe(root);
+        clkObs(root);
+        cbObs(root);
+        ptrObs(root);
+        inpObs(root);
+        selObs(root);
+        chgObs(root);
+        subObs(root);
     }
 }
