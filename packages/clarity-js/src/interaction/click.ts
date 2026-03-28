@@ -120,7 +120,7 @@ function text(element: Node): TextInfo {
 
 function reaction(element: Node): BooleanFlag {
     const tag = getElementAttribute(element, "tagName");
-    if (UserInputTags.indexOf(tag) >= 0) {
+    if (UserInputTags.includes(tag)) {
         return BooleanFlag.False;
     }
     return BooleanFlag.True;
@@ -216,11 +216,11 @@ function source(): ClickSource {
         let result = ClickSource.Unknown;
 
         for (const line of stack.split("\n")) {
-            if (line.indexOf("://") >= 0) {
-                result = line.indexOf("extension") < 0 && line.indexOf(origin) >= 0
+            if (line.includes("://")) {
+                result = !line.includes("extension") && line.includes(origin)
                     ? ClickSource.FirstParty
                     : ClickSource.ThirdParty;
-            } else if (line.indexOf("eval") >= 0 || line.indexOf("Function") >= 0 || line.indexOf("<a") >= 0 || VM_PATTERN.test(line)) {
+            } else if (line.includes("eval") || line.includes("Function") || line.includes("<a") || VM_PATTERN.test(line)) {
                 result = ClickSource.Eval;
             }
         }

@@ -136,7 +136,7 @@ export async function suspend(timer: Timer): Promise<Task> {
 }
 
 function key(timer: Timer): string {
-    return `${timer.id}.${timer.cost}`;
+    return timer.id + "." + timer.cost;
 }
 
 async function wait(): Promise<RequestIdleCallbackDeadline> {

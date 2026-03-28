@@ -59,7 +59,7 @@ function load(url: string, mid: number | null): void {
       }
     };
     script.onerror = () => {
-      report(new Error(`${DataConstant.Module}: ${url}`));
+      report(new Error(DataConstant.Module + ": " + url));
     };
     document.head.appendChild(script);
   } catch (error) {

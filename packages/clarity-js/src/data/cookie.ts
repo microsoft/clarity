@@ -34,7 +34,7 @@ export function getCookie(key: string, limit = false): string {
 
           // If we are limiting cookies, check if the cookie value is limited
           if (limit) {
-            return decodedValue.endsWith(`${Constant.Tilde}1`) ? decodedValue.substring(0, decodedValue.length - 2) : null;
+            return decodedValue.endsWith(Constant.Tilde + "1") ? decodedValue.substring(0, decodedValue.length - 2) : null;
           }
 
           return decodedValue;
@@ -56,19 +56,19 @@ export function setCookie(key: string, value: string, time: number): void {
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + time);
     let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
-    let cookie = `${key}=${encodedValue}${Constant.Semicolon}${expires}${Constant.Path}`;
+    let cookie = key + "=" + encodedValue + Constant.Semicolon + expires + Constant.Path;
     try {
       // Attempt to get the root domain only once and fall back to writing cookie on the current domain.
       if (rootDomain === null) {
         let hostname = location.hostname ? location.hostname.split(Constant.Dot) : [];
         // Walk backwards on a domain and attempt to set a cookie, until successful
         for (let i = hostname.length - 1; i >= 0; i--) {
-          rootDomain = `.${hostname[i]}${rootDomain ? rootDomain : Constant.Empty}`;
+          rootDomain = "." + hostname[i] + (rootDomain ? rootDomain : Constant.Empty);
           // We do not wish to attempt writing a cookie on the absolute last part of the domain, e.g. .com or .net.
           // So we start attempting after second-last part, e.g. .domain.com (PASS) or .co.uk (FAIL)
           if (i < hostname.length - 1) {
             // Write the cookie on the current computed top level domain
-            document.cookie = `${cookie}${Constant.Semicolon}${Constant.Domain}${rootDomain}`;
+            document.cookie = cookie + Constant.Semicolon + Constant.Domain + rootDomain;
             // Once written, check if the cookie exists and its value matches exactly with what we intended to set
             // Checking for exact value match helps us eliminate a corner case where the cookie may already be present with a different value
             // If the check is successful, no more action is required and we can return from the function since rootDomain cookie is already set
@@ -85,6 +85,6 @@ export function setCookie(key: string, value: string, time: number): void {
     } catch {
       rootDomain = Constant.Empty;
     }
-    document.cookie = rootDomain ? `${cookie}${Constant.Semicolon}${Constant.Domain}${rootDomain}` : cookie;
+    document.cookie = rootDomain ? cookie + Constant.Semicolon + Constant.Domain + rootDomain : cookie;
   }
 }
