@@ -12,6 +12,7 @@ import config from "@src/core/config";
 export { hashText } from "@src/layout/dom";
 
 export function start(): void {
+    // The order below is important and is determined by interdependencies of modules
     docStart();
     regStart();
     domStart();
@@ -22,6 +23,8 @@ export function start(): void {
     } else {
         mutStart();
     }
+    // IMPORTANT: Start custom element detection BEFORE discover
+    // This ensures pre-existing custom elements are registered before DOM traversal
     custStart();
     discStart();
     styStart();

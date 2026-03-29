@@ -39,11 +39,16 @@ const modules: Module[] = [
 ];
 
 export function start(): void {
+    // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
     metric.start();
     modules.forEach(x => measure(x.start)());
 }
 
 export function stop(): void {
+    // Stop modules in the reverse order of their initialization
+    // The ordering below should respect inter-module dependency.
+    // E.g. if upgrade depends on upload, then upgrade needs to end before upload.
+    // Similarly, if upload depends on metadata, upload needs to end before metadata.
     modules.slice().reverse().forEach(x => measure(x.stop)());
     metric.stop();
 }
