@@ -22,18 +22,14 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
     switch (type) {
         case Event.Document:
             let d = doc.data;
-            tokens.push(d.width);
-            tokens.push(d.height);
+            tokens.push(d.width, d.height);
             baseline.track(type, d.width, d.height);
             queue(tokens);
             break;
         case Event.Region:
             for (let r of region.state) {
                 tokens = [r.time, Event.Region];
-                tokens.push(r.data.id);
-                tokens.push(r.data.interaction);
-                tokens.push(r.data.visibility);
-                tokens.push(r.data.name);
+                tokens.push(r.data.id, r.data.interaction, r.data.visibility, r.data.name);
                 queue(tokens, false);
             }
             region.reset();
@@ -42,16 +38,12 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
         case Event.StyleSheetUpdate:
             for (let entry of style.sheetAdoptionState) {
                 tokens = [entry.time, entry.event];
-                tokens.push(entry.data.id);
-                tokens.push(entry.data.operation);
-                tokens.push(entry.data.newIds);
+                tokens.push(entry.data.id, entry.data.operation, entry.data.newIds);
                 queue(tokens);
             }
             for (let entry of style.sheetUpdateState) {
                 tokens = [entry.time, entry.event];
-                tokens.push(entry.data.id);
-                tokens.push(entry.data.operation);
-                tokens.push(entry.data.cssRules);
+                tokens.push(entry.data.id, entry.data.operation, entry.data.cssRules);
                 queue(tokens, false);
             }
             style.reset();
@@ -59,12 +51,11 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
         case Event.Animation:
             for (let entry of animation.state) {
                 tokens = [entry.time, entry.event];
-                tokens.push(entry.data.id);
-                tokens.push(entry.data.operation);
-                tokens.push(entry.data.keyFrames);
-                tokens.push(entry.data.timing);
-                tokens.push(entry.data.timeline);
-                tokens.push(entry.data.targetId);
+                tokens.push(
+                    entry.data.id, entry.data.operation,
+                    entry.data.keyFrames, entry.data.timing,
+                    entry.data.timeline, entry.data.targetId
+                );
                 queue(tokens);
             }
             animation.reset();
@@ -100,7 +91,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                         if (value.previous) { tokens.push(value.previous); }
                                     }
                                     tokens.push(suspend ? Constant.SuspendMutationTag : data[key]);
-                                    if (box && box.length === 2) { tokens.push(`${Constant.Hash}${str(box[0])}.${str(box[1])}`); }
+                                    if (box && box.length === 2) { tokens.push(Constant.Hash + box[0].toString(36) + "." + box[1].toString(36)); }
                                     break;
                                 case "attributes":
                                     for (let attr in data[key]) {
@@ -145,13 +136,9 @@ function size(value: NodeValue): number[] {
     return value.metadata.size;
 }
 
-function str(input: number): string {
-    return input.toString(36);
-}
-
 function attribute(key: string, value: string, privacy: Privacy, tag: string): string {
     if (key === Constant.Href && tag === Constant.LinkTag) {
-        return `${key}=${value}`;
+        return key + "=" + value;
     }
-    return `${key}=${scrub.text(value, key.indexOf(Constant.DataAttribute) === 0 ? Constant.DataAttribute : key, privacy)}`;
+    return key + "=" + scrub.text(value, key.indexOf(Constant.DataAttribute) === 0 ? Constant.DataAttribute : key, privacy);
 }

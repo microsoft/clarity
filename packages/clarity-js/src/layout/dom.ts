@@ -65,12 +65,12 @@ export function parse(root: ParentNode, init: boolean = false): void {
     // It's possible for script to receive invalid selectors, e.g. "'#id'" with extra quotes, and cause the code below to fail
     try {
         // Parse unmask configuration into separate query selectors and override tokens as part of initialization
-        if (init) { config.unmask.forEach(x => x.indexOf(Constant.Bang) < 0 ? unmask.push(x) : override.push(x.substr(1))); }
+        if (init) { config.unmask.forEach(x => !x.includes(Constant.Bang) ? unmask.push(x) : override.push(x.substr(1))); }
 
         // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
         // We ensure that the root note supports querySelectorAll API before executing the code below to identify new regions.
         if ("querySelectorAll" in root) {
-            config.regions.forEach(x => root.querySelectorAll(x[1]).forEach(e => region.observe(e, `${x[0]}`))); // Regions
+            config.regions.forEach(x => root.querySelectorAll(x[1]).forEach(e => region.observe(e, "" + x[0]))); // Regions
             config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
             config.checksum.forEach(x => root.querySelectorAll(x[1]).forEach(e => fraudMap.set(e, x[0]))); // Fraud Checksum Check
             unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
@@ -237,18 +237,18 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
     let tag = data.tag.toUpperCase();
 
     switch (true) {
-        case maskTags.indexOf(tag) >= 0:
+        case maskTags.includes(tag):
             let type = attributes[Constant.Type];
             let meta: string = Constant.Empty;
             const excludedPrivacyAttributes = [Constant.Class, Constant.Style]
             Object.keys(attributes)
               .filter((x) => !excludedPrivacyAttributes.includes(x as Constant))
               .forEach((x) => (meta += attributes[x].toLowerCase()));
-            let exclude = maskExclude.some((x) => meta.indexOf(x) >= 0);
+            let exclude = maskExclude.some((x) => meta.includes(x));
             // Regardless of privacy mode, always mask off user input from input boxes or drop downs with two exceptions:
             // (1) The node is detected to be one of the excluded fields, in which case we drop everything
             // (2) The node's type is one of the allowed types (like checkboxes)
-            metadata.privacy = tag === Constant.InputTag && maskDisable.indexOf(type) >= 0 ? current : (exclude ? Privacy.Exclude : Privacy.Text);
+            metadata.privacy = tag === Constant.InputTag && maskDisable.includes(type) ? current : (exclude ? Privacy.Exclude : Privacy.Text);
             break;
         case Constant.MaskData in attributes:
             metadata.privacy = Privacy.TextImage;
@@ -269,7 +269,7 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             let pTag = parent && parent.data ? parent.data.tag : Constant.Empty;
             let pSelector = parent && parent.selector ? parent.selector[Selector.Default] : Constant.Empty;
             let tags: string[] = [Constant.StyleTag, Constant.TitleTag, Constant.SvgStyle];
-            metadata.privacy = tags.includes(pTag) || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current;
+            metadata.privacy = tags.includes(pTag) || override.some(x => pSelector.includes(x)) ? Privacy.None : current;
             break;
         case current === Privacy.Sensitive:
             // In a mode where we mask sensitive information by default, look through class names to aggressively mask content
@@ -285,7 +285,7 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
 }
 
 function inspect(input: string, lookup: string[], metadata: NodeMeta): Privacy {
-    if (input && lookup.some(x => input.indexOf(x) >= 0)) {
+    if (input && lookup.some(x => input.includes(x))) {
         return Privacy.Text;
     }
     return metadata.privacy;
@@ -407,7 +407,7 @@ function updateImageSize(value: NodeValue): void {
         if(img && (!img.complete || img.naturalWidth === 0)){
             // This will trigger mutation to update the original width and height after image loads.
             bind(img, 'load', () => {
-                img.setAttribute('data-clarity-loaded', `${shortid()}`);
+                img.setAttribute('data-clarity-loaded', "" + shortid());
             })
         }
         value.metadata.size = [];

@@ -20,32 +20,21 @@ export default function (event: Event): void {
         case Event.Baseline: {
             const b = baseline.state;
             if (b && b.data) {
+                let d = b.data;
                 tokens = [b.time, b.event];
-                tokens.push(b.data.visible);
-                tokens.push(b.data.docWidth);
-                tokens.push(b.data.docHeight);
-                tokens.push(b.data.screenWidth);
-                tokens.push(b.data.screenHeight);
-                tokens.push(b.data.scrollX);
-                tokens.push(b.data.scrollY);
-                tokens.push(b.data.pointerX);
-                tokens.push(b.data.pointerY);
-                tokens.push(b.data.activityTime);
-                tokens.push(b.data.scrollTime);
-                tokens.push(b.data.pointerTime);
-                tokens.push(b.data.moveX);
-                tokens.push(b.data.moveY);
-                tokens.push(b.data.moveTime);
-                tokens.push(b.data.downX);
-                tokens.push(b.data.downY);
-                tokens.push(b.data.downTime);
-                tokens.push(b.data.upX);
-                tokens.push(b.data.upY);
-                tokens.push(b.data.upTime);
-                tokens.push(b.data.pointerPrevX);
-                tokens.push(b.data.pointerPrevY);
-                tokens.push(b.data.pointerPrevTime);
-                tokens.push(b.data.modules);
+                tokens.push(
+                    d.visible, d.docWidth, d.docHeight,
+                    d.screenWidth, d.screenHeight,
+                    d.scrollX, d.scrollY,
+                    d.pointerX, d.pointerY,
+                    d.activityTime, d.scrollTime,
+                    d.pointerTime,
+                    d.moveX, d.moveY, d.moveTime,
+                    d.downX, d.downY, d.downTime,
+                    d.upX, d.upY, d.upTime,
+                    d.pointerPrevX, d.pointerPrevY, d.pointerPrevTime,
+                    d.modules
+                );
                 queue(tokens, false);
             }
             baseline.reset();
@@ -64,9 +53,7 @@ export default function (event: Event): void {
             queue(tokens);
             break;
         case Event.Upload:
-            tokens.push(track.sequence);
-            tokens.push(track.attempts);
-            tokens.push(track.status);
+            tokens.push(track.sequence, track.attempts, track.status);
             queue(tokens, false);
             break;
         case Event.Custom:
@@ -146,9 +133,7 @@ export default function (event: Event): void {
             break;
         }
         case Event.Consent:
-            tokens.push(consent.data.source);
-            tokens.push(consent.data.ad_Storage);
-            tokens.push(consent.data.analytics_Storage);
+            tokens.push(consent.data.source, consent.data.ad_Storage, consent.data.analytics_Storage);
             queue(tokens, false);
             break;
     }

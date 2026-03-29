@@ -8,22 +8,16 @@ export default async function(type: Event): Promise<void> {
     let tokens: Token[] = [t, type];
     switch (type) {
         case Event.Navigation:
-            tokens.push(navigation.data.fetchStart);
-            tokens.push(navigation.data.connectStart);
-            tokens.push(navigation.data.connectEnd);
-            tokens.push(navigation.data.requestStart);
-            tokens.push(navigation.data.responseStart);
-            tokens.push(navigation.data.responseEnd);
-            tokens.push(navigation.data.domInteractive);
-            tokens.push(navigation.data.domComplete);
-            tokens.push(navigation.data.loadEventStart);
-            tokens.push(navigation.data.loadEventEnd);
-            tokens.push(navigation.data.redirectCount);
-            tokens.push(navigation.data.size);
-            tokens.push(navigation.data.type);
-            tokens.push(navigation.data.protocol);
-            tokens.push(navigation.data.encodedSize);
-            tokens.push(navigation.data.decodedSize);
+            tokens.push(
+                navigation.data.fetchStart, navigation.data.connectStart,
+                navigation.data.connectEnd, navigation.data.requestStart,
+                navigation.data.responseStart, navigation.data.responseEnd,
+                navigation.data.domInteractive, navigation.data.domComplete,
+                navigation.data.loadEventStart, navigation.data.loadEventEnd,
+                navigation.data.redirectCount, navigation.data.size,
+                navigation.data.type, navigation.data.protocol,
+                navigation.data.encodedSize, navigation.data.decodedSize
+            );
             navigation.reset();
             queue(tokens);
             break;

@@ -61,7 +61,7 @@ export function consent(): void {
 }
 
 function trackConsent(consent: ConsentType): void {
-    dimension.log(Dimension.Consent, consent.toString());
+    dimension.log(Dimension.Consent, "" + consent);
 }
 
 export function trackConsentv2(consent: ConsentData): void {

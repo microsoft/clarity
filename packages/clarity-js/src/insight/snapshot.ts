@@ -76,7 +76,7 @@ function traverse(root: Node): void {
             case Node.ELEMENT_NODE:
                 let element = node as HTMLElement;
                 attributes = getAttributes(element);
-                tag = ["NOSCRIPT", "SCRIPT", "STYLE"].indexOf(element.tagName) < 0 ? element.tagName : tag;
+                tag = !["NOSCRIPT", "SCRIPT", "STYLE"].includes(element.tagName) ? element.tagName : tag;
                 break;
         }
         add(node, parent, { tag, attributes, value });     

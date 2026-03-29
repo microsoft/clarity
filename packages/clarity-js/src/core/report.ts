@@ -10,7 +10,7 @@ export function reset(): void {
 
 export function report(e: Error): Error {
     // Do not report the same message twice for the same page
-    if (history && history.indexOf(e.message) === -1) {
+    if (history && !history.includes(e.message)) {
         const url = config.report;
         if (url && url.length > 0 && data) {
             let payload: Report = {v: data.version, p: data.projectId, u: data.userId, s: data.sessionId, n: data.pageNum};

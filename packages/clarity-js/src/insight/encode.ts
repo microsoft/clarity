@@ -58,7 +58,7 @@ export default async function (type: Event): Promise<void> {
 
 function attribute(key: string, value: string, privacy: Privacy, tag: string): string {
     if (key === Constant.Href && tag === Constant.LinkTag) {
-        return `${key}=${value}`;
+        return key + "=" + value;
     }
-    return `${key}=${scrub.text(value, key.indexOf(Constant.DataAttribute) === 0 ? Constant.DataAttribute : key, privacy)}`;
+    return key + "=" + scrub.text(value, key.indexOf(Constant.DataAttribute) === 0 ? Constant.DataAttribute : key, privacy);
 }

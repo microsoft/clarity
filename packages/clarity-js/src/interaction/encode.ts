@@ -42,7 +42,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                         tokens.push(entry.data.id); 
 
                         if (entry.data.isPrimary !== undefined) {
-                            tokens.push(entry.data.isPrimary.toString());
+                            tokens.push("" + entry.data.isPrimary);
                         }
                     }
                     queue(tokens);
@@ -59,25 +59,16 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 let cTarget = metadata(entry.data.target as Node, entry.event, entry.data.text);
                 tokens = [entry.time, entry.event];
                 let cHash = cTarget.hash ? cTarget.hash.join(Constant.Dot) : Constant.Empty;
-                tokens.push(cTarget.id);
-                tokens.push(entry.data.x);
-                tokens.push(entry.data.y);
-                tokens.push(entry.data.eX);
-                tokens.push(entry.data.eY);
-                tokens.push(entry.data.button);
-                tokens.push(entry.data.reaction);
-                tokens.push(entry.data.context);
-                tokens.push(scrub.text(entry.data.text, "click", cTarget.privacy));
-                tokens.push(scrub.url(entry.data.link));
-                tokens.push(cHash);
-                tokens.push(entry.data.trust);
-                tokens.push(entry.data.isFullText);
-                tokens.push(entry.data.w);
-                tokens.push(entry.data.h);
-                tokens.push(entry.data.tag);
-                tokens.push(entry.data.class);
-                tokens.push(entry.data.id);
-                tokens.push(entry.data.source);
+                tokens.push(
+                    cTarget.id, entry.data.x, entry.data.y,
+                    entry.data.eX, entry.data.eY,
+                    entry.data.button, entry.data.reaction, entry.data.context,
+                    scrub.text(entry.data.text, "click", cTarget.privacy),
+                    scrub.url(entry.data.link),
+                    cHash, entry.data.trust, entry.data.isFullText,
+                    entry.data.w, entry.data.h,
+                    entry.data.tag, entry.data.class, entry.data.id, entry.data.source
+                );
                 queue(tokens);
                 timeline.track(entry.time, entry.event, cHash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
@@ -97,16 +88,14 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             break;
         case Event.Resize:
             let r = resize.data;
-            tokens.push(r.width);
-            tokens.push(r.height);
+            tokens.push(r.width, r.height);
             baseline.track(type, r.width, r.height);
             resize.reset();
             queue(tokens);
             break;
         case Event.Unload:
             let u = unload.data;
-            tokens.push(u.name);
-            tokens.push(u.persisted);
+            tokens.push(u.name, u.persisted);
             unload.reset();
             queue(tokens);
             break;
@@ -126,10 +115,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             if (s) {
                 let startTarget = metadata(s.start as Node, type);
                 let endTarget = metadata(s.end as Node, type);
-                tokens.push(startTarget.id);
-                tokens.push(s.startOffset);
-                tokens.push(endTarget.id);
-                tokens.push(s.endOffset);
+                tokens.push(startTarget.id, s.startOffset, endTarget.id, s.endOffset);
                 selection.reset();
                 queue(tokens);
             }
@@ -143,12 +129,10 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 const sBottomHash = bottom?.hash ? bottom.hash.join(Constant.Dot) : Constant.Empty;
                 if (sTarget.id > 0) {
                     tokens = [entry.time, entry.event];
-                    tokens.push(sTarget.id);
-                    tokens.push(entry.data.x);
-                    tokens.push(entry.data.y);
-                    tokens.push(sTopHash);
-                    tokens.push(sBottomHash);
-                    tokens.push(entry.data.trust);
+                    tokens.push(
+                        sTarget.id, entry.data.x, entry.data.y,
+                        sTopHash, sBottomHash, entry.data.trust
+                    );
                     queue(tokens);
                     baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
                 }
@@ -184,12 +168,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.Timeline:
             for (let entry of timeline.updates) {
                 tokens = [entry.time, entry.event];
-                tokens.push(entry.data.type);
-                tokens.push(entry.data.hash);
-                tokens.push(entry.data.x);
-                tokens.push(entry.data.y);
-                tokens.push(entry.data.reaction);
-                tokens.push(entry.data.context);
+                tokens.push(entry.data.type, entry.data.hash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
                 queue(tokens, false);
             }
             timeline.reset();
