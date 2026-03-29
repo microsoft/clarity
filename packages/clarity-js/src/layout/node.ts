@@ -1,6 +1,6 @@
 import { Constant, Source } from "@clarity-types/layout";
 import { Code, Dimension, Severity } from "@clarity-types/data";
-import * as dom from "./dom";
+import { add as domAdd, update as domUpdate, has as domHas, iframe as domIframe, get as domGet, parse as domParse, sameorigin, iframeContent, removeIFrame } from "./dom";
 import * as event from "@src/core/event";
 import * as dimension from "@src/data/dimension";
 import * as internal from "@src/diagnostic/internal";
@@ -14,11 +14,15 @@ import { electron } from "@src/data/metadata";
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last", "aria-label"];
 const newlineRegex = /[\r\n]+/g;
 
+function domCall(isAdd: boolean, node: Node, parent: Node, data: any, source: Source): void {
+    isAdd ? domAdd(node, parent, data, source) : domUpdate(node, parent, data, source);
+}
+
 export default function (node: Node, source: Source, timestamp: number): Node {
     let child: Node = null;
 
     // Do not track this change if we are attempting to remove a node before discovering it
-    if (source === Source.ChildListRemove && dom.has(node) === false) { return child; }
+    if (source === Source.ChildListRemove && domHas(node) === false) { return child; }
 
     // Special handling for text nodes that belong to style nodes
     if (source !== Source.Discover &&
@@ -28,25 +32,24 @@ export default function (node: Node, source: Source, timestamp: number): Node {
         node = node.parentNode;
     }
 
-    let add = dom.has(node) === false;
-    let call = add ? "add" : "update";
+    let isAdd = domHas(node) === false;
     let parent = node.parentElement ? node.parentElement : null;
     let insideFrame = node.ownerDocument !== document;
     switch (node.nodeType) {
         case Node.DOCUMENT_TYPE_NODE:
-            parent = insideFrame && node.parentNode ? dom.iframe(node.parentNode) : parent;
+            parent = insideFrame && node.parentNode ? domIframe(node.parentNode) : parent;
             let docTypePrefix = insideFrame ? Constant.IFramePrefix : Constant.Empty;
             let doctype = node as DocumentType;
             let docName = doctype.name ? doctype.name : Constant.HTML; 
             let docAttributes = { name: docName, publicId: doctype.publicId, systemId: doctype.systemId };
             let docData = { tag: docTypePrefix + Constant.DocumentTag, attributes: docAttributes };
-            dom[call](node, parent, docData, source);
+            domCall(isAdd, node, parent, docData, source);
             break;
         case Node.DOCUMENT_NODE:
             // We check for regions in the beginning when discovering document and
             // later whenever there are new additions or modifications to DOM (mutations)
             if (node === document) {
-                dom.parse(document);
+                domParse(document);
             }
             checkDocumentStyles(node as Document, timestamp);
             observe(node as Document);
@@ -54,9 +57,9 @@ export default function (node: Node, source: Source, timestamp: number): Node {
         case Node.DOCUMENT_FRAGMENT_NODE:
             let shadowRoot = (node as ShadowRoot);
             if (shadowRoot.host) {
-                dom.parse(shadowRoot);
+                domParse(shadowRoot);
                 let type = typeof (shadowRoot.constructor);
-                if (type === Constant.Function && shadowRoot.constructor.toString().indexOf(Constant.NativeCode) >= 0) {
+                if (type === Constant.Function && shadowRoot.constructor.toString().includes(Constant.NativeCode)) {
                     observe(shadowRoot);
                     
                     // See: https://wicg.github.io/construct-stylesheets/ for more details on adoptedStyleSheets.
@@ -65,12 +68,12 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     // cause any unintended side effect to the page. We will re-evaluate after we gather more real world data on this.
                     let style = Constant.Empty as string;
                     let fragmentData = { tag: Constant.ShadowDomTag, attributes: { style } };
-                    dom[call](node, shadowRoot.host, fragmentData, source);
+                    domCall(isAdd, node, shadowRoot.host, fragmentData, source);
                 } else {
                     // If the browser doesn't support shadow DOM natively, we detect that, and send appropriate tag back.
                     // The differentiation is important because we don't have to observe pollyfill shadow DOM nodes,
                     // the same way we observe real shadow DOM nodes (encapsulation provided by the browser).
-                    dom[call](node, shadowRoot.host, { tag: Constant.PolyfillShadowDomTag, attributes: {} }, source);
+                    domCall(isAdd, node, shadowRoot.host, { tag: Constant.PolyfillShadowDomTag, attributes: {} }, source);
                 }
                 checkDocumentStyles(node as Document, timestamp);
             }
@@ -83,9 +86,9 @@ export default function (node: Node, source: Source, timestamp: number): Node {
             // Also, we do not track text nodes for STYLE tags
             // The only exception is when we receive a mutation to remove the text node, in that case
             // parent will be null, but we can still process the node by checking it's an update call.
-            if (call === "update" || (parent && dom.has(parent) && parent.tagName !== "STYLE" && parent.tagName !== "NOSCRIPT")) {
+            if (!isAdd || (parent && domHas(parent) && parent.tagName !== "STYLE" && parent.tagName !== "NOSCRIPT")) {
                 let textData = { tag: Constant.TextTag, value: node.nodeValue };
-                dom[call](node, parent, textData, source);
+                domCall(isAdd, node, parent, textData, source);
             }
             break;
         case Node.ELEMENT_NODE:
@@ -100,10 +103,10 @@ export default function (node: Node, source: Source, timestamp: number): Node {
 
             switch (tag) {
                 case "HTML":
-                    parent = insideFrame && parent ? dom.iframe(parent) : parent;
+                    parent = insideFrame && parent ? domIframe(parent) : parent;
                     let htmlPrefix = insideFrame ? Constant.IFramePrefix : Constant.Empty;
                     let htmlData = { tag: htmlPrefix + tag, attributes };
-                    dom[call](node, parent, htmlData, source);
+                    domCall(isAdd, node, parent, htmlData, source);
                     break;
                 case "SCRIPT":
                     if (Constant.Type in attributes && attributes[Constant.Type] === Constant.JsonLD) {
@@ -116,7 +119,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     // keeping the noscript tag but ignoring its contents. Some HTML markup relies on having these tags
                     // to maintain parity with the original css view, but we don't want to execute any noscript in Clarity
                     let noscriptData = { tag, attributes: {}, value: '' };
-                    dom[call](node, parent, noscriptData, source);
+                    domCall(isAdd, node, parent, noscriptData, source);
                     break;
                 case "META":
                     var key = (Constant.Property in attributes ?
@@ -141,11 +144,11 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     let head = { tag, attributes };
                     let l = insideFrame && node.ownerDocument?.location ? node.ownerDocument.location : location;
                     head.attributes[Constant.Base] = l.protocol + "//" + l.host + l.pathname;
-                    dom[call](node, parent, head, source);
+                    domCall(isAdd, node, parent, head, source);
                     break;
                 case "BASE":
                     // Override the auto detected base path to explicit value specified in this tag
-                    let baseHead = dom.get(node.parentElement);
+                    let baseHead = domGet(node.parentElement);
                     if (baseHead) {
                         // We create "a" element so we can generate protocol and hostname for relative paths like "/path/"
                         let a = document.createElement("a");
@@ -155,12 +158,12 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     break;
                 case "STYLE":
                     let styleData = { tag, attributes, value: getStyleValue(element as HTMLStyleElement) };
-                    dom[call](node, parent, styleData, source);
+                    domCall(isAdd, node, parent, styleData, source);
                     break;
                 case "IFRAME":
                     let iframe = node as HTMLIFrameElement;
                     let frameData = { tag, attributes };
-                    if (dom.sameorigin(iframe)) {
+                    if (sameorigin(iframe)) {
                         mutation.monitor(iframe);
                         frameData.attributes[Constant.SameOrigin] = "true";
                         if (iframe.contentDocument && iframe.contentWindow && iframe.contentDocument.readyState !== "loading") {
@@ -170,7 +173,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     if (source === Source.ChildListRemove) {
                         removeObserver(iframe);
                     }
-                    dom[call](node, parent, frameData, source);
+                    domCall(isAdd, node, parent, frameData, source);
                     break;
                 case "LINK":
                     // electron stylesheets reference the local file system - translating those
@@ -180,7 +183,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                             var currentStyleSheet = document.styleSheets[styleSheetIndex];
                             if (currentStyleSheet.ownerNode == element) {
                                 let syntheticStyleData = { tag: "STYLE", attributes, value: getCssRules(currentStyleSheet) };
-                                dom[call](node, parent, syntheticStyleData, source);
+                                domCall(isAdd, node, parent, syntheticStyleData, source);
                                 break;
                             }
                         }
@@ -188,7 +191,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     }
                     // for links that aren't electron style sheets we can process them normally
                     let linkData = { tag, attributes };
-                    dom[call](node, parent, linkData, source);
+                    domCall(isAdd, node, parent, linkData, source);
                     break;
                 case "VIDEO":
                 case "AUDIO":
@@ -198,13 +201,13 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                         attributes[Constant.Src] = "";
                     }
                     let mediaTag = { tag, attributes };
-                    dom[call](node, parent, mediaTag, source);
+                    domCall(isAdd, node, parent, mediaTag, source);
                     break;
                 default:
                     custom.check(element.localName);
                     let data = { tag, attributes };
                     if (element.shadowRoot) { child = element.shadowRoot; }
-                    dom[call](node, parent, data, source);
+                    domCall(isAdd, node, parent, data, source);
                     break;
             }
             break;
@@ -215,7 +218,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
 }
 
 function observe(root: Document | ShadowRoot): void {
-    if (dom.has(root) || event.has(root)) { return; }
+    if (domHas(root) || event.has(root)) { return; }
     mutation.observe(root); // Observe mutations for this root node
     interaction.observe(root); // Observe interactions for this root node
 }
@@ -224,7 +227,7 @@ export function removeObserver(root: HTMLIFrameElement): void {
     // iframes will have load event listeners and they should be removed when iframe is removed
     // from the document
     event.unbind(root);
-    const { doc = null, win = null } = dom.iframeContent(root) || {};
+    const { doc = null, win = null } = iframeContent(root) || {};
 
     if (win) {
         // For iframes, scroll event is observed on content window and this needs to be removed as well
@@ -238,7 +241,7 @@ export function removeObserver(root: HTMLIFrameElement): void {
         mutation.disconnect(doc);
         
         // Remove iframe and content document from maps tracking them
-        dom.removeIFrame(root, doc);
+        removeIFrame(root, doc);
     }
 }
 
@@ -279,7 +282,7 @@ function getAttributes(element: HTMLElement): { [key: string]: string } {
     if (attributes && attributes.length > 0) {
         for (let i = 0; i < attributes.length; i++) {
             let name = attributes[i].name;
-            if (IGNORE_ATTRIBUTES.indexOf(name) < 0) {
+            if (!IGNORE_ATTRIBUTES.includes(name)) {
                 output[name] = attributes[i].value;
             }
         }

@@ -1,13 +1,13 @@
-import * as fraud from "@src/diagnostic/fraud";
-import * as internal from "@src/diagnostic/internal";
-import * as script from "@src/diagnostic/script";
+import { start as fraudStart } from "@src/diagnostic/fraud";
+import { start as intStart, stop as intStop } from "@src/diagnostic/internal";
+import { start as scrStart } from "@src/diagnostic/script";
 
 export function start(): void {
-    fraud.start();
-    script.start();
-    internal.start();
+    fraudStart();
+    scrStart();
+    intStart();
 }
 
 export function stop(): void {
-    internal.stop();
+    intStop();
 }

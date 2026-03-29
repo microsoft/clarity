@@ -1,12 +1,12 @@
-import * as navigation from "@src/performance/navigation";
-import * as observer from "@src/performance/observer";
+import { reset as navReset } from "@src/performance/navigation";
+import { start as obsStart, stop as obsStop } from "@src/performance/observer";
 
 export function start(): void {
-    navigation.reset();
-    observer.start();
+    navReset();
+    obsStart();
 }
 
 export function stop(): void {
-    observer.stop();
-    navigation.reset();
+    obsStop();
+    navReset();
 }
