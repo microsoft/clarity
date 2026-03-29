@@ -16,34 +16,7 @@ export function reset(): void {
     // Baseline state holds the previous values - if it is updated in the current payload,
     // reset the state to current value after sending the previous state
     if (update) {
-        state = { time: time(), event: Event.Baseline, data: {
-            visible: buffer.visible,
-            docWidth: buffer.docWidth,
-            docHeight: buffer.docHeight,
-            screenWidth: buffer.screenWidth,
-            screenHeight: buffer.screenHeight,
-            scrollX: buffer.scrollX,
-            scrollY: buffer.scrollY,
-            pointerX: buffer.pointerX,
-            pointerY: buffer.pointerY,
-            activityTime: buffer.activityTime,
-            scrollTime: buffer.scrollTime,
-            pointerTime: buffer.pointerTime,
-            moveX: buffer.moveX,
-            moveY: buffer.moveY,
-            moveTime: buffer.moveTime,
-            downX: buffer.downX,
-            downY: buffer.downY,
-            downTime: buffer.downTime,
-            upX: buffer.upX,
-            upY: buffer.upY,
-            upTime: buffer.upTime,
-            pointerPrevX: buffer.pointerPrevX,
-            pointerPrevY: buffer.pointerPrevY,
-            pointerPrevTime: buffer.pointerPrevTime,
-            modules: buffer.modules,
-          }
-        };
+        state = { time: time(), event: Event.Baseline, data: Object.assign({}, buffer) };
     }
     buffer = buffer ? buffer : {
         visible: BooleanFlag.True,
@@ -93,45 +66,34 @@ export function track(event: Event, x: number, y: number, time?: number): void {
             buffer.moveX = x;
             buffer.moveY = y;
             buffer.moveTime = time;
-            buffer.pointerPrevX = buffer.pointerX;
-            buffer.pointerPrevY = buffer.pointerY;
-            buffer.pointerPrevTime = buffer.pointerTime;
-            buffer.pointerX = x;
-            buffer.pointerY = y;
-            buffer.pointerTime = time;
+            updatePointer(x, y, time);
             break;
         case Event.MouseDown:
             buffer.downX = x;
             buffer.downY = y;
             buffer.downTime = time;
-            buffer.pointerPrevX = buffer.pointerX;
-            buffer.pointerPrevY = buffer.pointerY;
-            buffer.pointerPrevTime = buffer.pointerTime;
-            buffer.pointerX = x;
-            buffer.pointerY = y;
-            buffer.pointerTime = time;
+            updatePointer(x, y, time);
             break;
         case Event.MouseUp:
             buffer.upX = x;
             buffer.upY = y;
             buffer.upTime = time;
-            buffer.pointerPrevX = buffer.pointerX;
-            buffer.pointerPrevY = buffer.pointerY;
-            buffer.pointerPrevTime = buffer.pointerTime;
-            buffer.pointerX = x;
-            buffer.pointerY = y;
-            buffer.pointerTime = time;
+            updatePointer(x, y, time);
             break;
         default:
-            buffer.pointerPrevX = buffer.pointerX;
-            buffer.pointerPrevY = buffer.pointerY;
-            buffer.pointerPrevTime = buffer.pointerTime;
-            buffer.pointerX = x;
-            buffer.pointerY = y;
-            buffer.pointerTime = time;
+            updatePointer(x, y, time);
             break;
     }
     update = true;
+}
+
+function updatePointer(x: number, y: number, time: number): void {
+    buffer.pointerPrevX = buffer.pointerX;
+    buffer.pointerPrevY = buffer.pointerY;
+    buffer.pointerPrevTime = buffer.pointerTime;
+    buffer.pointerX = x;
+    buffer.pointerY = y;
+    buffer.pointerTime = time;
 }
 
 export function activity(t: number): void {
