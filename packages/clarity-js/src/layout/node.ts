@@ -1,6 +1,9 @@
 import { Constant, Source } from "@clarity-types/layout";
 import { Code, Dimension, Severity } from "@clarity-types/data";
-import { add as domAdd, update as domUpdate, has as domHas, iframe as domIframe, get as domGet, parse as domParse, sameorigin, iframeContent, removeIFrame } from "./dom";
+import {
+    add as domAdd, update as domUpdate, has as domHas, iframe as domIframe,
+    get as domGet, parse as domParse, sameorigin, iframeContent, removeIFrame
+} from "./dom";
 import * as event from "@src/core/event";
 import * as dimension from "@src/data/dimension";
 import * as internal from "@src/diagnostic/internal";
