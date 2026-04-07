@@ -140,6 +140,7 @@ export interface Config {
     throttleDom?: boolean;
     conversions?: boolean;
     includeSubdomains?: boolean;
+    trackEmbedded?: boolean;
     modules?: string[];
     diagnostics?: boolean;
 }
