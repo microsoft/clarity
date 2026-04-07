@@ -30,7 +30,7 @@ Examples of dashboard/service issues:
 
 ### Issues with the Open-Source Packages (clarity-js, clarity-decode, clarity-visualize)
 
-If your issue is a **bug, feature request, or question about the open-source code** in this repository, please [open a GitHub issue](https://github.com/microsoft/clarity/issues/new). Include:
+If your issue is a **bug, feature request, or question about the open-source code** in this repository, please [open a GitHub issue](https://github.com/microsoft/clarity/issues/new/choose). Include:
 
 - The **package name** and **version** you're using (e.g., `clarity-js@0.8.1`)
 - Steps to reproduce the issue
