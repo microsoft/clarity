@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "git-clarity": {
+      "command": "python",
+      "args": ["-m", "mcp_server_git", "--repository", "${workspaceFolder}"]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "recommendations": [
+    "ms-playwright.playwright",
+    "ms-vscode.vscode-typescript-tslint-plugin"
+  ]
+}
