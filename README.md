@@ -8,6 +8,9 @@ It's the same code that powers Microsoft's hosted behavioral analytics solution:
 We encourage the community to join us in building the best behavioral analytics library, that puts privacy first and prioritizes performance. 
 
 ## Project Structure
+
+For a detailed architecture overview with diagrams, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+
 1. **[clarity-js](https://github.com/microsoft/clarity/tree/master/packages/clarity-js)**: Instrumentation code that goes on the website and tracks user interactions as well as layout changes.
 
 2. **[clarity-decode](https://github.com/microsoft/clarity/tree/master/packages/clarity-decode)**: Code, which usually runs on the server, decodes incoming data back into its original format.
@@ -38,40 +41,13 @@ Here are some example sessions on popular websites visualized to demonstrate the
 ## Privacy Notice
 Clarity handles sensitive data with care. By default sensitive content on the page is masked before uploading to the server. Additionally, Clarity offers several masking configuration options to ensure you are in full control of your data.
 
-## Claude Code Setup (Optional)
-If you're using [Claude Code](https://claude.ai/claude-code) for development, this repository includes:
+## AI Agent Setup (Optional)
+This repository includes configuration for AI coding agents (Claude Code, GitHub Copilot, OpenAI Codex):
 
-1. **`CLAUDE.md`** - Project context and development guidelines automatically loaded by Claude
-2. **`.mcp.json`** - MCP (Model Context Protocol) server configuration for enhanced Git operations
+- **`AGENTS.md`** — project context and development guidelines loaded by AI agents
+- **`.mcp.json`** / **`.vscode/mcp.json`** — Git MCP server for enhanced Git operations
 
-### Prerequisites for MCP Server
-1. Install Python 3:
-   ```bash
-   python3 --version  # Verify installation
-   ```
-
-2. Install the Git MCP Server:
-   ```bash
-   pip3 install mcp-server-git
-   ```
-
-### Enable MCP Server
-The repository includes a `.mcp.json` file that configures the Git MCP server. To enable it:
-
-**Option 1: Auto-enable (Recommended)**
-Add to your `.claude/settings.local.json`:
-```json
-{
-  "enableAllProjectMcpServers": true
-}
-```
-
-**Option 2: Explicit approval**
-Claude Code will prompt you to approve the MCP server on first use.
-
-### What It Provides
-- **CLAUDE.md**: Persistent instructions for Claude including build commands, testing, architecture, and coding standards
-- **Git MCP Server**: Enhanced Git operations through natural language (commit history, diffs, branch management, etc.)
+See [docs/mcp-setup.md](./docs/mcp-setup.md) for setup instructions per agent.
 
 ## Improving Clarity
 If you haven't already done so, start contributing by following instructions **[here](https://github.com/microsoft/clarity/blob/master/CONTRIBUTING.md)**.

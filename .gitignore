@@ -7,6 +7,11 @@ node_modules/
 
 # Visual Studio Code
 .vscode/
+!.vscode/mcp.json
+!.vscode/extensions.json
+
+# Claude Code
+.claude/settings.local.json
 
 # npm logs
 npm-debug.log*

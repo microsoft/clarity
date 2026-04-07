@@ -57,23 +57,13 @@ sudo update-alternatives --install /usr/bin/node node /usr/bin/nodejs 10
 
 ### Starting Clarity
 
-Install yarn package manager globally on your machine:
+For full build, test, and development commands see [AGENTS.md](./AGENTS.md).
+
+Quick start:
 ```
 npm i -g yarn
-```
-
-Install yarn packages:
-```
 yarn install
-```
-
-To build:
-```
 yarn build
-```
-
-To test:
-```
 yarn test
 ```
 
@@ -113,13 +103,7 @@ Edit Clarity:
 Go to 'File -> Open Folder' and select the 'clarity' folder that you just cloned.
 ```
 
-To debug tests from Visual Studio Code, install the [Playwright Test for VSCode](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) extension.
+The repository includes a `.vscode/extensions.json` file with recommended extensions. VS Code will prompt you to install them automatically when you open the project. They include:
 
-### Text Editor TSLint Plugin
-
-TSLint plugin will read Clarity's TSLint configuration and highlight any TSLint errors immediately as you edit your code.
-
-For Visual Studio Code, you can install the TSLint plugin from the Visual Studio Marketplace:
-```
-https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-typescript-tslint-plugin
-```
+- **[Playwright Test for VSCode](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright)** — run and debug tests from the editor
+- **[TSLint](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-typescript-tslint-plugin)** — highlights lint errors as you edit
