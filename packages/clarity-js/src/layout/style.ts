@@ -29,10 +29,13 @@ function proxyStyleRules(win: any) {
     }   
 }
 
+// If we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
+// and attached the sheet to a document. This way the timestamp of the style sheet creation will align
+// to when it is used in the document rather than potentially being misaligned during the traverse process.
 function proxyStyleMethod(win: any, method: string, operation: StyleSheetOperation): void {
     if (win.__clr[method] === undefined) {
         win.__clr[method] = win.CSSStyleSheet.prototype[method];
-        win.CSSStyleSheet.prototype[method] = function(): any {
+        win.CSSStyleSheet.prototype[method] = function() {
             if (core.active()) {
                 if (createdSheetIds.includes(this[styleSheetId])) {
                     trackStyleChange(time(), this[styleSheetId], operation, arguments[0]);

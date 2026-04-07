@@ -17,10 +17,6 @@ import { electron } from "@src/data/metadata";
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last", "aria-label"];
 const newlineRegex = /[\r\n]+/g;
 
-function domCall(isAdd: boolean, node: Node, parent: Node, data: any, source: Source): void {
-    isAdd ? domAdd(node, parent, data, source) : domUpdate(node, parent, data, source);
-}
-
 export default function (node: Node, source: Source, timestamp: number): Node {
     let child: Node = null;
 
@@ -35,7 +31,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
         node = node.parentNode;
     }
 
-    let isAdd = domHas(node) === false;
+    let domFn = domHas(node) ? domUpdate : domAdd;
     let parent = node.parentElement ? node.parentElement : null;
     let insideFrame = node.ownerDocument !== document;
     switch (node.nodeType) {
@@ -46,7 +42,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
             let docName = doctype.name ? doctype.name : Constant.HTML; 
             let docAttributes = { name: docName, publicId: doctype.publicId, systemId: doctype.systemId };
             let docData = { tag: docTypePrefix + Constant.DocumentTag, attributes: docAttributes };
-            domCall(isAdd, node, parent, docData, source);
+            domFn(node, parent, docData, source);
             break;
         case Node.DOCUMENT_NODE:
             // We check for regions in the beginning when discovering document and
@@ -71,12 +67,12 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     // cause any unintended side effect to the page. We will re-evaluate after we gather more real world data on this.
                     let style = Constant.Empty as string;
                     let fragmentData = { tag: Constant.ShadowDomTag, attributes: { style } };
-                    domCall(isAdd, node, shadowRoot.host, fragmentData, source);
+                    domFn(node, shadowRoot.host, fragmentData, source);
                 } else {
                     // If the browser doesn't support shadow DOM natively, we detect that, and send appropriate tag back.
                     // The differentiation is important because we don't have to observe pollyfill shadow DOM nodes,
                     // the same way we observe real shadow DOM nodes (encapsulation provided by the browser).
-                    domCall(isAdd, node, shadowRoot.host, { tag: Constant.PolyfillShadowDomTag, attributes: {} }, source);
+                    domFn(node, shadowRoot.host, { tag: Constant.PolyfillShadowDomTag, attributes: {} }, source);
                 }
                 checkDocumentStyles(node as Document, timestamp);
             }
@@ -89,9 +85,9 @@ export default function (node: Node, source: Source, timestamp: number): Node {
             // Also, we do not track text nodes for STYLE tags
             // The only exception is when we receive a mutation to remove the text node, in that case
             // parent will be null, but we can still process the node by checking it's an update call.
-            if (!isAdd || (parent && domHas(parent) && parent.tagName !== "STYLE" && parent.tagName !== "NOSCRIPT")) {
+            if (domFn === domUpdate || (parent && domHas(parent) && parent.tagName !== "STYLE" && parent.tagName !== "NOSCRIPT")) {
                 let textData = { tag: Constant.TextTag, value: node.nodeValue };
-                domCall(isAdd, node, parent, textData, source);
+                domFn(node, parent, textData, source);
             }
             break;
         case Node.ELEMENT_NODE:
@@ -109,7 +105,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     parent = insideFrame && parent ? domIframe(parent) : parent;
                     let htmlPrefix = insideFrame ? Constant.IFramePrefix : Constant.Empty;
                     let htmlData = { tag: htmlPrefix + tag, attributes };
-                    domCall(isAdd, node, parent, htmlData, source);
+                    domFn(node, parent, htmlData, source);
                     break;
                 case "SCRIPT":
                     if (Constant.Type in attributes && attributes[Constant.Type] === Constant.JsonLD) {
@@ -122,7 +118,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     // keeping the noscript tag but ignoring its contents. Some HTML markup relies on having these tags
                     // to maintain parity with the original css view, but we don't want to execute any noscript in Clarity
                     let noscriptData = { tag, attributes: {}, value: '' };
-                    domCall(isAdd, node, parent, noscriptData, source);
+                    domFn(node, parent, noscriptData, source);
                     break;
                 case "META":
                     var key = (Constant.Property in attributes ?
@@ -147,7 +143,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     let head = { tag, attributes };
                     let l = insideFrame && node.ownerDocument?.location ? node.ownerDocument.location : location;
                     head.attributes[Constant.Base] = l.protocol + "//" + l.host + l.pathname;
-                    domCall(isAdd, node, parent, head, source);
+                    domFn(node, parent, head, source);
                     break;
                 case "BASE":
                     // Override the auto detected base path to explicit value specified in this tag
@@ -161,7 +157,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     break;
                 case "STYLE":
                     let styleData = { tag, attributes, value: getStyleValue(element as HTMLStyleElement) };
-                    domCall(isAdd, node, parent, styleData, source);
+                    domFn(node, parent, styleData, source);
                     break;
                 case "IFRAME":
                     let iframe = node as HTMLIFrameElement;
@@ -176,7 +172,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     if (source === Source.ChildListRemove) {
                         removeObserver(iframe);
                     }
-                    domCall(isAdd, node, parent, frameData, source);
+                    domFn(node, parent, frameData, source);
                     break;
                 case "LINK":
                     // electron stylesheets reference the local file system - translating those
@@ -186,7 +182,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                             var currentStyleSheet = document.styleSheets[styleSheetIndex];
                             if (currentStyleSheet.ownerNode == element) {
                                 let syntheticStyleData = { tag: "STYLE", attributes, value: getCssRules(currentStyleSheet) };
-                                domCall(isAdd, node, parent, syntheticStyleData, source);
+                                domFn(node, parent, syntheticStyleData, source);
                                 break;
                             }
                         }
@@ -194,7 +190,7 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     }
                     // for links that aren't electron style sheets we can process them normally
                     let linkData = { tag, attributes };
-                    domCall(isAdd, node, parent, linkData, source);
+                    domFn(node, parent, linkData, source);
                     break;
                 case "VIDEO":
                 case "AUDIO":
@@ -204,13 +200,13 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                         attributes[Constant.Src] = "";
                     }
                     let mediaTag = { tag, attributes };
-                    domCall(isAdd, node, parent, mediaTag, source);
+                    domFn(node, parent, mediaTag, source);
                     break;
                 default:
                     custom.check(element.localName);
                     let data = { tag, attributes };
                     if (element.shadowRoot) { child = element.shadowRoot; }
-                    domCall(isAdd, node, parent, data, source);
+                    domFn(node, parent, data, source);
                     break;
             }
             break;

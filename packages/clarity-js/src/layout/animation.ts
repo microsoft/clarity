@@ -78,6 +78,7 @@ export function stop(): void {
 
 function overrideAnimationHelper(name: string) {
     let original = Animation.prototype[name];
+    if (typeof original !== "function") { return; }
     Animation.prototype[name] = function(): void {
         trackAnimationOperation(this, name);
         return original.apply(this, arguments);

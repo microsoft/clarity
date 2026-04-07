@@ -348,14 +348,18 @@ function proxyStyleRules(win: any): void {
 
   win.__clr = win.__clr || {};
 
-  // Proxy insertRule/deleteRule on CSSStyleSheet and CSSMediaRule to detect dynamic style changes.
-  // Libraries like styled-components use insertRule API instead of DOM text nodes.
+  // Some popular open source libraries, like styled-components, optimize performance
+  // by injecting CSS using insertRule API vs. appending text node. A side effect of
+  // using javascript API is that it doesn't trigger DOM mutation and therefore we
+  // need to override the insertRule API and listen for changes manually.
   proxyRule(win, "CSSStyleSheet", "InsertRule", "insertRule", function() { return this.ownerNode; });
   proxyRule(win, "CSSStyleSheet", "DeleteRule", "deleteRule", function() { return this.ownerNode; });
   proxyRule(win, "CSSMediaRule", "MediaInsertRule", "insertRule", function() { return this.parentStyleSheet.ownerNode; });
   proxyRule(win, "CSSMediaRule", "MediaDeleteRule", "deleteRule", function() { return this.parentStyleSheet.ownerNode; });
 
   // Add a hook to attachShadow API calls
+  // In case we are unable to add a hook and browser throws an exception,
+  // reset attachShadow variable and resume processing like before
   if ("Element" in win && win.Element && win.Element.prototype && win.__clr.AttachShadow === undefined) {
     win.__clr.AttachShadow = win.Element.prototype.attachShadow;
     try {
