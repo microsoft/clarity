@@ -8,6 +8,36 @@ When you submit a pull request, a CLA-bot will automatically determine whether y
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
+## Reporting Issues
+
+Before opening a GitHub issue, please determine which type of issue you're experiencing:
+
+### Issues with the Clarity Dashboard or Service (clarity.microsoft.com)
+
+If your issue is related to the **Clarity dashboard, service, or your project at [clarity.microsoft.com](https://clarity.microsoft.com)**, this GitHub repository is **not** the right place. Instead, please email **[clarityms@microsoft.com](mailto:clarityms@microsoft.com)** with:
+
+- Your **Clarity project ID** or a link to your project page
+- A description of the issue you're experiencing
+- Screenshots or screen recordings, if applicable
+
+Examples of dashboard/service issues:
+- Missing or incorrect data in recordings, heatmaps, or analytics
+- Problems logging in to your Clarity account
+- Issues with GA4 integration, Smart Events, or Custom Tags in the dashboard
+- Session recordings not appearing or rendering incorrectly
+- Export API questions
+- Project setup or team management
+
+### Issues with the Open-Source Packages (clarity-js, clarity-decode, clarity-visualize)
+
+If your issue is a **bug, feature request, or question about the open-source code** in this repository, please [open a GitHub issue](https://github.com/microsoft/clarity/issues/new/choose). Include:
+
+- The **package name** and **version** you're using (e.g., `clarity-js@0.8.1`)
+- Steps to reproduce the issue
+- Expected vs. actual behavior
+- Browser and OS information
+- A minimal code sample, if possible
+
 ## Workflow
 
 ### Submitting Code Changes
