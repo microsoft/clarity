@@ -56,7 +56,8 @@ export function setCookie(key: string, value: string, time: number): void {
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + time);
     let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
-    let cookie = `${key}=${encodedValue}${Constant.Semicolon}${expires}${Constant.Path}`;
+    let sameSite = config.trackEmbedded ? `${Constant.Semicolon}SameSite=None${Constant.Semicolon}Secure` : Constant.Empty;
+    let cookie = `${key}=${encodedValue}${Constant.Semicolon}${expires}${Constant.Path}${sameSite}`;
     try {
       // Attempt to get the root domain only once and fall back to writing cookie on the current domain.
       if (rootDomain === null) {
