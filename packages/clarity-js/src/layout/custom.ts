@@ -23,14 +23,14 @@ export function check(tag: string) {
 export function start() {
     // Wrap in try-catch to handle Safari iOS where window properties or customElements.define may be readonly
     try {
-        window.clarityOverrides = window.clarityOverrides || {};
-        if (window.customElements?.define && !window.clarityOverrides.define) {
-            window.clarityOverrides.define = window.customElements.define;
+        window.__clr = window.__clr || {};
+        if (window.customElements?.define && !window.__clr.define) {
+            window.__clr.define = window.customElements.define;
             window.customElements.define = function () {
                 if (active()) {
                     register(arguments[0]);
                 }
-                return window.clarityOverrides.define.apply(this, arguments);
+                return window.__clr.define.apply(this, arguments);
             };
         }
     } catch (e) {

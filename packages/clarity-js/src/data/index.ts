@@ -1,19 +1,19 @@
 import measure from "@src/core/measure";
-import * as baseline from "@src/data/baseline";
-import * as consent from "@src/data/consent";
-import * as envelope from "@src/data/envelope";
-import * as dimension from "@src/data/dimension";
-import * as metadata from "@src/data/metadata";
+import { start as baseStart, stop as baseStop, compute as baseCompute } from "@src/data/baseline";
+import { start as conStart, stop as conStop, compute as conCompute } from "@src/data/consent";
+import { start as envStart, stop as envStop } from "@src/data/envelope";
+import { start as dimStart, stop as dimStop, compute as dimCompute } from "@src/data/dimension";
+import { start as metaStart, stop as metaStop } from "@src/data/metadata";
 import { Module } from "@clarity-types/core";
 import * as metric from "@src/data/metric";
-import * as ping from "@src/data/ping";
-import * as limit from "@src/data/limit";
-import * as summary from "@src/data/summary";
-import * as upgrade from "@src/data/upgrade";
-import * as upload from "@src/data/upload";
-import * as variable from "@src/data/variable";
-import * as extract from "@src/data/extract";
-import * as cookie from "@src/data/cookie";
+import { start as pingStart, stop as pingStop } from "@src/data/ping";
+import { start as limStart, stop as limStop, compute as limCompute } from "@src/data/limit";
+import { start as sumStart, stop as sumStop, compute as sumCompute } from "@src/data/summary";
+import { start as upgrStart, stop as upgrStop } from "@src/data/upgrade";
+import { start as uplStart, stop as uplStop } from "@src/data/upload";
+import { start as varStart, stop as varStop, compute as varCompute } from "@src/data/variable";
+import { start as extStart, stop as extStop, compute as extCompute } from "@src/data/extract";
+import { start as cookStart, stop as cookStop } from "@src/data/cookie";
 export { event } from "@src/data/custom";
 export { consent, consentv2, metadata } from "@src/data/metadata";
 export { upgrade } from "@src/data/upgrade";
@@ -22,7 +22,21 @@ export { signal } from "@src/data/signal";
 export { max as maxMetric } from "@src/data/metric";
 export { log as dlog } from "@src/data/dimension";
 
-const modules: Module[] = [baseline, dimension, variable, limit, summary, cookie, consent, metadata, envelope, upload, ping, upgrade, extract];
+const modules: Module[] = [
+    { start: baseStart, stop: baseStop },
+    { start: dimStart, stop: dimStop },
+    { start: varStart, stop: varStop },
+    { start: limStart, stop: limStop },
+    { start: sumStart, stop: sumStop },
+    { start: cookStart, stop: cookStop },
+    { start: conStart, stop: conStop },
+    { start: metaStart, stop: metaStop },
+    { start: envStart, stop: envStop },
+    { start: uplStart, stop: uplStop },
+    { start: pingStart, stop: pingStop },
+    { start: upgrStart, stop: upgrStop },
+    { start: extStart, stop: extStop },
+];
 
 export function start(): void {
     // Metric needs to be initialized before we can start measuring. so metric is not wrapped in measure
@@ -40,12 +54,12 @@ export function stop(): void {
 }
 
 export function compute(): void {
-    variable.compute();
-    baseline.compute();
-    dimension.compute();
+    varCompute();
+    baseCompute();
+    dimCompute();
     metric.compute();
-    summary.compute();
-    limit.compute();
-    extract.compute();
-    consent.compute();
+    sumCompute();
+    limCompute();
+    extCompute();
+    conCompute();
 }

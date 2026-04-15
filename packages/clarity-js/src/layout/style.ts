@@ -10,7 +10,7 @@ import { getCssRules } from "./node";
 
 export let sheetUpdateState: StyleSheetState[] = [];
 export let sheetAdoptionState: StyleSheetState[] = [];
-const styleSheetId = 'claritySheetId';
+const styleSheetId = '__clrSId';
 let styleSheetMap = {};
 let styleTimeMap: {[key: string]: number} = {};
 let documentNodes = [];
@@ -21,39 +21,29 @@ function proxyStyleRules(win: any) {
         return;
     }
     
-    win.clarityOverrides = win.clarityOverrides || {};
+    win.__clr = win.__clr || {};
 
     if (win['CSSStyleSheet'] && win.CSSStyleSheet.prototype) {
-        if (win.clarityOverrides.replace === undefined) { 
-            win.clarityOverrides.replace = win.CSSStyleSheet.prototype.replace; 
-            win.CSSStyleSheet.prototype.replace = function(): Promise<CSSStyleSheet> {
-                if (core.active()) {
-                    // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
-                    // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
-                    // to when it is used in the document rather than potentially being misaligned during the traverse process.
-                    if (createdSheetIds.indexOf(this[styleSheetId]) > -1) {
-                        trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.Replace, arguments[0]);
-                    }
-                }
-                return win.clarityOverrides.replace.apply(this, arguments);
-            };
-        }
-
-        if (win.clarityOverrides.replaceSync === undefined) { 
-            win.clarityOverrides.replaceSync = win.CSSStyleSheet.prototype.replaceSync; 
-            win.CSSStyleSheet.prototype.replaceSync = function(): void {
-                if (core.active()) {
-                    // if we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
-                    // and attached the sheet to a document. This way the timestamp of the style sheet creation will align
-                    // to when it is used in the document rather than potentially being misaligned during the traverse process.
-                    if (createdSheetIds.indexOf(this[styleSheetId]) > -1) {
-                        trackStyleChange(time(), this[styleSheetId], StyleSheetOperation.ReplaceSync, arguments[0]);
-                    }                
-                }
-                return win.clarityOverrides.replaceSync.apply(this, arguments);
-            };
-        }
+        proxyStyleMethod(win, "replace", StyleSheetOperation.Replace);
+        proxyStyleMethod(win, "replaceSync", StyleSheetOperation.ReplaceSync);
     }   
+}
+
+// If we haven't seen this stylesheet on this page yet, wait until the checkDocumentStyles has found it
+// and attached the sheet to a document. This way the timestamp of the style sheet creation will align
+// to when it is used in the document rather than potentially being misaligned during the traverse process.
+function proxyStyleMethod(win: any, method: string, operation: StyleSheetOperation): void {
+    if (win.__clr[method] === undefined) {
+        win.__clr[method] = win.CSSStyleSheet.prototype[method];
+        win.CSSStyleSheet.prototype[method] = function() {
+            if (core.active()) {
+                if (createdSheetIds.includes(this[styleSheetId])) {
+                    trackStyleChange(time(), this[styleSheetId], operation, arguments[0]);
+                }
+            }
+            return win.__clr[method].apply(this, arguments);
+        };
+    }
 }
 
 export function start(): void {
@@ -63,7 +53,7 @@ export function start(): void {
 export function checkDocumentStyles(documentNode: Document, timestamp: number): void {
     if (config.lean && config.lite) { return; }
 
-    if (documentNodes.indexOf(documentNode) === -1) {
+    if (!documentNodes.includes(documentNode)) {
         documentNodes.push(documentNode);
         if (documentNode.defaultView) {
             proxyStyleRules(documentNode.defaultView);
@@ -80,7 +70,7 @@ export function checkDocumentStyles(documentNode: Document, timestamp: number): 
         // For SPA or times in which Clarity restarts on a given page, our visualizer would lose context
         // on the previously created style sheet for page N-1.
         // Then we synthetically call replaceSync with its contents to bootstrap it
-        if (!styleSheet[styleSheetId] || createdSheetIds.indexOf(styleSheet[styleSheetId]) === -1) {
+        if (!styleSheet[styleSheetId] || !createdSheetIds.includes(styleSheet[styleSheetId])) {
             styleSheet[styleSheetId] = shortid();
             createdSheetIds.push(styleSheet[styleSheetId]);
             trackStyleChange(timestamp, styleSheet[styleSheetId], StyleSheetOperation.Create);
@@ -152,9 +142,5 @@ function trackStyleAdoption(time: number, id: number, operation: StyleSheetOpera
 }
 
 function arraysEqual(a: string[], b: string[]): boolean {
-    if (a.length !== b.length) {
-        return false;
-    }
-
-    return a.every((value, index) => value === b[index]);
+    return a.length === b.length && a.every((v, i) => v === b[i]);
 }

@@ -13,7 +13,7 @@ export default function (method: Function): Function {
         if (duration > Setting.LongTask) {
             metric.count(Metric.LongTaskCount);
             metric.max(Metric.ThreadBlockedTime, duration);
-            method.dn && internal.log(Code.FunctionExecutionTime, Severity.Info, `${method.dn}-${duration}`);
+            method.dn && internal.log(Code.FunctionExecutionTime, Severity.Info, method.dn + "-" + duration);
         }
     };
 }

@@ -149,9 +149,9 @@ async function upload(final: boolean = false): Promise<void> {
     if(!envelope.data) return;
 
     let e = JSON.stringify(envelope.envelope(last));
-    let a = `[${analysis.join()}]`;
+    let a = "[" + analysis.join() + "]";
 
-    let p = sendPlaybackBytes ? `[${playback.join()}]` : Constant.Empty;
+    let p = sendPlaybackBytes ? "[" + playback.join() + "]" : Constant.Empty;
     
     // For final (beacon) payloads, If size is too large, we need to remove playback data
     if (last && p.length > 0 && (e.length + a.length + p.length > Setting.MaxBeaconPayloadBytes)) {
@@ -179,7 +179,7 @@ async function upload(final: boolean = false): Promise<void> {
 }
 
 function stringify(encoded: EncodedPayload): string {
-    return encoded.p.length > 0 ? `{"e":${encoded.e},"a":${encoded.a},"p":${encoded.p}}` : `{"e":${encoded.e},"a":${encoded.a}}`;
+    return encoded.p.length > 0 ? '{"e":' + encoded.e + ',"a":' + encoded.a + ',"p":' + encoded.p + '}' : '{"e":' + encoded.e + ',"a":' + encoded.a + '}';
 }
 
 function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boolean = false): void {
@@ -216,7 +216,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             let xhr = new XMLHttpRequest();
             xhr.open("POST", url, true);
             xhr.timeout = Setting.UploadTimeout;
-            xhr.ontimeout = () => { report(new Error(`${Constant.Timeout} : ${url}`)) };
+            xhr.ontimeout = () => { report(new Error(Constant.Timeout + " : " + url)) };
             if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence); }; }
             xhr.withCredentials = true;
             if (zipped) {

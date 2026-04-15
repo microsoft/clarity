@@ -22,7 +22,7 @@ let defaultStatus: ConsentState = { source: ConsentSource.Default, ad_Storage: C
 export function start(): void {
   const ua = navigator && "userAgent" in navigator ? navigator.userAgent : Constant.Empty;
   const timezone = (typeof Intl !== 'undefined' && Intl?.DateTimeFormat()?.resolvedOptions()?.timeZone) ?? '';
-  const timezoneOffset = new Date().getTimezoneOffset().toString();
+  const timezoneOffset = "" + new Date().getTimezoneOffset();
   const ancestorOrigins = window.location.ancestorOrigins ? Array.from(window.location.ancestorOrigins).toString() : '';
   const title = document && document.title ? document.title : Constant.Empty;
   electron = ua.indexOf(Constant.Electron) > 0 ? BooleanFlag.True : BooleanFlag.False;
@@ -45,9 +45,9 @@ export function start(): void {
   dimension.log(Dimension.TabId, tab());
   dimension.log(Dimension.PageLanguage, document.documentElement.lang);
   dimension.log(Dimension.DocumentDirection, document.dir);
-  dimension.log(Dimension.DevicePixelRatio, `${window.devicePixelRatio}`);
-  dimension.log(Dimension.Dob, u.dob.toString());
-  dimension.log(Dimension.CookieVersion, u.version.toString());
+  dimension.log(Dimension.DevicePixelRatio, "" + window.devicePixelRatio);
+  dimension.log(Dimension.Dob, "" + u.dob);
+  dimension.log(Dimension.CookieVersion, "" + u.version);
   dimension.log(Dimension.AncestorOrigins, ancestorOrigins);
   dimension.log(Dimension.Timezone, timezone);
   dimension.log(Dimension.TimezoneOffset, timezoneOffset);
@@ -305,7 +305,7 @@ function session(): Session {
       output.session = parts[0];
       output.count = num(parts[2]) + 1;
       output.upgrade = num(parts[3]);
-      output.upload = parts.length >= 6 ? `${Constant.HTTPS}${parts[5]}/${parts[4]}` : `${Constant.HTTPS}${parts[4]}`;
+      output.upload = parts.length >= 6 ? Constant.HTTPS + parts[5] + "/" + parts[4] : Constant.HTTPS + parts[4];
     }
   }
   return output;

@@ -23,7 +23,7 @@ function recompute(evt: UIEvent): void {
     let element = target(evt) as HTMLInputElement;
     if (element) {
         let value = element.value;
-        let checksum = value && value.length >= Setting.WordLength && config.fraud && MaskExcludeList.indexOf(element.type) === -1 ? hash(value, Setting.ChecksumPrecision) : Constant.Empty;
+        let checksum = value && value.length >= Setting.WordLength && config.fraud && !MaskExcludeList.includes(element.type) ? hash(value, Setting.ChecksumPrecision) : Constant.Empty;
         state.push({ time: time(evt), event: Event.Change, data: { target: target(evt), type: element.type, value, checksum } });
         schedule(encode.bind(this, Event.Change));
     }

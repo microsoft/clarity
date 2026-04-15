@@ -12,7 +12,7 @@ export function ld(json: any): void {
         if (key === JsonLD.Type && typeof value === "string") {
             value = value.toLowerCase();
             /* Normalizations */
-            value = value.indexOf(JsonLD.Article) >= 0 || value.indexOf(JsonLD.Posting) >= 0 ? JsonLD.Article : value;
+            value = value.includes(JsonLD.Article) || value.includes(JsonLD.Posting) ? JsonLD.Article : value;
             switch (value) {
                 case JsonLD.Article:
                 case JsonLD.Recipe:

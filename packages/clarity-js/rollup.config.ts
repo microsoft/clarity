@@ -6,6 +6,15 @@ import typescript from "@rollup/plugin-typescript";
 import { readFileSync } from "fs";
 
 const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
+const terserOpts = {
+  compress: {
+    passes: 3,
+    hoist_vars: true,
+  },
+  mangle: {
+  },
+  output: { comments: false }
+};
 export default [
   {
     input: "src/index.ts",
@@ -25,7 +34,7 @@ export default [
   },
   {
     input: "src/global.ts",
-    output: [ { file: pkg.unpkg, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.unpkg, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -33,13 +42,13 @@ export default [
     plugins: [
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
   {
     input: "src/global.ts",
-    output: [ { file: pkg.extended, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.extended, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -47,13 +56,13 @@ export default [
     plugins: [
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
   {
     input: "src/global.ts",
-    output: [ { file: pkg.insight, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.insight, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -71,13 +80,13 @@ export default [
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
   {
     input: "src/global.ts",
-    output: [ { file: pkg.performance, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.performance, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -94,13 +103,13 @@ export default [
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
   {
     input: "src/dynamic/agent/index.ts",
-    output: [ { file: pkg.livechat, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.livechat, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -114,13 +123,13 @@ export default [
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
   {
     input: "src/dynamic/agent/index.ts",
-    output: [ { file: pkg.tidio, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.tidio, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -134,13 +143,13 @@ export default [
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
   {
     input: "src/dynamic/agent/index.ts",
-    output: [ { file: pkg.crisp, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.crisp, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -154,7 +163,7 @@ export default [
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
   }

@@ -40,7 +40,7 @@ function observe(): void {
         // It must only be used only with the "type" option, and cannot be used with entryTypes.
         // This is why we need to individually "observe" each supported type
         for (let x of types) {
-            if (PerformanceObserver.supportedEntryTypes.indexOf(x) >= 0) {
+            if (PerformanceObserver.supportedEntryTypes.includes(x)) {
                 // Initialize CLS with a value of zero. It's possible (and recommended) for sites to not have any cumulative layout shift.
                 // In those cases, we want to still initialize the metric in Clarity
                 if (x === Constant.CLS) { metric.sum(Metric.CumulativeLayoutShift, 0); }
@@ -78,7 +78,7 @@ function process(entries: PerformanceEntryList): void {
                 {
                     interaction.processInteractionEntry(entry as PerformanceEventTiming); 
                     // Logging it as dimension because we're always looking for the last value.
-                    dimension.log(Dimension.InteractionNextPaint, interaction.estimateP98LongestInteraction().toString()); 
+                    dimension.log(Dimension.InteractionNextPaint, "" + interaction.estimateP98LongestInteraction()); 
                 }
                 break;
             case Constant.CLS:

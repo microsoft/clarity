@@ -66,7 +66,7 @@ export function stop(): void {
 
 function redact(input: string): string {
     return input && input.length >= Setting.WordLength ? 
-        `${input.substring(0,2)}${scrub(input.substring(2), Constant.Asterix, Constant.Asterix)}` : scrub(input, Constant.Asterix, Constant.Asterix);
+        input.substring(0,2) + scrub(input.substring(2), Constant.Asterix, Constant.Asterix) : scrub(input, Constant.Asterix, Constant.Asterix);
 }
 
 async function sha256(input: string): Promise<string> {

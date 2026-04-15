@@ -10,10 +10,10 @@ export function start(): void {
 }
 
 export function log(code: Code, severity: Severity, name: string = null, message: string = null, stack: string = null): void {
-    let key = name ? `${name}|${message}`: "";
+    let key = name ? name + "|" + message: "";
     // While rare, it's possible for code to fail repeatedly during the lifetime of the same page
     // In those cases, we only want to log the failure once and not spam logs with redundant information.
-    if (code in history && history[code].indexOf(key) >= 0) { return; }
+    if (code in history && history[code].includes(key)) { return; }
 
     data = { code, name, message, stack, severity };
 

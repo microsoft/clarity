@@ -8,13 +8,9 @@ import * as core from "@src/core";
 
 export let state: AnimationState[] = [];
 let elementAnimate: (keyframes: Keyframe[] | PropertyIndexedKeyframes, options?: number | KeyframeAnimationOptions) => Animation = null;
-let animationPlay: () => void = null;
-let animationPause: () => void = null;
-let animationCommitStyles: () => void = null;
-let animationCancel: () => void = null;
-let animationFinish: () => void = null;
-const animationId = 'clarityAnimationId';
-const operationCount = 'clarityOperationCount';
+let overridden = false;
+const animationId = '__clrAId';
+const operationCount = '__clrOCnt';
 const maxOperations = 20;
 
 export function start(): void {
@@ -27,11 +23,10 @@ export function start(): void {
         window["KeyframeEffect"].prototype.getTiming
     ) {
         reset();
-        overrideAnimationHelper(animationPlay, "play");
-        overrideAnimationHelper(animationPause, "pause");
-        overrideAnimationHelper(animationCommitStyles, "commitStyles");
-        overrideAnimationHelper(animationCancel, "cancel");
-        overrideAnimationHelper(animationFinish, "finish");
+        if (!overridden) {
+            overridden = true;
+            ["play", "pause", "commitStyles", "cancel", "finish"].forEach(overrideAnimationHelper);
+        }
         if (elementAnimate === null) {
             elementAnimate = Element.prototype.animate;
             Element.prototype.animate = function(): Animation {
@@ -81,15 +76,14 @@ export function stop(): void {
     reset();
 }
 
-function overrideAnimationHelper(functionToOverride: () => void, name: string) {
-    if (functionToOverride === null) {
-      functionToOverride = Animation.prototype[name];
-      Animation.prototype[name] = function(): void {
+function overrideAnimationHelper(name: string) {
+    let original = Animation.prototype[name];
+    if (typeof original !== "function") { return; }
+    Animation.prototype[name] = function(): void {
         trackAnimationOperation(this, name);
-        return functionToOverride.apply(this, arguments);
-      }
+        return original.apply(this, arguments);
     }
-  }
+}
 
 function trackAnimationOperation(animation: Animation, name: string) {
     if (core.active()) {

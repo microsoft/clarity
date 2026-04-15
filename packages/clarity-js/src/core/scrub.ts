@@ -97,13 +97,13 @@ export function url(input: string, electron: boolean = false, truncate: boolean 
     let result = input;
     // Replace the URL for Electron apps so we don't send back file:/// URL
     if (electron) {
-        result = `${Data.Constant.HTTPS}${Data.Constant.Electron}`;
+        result = Data.Constant.HTTPS + Data.Constant.Electron;
     } else {
         let drop = config.drop;
         if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
             let [path, query] = input.split("?");
             let swap = Data.Constant.Dropped;
-            result = path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
+            result = path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(x + "=") === 0) ? (p.split("=")[0] + "=" + swap) : p).join("&");
         }
     }
 
@@ -120,7 +120,7 @@ function mangleText(value: string): string {
         let index = value.indexOf(first);
         let prefix = value.substr(0, index);
         let suffix = value.substr(index + trimmed.length);
-        return `${prefix}${trimmed.length.toString(36)}${suffix}`;
+        return prefix + trimmed.length.toString(36) + suffix;
     }
     return value;
 }
