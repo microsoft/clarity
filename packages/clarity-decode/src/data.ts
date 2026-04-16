@@ -1,5 +1,6 @@
 import { Data } from "clarity-js";
 import { Constant, DataEvent } from "../types/data";
+import { BrandAgentEventName } from "clarity-js/types/data";
 
 export function decode(tokens: Data.Token[]): DataEvent {
     let time = tokens[0] as number;
@@ -104,6 +105,12 @@ export function decode(tokens: Data.Token[]): DataEvent {
         case Data.Event.Consent:
             let consent: Data.ConsentData = { source: tokens[2] as number, ad_Storage: tokens[3] as number, analytics_Storage: tokens[4] as number};
             return { time, event, data: consent };
+        case Data.Event.BrandAgent:
+            let brandAgentData: Data.BrandAgentData = {
+                name: tokens[2] as BrandAgentEventName,
+                cid: tokens[3] as string,
+            };
+            return { time, event, data: brandAgentData };
     }
     return null;
 }

@@ -166,5 +166,19 @@ export default [
       terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
+  },
+  {
+    input: "src/dynamic/brandagent/index.ts",
+    output: [ { file: pkg["brandagent"], format: "iife", exports: "named" } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      resolve(),
+      typescript(),
+      terser({output: {comments: false}}),
+      commonjs({ include: ["node_modules/**"] })
+    ]
   }
 ];

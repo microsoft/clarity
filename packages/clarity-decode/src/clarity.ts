@@ -1,5 +1,5 @@
 import { Data, version } from "clarity-js";
-import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
+import { BaselineEvent, BrandAgentEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
 import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent, ConsentEvent } from "../types/data";
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
@@ -204,6 +204,10 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.CustomElement:
                 if (payload.customElement === undefined) { payload.customElement = []; }
                 payload.customElement.push(layout.decode(entry) as CustomElementEvent);
+                break;
+            case Data.Event.BrandAgent:
+                if (payload.brandAgent === undefined) { payload.brandAgent = []; }
+                payload.brandAgent.push(data.decode(entry) as BrandAgentEvent);
                 break;
             default:
                 if (typeof entry[1] === "number" && entry[1] < 200) {
