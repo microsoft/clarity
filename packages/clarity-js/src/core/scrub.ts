@@ -4,7 +4,7 @@ import * as Layout from "@clarity-types/layout";
 import config from "@src/core/config";
 
 const catchallRegex = /\S/gi;
-const maxUrlLength = 255;
+const maxUrlLength = 2048;
 let unicodeRegex = true;
 let digitRegex = null;
 let letterRegex = null;
