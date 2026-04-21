@@ -15,7 +15,7 @@ import { set } from "@src/data/variable";
 export let data: Metadata = null;
 export let callbacks: MetadataCallbackOptions[] = [];
 export let electron = BooleanFlag.False;
-let consentStatus: ConsentState = null;
+let consentStatus: ConsentData = null;
 let cookiesLogged = false;
 let defaultStatus: ConsentState = { source: ConsentSource.Default, ad_Storage: Constant.Denied, analytics_Storage: Constant.Denied };
 
@@ -84,15 +84,14 @@ export function start(): void {
   if (consentStatus === null) {
     consentStatus = {
       source: u.consent ? ConsentSource.Cookie : ConsentSource.Implicit,
-      ad_Storage: config.track ? Constant.Granted : Constant.Denied,
-      analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
+      ad_Storage: config.track ? BooleanFlag.True : BooleanFlag.False,
+      analytics_Storage: config.track ? BooleanFlag.True : BooleanFlag.False,
     };
   }
 
   logCookies();
 
-  const consent = getConsentData(consentStatus);
-  trackConsent.config(consent);
+  trackConsent.config(consentStatus);
   // Track ids using a cookie if configuration allows it
   track(u);
 }
@@ -112,7 +111,7 @@ function userAgentData(): void {
 
 function logCookies(): void {
   // Only log cookies if both analytics_Storage and ad_Storage are granted, and we haven't already logged them
-  if (cookiesLogged || consentStatus?.analytics_Storage !== Constant.Granted || consentStatus?.ad_Storage !== Constant.Granted) { return; }
+  if (cookiesLogged || consentStatus?.analytics_Storage !== BooleanFlag.True || consentStatus?.ad_Storage !== BooleanFlag.True) { return; }
   for (let key of config.cookies) {
     let value = getCookie(key);
     if (value) { set(key, value); }
@@ -136,7 +135,7 @@ export function metadata(cb: MetadataCallback, wait: boolean = true, recall: boo
   // we go through the upgrading flow.
   if (data && (upgraded || wait === false)) {
     // Immediately invoke the callback if the caller explicitly doesn't want to wait for the upgrade confirmation
-    cb(data, !config.lean, consentInfo ? consentStatus : undefined);
+    cb(data, !config.lean, consentInfo ? getConsentState() : undefined);
     called = true;
   }
   if (recall || !called) {
@@ -158,14 +157,14 @@ export function consent(status = true): void {
   consentv2({ source: ConsentSource.APIv1, ad_Storage: Constant.Granted, analytics_Storage: Constant.Granted });
 }
 
-export function consentv2(consentState: ConsentState = defaultStatus, source: number = ConsentSource.APIv2): void {
+export function consentv2(consentInput: ConsentState = defaultStatus, source: number = ConsentSource.APIv2): void {
   // Guard against calling consent API when Clarity hasn't started (e.g., due to GPC)
   if (!core.active()) { return; }
 
-  const updatedStatus = {
-    source: consentState.source ?? source,
-    ad_Storage: normalizeConsent(consentState.ad_Storage, consentStatus?.ad_Storage),
-    analytics_Storage: normalizeConsent(consentState.analytics_Storage, consentStatus?.analytics_Storage),
+  const updatedStatus: ConsentData = {
+    source: consentInput.source ?? source,
+    ad_Storage: normalizeConsent(consentInput.ad_Storage, consentStatus?.ad_Storage),
+    analytics_Storage: normalizeConsent(consentInput.analytics_Storage, consentStatus?.analytics_Storage),
   };
 
   if (
@@ -174,16 +173,15 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     updatedStatus.analytics_Storage === consentStatus.analytics_Storage
   ) {
     consentStatus.source = updatedStatus.source;
-    trackConsent.trackConsentv2(getConsentData(consentStatus));
+    trackConsent.trackConsentv2(consentStatus);
     trackConsent.consent();
     return;
   }
 
   consentStatus = updatedStatus;
   callback(true);
-  const consentData = getConsentData(consentStatus);
 
-  if (!consentData.analytics_Storage && config.track) {
+  if (!consentStatus.analytics_Storage && config.track) {
     config.track = false;
     clear(true);
     clarity.stop();
@@ -191,29 +189,31 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
     return;
   }
 
-  if (core.active() && consentData.analytics_Storage) {
+  if (core.active() && consentStatus.analytics_Storage) {
     config.track = true;
     track(user(), BooleanFlag.True);
     save();
   }
 
   logCookies();
-  trackConsent.trackConsentv2(consentData);
+  trackConsent.trackConsentv2(consentStatus);
   trackConsent.consent();
 }
 
-function getConsentData(consentState: ConsentState): ConsentData {
-  let consent: ConsentData = {
-    source: consentState.source ?? ConsentSource.Unknown,
-    ad_Storage: consentState.ad_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
-    analytics_Storage: consentState.analytics_Storage === Constant.Granted ? BooleanFlag.True : BooleanFlag.False,
-  };
 
-  return consent;
+function getConsentState(): ConsentState {
+  return {
+    source: consentStatus.source,
+    ad_Storage: consentStatus.ad_Storage === BooleanFlag.True ? Constant.Granted : Constant.Denied,
+    analytics_Storage: consentStatus.analytics_Storage === BooleanFlag.True ? Constant.Granted : Constant.Denied,
+  };
 }
 
-function normalizeConsent(value: unknown, fallback: string = Constant.Denied): string {
-  return typeof value === 'string' ? value.toLowerCase() : fallback;
+function normalizeConsent(value: unknown, fallback: BooleanFlag = BooleanFlag.False): BooleanFlag {
+  if (typeof value === 'string') {
+    return value.toLowerCase() === Constant.Granted ? BooleanFlag.True : BooleanFlag.False;
+  }
+  return fallback;
 }
 
 export function clear(all: boolean = false): void {
@@ -258,7 +258,7 @@ function processCallback(upgrade: BooleanFlag, consentUpdate: boolean = false): 
         ((!cb.called && !consentUpdate) || (cb.consentInfo && consentUpdate)) && //If consentUpdate is true, we only call the callback if it has consentInfo
         (!cb.wait || upgrade)
       ) {
-        cb.callback(data, !config.lean, cb.consentInfo ? consentStatus : undefined);
+        cb.callback(data, !config.lean, cb.consentInfo ? getConsentState() : undefined);
         cb.called = true;
         if (!cb.recall) {
           callbacks.splice(i, 1);
