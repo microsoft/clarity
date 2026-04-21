@@ -44,6 +44,7 @@ const ConsentSource = {
     APIv2: 5,
     Cookie: 6,
     Default: 7,
+    Unknown: 255,
 } as const;
 
 // Maximum time to wait from when consent() is called to when its callback resolves
@@ -1207,9 +1208,10 @@ test.describe("consentv2 - Production API", () => {
                 });
 
                 const hasConsentChange = opts.grantConsentAfterStart || opts.denyConsentAfterStart;
-                // For denial tests, use longer delay to ensure initial upload completes before denial
+                // For denial tests, use longer delay to ensure initial upload completes before denial.
+                // Upload delay is ~1s (config.delay), so we wait longer than that to avoid a race condition.
                 const consentChangeDelay = opts.denyConsentAfterStart
-                    ? (window as any).CONSENT_CALLBACK_TIMEOUT / 2
+                    ? (window as any).CONSENT_CALLBACK_TIMEOUT * 0.75
                     : (window as any).COOKIE_SETUP_DELAY;
 
                 if (hasConsentChange) {
@@ -1305,5 +1307,345 @@ test.describe("consentv2 - Production API", () => {
 
         // Verify error was thrown and handled gracefully (test success proves it was caught)
         expect(result.errorWasThrown).toBe(true);
+    });
+
+    // ========================
+    // Edge case tests
+    // ========================
+
+    test("no-change consent: track=true → granted/granted updates source only, keeps cookies", async ({ page }) => {
+        await page.evaluate(setupCookieMock as () => void);
+
+        // Start with track=true (implicit granted)
+        const initialConsent = await page.evaluate(({ sessionKey, cookieKey }) => {
+            return new Promise((resolve) => {
+                (window as any).clarity("start", {
+                    projectId: "test",
+                    track: true,
+                    upload: false
+                });
+
+                setTimeout(() => {
+                    (window as any).clarity("metadata", (_data: any, _upgrade: any, consent: any) => {
+                        if (consent) {
+                            const cookies = document.cookie;
+                            const clckMatch = cookies.match(new RegExp(`${cookieKey}=([^;]+)`));
+                            resolve({
+                                consent,
+                                hasClskCookie: cookies.includes(`${sessionKey}=`),
+                                hasClckCookie: cookies.includes(`${cookieKey}=`),
+                                clskCookieValue: "",
+                                clckCookieValue: clckMatch ? clckMatch[1] : "",
+                                cookies
+                            });
+                        }
+                    }, false, false, true);
+                }, (window as any).COOKIE_SETUP_DELAY);
+
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
+            });
+        }, { sessionKey: Constant.SessionKey, cookieKey: Constant.CookieKey });
+
+        expect(initialConsent).not.toBeNull();
+        const initialResult = initialConsent as ConsentTestResult;
+        expect(initialResult.consent.source).toBe(ConsentSource.Implicit);
+        expect(initialResult.consent.ad_Storage).toBe(Constant.Granted);
+        expect(initialResult.consent.analytics_Storage).toBe(Constant.Granted);
+        expect(initialResult.hasClckCookie).toBe(true);
+
+        // Call consentv2 with same values — should update source only
+        const result = await page.evaluate(({ sessionKey, cookieKey }) => {
+            return new Promise((resolve) => {
+                (window as any).clarity("consentv2", {
+                    ad_Storage: "granted",
+                    analytics_Storage: "granted"
+                });
+
+                (window as any).clarity("metadata", (_data: any, _upgrade: any, consent: any) => {
+                    if (consent) {
+                        const cookies = document.cookie;
+                        const clckMatch = cookies.match(new RegExp(`${cookieKey}=([^;]+)`));
+                        resolve({
+                            consent,
+                            hasClskCookie: cookies.includes(`${sessionKey}=`),
+                            hasClckCookie: cookies.includes(`${cookieKey}=`),
+                            clskCookieValue: "",
+                            clckCookieValue: clckMatch ? clckMatch[1] : "",
+                            cookies
+                        });
+                    }
+                }, false, false, true);
+
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
+            });
+        }, { sessionKey: Constant.SessionKey, cookieKey: Constant.CookieKey });
+
+        expect(result).not.toBeNull();
+        const consentResult = result as ConsentTestResult;
+        expect(consentResult.consent.source).toBe(ConsentSource.APIv2);
+        expect(consentResult.consent.ad_Storage).toBe(Constant.Granted);
+        expect(consentResult.consent.analytics_Storage).toBe(Constant.Granted);
+        expect(consentResult.hasClckCookie).toBe(true);
+    });
+
+    test("partial fields: track=true → consentv2 with only ad_Storage denied preserves analytics_Storage", async ({ page }) => {
+        await page.evaluate(setupCookieMock as () => void);
+
+        // Start with track=true (implicit granted for both)
+        await page.evaluate(() => {
+            (window as any).clarity("start", {
+                projectId: "test",
+                track: true,
+                upload: false
+            });
+        });
+
+        // Call consentv2 with only ad_Storage, omit analytics_Storage
+        const result = await page.evaluate(({ sessionKey, cookieKey }) => {
+            return new Promise((resolve) => {
+                (window as any).clarity("consentv2", {
+                    ad_Storage: "denied"
+                });
+
+                (window as any).clarity("metadata", (_data: any, _upgrade: any, consent: any) => {
+                    if (consent) {
+                        const cookies = document.cookie;
+                        const clckMatch = cookies.match(new RegExp(`${cookieKey}=([^;]+)`));
+                        resolve({
+                            consent,
+                            hasClskCookie: cookies.includes(`${sessionKey}=`),
+                            hasClckCookie: cookies.includes(`${cookieKey}=`),
+                            clskCookieValue: "",
+                            clckCookieValue: clckMatch ? clckMatch[1] : "",
+                            cookies
+                        });
+                    }
+                }, false, false, true);
+
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
+            });
+        }, { sessionKey: Constant.SessionKey, cookieKey: Constant.CookieKey });
+
+        expect(result).not.toBeNull();
+        const consentResult = result as ConsentTestResult;
+        expect(consentResult.consent.ad_Storage).toBe(Constant.Denied);
+        expect(consentResult.consent.analytics_Storage).toBe(Constant.Granted);
+        // analytics_Storage is still granted, so cookies should remain
+        expect(consentResult.hasClckCookie).toBe(true);
+    });
+
+    test("invalid values: track=true → consentv2 with non-string values falls back to current", async ({ page }) => {
+        await page.evaluate(setupCookieMock as () => void);
+
+        // Start with track=true (implicit granted)
+        await page.evaluate(() => {
+            (window as any).clarity("start", {
+                projectId: "test",
+                track: true,
+                upload: false
+            });
+        });
+
+        // Call consentv2 with non-string values (number, null)
+        const result = await page.evaluate(({ sessionKey, cookieKey }) => {
+            return new Promise((resolve) => {
+                (window as any).clarity("consentv2", {
+                    ad_Storage: 123,
+                    analytics_Storage: null
+                });
+
+                (window as any).clarity("metadata", (_data: any, _upgrade: any, consent: any) => {
+                    if (consent) {
+                        const cookies = document.cookie;
+                        const clckMatch = cookies.match(new RegExp(`${cookieKey}=([^;]+)`));
+                        resolve({
+                            consent,
+                            hasClskCookie: cookies.includes(`${sessionKey}=`),
+                            hasClckCookie: cookies.includes(`${cookieKey}=`),
+                            clskCookieValue: "",
+                            clckCookieValue: clckMatch ? clckMatch[1] : "",
+                            cookies
+                        });
+                    }
+                }, false, false, true);
+
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
+            });
+        }, { sessionKey: Constant.SessionKey, cookieKey: Constant.CookieKey });
+
+        expect(result).not.toBeNull();
+        const consentResult = result as ConsentTestResult;
+        // Non-string values should fall back to current (granted)
+        expect(consentResult.consent.ad_Storage).toBe(Constant.Granted);
+        expect(consentResult.consent.analytics_Storage).toBe(Constant.Granted);
+        expect(consentResult.hasClckCookie).toBe(true);
+    });
+
+    test("restart persistence: consent persists across stop/start cycle", async ({ page }) => {
+        await page.evaluate(setupCookieMock as () => void);
+
+        // Start with track=false (denied), then grant consent
+        await page.evaluate(() => {
+            (window as any).clarity("start", {
+                projectId: "test",
+                track: false,
+                upload: false
+            });
+        });
+
+        const grantResult = await page.evaluate(({ sessionKey, cookieKey }) => {
+            return new Promise((resolve) => {
+                (window as any).clarity("consentv2", {
+                    ad_Storage: "granted",
+                    analytics_Storage: "granted"
+                });
+
+                (window as any).clarity("metadata", (_data: any, _upgrade: any, consent: any) => {
+                    if (consent) {
+                        const cookies = document.cookie;
+                        const clckMatch = cookies.match(new RegExp(`${cookieKey}=([^;]+)`));
+                        resolve({
+                            consent,
+                            hasClskCookie: cookies.includes(`${sessionKey}=`),
+                            hasClckCookie: cookies.includes(`${cookieKey}=`),
+                            clskCookieValue: "",
+                            clckCookieValue: clckMatch ? clckMatch[1] : "",
+                            cookies
+                        });
+                    }
+                }, false, false, true);
+
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
+            });
+        }, { sessionKey: Constant.SessionKey, cookieKey: Constant.CookieKey });
+
+        expect(grantResult).not.toBeNull();
+        expect((grantResult as ConsentTestResult).consent.ad_Storage).toBe(Constant.Granted);
+        expect((grantResult as ConsentTestResult).consent.analytics_Storage).toBe(Constant.Granted);
+
+        // Stop and restart — consent should persist
+        const restartResult = await page.evaluate(({ sessionKey, cookieKey }) => {
+            return new Promise((resolve) => {
+                (window as any).clarity("stop");
+
+                setTimeout(() => {
+                    (window as any).clarity("start", {
+                        projectId: "test",
+                        track: false,
+                        upload: false
+                    });
+
+                    (window as any).clarity("metadata", (_data: any, _upgrade: any, consent: any) => {
+                        if (consent) {
+                            const cookies = document.cookie;
+                            const clckMatch = cookies.match(new RegExp(`${cookieKey}=([^;]+)`));
+                            resolve({
+                                consent,
+                                hasClskCookie: cookies.includes(`${sessionKey}=`),
+                                hasClckCookie: cookies.includes(`${cookieKey}=`),
+                                clskCookieValue: "",
+                                clckCookieValue: clckMatch ? clckMatch[1] : "",
+                                cookies
+                            });
+                        }
+                    }, false, false, true);
+                }, (window as any).COOKIE_SETUP_DELAY);
+
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
+            });
+        }, { sessionKey: Constant.SessionKey, cookieKey: Constant.CookieKey });
+
+        expect(restartResult).not.toBeNull();
+        const consentResult = restartResult as ConsentTestResult;
+        // Consent should persist from before the restart
+        expect(consentResult.consent.ad_Storage).toBe(Constant.Granted);
+        expect(consentResult.consent.analytics_Storage).toBe(Constant.Granted);
+    });
+
+    test("callback contract: metadata callback receives string consent values, not BooleanFlag", async ({ page }) => {
+        await page.evaluate(setupCookieMock as () => void);
+
+        const result = await page.evaluate(() => {
+            return new Promise((resolve) => {
+                (window as any).clarity("start", {
+                    projectId: "test",
+                    track: true,
+                    upload: false
+                });
+
+                (window as any).clarity("metadata", (_data: any, _upgrade: any, consent: any) => {
+                    if (consent) {
+                        resolve({
+                            ad_Storage_type: typeof consent.ad_Storage,
+                            analytics_Storage_type: typeof consent.analytics_Storage,
+                            ad_Storage_value: consent.ad_Storage,
+                            analytics_Storage_value: consent.analytics_Storage
+                        });
+                    }
+                }, false, false, true);
+
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
+            });
+        });
+
+        expect(result).not.toBeNull();
+        const typedResult = result as {
+            ad_Storage_type: string;
+            analytics_Storage_type: string;
+            ad_Storage_value: any;
+            analytics_Storage_value: any;
+        };
+        // Values must be strings ("granted"/"denied"), not numbers (BooleanFlag)
+        expect(typedResult.ad_Storage_type).toBe("string");
+        expect(typedResult.analytics_Storage_type).toBe("string");
+        expect(typedResult.ad_Storage_value).toBe(Constant.Granted);
+        expect(typedResult.analytics_Storage_value).toBe(Constant.Granted);
+    });
+
+    test("case insensitive: consentv2 handles mixed-case consent values", async ({ page }) => {
+        await page.evaluate(setupCookieMock as () => void);
+
+        // Start with track=false (denied)
+        await page.evaluate(() => {
+            (window as any).clarity("start", {
+                projectId: "test",
+                track: false,
+                upload: false
+            });
+        });
+
+        // Grant with mixed-case values
+        const result = await page.evaluate(({ sessionKey, cookieKey }) => {
+            return new Promise((resolve) => {
+                (window as any).clarity("consentv2", {
+                    ad_Storage: "GRANTED",
+                    analytics_Storage: "Granted"
+                });
+
+                (window as any).clarity("metadata", (_data: any, _upgrade: any, consent: any) => {
+                    if (consent) {
+                        const cookies = document.cookie;
+                        const clckMatch = cookies.match(new RegExp(`${cookieKey}=([^;]+)`));
+                        resolve({
+                            consent,
+                            hasClskCookie: cookies.includes(`${sessionKey}=`),
+                            hasClckCookie: cookies.includes(`${cookieKey}=`),
+                            clskCookieValue: "",
+                            clckCookieValue: clckMatch ? clckMatch[1] : "",
+                            cookies
+                        });
+                    }
+                }, false, false, true);
+
+                setTimeout(() => resolve(null), (window as any).CONSENT_CALLBACK_TIMEOUT);
+            });
+        }, { sessionKey: Constant.SessionKey, cookieKey: Constant.CookieKey });
+
+        expect(result).not.toBeNull();
+        const consentResult = result as ConsentTestResult;
+        expect(consentResult.consent.ad_Storage).toBe(Constant.Granted);
+        expect(consentResult.consent.analytics_Storage).toBe(Constant.Granted);
+        // Cookies should be set since consent was granted
+        expect(consentResult.hasClckCookie).toBe(true);
     });
 });
