@@ -411,22 +411,24 @@ export class LayoutHelper {
                     linkElement = linkElement ? linkElement : this.createElement(doc, node.tag) as HTMLLinkElement;
                     if (!node.attributes) { node.attributes = {}; }
                     this.setAttributes(linkElement, node);
+                    // Strip SRI: recorded hashes won't match proxied/redeployed bytes during replay. See microsoft/clarity#418.
+                    LayoutHelper.stripIntegrity(linkElement);
                     if ("rel" in node.attributes) {
                         if (node.attributes["rel"] === Constant.StyleSheet) {
                             this.stylesheets.push(new Promise((resolve: () => void): void => {
                                 const proxy = useproxy ?? this.state.options.useproxy;
                                 if (proxy) {
-                                    if (linkElement.integrity) {
-                                        linkElement.removeAttribute('integrity');
-                                    }
-
                                     linkElement.href = proxy(linkElement.href, linkElement.id, Constant.StyleSheet);
                                 }
                                 linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
                                 setTimeout(resolve, LayoutHelper.TIMEOUT);
                             }));
-                        } else if ((node.attributes["rel"].includes("preload") || node.attributes["rel"].includes("preconnect"))
-                            && (node.attributes?.as === "style" || node.attributes?.as === "font")) {
+                        } else if ((node.attributes["rel"].includes("preload")
+                                || node.attributes["rel"].includes("modulepreload")
+                                || node.attributes["rel"].includes("preconnect"))
+                            && (node.attributes?.as === "style"
+                                || node.attributes?.as === "font"
+                                || node.attributes?.as === "script")) {
                                 this.fonts.push(new Promise((resolve: () => void): void => {
                                     const proxy = useproxy ?? this.state.options.useproxy;
                                     linkElement.href = proxy ? proxy(linkElement.href, linkElement.id, node.attributes.as) : linkElement.href;
@@ -486,8 +488,18 @@ export class LayoutHelper {
         let domElement = this.element(node.id) as HTMLElement;
         domElement = domElement ? domElement : this.createElement(doc, node.tag);
         this.setAttributes(domElement as HTMLElement, node);
+        // Strip SRI on default-path nodes (e.g. <script>) for the same reason as <link>.
+        LayoutHelper.stripIntegrity(domElement);
         this.resize(domElement, node.width, node.height);
         insert(node, parent, domElement, pivot);
+    }
+
+    /** Remove the SRI `integrity` attribute. See microsoft/clarity#418. */
+    public static stripIntegrity(element: HTMLElement): void {
+        if (!element) { return; }
+        if (typeof element.hasAttribute === "function" && element.hasAttribute("integrity")) {
+            element.removeAttribute("integrity");
+        }
     }
 
     private style = (node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void => {
