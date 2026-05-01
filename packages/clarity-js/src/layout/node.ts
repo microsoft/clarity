@@ -14,7 +14,7 @@ import * as custom from "@src/layout/custom";
 import { checkDocumentStyles } from "@src/layout/style";
 import { electron } from "@src/data/metadata";
 
-const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last", "aria-label"];
+const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last", "aria-label", "integrity", "crossorigin"];
 const newlineRegex = /[\r\n]+/g;
 
 export default function (node: Node, source: Source, timestamp: number): Node {
