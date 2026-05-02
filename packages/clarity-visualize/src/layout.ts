@@ -412,7 +412,7 @@ export class LayoutHelper {
                     if (!node.attributes) { node.attributes = {}; }
                     this.setAttributes(linkElement, node);
                     // Strip SRI: recorded hashes won't match proxied/redeployed bytes during replay. See microsoft/clarity#418.
-                    LayoutHelper.stripIntegrity(linkElement);
+                    linkElement.removeAttribute("integrity");
                     if ("rel" in node.attributes) {
                         if (node.attributes["rel"] === Constant.StyleSheet) {
                             this.stylesheets.push(new Promise((resolve: () => void): void => {
@@ -488,18 +488,8 @@ export class LayoutHelper {
         let domElement = this.element(node.id) as HTMLElement;
         domElement = domElement ? domElement : this.createElement(doc, node.tag);
         this.setAttributes(domElement as HTMLElement, node);
-        // Strip SRI on default-path nodes (e.g. <script>) for the same reason as <link>.
-        LayoutHelper.stripIntegrity(domElement);
         this.resize(domElement, node.width, node.height);
         insert(node, parent, domElement, pivot);
-    }
-
-    /** Remove the SRI `integrity` attribute. See microsoft/clarity#418. */
-    public static stripIntegrity(element: HTMLElement): void {
-        if (!element) { return; }
-        if (typeof element.hasAttribute === "function" && element.hasAttribute("integrity")) {
-            element.removeAttribute("integrity");
-        }
     }
 
     private style = (node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void => {
