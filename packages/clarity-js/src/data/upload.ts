@@ -152,14 +152,14 @@ async function upload(final: boolean = false): Promise<void> {
 
     // Rotate buffers BEFORE serializing/awaiting compress.
     // `await compress(payload)` below yields the event loop, during which concurrent
-    // queue() calls can run. If we snapshot-then-await-then-eassign (`analysis = []`), 
+    // queue() calls can run. If we snapshot-then-await-then-reassign (`analysis = []`),
     // those concurrent pushes land in the soon-to-be-orphaned array reference and are silently lost.
-    //  By swapping the bindings up front, the= pending arrays are local-only and concurrent pushes 
+    // By swapping the bindings up front, the pending arrays are local-only and concurrent pushes
     // land in the fresh module-level arrays, where they ride out in the next upload.
     let pendingAnalysis = analysis;
     analysis = [];
 
-    let pendingPlayback: string[] = [];
+    let pendingPlayback: string[];
     if (sendPlaybackBytes) {
         pendingPlayback = playback;
         playback = [];
@@ -169,7 +169,7 @@ async function upload(final: boolean = false): Promise<void> {
     }
 
     let a = "[" + pendingAnalysis.join() + "]";
-    let p = sendPlaybackBytes ? "[" + pendingPlayback.join() + "]" : Constant.Empty;
+    let p = sendPlaybackBytes ? "[" + pendingPlayback!.join() + "]" : Constant.Empty;
 
     // For final (beacon) payloads, If size is too large, we need to remove playback data
     if (last && p.length > 0 && (e.length + a.length + p.length > Setting.MaxBeaconPayloadBytes)) {
