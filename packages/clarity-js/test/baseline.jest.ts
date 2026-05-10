@@ -1,10 +1,15 @@
 import { BooleanFlag, Event } from "@clarity-types/data";
 
-// Mock modules with browser dependencies
-jest.mock("@src/data/encode", () => ({ default: jest.fn() }));
+// Mock modules with browser dependencies.
+// These are more than stubs — tests use them to verify encoding behavior and timestamps.
+jest.mock("@src/data/encode", () => ({ __esModule: true, default: jest.fn() }));
 jest.mock("@src/core/time", () => ({ time: jest.fn(() => 0) }));
 
 import * as baseline from "@src/data/baseline";
+
+// Get typed references to the mocks for assertions and control
+const mockEncode: jest.Mock = require("@src/data/encode").default;
+const mockTime: jest.Mock = require("@src/core/time").time;
 
 /** Default buffer values after a fresh start — used for initial state verification. */
 const DEFAULTS = {
@@ -69,6 +74,8 @@ describe("Baseline", () => {
     // values set by earlier tests — assertions are written to account for this.
 
     beforeEach(() => {
+        mockEncode.mockClear();
+        mockTime.mockReturnValue(0);
         baseline.stop();
         baseline.start();
     });
@@ -240,23 +247,92 @@ describe("Baseline", () => {
         expect(data.pointerTime).toBe(200);
     });
 
-    // --- Encoding ---
+    // --- Encoding and compute() ---
 
-    test("track sets update flag so reset triggers encode", () => {
-        const encode = require("@src/data/encode").default;
-        encode.mockClear();
-
+    test("compute calls encode with Event.Baseline when data has changed", () => {
         baseline.track(Event.Scroll, 10, 20, 100);
-        baseline.reset(); // should snapshot to state (update=true)
-        expect(baseline.state).not.toBeNull();
-        expect(baseline.state.event).toBe(Event.Baseline);
-        expect(baseline.state.data.scrollX).toBe(10);
+        baseline.compute();
+        expect(mockEncode).toHaveBeenCalledTimes(1);
+        expect(mockEncode).toHaveBeenCalledWith(Event.Baseline);
     });
+
+    test("compute does not call encode when no data has changed", () => {
+        // After start(), update=false — nothing to encode
+        baseline.compute();
+        expect(mockEncode).not.toHaveBeenCalled();
+    });
+
+    test("compute encodes on every call while update flag is set", () => {
+        baseline.track(Event.Scroll, 10, 20, 100);
+        baseline.compute();
+        // reset() does not clear the update flag — only start() does.
+        // So compute() will encode again if called before the next start() cycle.
+        baseline.reset();
+        baseline.compute();
+        expect(mockEncode).toHaveBeenCalledTimes(2);
+    });
+
+    test("start() clears the update flag so compute does not encode", () => {
+        baseline.track(Event.Scroll, 10, 20, 100);
+        baseline.compute();
+        expect(mockEncode).toHaveBeenCalledTimes(1);
+        // start() resets update=false
+        baseline.stop();
+        baseline.start();
+        baseline.compute();
+        expect(mockEncode).toHaveBeenCalledTimes(1); // no new call
+    });
+
+    test("visibility(False) sets update flag so compute encodes", () => {
+        baseline.visibility(5000, BooleanFlag.False);
+        baseline.compute();
+        expect(mockEncode).toHaveBeenCalledWith(Event.Baseline);
+    });
+
+    test("dynamic() sets update flag so compute encodes", () => {
+        baseline.dynamic(new Set([1, 2]));
+        baseline.compute();
+        expect(mockEncode).toHaveBeenCalledWith(Event.Baseline);
+    });
+
+    // --- Timestamps via time mock ---
+
+    test("reset snapshots buffer with current time from time()", () => {
+        mockTime.mockReturnValue(42000);
+        baseline.track(Event.Scroll, 10, 20, 100);
+        baseline.reset();
+        expect(baseline.state.time).toBe(42000);
+    });
+
+    test("state timestamp updates on each reset cycle", () => {
+        mockTime.mockReturnValue(1000);
+        baseline.track(Event.Scroll, 10, 20, 100);
+        baseline.reset();
+        expect(baseline.state.time).toBe(1000);
+
+        // Second cycle: new track, new time
+        mockTime.mockReturnValue(5000);
+        baseline.track(Event.Scroll, 30, 40, 200);
+        baseline.reset();
+        expect(baseline.state.time).toBe(5000);
+    });
+
+    // --- Reset/state snapshot ---
 
     test("reset without prior track does not update state", () => {
         // After start(), update=false — reset should not snapshot
         const stateBefore = baseline.state;
         baseline.reset();
         expect(baseline.state).toBe(stateBefore);
+    });
+
+    test("reset snapshots buffer data into state.data", () => {
+        baseline.track(Event.Scroll, 10, 20, 100);
+        baseline.reset();
+        expect(baseline.state).not.toBeNull();
+        expect(baseline.state.event).toBe(Event.Baseline);
+        expect(baseline.state.data.scrollX).toBe(10);
+        expect(baseline.state.data.scrollY).toBe(20);
+        expect(baseline.state.data.scrollTime).toBe(100);
     });
 });
