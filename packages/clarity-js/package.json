@@ -50,6 +50,8 @@
     "build:main": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "build:clean": "del-cli build/*",
     "test": "playwright test --config ../../playwright.config.ts --project=clarity-js",
+    "test:unit": "yarn generate-test-types && vitest run",
+    "generate-test-types": "tsx ../../scripts/generate-test-types.ts",
     "tslint": "tslint --project ./",
     "tslint:fix": "tslint --fix --project ./ --force"
   },
