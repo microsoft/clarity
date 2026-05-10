@@ -1,5 +1,35 @@
 # Testing clarity-js: Tooling Challenges and Options
 
+## Decision: Jest + ts-jest for Unit Tests
+
+**Chosen approach:** Jest with `ts-jest` in full-compiler mode for unit testing clarity-js source modules directly.
+
+**Why:** clarity-js types use `const enum` in `.d.ts` files, which have no runtime representation. Most modern test tools (Vitest, esbuild, SWC) use fast "isolated module" transforms that can't resolve these values. `ts-jest` uses the full TypeScript compiler (`tsc`), which can — no code generation or workarounds needed.
+
+**Rationale:**
+- **Simplicity over speed.** The Vitest approach requires a custom generator script (~240 lines) that parses `.d.ts` files, resolves cross-file enum references, and writes runtime `.ts` equivalents. That's real code to maintain — when someone adds a new enum pattern or changes the type file structure, the generator could break silently. Jest/tsc just works because it uses the same compiler as the production build.
+- **The speed cost is acceptable.** The tsc compilation adds a fixed ~12s overhead on a cold run (~2-4s cached). This is amortized across all tests — it doesn't grow with test count. A mature test suite with hundreds of tests will spend most of its time in test execution, not compilation. Test execution speed is not a top priority for this project.
+- **One fewer build step.** No "did you forget to regenerate types?" failures. No gitignored generated directory to manage. `npx jest` just works.
+
+**What we evaluated:**
+
+| Approach | Pros | Cons | Verdict |
+|----------|------|------|---------|
+| **Jest + ts-jest (tsc)** | No workarounds needed, handles `const enum` natively, stable ecosystem | Slower compilation (~12s cold, ~4s cached) | **Chosen** |
+| **Vitest + generated types** | Fastest execution (~0.5s), great watch mode | Requires maintaining a generator script to convert `.d.ts` → runtime `.ts` | Rejected — generator is extra maintenance |
+| **Playwright only** | Already in place for integration tests | Can't unit test source modules (IIFE closure hides internals) | Keep for integration/E2E only |
+| **Convert `const enum` to `as const`** | Eliminates the problem entirely | Changes production code, large migration, minor bundle size risk | Not pursued — too invasive |
+
+**Test structure going forward:**
+- **Unit tests:** `packages/clarity-js/test/*.jest.ts` — run with `npx jest` in clarity-js, direct source imports, mocked browser dependencies
+- **Integration tests:** `test/*.test.ts` and `packages/*/test/*.test.ts` — run with Playwright, load built bundle in real browser, end-to-end verification
+
+---
+
+The rest of this document provides background on why this decision was necessary and details on each option evaluated.
+
+---
+
 ## The Core Problem
 
 clarity-js uses TypeScript `const enum` declarations in `.d.ts` files (e.g., `packages/clarity-js/types/data.d.ts`):
