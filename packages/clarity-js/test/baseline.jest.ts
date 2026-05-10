@@ -335,4 +335,20 @@ describe("Baseline", () => {
         expect(baseline.state.data.scrollY).toBe(20);
         expect(baseline.state.data.scrollTime).toBe(100);
     });
+
+    // --- stop() ---
+
+    test("stop calls reset, snapshotting pending data", () => {
+        baseline.track(Event.Scroll, 77, 88, 999);
+        baseline.stop();
+        // stop() → reset() should have captured the buffer into state
+        expect(baseline.state).not.toBeNull();
+        expect(baseline.state.data.scrollX).toBe(77);
+    });
+
+    test("stop does not call encode", () => {
+        baseline.track(Event.Scroll, 10, 20, 100);
+        baseline.stop();
+        expect(mockEncode).not.toHaveBeenCalled();
+    });
 });
