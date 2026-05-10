@@ -17,7 +17,7 @@ export default async function (type: Event): Promise<void> {
             let d = doc.data;
             tokens.push(d.width);
             tokens.push(d.height);
-            baseline.track(type, d.width, d.height);
+            baseline.track(type, d.width, d.height, eventTime);
             queue(tokens);
             break;
         case Event.Snapshot:

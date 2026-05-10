@@ -89,7 +89,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
         case Event.Resize:
             let r = resize.data;
             tokens.push(r.width, r.height);
-            baseline.track(type, r.width, r.height);
+            baseline.track(type, r.width, r.height, t);
             resize.reset();
             queue(tokens);
             break;
