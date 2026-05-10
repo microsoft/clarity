@@ -134,7 +134,9 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                         sTopHash, sBottomHash, entry.data.trust
                     );
                     queue(tokens);
-                    baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
+                    if (entry.data.target === document.documentElement) {
+                        baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
+                    }
                 }
             }
             scroll.reset();
