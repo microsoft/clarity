@@ -32,6 +32,3 @@ debug.log
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-
-# Generated test types
-packages/clarity-js/test/generated-types/
