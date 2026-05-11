@@ -10,6 +10,15 @@ const mockEncode: jest.Mock = require("@src/data/encode").default;
 const mockTime: jest.Mock = require("@src/core/time").time;
 
 /**
+ * Sets the update flag so reset() will snapshot the buffer.
+ * baseline has no public API to read the buffer without update=true,
+ * so we fire a zero-value scroll as a no-op primer.
+ */
+function primeBuffer(): void {
+    baseline.track(Event.Scroll, 0, 0, 0);
+}
+
+/**
  * Snapshots buffer via reset(), returns state.data.
  * Requires at least one track() call first (so update=true).
  */
@@ -67,7 +76,7 @@ describe("Baseline", () => {
 
     test("scroll updates only scrollX, scrollY, scrollTime", () => {
         // Prime the buffer so we can snapshot
-        baseline.track(Event.Scroll, 0, 0, 0);
+        primeBuffer();
         const before = { ...getBufferSnapshot() };
         baseline.track(Event.Scroll, 120, 450, 5000);
         const after = getBufferSnapshot();
@@ -75,7 +84,7 @@ describe("Baseline", () => {
     });
 
     test("document updates only docWidth, docHeight", () => {
-        baseline.track(Event.Scroll, 0, 0, 0);
+        primeBuffer();
         const before = { ...getBufferSnapshot() };
         baseline.track(Event.Document, 1920, 3000, 500);
         const after = getBufferSnapshot();
@@ -83,7 +92,7 @@ describe("Baseline", () => {
     });
 
     test("resize updates only screenWidth, screenHeight", () => {
-        baseline.track(Event.Scroll, 0, 0, 0);
+        primeBuffer();
         const before = { ...getBufferSnapshot() };
         baseline.track(Event.Resize, 1440, 900, 600);
         const after = getBufferSnapshot();
@@ -91,7 +100,7 @@ describe("Baseline", () => {
     });
 
     test("mousemove updates move + pointer fields only", () => {
-        baseline.track(Event.Scroll, 0, 0, 0);
+        primeBuffer();
         const before = { ...getBufferSnapshot() };
         baseline.track(Event.MouseMove, 200, 300, 1000);
         const after = getBufferSnapshot();
@@ -104,7 +113,7 @@ describe("Baseline", () => {
     });
 
     test("mousedown updates down + pointer fields only", () => {
-        baseline.track(Event.Scroll, 0, 0, 0);
+        primeBuffer();
         const before = { ...getBufferSnapshot() };
         baseline.track(Event.MouseDown, 50, 75, 2000);
         const after = getBufferSnapshot();
@@ -117,7 +126,7 @@ describe("Baseline", () => {
     });
 
     test("mouseup updates up + pointer fields only", () => {
-        baseline.track(Event.Scroll, 0, 0, 0);
+        primeBuffer();
         const before = { ...getBufferSnapshot() };
         baseline.track(Event.MouseUp, 60, 80, 3000);
         const after = getBufferSnapshot();
@@ -130,7 +139,7 @@ describe("Baseline", () => {
     });
 
     test("default event (Click) updates pointer fields only", () => {
-        baseline.track(Event.Scroll, 0, 0, 0);
+        primeBuffer();
         const before = { ...getBufferSnapshot() };
         baseline.track(Event.Click, 100, 200, 4000);
         const after = getBufferSnapshot();
@@ -218,7 +227,7 @@ describe("Baseline", () => {
 
     test("activity updates activityTime", () => {
         baseline.activity(9999);
-        baseline.track(Event.Scroll, 0, 0, 0);
+        primeBuffer();
         const data = getBufferSnapshot();
         expect(data.activityTime).toBe(9999);
     });
@@ -227,7 +236,7 @@ describe("Baseline", () => {
 
     test("visibility(False) sets visible flag and activityTime", () => {
         baseline.visibility(5000, BooleanFlag.False);
-        baseline.track(Event.Scroll, 0, 0, 0); // need update=true for snapshot
+        primeBuffer();
         const data = getBufferSnapshot();
         expect(data.visible).toBe(BooleanFlag.False);
         expect(data.activityTime).toBe(5000);
@@ -235,7 +244,7 @@ describe("Baseline", () => {
 
     test("visibility(True) does not set activityTime", () => {
         baseline.visibility(8000, BooleanFlag.True);
-        baseline.track(Event.Scroll, 0, 0, 0);
+        primeBuffer();
         const data = getBufferSnapshot();
         expect(data.visible).toBe(BooleanFlag.True);
         expect(data.activityTime).not.toBe(8000);
@@ -245,7 +254,7 @@ describe("Baseline", () => {
 
     test("dynamic stores module set as array", () => {
         baseline.dynamic(new Set([1, 5, 10]));
-        baseline.track(Event.Scroll, 0, 0, 0);
+        primeBuffer();
         const data = getBufferSnapshot();
         expect(data.modules).toEqual([1, 5, 10]);
     });
@@ -257,7 +266,7 @@ describe("Baseline", () => {
         baseline.stop();
         baseline.start();
         // After stop/start, the buffer still holds old values
-        baseline.track(Event.Scroll, 0, 0, 0); // need update=true for snapshot
+        primeBuffer();
         const data = getBufferSnapshot();
         expect(data.scrollX).toBe(0); // overwritten by the new track
         expect(data.scrollY).toBe(0);
@@ -270,7 +279,7 @@ describe("Baseline", () => {
         baseline.stop();
         baseline.start();
         baseline.reset(); // does not create fresh buffer, just snapshots if update=true
-        baseline.track(Event.Scroll, 0, 0, 0); // trigger update for snapshot
+        primeBuffer();
         const data = getBufferSnapshot();
         // docWidth/docHeight still hold values from before stop/start
         expect(data.docWidth).toBe(1024);
