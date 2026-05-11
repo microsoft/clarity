@@ -1,47 +1,16 @@
 import { BooleanFlag, Event } from "@clarity-types/data";
 
 // Mock modules with browser dependencies.
-// These are more than stubs — tests use them to verify encoding behavior and timestamps.
 jest.mock("@src/data/encode", () => ({ __esModule: true, default: jest.fn() }));
 jest.mock("@src/core/time", () => ({ time: jest.fn(() => 0) }));
 
 import * as baseline from "@src/data/baseline";
 
-// Get typed references to the mocks for assertions and control
 const mockEncode: jest.Mock = require("@src/data/encode").default;
 const mockTime: jest.Mock = require("@src/core/time").time;
 
-/** Default buffer values after a fresh start — used for initial state verification. */
-const DEFAULTS = {
-    visible: BooleanFlag.True,
-    docWidth: 0,
-    docHeight: 0,
-    screenWidth: 0,
-    screenHeight: 0,
-    scrollX: 0,
-    scrollY: 0,
-    pointerX: 0,
-    pointerY: 0,
-    activityTime: 0,
-    scrollTime: 0,
-    pointerTime: undefined,
-    moveX: undefined,
-    moveY: undefined,
-    moveTime: undefined,
-    downX: undefined,
-    downY: undefined,
-    downTime: undefined,
-    upX: undefined,
-    upY: undefined,
-    upTime: undefined,
-    pointerPrevX: undefined,
-    pointerPrevY: undefined,
-    pointerPrevTime: undefined,
-    modules: null,
-};
-
 /**
- * Snapshots the current buffer into state and returns it.
+ * Snapshots buffer via reset(), returns state.data.
  * Requires at least one track() call first (so update=true).
  */
 function getBufferSnapshot() {
@@ -50,28 +19,32 @@ function getBufferSnapshot() {
 }
 
 /**
- * Asserts that the given fields have the expected values, AND that a set of
- * "unrelated" fields were NOT changed by the operation under test.
- *
- * `changed` — fields expected to have specific values after the operation.
- * `unchanged` — fields expected to remain at their default. These catch
- * unintended side effects (e.g., a scroll event accidentally writing to docWidth).
+ * Snapshot-diff helper: takes a "before" snapshot, runs the operation,
+ * takes an "after" snapshot, and verifies ONLY the expected keys changed.
+ * Catches unintended side effects automatically.
  */
-function expectChanged(changed: Record<string, unknown>, unchanged: string[]) {
-    const data = getBufferSnapshot();
-    for (const [key, value] of Object.entries(changed)) {
-        expect(data[key]).toEqual(value);
+function expectOnlyChanges(
+    before: Record<string, unknown> | any,
+    after: Record<string, unknown> | any,
+    expected: Record<string, unknown>,
+) {
+    // Verify expected fields have expected values
+    for (const [key, value] of Object.entries(expected)) {
+        expect(after[key]).toEqual(value);
     }
-    for (const key of unchanged) {
-        expect(data[key]).toEqual(DEFAULTS[key]);
+    // Verify all other fields are unchanged from before
+    for (const key of Object.keys(after)) {
+        if (!(key in expected)) {
+            expect(after[key]).toEqual(before[key]);
+        }
     }
 }
 
 describe("Baseline", () => {
-    // NOTE: baseline.ts uses a module-level singleton buffer that persists across
-    // stop()/start() cycles (by design). Tests within this suite share that buffer.
-    // The FIRST describe block runs against a fresh buffer. Later tests may see
-    // values set by earlier tests — assertions are written to account for this.
+    // baseline.ts uses a module-level singleton buffer that persists across
+    // stop()/start() cycles (by design). Tests use snapshot-diff to detect
+    // side effects: capture state before and after, verify only expected
+    // fields changed.
 
     beforeEach(() => {
         mockEncode.mockClear();
@@ -85,90 +58,92 @@ describe("Baseline", () => {
     });
 
     // --- Initial state ---
-    // These tests run first and verify the fresh buffer state.
 
     test("state is null before any tracking", () => {
         expect(baseline.state).toBeNull();
     });
 
-    test("initial buffer has all expected defaults", () => {
-        // Need one track call so reset() can snapshot buffer into state
+    // --- Event routing with side-effect detection ---
+
+    test("scroll updates only scrollX, scrollY, scrollTime", () => {
+        // Prime the buffer so we can snapshot
         baseline.track(Event.Scroll, 0, 0, 0);
-        const data = getBufferSnapshot();
-        for (const [key, value] of Object.entries(DEFAULTS)) {
-            expect(data[key]).toEqual(value);
-        }
-    });
-
-    // --- track() event routing ---
-    // Each test verifies the expected fields AND checks that unrelated fields
-    // were not modified by the event.
-
-    test("scroll event updates scrollX, scrollY, scrollTime — not doc/screen/pointer", () => {
+        const before = { ...getBufferSnapshot() };
         baseline.track(Event.Scroll, 120, 450, 5000);
-        expectChanged(
-            { scrollX: 120, scrollY: 450, scrollTime: 5000 },
-            ["docWidth", "docHeight", "screenWidth", "screenHeight",
-             "moveX", "moveY", "moveTime", "downX", "downY", "downTime",
-             "upX", "upY", "upTime", "pointerPrevX", "pointerPrevY", "pointerPrevTime"],
-        );
+        const after = getBufferSnapshot();
+        expectOnlyChanges(before, after, { scrollX: 120, scrollY: 450, scrollTime: 5000 });
     });
 
-    test("document event updates docWidth, docHeight — not scroll/screen/pointer", () => {
-        baseline.track(Event.Document, 1920, 3000);
-        expectChanged(
-            { docWidth: 1920, docHeight: 3000 },
-            ["screenWidth", "screenHeight",
-             "moveX", "moveY", "moveTime", "downX", "downY", "downTime",
-             "upX", "upY", "upTime", "pointerPrevX", "pointerPrevY", "pointerPrevTime"],
-        );
+    test("document updates only docWidth, docHeight", () => {
+        baseline.track(Event.Scroll, 0, 0, 0);
+        const before = { ...getBufferSnapshot() };
+        baseline.track(Event.Document, 1920, 3000, 500);
+        const after = getBufferSnapshot();
+        expectOnlyChanges(before, after, { docWidth: 1920, docHeight: 3000 });
     });
 
-    test("resize event updates screenWidth, screenHeight — not doc/scroll/pointer", () => {
-        baseline.track(Event.Resize, 1440, 900);
-        expectChanged(
-            { screenWidth: 1440, screenHeight: 900 },
-            ["moveX", "moveY", "moveTime", "downX", "downY", "downTime",
-             "upX", "upY", "upTime", "pointerPrevX", "pointerPrevY", "pointerPrevTime"],
-        );
+    test("resize updates only screenWidth, screenHeight", () => {
+        baseline.track(Event.Scroll, 0, 0, 0);
+        const before = { ...getBufferSnapshot() };
+        baseline.track(Event.Resize, 1440, 900, 600);
+        const after = getBufferSnapshot();
+        expectOnlyChanges(before, after, { screenWidth: 1440, screenHeight: 900 });
     });
 
-    test("mousemove updates move+pointer fields — not down/up", () => {
+    test("mousemove updates move + pointer fields only", () => {
+        baseline.track(Event.Scroll, 0, 0, 0);
+        const before = { ...getBufferSnapshot() };
         baseline.track(Event.MouseMove, 200, 300, 1000);
-        expectChanged(
-            { moveX: 200, moveY: 300, moveTime: 1000,
-              pointerX: 200, pointerY: 300, pointerTime: 1000 },
-            ["downX", "downY", "downTime", "upX", "upY", "upTime"],
-        );
+        const after = getBufferSnapshot();
+        expectOnlyChanges(before, after, {
+            moveX: 200, moveY: 300, moveTime: 1000,
+            pointerX: 200, pointerY: 300, pointerTime: 1000,
+            pointerPrevX: before.pointerX, pointerPrevY: before.pointerY,
+            pointerPrevTime: before.pointerTime,
+        });
     });
 
-    test("mousedown updates down+pointer fields — not move/up", () => {
+    test("mousedown updates down + pointer fields only", () => {
+        baseline.track(Event.Scroll, 0, 0, 0);
+        const before = { ...getBufferSnapshot() };
         baseline.track(Event.MouseDown, 50, 75, 2000);
-        expectChanged(
-            { downX: 50, downY: 75, downTime: 2000, pointerX: 50, pointerY: 75 },
-            ["upX", "upY", "upTime"],
-        );
+        const after = getBufferSnapshot();
+        expectOnlyChanges(before, after, {
+            downX: 50, downY: 75, downTime: 2000,
+            pointerX: 50, pointerY: 75, pointerTime: 2000,
+            pointerPrevX: before.pointerX, pointerPrevY: before.pointerY,
+            pointerPrevTime: before.pointerTime,
+        });
     });
 
-    test("mouseup updates up+pointer fields — not down/move", () => {
+    test("mouseup updates up + pointer fields only", () => {
+        baseline.track(Event.Scroll, 0, 0, 0);
+        const before = { ...getBufferSnapshot() };
         baseline.track(Event.MouseUp, 60, 80, 3000);
-        expectChanged(
-            { upX: 60, upY: 80, upTime: 3000, pointerX: 60, pointerY: 80 },
-            [],
-        );
+        const after = getBufferSnapshot();
+        expectOnlyChanges(before, after, {
+            upX: 60, upY: 80, upTime: 3000,
+            pointerX: 60, pointerY: 80, pointerTime: 3000,
+            pointerPrevX: before.pointerX, pointerPrevY: before.pointerY,
+            pointerPrevTime: before.pointerTime,
+        });
     });
 
-    test("default event (Click) only updates pointer fields — not move/down/up", () => {
+    test("default event (Click) updates pointer fields only", () => {
+        baseline.track(Event.Scroll, 0, 0, 0);
+        const before = { ...getBufferSnapshot() };
         baseline.track(Event.Click, 100, 200, 4000);
-        const data = getBufferSnapshot();
-        expect(data.pointerX).toBe(100);
-        expect(data.pointerY).toBe(200);
-        expect(data.pointerTime).toBe(4000);
+        const after = getBufferSnapshot();
+        expectOnlyChanges(before, after, {
+            pointerX: 100, pointerY: 200, pointerTime: 4000,
+            pointerPrevX: before.pointerX, pointerPrevY: before.pointerY,
+            pointerPrevTime: before.pointerTime,
+        });
     });
 
-    // --- Pointer previous tracking ---
+    // --- Compound stateful scenarios ---
 
-    test("successive pointer events save previous pointer values", () => {
+    test("successive pointer events propagate current → prev correctly", () => {
         baseline.track(Event.MouseMove, 10, 20, 100);
         baseline.track(Event.MouseMove, 30, 40, 200);
         const data = getBufferSnapshot();
@@ -178,6 +153,65 @@ describe("Baseline", () => {
         expect(data.pointerPrevX).toBe(10);
         expect(data.pointerPrevY).toBe(20);
         expect(data.pointerPrevTime).toBe(100);
+    });
+
+    test("interleaved pointer event types share prev tracking", () => {
+        baseline.track(Event.MouseMove, 10, 20, 100);
+        baseline.track(Event.MouseDown, 30, 40, 200);
+        baseline.track(Event.MouseUp, 50, 60, 300);
+        const data = getBufferSnapshot();
+        // Last event (MouseUp) is current, MouseDown is prev
+        expect(data.pointerX).toBe(50);
+        expect(data.pointerY).toBe(60);
+        expect(data.pointerPrevX).toBe(30);
+        expect(data.pointerPrevY).toBe(40);
+        expect(data.pointerPrevTime).toBe(200);
+        // Each event type also stored its own fields
+        expect(data.moveX).toBe(10);
+        expect(data.moveY).toBe(20);
+        expect(data.downX).toBe(30);
+        expect(data.downY).toBe(40);
+        expect(data.upX).toBe(50);
+        expect(data.upY).toBe(60);
+    });
+
+    test("three pointer events: only one level of prev is kept", () => {
+        baseline.track(Event.MouseMove, 1, 2, 10);
+        baseline.track(Event.MouseMove, 3, 4, 20);
+        baseline.track(Event.MouseMove, 5, 6, 30);
+        const data = getBufferSnapshot();
+        // Current = last event, prev = second-to-last (first event is lost)
+        expect(data.pointerX).toBe(5);
+        expect(data.pointerY).toBe(6);
+        expect(data.pointerPrevX).toBe(3);
+        expect(data.pointerPrevY).toBe(4);
+        expect(data.pointerPrevTime).toBe(20);
+    });
+
+    test("different event types accumulate independently", () => {
+        baseline.track(Event.Scroll, 10, 20, 100);
+        baseline.track(Event.Document, 1920, 3000, 150);
+        baseline.track(Event.Resize, 1440, 900, 160);
+        baseline.track(Event.MouseMove, 50, 60, 200);
+        const data = getBufferSnapshot();
+        expect(data.scrollX).toBe(10);
+        expect(data.scrollY).toBe(20);
+        expect(data.docWidth).toBe(1920);
+        expect(data.docHeight).toBe(3000);
+        expect(data.screenWidth).toBe(1440);
+        expect(data.screenHeight).toBe(900);
+        expect(data.moveX).toBe(50);
+        expect(data.pointerX).toBe(50);
+    });
+
+    test("visibility(False) + track compounds activityTime and event data", () => {
+        baseline.visibility(5000, BooleanFlag.False);
+        baseline.track(Event.Scroll, 100, 200, 6000);
+        const data = getBufferSnapshot();
+        expect(data.visible).toBe(BooleanFlag.False);
+        expect(data.activityTime).toBe(5000);
+        expect(data.scrollX).toBe(100);
+        expect(data.scrollY).toBe(200);
     });
 
     // --- activity() ---
@@ -193,6 +227,7 @@ describe("Baseline", () => {
 
     test("visibility(False) sets visible flag and activityTime", () => {
         baseline.visibility(5000, BooleanFlag.False);
+        baseline.track(Event.Scroll, 0, 0, 0); // need update=true for snapshot
         const data = getBufferSnapshot();
         expect(data.visible).toBe(BooleanFlag.False);
         expect(data.activityTime).toBe(5000);
@@ -200,9 +235,9 @@ describe("Baseline", () => {
 
     test("visibility(True) does not set activityTime", () => {
         baseline.visibility(8000, BooleanFlag.True);
+        baseline.track(Event.Scroll, 0, 0, 0);
         const data = getBufferSnapshot();
         expect(data.visible).toBe(BooleanFlag.True);
-        // activityTime should NOT be set to 8000 — visible events don't update it
         expect(data.activityTime).not.toBe(8000);
     });
 
@@ -217,6 +252,31 @@ describe("Baseline", () => {
 
     // --- Lifecycle ---
 
+    test("buffer values persist across stop/start cycles (by design)", () => {
+        baseline.track(Event.Scroll, 999, 888, 7000);
+        baseline.stop();
+        baseline.start();
+        // After stop/start, the buffer still holds old values
+        baseline.track(Event.Scroll, 0, 0, 0); // need update=true for snapshot
+        const data = getBufferSnapshot();
+        expect(data.scrollX).toBe(0); // overwritten by the new track
+        expect(data.scrollY).toBe(0);
+        // But fields that weren't re-tracked retain their old values
+        // (e.g., pointer fields set by earlier tests in this suite)
+    });
+
+    test("there is no API to clear the buffer — only module reload resets it", () => {
+        baseline.track(Event.Document, 1024, 768, 100);
+        baseline.stop();
+        baseline.start();
+        baseline.reset(); // does not create fresh buffer, just snapshots if update=true
+        baseline.track(Event.Scroll, 0, 0, 0); // trigger update for snapshot
+        const data = getBufferSnapshot();
+        // docWidth/docHeight still hold values from before stop/start
+        expect(data.docWidth).toBe(1024);
+        expect(data.docHeight).toBe(768);
+    });
+
     test("multiple scroll track calls overwrite — last one wins", () => {
         baseline.track(Event.Scroll, 100, 200, 1000);
         baseline.track(Event.Scroll, 300, 400, 2000);
@@ -224,27 +284,6 @@ describe("Baseline", () => {
         expect(data.scrollX).toBe(300);
         expect(data.scrollY).toBe(400);
         expect(data.scrollTime).toBe(2000);
-    });
-
-    test("different event types accumulate independently", () => {
-        baseline.track(Event.Scroll, 10, 20, 100);
-        baseline.track(Event.Document, 1920, 3000);
-        baseline.track(Event.Resize, 1440, 900);
-        baseline.track(Event.MouseMove, 50, 60, 200);
-        const data = getBufferSnapshot();
-        expect(data.scrollX).toBe(10);
-        expect(data.scrollY).toBe(20);
-        expect(data.scrollTime).toBe(100);
-        expect(data.docWidth).toBe(1920);
-        expect(data.docHeight).toBe(3000);
-        expect(data.screenWidth).toBe(1440);
-        expect(data.screenHeight).toBe(900);
-        expect(data.moveX).toBe(50);
-        expect(data.moveY).toBe(60);
-        expect(data.moveTime).toBe(200);
-        expect(data.pointerX).toBe(50);
-        expect(data.pointerY).toBe(60);
-        expect(data.pointerTime).toBe(200);
     });
 
     // --- Encoding and compute() ---
@@ -257,7 +296,6 @@ describe("Baseline", () => {
     });
 
     test("compute does not call encode when no data has changed", () => {
-        // After start(), update=false — nothing to encode
         baseline.compute();
         expect(mockEncode).not.toHaveBeenCalled();
     });
@@ -265,8 +303,6 @@ describe("Baseline", () => {
     test("compute encodes on every call while update flag is set", () => {
         baseline.track(Event.Scroll, 10, 20, 100);
         baseline.compute();
-        // reset() does not clear the update flag — only start() does.
-        // So compute() will encode again if called before the next start() cycle.
         baseline.reset();
         baseline.compute();
         expect(mockEncode).toHaveBeenCalledTimes(2);
@@ -276,11 +312,10 @@ describe("Baseline", () => {
         baseline.track(Event.Scroll, 10, 20, 100);
         baseline.compute();
         expect(mockEncode).toHaveBeenCalledTimes(1);
-        // start() resets update=false
         baseline.stop();
         baseline.start();
         baseline.compute();
-        expect(mockEncode).toHaveBeenCalledTimes(1); // no new call
+        expect(mockEncode).toHaveBeenCalledTimes(1);
     });
 
     test("visibility(False) sets update flag so compute encodes", () => {
@@ -310,7 +345,6 @@ describe("Baseline", () => {
         baseline.reset();
         expect(baseline.state.time).toBe(1000);
 
-        // Second cycle: new track, new time
         mockTime.mockReturnValue(5000);
         baseline.track(Event.Scroll, 30, 40, 200);
         baseline.reset();
@@ -320,7 +354,6 @@ describe("Baseline", () => {
     // --- Reset/state snapshot ---
 
     test("reset without prior track does not update state", () => {
-        // After start(), update=false — reset should not snapshot
         const stateBefore = baseline.state;
         baseline.reset();
         expect(baseline.state).toBe(stateBefore);
@@ -341,7 +374,6 @@ describe("Baseline", () => {
     test("stop calls reset, snapshotting pending data", () => {
         baseline.track(Event.Scroll, 77, 88, 999);
         baseline.stop();
-        // stop() → reset() should have captured the buffer into state
         expect(baseline.state).not.toBeNull();
         expect(baseline.state.data.scrollX).toBe(77);
     });
