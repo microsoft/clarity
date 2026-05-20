@@ -113,6 +113,13 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
         case Data.Event.Unload:
             let unloadData: Interaction.UnloadData = { name: tokens[2] as string, persisted: tokens[3] as number };
             return { time, event, data: unloadData };
+        case Data.Event.Chat: {
+            // Wire order: [time, Event.Chat, action, isBrandAgent, cid]
+            const isBrandAgent = (tokens[3] as number) !== 0;
+            const cid = (tokens[4] as string) || null;
+            let chatData = { action: tokens[2] as number, isBrandAgent, cid };
+            return { time, event, data: chatData };
+        }
     }
     return null;
 }

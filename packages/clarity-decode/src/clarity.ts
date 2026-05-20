@@ -1,9 +1,9 @@
 import { Data, version } from "clarity-js";
-import { BaselineEvent, BrandAgentEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
+import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
 import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent, ConsentEvent } from "../types/data";
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
-import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent } from "../types/interaction";
+import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent, ChatEvent } from "../types/interaction";
 import { CustomElementEvent, DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
 import { NavigationEvent } from "../types/performance";
 
@@ -153,6 +153,10 @@ export function decode(input: string): DecodedPayload {
                 if (payload.focus === undefined) { payload.focus = []; }
                 payload.focus.push(interaction.decode(entry) as FocusEvent);
                 break;
+            case Data.Event.Chat:
+                if (payload.chat === undefined) { payload.chat = []; }
+                payload.chat.push(interaction.decode(entry) as ChatEvent);
+                break;
             case Data.Event.Box:
                 /* Deprecated - Intentionally, no-op. For backward compatibility. */
                 break;
@@ -204,10 +208,6 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.CustomElement:
                 if (payload.customElement === undefined) { payload.customElement = []; }
                 payload.customElement.push(layout.decode(entry) as CustomElementEvent);
-                break;
-            case Data.Event.BrandAgent:
-                if (payload.brandAgent === undefined) { payload.brandAgent = []; }
-                payload.brandAgent.push(data.decode(entry) as BrandAgentEvent);
                 break;
             default:
                 if (typeof entry[1] === "number" && entry[1] < 200) {

@@ -11,7 +11,6 @@ import { start as interStart, stop as interStop } from "@src/interaction";
 import { start as layoutStart, stop as layoutStop } from "@src/layout";
 import { start as perfStart, stop as perfStop } from "@src/performance";
 import { start as dynStart, stop as dynStop } from "@src/core/dynamic";
-import { start as brandAgentStart, stop as brandAgentStop } from "@src/dynamic/brandagent";
 export { version };
 export { consent, consentv2, event, identify, set, upgrade, metadata, signal, maxMetric, dlog } from "@src/data";
 export { queue } from "@src/data/upload";
@@ -25,8 +24,7 @@ const modules: Module[] = [
   { start: layoutStart, stop: layoutStop },
   { start: interStart, stop: interStop },
   { start: perfStart, stop: perfStop },
-  { start: dynStart, stop: dynStop },
-  { start: brandAgentStart, stop: brandAgentStop }
+  { start: dynStart, stop: dynStop }
 ];
 
 export function start(config: Config = null): void {
