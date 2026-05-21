@@ -72,7 +72,8 @@ function run(): void {
             run();
         }).catch((error: Error): void => {
             // Same invariant: always free activeTask and drain, regardless of page context.
-            if (error) { internal.log(Code.RunTask, Severity.Warning, error.name, error.message, error.stack); }
+            let stale = entry.id !== metadata.id();
+            if (!stale && error) { internal.log(Code.RunTask, Severity.Warning, error.name, error.message, error.stack); }
             activeTask = null;
             run();
         });
