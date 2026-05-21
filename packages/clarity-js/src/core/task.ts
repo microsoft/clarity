@@ -64,16 +64,14 @@ function run(): void {
     if (entry) {
         activeTask = entry;
         entry.task().then((): void => {
-            // Bail out if the context in which this task was operating is different from the current page
-            // An example scenario where task could span across pages is Single Page Applications (SPA)
-            // A task that started on page #1, but completes on page #2
-            if (entry.id !== metadata.id()) { return; }
-            entry.resolve();
-            activeTask = null; // Reset active task back to null now that the promise is resolved
+            // Skip resolve() if the page context changed, but always free activeTask and drain
+            // the queue — otherwise a stale entry pins activeTask and wedges the scheduler.
+            let stale = entry.id !== metadata.id();
+            if (!stale) { entry.resolve(); }
+            activeTask = null;
             run();
         }).catch((error: Error): void => {
-            // If one of the scheduled tasks failed, log, recover and continue processing rest of the tasks
-            if (entry.id !== metadata.id()) { return; }
+            // Same invariant: always free activeTask and drain, regardless of page context.
             if (error) { internal.log(Code.RunTask, Severity.Warning, error.name, error.message, error.stack); }
             activeTask = null;
             run();
