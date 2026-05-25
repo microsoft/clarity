@@ -24,13 +24,12 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "@types/jest": "^30.0.0",
-    "jest": "^30.4.2",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
     "lerna": "^9.0.7",
     "parse-url": "^8.1.0",
     "ts-jest": "^29.4.9",
-    "ts-node": "^10.9.2",
-    "tsx": "^4.21.0"
+    "ts-node": "^10.9.2"
   },
   "resolutions": {
     "parse-url": "^8.1.0"

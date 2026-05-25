@@ -152,11 +152,9 @@ test.describe("Baseline scroll filtering", () => {
         const decoded = payloads.map(x => decode(x));
         const baselines = getBaselines(decoded);
 
-        // If baseline was captured, scroll should still reflect the document position (200), not the nested (400)
-        if (baselines.length > 0) {
-            const lastBaseline = baselines[baselines.length - 1];
-            expect(lastBaseline.data.scrollY).toBe(200);
-        }
+        expect(baselines.length).toBeGreaterThan(0);
+        const lastBaseline = baselines[baselines.length - 1];
+        expect(lastBaseline.data.scrollY).toBe(200);
     });
 
     test("nested scroll followed by document scroll updates baseline to document position", async ({ page }) => {

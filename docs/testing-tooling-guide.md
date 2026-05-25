@@ -406,13 +406,11 @@ Playwright tests don't just run *in* a browser — they run *outside* the browse
 
 clarity-js has two distinct testing needs:
 
-1. **Unit tests** (test individual modules like `baseline.ts`): Vitest in Node.js mode is ideal. Mock browser globals, import source directly, test logic fast. This is what we set up with `yarn test:unit`.
+1. **Unit tests** (test individual modules like `baseline.ts`): Jest with ts-jest is ideal. Mock browser globals, import source directly, test logic fast. This is what we set up with `yarn test:unit`.
 
 2. **Integration/E2E tests** (test the full pipeline — instrument a page, collect events, decode payloads): Playwright is the right tool. You need to load `clarity.min.js` in a real browser, drive real user interactions, and capture the upload payloads. These tests verify that the built bundle works correctly end-to-end.
 
-Vitest browser mode occupies an awkward middle ground for clarity-js — it gives you a real DOM but not the page-control capabilities you need for integration tests. It would be useful if you had modules that use DOM APIs directly (like `MutationObserver` wrappers) and want faster feedback than full Playwright tests, but it still uses Playwright under the hood so the speed advantage is marginal.
-
-**Recommendation:** Keep Playwright for integration tests, use Vitest (Node.js mode) for unit tests. They complement each other.
+**Recommendation:** Keep Playwright for integration tests, use Jest (with ts-jest) for unit tests. They complement each other.
 
 ---
 
@@ -515,14 +513,12 @@ export default {
 
 ### Recommended Path
 
-**Vitest + auto-generated runtime types (Option A)** gives the best balance:
+**Jest + ts-jest** gives the best balance:
 
-- Fast test execution (esbuild)
+- Uses the full TypeScript compiler, so `const enum` in `.d.ts` files works without workarounds
 - Direct source imports (no IIFE, no decode round-trip)
 - No production code changes (no bundle size impact)
-- Generated types are a build artifact, not a maintenance surface
-
-The generator script is the main upfront cost, but it's a one-time investment that enables proper unit testing of all clarity-js internals.
+- No generated types or custom scripts to maintain
 
 ---
 
