@@ -26,6 +26,8 @@ let config: Config = {
     includeSubdomains: true,
     modules: [],
     diagnostics: false,
+    enforceCoverage: false,
+    enforceCoverageConsentSource: null,
 };
 
 export default config;

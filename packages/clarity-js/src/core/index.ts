@@ -1,5 +1,5 @@
 import { Config } from "@clarity-types/core";
-import { Constant } from "@clarity-types/data";
+import { ConsentSource, Constant } from "@clarity-types/data";
 import configuration from "@src/core/config";
 import * as event from "@src/core/event";
 import * as history from "@src/core/history";
@@ -33,17 +33,36 @@ export function active(): boolean {
     return status;
 }
 
-export function check(): boolean {
+export function gpcBlocked(): boolean {
     try {
-        let globalPrivacyControlSet = navigator && "globalPrivacyControl" in navigator && navigator['globalPrivacyControl'] == true;
-        return status === false &&
+        return navigator && "globalPrivacyControl" in navigator && navigator["globalPrivacyControl"] === true;
+    } catch (ex) {
+        return false;
+    }
+}
+
+export function check(config: Config = null): boolean {
+    try {
+        let canStart = status === false &&
             typeof Promise !== "undefined" &&
             window["MutationObserver"] &&
             document["createTreeWalker"] &&
             "now" in Date &&
             "now" in performance &&
-            typeof WeakMap !== "undefined" &&
-            !globalPrivacyControlSet
+            typeof WeakMap !== "undefined";
+
+        if (!canStart) { return false; }
+
+        if (gpcBlocked()) {
+            if (config && config.enforceCoverage) {
+                config.track = false;
+                config.enforceCoverageConsentSource = ConsentSource.CoverageEnforcementGPC;
+                return true;
+            }
+            return false;
+        }
+
+        return true;
     } catch (ex) {
         return false;
     }

@@ -142,6 +142,8 @@ export interface Config {
     includeSubdomains?: boolean;
     modules?: string[];
     diagnostics?: boolean;
+    enforceCoverage?: boolean;
+    enforceCoverageConsentSource?: number;
 }
 
 export const enum Constant {
