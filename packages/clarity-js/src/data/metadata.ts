@@ -82,8 +82,14 @@ export function start(): void {
   // Track consent config
   // If consent status is not already set, initialize it based on project configuration. Otherwise, use the existing consent status.
   if (consentStatus === null) {
+    let source: ConsentSource = u.consent ? ConsentSource.Cookie : ConsentSource.Implicit;
+
+    if (config.enforceCoverageConsentSource != null) {
+        source = config.enforceCoverageConsentSource as ConsentSource;
+    }
+
     consentStatus = {
-      source: u.consent ? ConsentSource.Cookie : ConsentSource.Implicit,
+      source,
       ad_Storage: config.track ? Constant.Granted : Constant.Denied,
       analytics_Storage: config.track ? Constant.Granted : Constant.Denied,
     };

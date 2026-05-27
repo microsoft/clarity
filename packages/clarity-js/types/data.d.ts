@@ -394,6 +394,8 @@ export const enum ConsentSource {
     APIv2 = 5,
     Cookie = 6,
     Default = 7,
+    CoverageEnforcementTOptOut = 8,
+    CoverageEnforcementGPC = 9,
     // 100-255 Reserved for CMP integration, both internal and external
     ClarityShopifyPixel = 100,
     ClarityShopifyApp = 101,
