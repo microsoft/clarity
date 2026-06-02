@@ -29,7 +29,7 @@ const modules: Module[] = [
 
 export function start(config: Config = null): void {
   // Check that browser supports required APIs and we do not attempt to start Clarity multiple times
-  if (core.check()) {
+  if (core.check(config)) {
     core.config(config);
     core.start();
     data.start();
