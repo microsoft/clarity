@@ -33,7 +33,7 @@ export function active(): boolean {
     return status;
 }
 
-export function check(): boolean {
+export function check(config: Config = null): boolean {
     try {
         let globalPrivacyControlSet = navigator && "globalPrivacyControl" in navigator && navigator['globalPrivacyControl'] == true;
         return status === false &&
@@ -43,7 +43,7 @@ export function check(): boolean {
             "now" in Date &&
             "now" in performance &&
             typeof WeakMap !== "undefined" &&
-            !globalPrivacyControlSet
+            (!globalPrivacyControlSet || (config && config.diagnostics))
     } catch (ex) {
         return false;
     }
