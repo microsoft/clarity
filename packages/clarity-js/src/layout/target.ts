@@ -15,7 +15,7 @@ export function target(evt: UIEvent): Node {
 
 export function metadata(node: Node, event: Event, text: string = null): TargetMetadata {
     // If the node is null, we return a reserved value for id: 0. Valid assignment of id begins from 1+.
-    let output: TargetMetadata = { id: 0, hash: null, privacy: Privacy.Text };
+    let output: TargetMetadata = { id: 0, hash: null, privacy: Privacy.Text, region: -1 };
     if (node) {
         let value = dom.get(node);
         if (value !== null) {
@@ -23,6 +23,7 @@ export function metadata(node: Node, event: Event, text: string = null): TargetM
             output.id = value.id;
             output.hash = value.hash;
             output.privacy = metadata.privacy;
+            output.region = value.region || -1;
             if (value.region) { region.track(value.region, event); }
             if (metadata.fraud) { fraud.check(metadata.fraud, value.id, text || value.data.value); }
         }

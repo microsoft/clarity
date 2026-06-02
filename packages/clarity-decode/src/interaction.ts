@@ -18,7 +18,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
                 y: tokens[4] as number,
-                id: tokens[5] as number | undefined,
+                id: typeof tokens[5] === "number" ? tokens[5] as number : undefined,
+                isPrimary: tokens[6] === undefined ? undefined : tokens[6] === "true",
             };
             return { time, event, data: pointerData };
         case Data.Event.Click:
