@@ -3,7 +3,7 @@ import { ResizeData, Setting } from "@clarity-types/interaction";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { bind } from "@src/core/event";
 import throttle from "@src/core/throttle";
-import encode from "./encode";
+import encode from "@src/interaction/encode";
 import { schedule } from "@src/core/task";
 
 export let data: ResizeData;
