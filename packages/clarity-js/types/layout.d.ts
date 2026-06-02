@@ -262,7 +262,7 @@ export interface TargetMetadata {
     id: number;
     hash: [string, string];
     privacy: Privacy;
-    region?: number;
+    region: string;
 }
 
 export interface StyleSheetData {

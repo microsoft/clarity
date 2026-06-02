@@ -9,7 +9,7 @@ import { time } from "@src/core/time";
 import { iframe } from "@src/layout/dom";
 import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
-import encode from "./encode";
+import encode from "@src/interaction/encode";
 
 const UserInputTags = ["input", "textarea", "radio", "button", "canvas", "select"];
 const VM_PATTERN = /VM\d/;
