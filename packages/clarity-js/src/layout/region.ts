@@ -1,4 +1,4 @@
-import { Event, Setting } from "@clarity-types/data";
+import { Constant, Event, Setting } from "@clarity-types/data";
 import { InteractionState, RegionData, RegionState, RegionQueue, RegionVisibility } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import * as dom from "@src/layout/dom";
@@ -35,6 +35,11 @@ export function observe(node: Node, name: string): void {
             observer.observe(node as Element);
         }
     }
+}
+
+export function get(id: number): string {
+    let node = dom.getNode(id);
+    return (node && regionMap ? regionMap.get(node) : Constant.Empty) || Constant.Empty;
 }
 
 export function exists(node: Node): boolean {

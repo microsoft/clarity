@@ -33,7 +33,7 @@ export function target(evt: UIEvent): Node {
 }
 
 export function metadata(node: Node): TargetMetadata {
-    let output: TargetMetadata = { id: 0, hash: null, privacy: config.conversions ? Privacy.Sensitive : Privacy.Snapshot };
+    let output: TargetMetadata = { id: 0, hash: null, privacy: config.conversions ? Privacy.Sensitive : Privacy.Snapshot, region: Constant.Empty };
     if (node) { output.id = idMap.has(node) ? idMap.get(node) : getId(node); }
     return output;
 }

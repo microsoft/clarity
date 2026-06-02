@@ -1,4 +1,4 @@
-import { Event, Setting } from "@clarity-types/data";
+import { Constant, Event, Setting } from "@clarity-types/data";
 import { InteractionState, RegionData, RegionState, RegionQueue, RegionVisibility } from "@clarity-types/layout";
 import { time } from "@src/core/time";
 import * as dom from "@src/layout/dom";
@@ -38,13 +38,17 @@ export function observe(node: Node, name: string): void {
     }
 }
 
+export function get(id: number): string {
+    let node = dom.getNode(id);
+    return (node && regionMap ? regionMap.get(node) : Constant.Empty) || Constant.Empty;
+}
+
 export function exists(node: Node): boolean {
     // Check if regionMap is not null before looking up a node
     // Since, dom module stops after region module, it's possible that we may set regionMap to be null
     // and still attempt to call exists on a late coming DOM mutation (or addition), effectively causing a script error
     return regionMap && regionMap.has(node);
 }
-
 export function track(id: number, event: Event): void {
     let node = dom.getNode(id);
     let data = id in regions ? regions[id] : { id, visibility: RegionVisibility.Rendered, interaction: InteractionState.None, name: regionMap.get(node) };
