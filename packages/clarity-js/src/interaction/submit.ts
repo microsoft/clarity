@@ -3,7 +3,7 @@ import { SubmitState } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
-import encode from "./encode";
+import encode from "@src/interaction/encode";
 import { target } from "@src/layout/target";
 
 export let state: SubmitState[] = [];

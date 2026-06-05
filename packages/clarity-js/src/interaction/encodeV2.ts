@@ -40,6 +40,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     tokens.push(entry.data.y);
                     tokens.push(entry.data.id !== undefined ? entry.data.id : Constant.Empty);
                     tokens.push(entry.data.isPrimary === undefined ? "true" : "" + entry.data.isPrimary);
+                    tokens.push(pTarget.region || Constant.Empty);
                     queue(tokens);
                     if (entry.data.isPrimary === undefined || entry.data.isPrimary) {
                         baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
@@ -64,6 +65,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     entry.data.w, entry.data.h,
                     entry.data.tag, entry.data.class, entry.data.id, entry.data.source
                 );
+                tokens.push(cTarget.region || Constant.Empty);
                 queue(tokens);
                 timeline.track(entry.time, entry.event, cHash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
@@ -101,6 +103,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                 tokens.push(iTarget.id);
                 tokens.push(scrub.text(entry.data.value, "input", iTarget.privacy, false, entry.data.type));
                 tokens.push(entry.data.trust);
+                tokens.push(iTarget.region || Constant.Empty);
                 queue(tokens);
             }
             input.reset();
@@ -128,6 +131,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                         sTarget.id, entry.data.x, entry.data.y,
                         sTopHash, sBottomHash, entry.data.trust
                     );
+                    tokens.push(sTarget.region || Constant.Empty);
                     queue(tokens);
                     baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
                 }

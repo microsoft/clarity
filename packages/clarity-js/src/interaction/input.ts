@@ -5,7 +5,7 @@ import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { get } from "@src/layout/dom";
-import encode from "./encode";
+import encode from "@src/interaction/encode";
 import { target } from "@src/layout/target";
 
 let timeout: number = null;

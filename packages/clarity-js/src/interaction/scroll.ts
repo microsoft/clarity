@@ -7,7 +7,7 @@ import { clearTimeout, setTimeout } from "@src/core/timeout";
 import throttle from "@src/core/throttle";
 import { iframe } from "@src/layout/dom";
 import { target, metadata } from "@src/layout/target";
-import encode from "./encode";
+import encode from "@src/interaction/encode";
 import * as dimension from "@src/data/dimension";
 
 export let state: ScrollState[] = [];

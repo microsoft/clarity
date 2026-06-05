@@ -182,7 +182,8 @@ export const enum Dimension {
     Timezone = 34,
     TimezoneOffset = 35,
     Consent = 36,
-    InteractionNextPaint = 37
+    InteractionNextPaint = 37,
+    GlobalPrivacyControl = 38
     // 200-300 reserved for internal use
 }
 
