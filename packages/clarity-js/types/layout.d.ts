@@ -53,7 +53,9 @@ export interface CustomElementData {
 export const enum RegionVisibility {
     Rendered = 0,
     Visible = 10,
-    ScrolledToEnd = 13
+    ScrolledToEnd = 13,
+    ViewportEnter = 14,
+    ViewportExit = 15
 }
 
 export const enum Constant {
@@ -260,6 +262,7 @@ export interface TargetMetadata {
     id: number;
     hash: [string, string];
     privacy: Privacy;
+    region: string;
 }
 
 export interface StyleSheetData {

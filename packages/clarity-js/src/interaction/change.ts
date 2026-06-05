@@ -6,7 +6,7 @@ import hash from "@src/core/hash";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { target } from "@src/layout/target";
-import encode from "./encode";
+import encode from "@src/interaction/encode";
 import { MaskExcludeList } from "@src/layout/constants";
 
 export let state: ChangeState[] = [];

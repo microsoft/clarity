@@ -149,10 +149,28 @@ async function upload(final: boolean = false): Promise<void> {
     if(!envelope.data) return;
 
     let e = JSON.stringify(envelope.envelope(last));
-    let a = "[" + analysis.join() + "]";
 
-    let p = sendPlaybackBytes ? "[" + playback.join() + "]" : Constant.Empty;
-    
+    // Rotate buffers BEFORE serializing/awaiting compress.
+    // `await compress(payload)` below yields the event loop, during which concurrent
+    // queue() calls can run. If we snapshot-then-await-then-reassign (`analysis = []`),
+    // those concurrent pushes land in the soon-to-be-orphaned array reference and are silently lost.
+    // By swapping the bindings up front, the pending arrays are local-only and concurrent pushes
+    // land in the fresh module-level arrays, where they ride out in the next upload.
+    let pendingAnalysis = analysis;
+    analysis = [];
+
+    let pendingPlayback: string[];
+    if (sendPlaybackBytes) {
+        pendingPlayback = playback;
+        playback = [];
+        playbackBytes = 0;
+        discoverBytes = 0;
+        leanLimit = false;
+    }
+
+    let a = "[" + pendingAnalysis.join() + "]";
+    let p = sendPlaybackBytes ? "[" + pendingPlayback!.join() + "]" : Constant.Empty;
+
     // For final (beacon) payloads, If size is too large, we need to remove playback data
     if (last && p.length > 0 && (e.length + a.length + p.length > Setting.MaxBeaconPayloadBytes)) {
         p = Constant.Empty;
@@ -167,15 +185,6 @@ async function upload(final: boolean = false): Promise<void> {
     let zipped = last ? null : await compress(payload);
     metric.sum(Metric.TotalBytes, zipped ? zipped.length : payload.length);
     send(payload, zipped, envelope.data.sequence, last);
-
-    // Clear out events now that payload has been dispatched
-    analysis = [];
-    if (sendPlaybackBytes) {
-        playback = [];
-        playbackBytes = 0;
-        discoverBytes = 0;
-        leanLimit = false;
-    }
 }
 
 function stringify(encoded: EncodedPayload): string {

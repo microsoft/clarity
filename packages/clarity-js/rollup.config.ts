@@ -54,6 +54,12 @@ export default [
       warn(message);
     },
     plugins: [
+      alias({
+        entries: [
+          { find: '@src/layout/region', replacement: '@src/layout/regionV2' },
+          { find: '@src/interaction/encode', replacement: '@src/interaction/encodeV2' }
+        ]
+      }),
       resolve(),
       typescript(),
       terser(terserOpts),

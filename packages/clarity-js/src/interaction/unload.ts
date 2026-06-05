@@ -3,7 +3,7 @@ import { UnloadData } from "@clarity-types/interaction";
 import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
 import { time } from "@src/core/time";
-import encode from "./encode";
+import encode from "@src/interaction/encode";
 
 export let data: UnloadData;
 

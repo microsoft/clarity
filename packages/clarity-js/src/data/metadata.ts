@@ -51,6 +51,7 @@ export function start(): void {
   dimension.log(Dimension.AncestorOrigins, ancestorOrigins);
   dimension.log(Dimension.Timezone, timezone);
   dimension.log(Dimension.TimezoneOffset, timezoneOffset);
+  dimension.log(Dimension.GlobalPrivacyControl, "" + !!(navigator && navigator["globalPrivacyControl"]));
 
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);
