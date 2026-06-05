@@ -131,7 +131,12 @@ test.describe("UA-CH userAgentData", () => {
 
     test("PlatformVersion matches UA-CH platformVersion", async ({ page }) => {
         const { uachData, clarityPlatformVersion } = await setupAndCollect(page);
-        expect(clarityPlatformVersion).toBe(uachData.platformVersion);
+        if (uachData.platformVersion) {
+            expect(clarityPlatformVersion).toBe(uachData.platformVersion);
+        } else {
+            // Headless/Linux browsers return empty platformVersion; dimension.log skips empty strings
+            expect(clarityPlatformVersion).toBeUndefined();
+        }
     });
 
     test("Model matches UA-CH model", async ({ page }) => {
