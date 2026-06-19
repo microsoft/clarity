@@ -306,7 +306,8 @@ function session(): Session {
       output.session = parts[0];
       output.count = num(parts[2]) + 1;
       output.upgrade = num(parts[3]);
-      output.upload = parts.length >= 6 ? Constant.HTTPS + parts[5] + "/" + parts[4] : Constant.HTTPS + parts[4];
+      output.upload = parts.length >= 6 ? Constant.HTTPS + parts[5] + "/" + parts[4]
+        : parts[4][0] === "/" ? parts[4] : Constant.HTTPS + parts[4];
     }
   }
   return output;
