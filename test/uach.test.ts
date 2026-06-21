@@ -1,55 +1,32 @@
 import { test, expect } from "@playwright/test";
-import { readFileSync } from "fs";
-import { pathToFileURL } from "url";
-import { resolve } from "path";
 import { decode } from "clarity-decode";
+import { markup } from "./helper";
+
+// Wire-protocol IDs mirrored from packages/clarity-js/types/data.d.ts.
+// clarity-decode declares Data.Dimension / Data.Metric as const enums (types-only),
+// so they have no runtime representation we can import here.
+const Dimension = { Platform: 22, PlatformVersion: 23, Brand: 24, Model: 25 } as const;
+const Metric = { Mobile: 27 } as const;
 
 async function setupAndCollect(page: import("@playwright/test").Page) {
-    const htmlPath = resolve(__dirname, "./html/core.html");
-    const html = readFileSync(htmlPath, "utf8");
-    await page.goto(pathToFileURL(htmlPath).toString());
-
-    await page.setContent(html.replace("</body>", `
-        <script>
-          window.payloads = [];
-          window.uachData = null;
-
-          if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
-            window.uachData = {
-              brands: navigator.userAgentData.brands.map(function(b) {
-                return { brand: b.brand, version: b.version };
-              }),
-              platform: navigator.userAgentData.platform,
-              mobile: navigator.userAgentData.mobile
+    // Capture navigator.userAgentData ground truth before clarity loads.
+    await page.addInitScript(() => {
+        (window as any).uachData = null;
+        const ua = (navigator as any).userAgentData;
+        if (ua && ua.getHighEntropyValues) {
+            (window as any).uachData = {
+                brands: ua.brands.map((b: any) => ({ brand: b.brand, version: b.version })),
+                platform: ua.platform,
+                mobile: ua.mobile,
             };
-            navigator.userAgentData.getHighEntropyValues(
-              ["model", "platformVersion"]
-            ).then(function(ua) {
-              window.uachData.platformVersion = ua.platformVersion;
-              window.uachData.model = ua.model;
+            ua.getHighEntropyValues(["model", "platformVersion"]).then((hv: any) => {
+                (window as any).uachData.platformVersion = hv.platformVersion;
+                (window as any).uachData.model = hv.model;
             });
-          }
+        }
+    });
 
-          ${readFileSync(resolve(__dirname, "../packages/clarity-js/build/clarity.min.js"), "utf8")};
-          clarity("start", {
-            delay: 100,
-            content: true,
-            fraud: [],
-            regions: [],
-            mask: [],
-            unmask: [],
-            upload: function(payload) { window.payloads.push(payload); window.clarity("upgrade", "test"); },
-            projectId: "test"
-          });
-        </script>
-        </body>
-    `));
-
-    await page.hover("#two");
-    await page.click("#child");
-    await page.locator("#search").fill("");
-    await page.locator("#search").type("query");
-    await page.waitForFunction("payloads && payloads.length > 2");
+    const encoded = await markup(page, "core.html");
     await page.waitForFunction("window.uachData !== null && window.uachData.platformVersion !== undefined");
 
     const uachData = await page.evaluate("window.uachData") as {
@@ -60,11 +37,8 @@ async function setupAndCollect(page: import("@playwright/test").Page) {
         mobile: boolean;
     };
 
-    const encoded: string[] = await page.evaluate("payloads");
     const decoded = encoded.map(x => decode(x));
 
-    // Dimension keys: Platform=22, PlatformVersion=23, Brand=24, Model=25
-    // Metric keys: Mobile=27
     const clarityBrands: string[] = [];
     let clarityPlatform: string | undefined;
     let clarityPlatformVersion: string | undefined;
@@ -74,16 +48,16 @@ async function setupAndCollect(page: import("@playwright/test").Page) {
         if (payload.dimension) {
             for (const event of payload.dimension) {
                 if (event.data) {
-                    if (event.data[24]) { clarityBrands.push(...event.data[24]); }
-                    if (event.data[22]) { clarityPlatform = event.data[22][0]; }
-                    if (event.data[23]) { clarityPlatformVersion = event.data[23][0]; }
-                    if (event.data[25]) { clarityModel = event.data[25][0]; }
+                    if (event.data[Dimension.Brand]) { clarityBrands.push(...event.data[Dimension.Brand]); }
+                    if (event.data[Dimension.Platform]) { clarityPlatform = event.data[Dimension.Platform][0]; }
+                    if (event.data[Dimension.PlatformVersion]) { clarityPlatformVersion = event.data[Dimension.PlatformVersion][0]; }
+                    if (event.data[Dimension.Model]) { clarityModel = event.data[Dimension.Model][0]; }
                 }
             }
         }
         if (payload.metric) {
             for (const event of payload.metric) {
-                if (event.data && event.data[27] !== undefined) { clarityMobile = event.data[27]; }
+                if (event.data && event.data[Metric.Mobile] !== undefined) { clarityMobile = event.data[Metric.Mobile]; }
             }
         }
     }
