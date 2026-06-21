@@ -23,7 +23,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
         case Event.Document:
             let d = doc.data;
             tokens.push(d.width, d.height);
-            baseline.track(type, d.width, d.height);
+            baseline.track(type, d.width, d.height, eventTime);
             queue(tokens);
             break;
         case Event.Region:
