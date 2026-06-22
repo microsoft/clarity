@@ -45,8 +45,8 @@ function recompute(event: UIEvent = null): void {
     // Edge doesn't support scrollTop position on document.documentElement.
     // For cross browser compatibility, looking up pageYOffset on window if the scroll is on document.
     // And, if for some reason that is not available, fall back to looking up scrollTop on document.documentElement.
-    let x = element === de && "pageXOffset" in w ? Math.round(w.pageXOffset) : Math.round((element as HTMLElement).scrollLeft);
-    let y = element === de && "pageYOffset" in w ? Math.round(w.pageYOffset) : Math.round((element as HTMLElement).scrollTop);
+    let x = element === de && "pageXOffset" in w ? Math.round(w.pageXOffset) : Math.round((element as HTMLElement)?.scrollLeft ?? 0);
+    let y = element === de && "pageYOffset" in w ? Math.round(w.pageYOffset) : Math.round((element as HTMLElement)?.scrollTop ?? 0);
     const width = window.innerWidth;
     const height = window.innerHeight;
     const xPosition = width / 3;

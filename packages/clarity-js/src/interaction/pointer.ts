@@ -34,8 +34,8 @@ export function observe(root: Node): void {
 function mouse(event: Event, root: Node, evt: MouseEvent): void {
     let frame = iframe(root);
     let d = frame && frame.contentDocument ? frame.contentDocument.documentElement : document.documentElement;
-    let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
-    let y = "pageY" in evt ? Math.round(evt.pageY) : ("clientY" in evt ? Math.round(evt["clientY"] + d.scrollTop) : null);
+    let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + (d?.scrollLeft || 0)) : null);
+    let y = "pageY" in evt ? Math.round(evt.pageY) : ("clientY" in evt ? Math.round(evt["clientY"] + (d?.scrollTop || 0)) : null);
     // In case of iframe, we adjust (x,y) to be relative to top parent's origin
     if (frame) {
         let distance = offset(frame);
@@ -56,8 +56,8 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
     if (touches) {
         for (let i = 0; i < touches.length; i++) {
             let entry = touches[i];
-            let x = "clientX" in entry ? Math.round(entry["clientX"] + d.scrollLeft) : null;
-            let y = "clientY" in entry ? Math.round(entry["clientY"] + d.scrollTop) : null;
+            let x = "clientX" in entry ? Math.round(entry["clientX"] + (d?.scrollLeft || 0)) : null;
+            let y = "clientY" in entry ? Math.round(entry["clientY"] + (d?.scrollTop || 0)) : null;
             x = x && frame ? x + Math.round(frame.offsetLeft) : x;
             y = y && frame ? y + Math.round(frame.offsetTop) : y;
 
