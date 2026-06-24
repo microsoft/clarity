@@ -6,6 +6,15 @@ export const enum Action {
   AgentMinimized,
   AgentMessage,
   HumanMessage,
+  BubbleShown,
+  NudgeClicked,
+}
+
+// Event-bus contract shared with the BrandAgent host page.
+// Must stay in sync with the consumer side.
+export interface BrandAgentEvent {
+  action: Action;
+  cid?: string;
 }
 
 export const enum AuthorType {

@@ -20,6 +20,11 @@ declare global {
         args: [action: string, eventName: string, callback: (data: any) => void]
       ) => void;
     };
+    BrandAgentClarity?: {
+      on: (eventName: string, callback: (data: any) => void) => void;
+      off: (eventName: string, callback: (data: any) => void) => void;
+      emit(eventName: string, event: any): void;
+    };
   }
 
   interface Function {
