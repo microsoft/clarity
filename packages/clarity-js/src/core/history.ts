@@ -8,11 +8,11 @@ import * as metric from "@src/data/metric";
 let pushState = null;
 let replaceState = null;
 let url = null;
-let count = 0;
+let depth = 0;
 
 export function start(): void {
     url = getCurrentUrl();
-    count = 0;
+    depth = 0;
     bind(window, "popstate", compute);
     pushState = proxyHistory(pushState, "pushState");
     replaceState = proxyHistory(replaceState, "replaceState");
@@ -23,8 +23,19 @@ function proxyHistory(original: Function, method: string): Function {
         try {
             original = history[method];
             history[method] = function(): void {
-                original.apply(this, arguments);
-                if (core.active() && check()) {
+                // Cap re-entrancy so a foreign history wrapper (e.g. Chrome for iOS) that
+                // re-enters this proxy can't recurse until the stack overflows.
+                if (depth >= Setting.CallStackDepth) {
+                    internal.log(Code.CallStackDepth, Severity.Info);
+                    return;
+                }
+                depth++;
+                try {
+                    original.apply(this, arguments);
+                } finally {
+                    depth--;
+                }
+                if (core.active()) {
                     compute();
                 }
             };
@@ -36,16 +47,7 @@ function proxyHistory(original: Function, method: string): Function {
     return original;
 }
 
-function check(): boolean {
-    if (count++ > Setting.CallStackDepth) {
-        internal.log(Code.CallStackDepth, Severity.Info);
-        return false;
-    }
-    return true;
-}
-
 function compute(): void {
-    count = 0; // Reset the counter
     if (url !== getCurrentUrl()) {
         // If the url changed, start tracking it as a new page
         clarity.stop();
@@ -64,5 +66,5 @@ function getCurrentUrl(): string {
 
 export function stop(): void {
     url = null;
-    count = 0;
+    depth = 0;
 }
