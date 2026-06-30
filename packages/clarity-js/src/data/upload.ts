@@ -303,7 +303,9 @@ function done(sequence: number): void {
 function delay(): number {
     // Progressively increase delay as we continue to send more payloads from the client to the server
     // If we are not uploading data to a server, and instead invoking UploadCallback, in that case keep returning configured value
-    let gap = config.lean === false && discoverBytes > 0 ? Setting.MinUploadDelay : (envelope.data ? envelope.data.sequence * config.delay : Setting.MinUploadDelay);
+    let gap = config.lean === false && discoverBytes > 0
+        ? Setting.MinUploadDelay
+        : (envelope.data ? envelope.data.sequence * config.delay : Setting.MinUploadDelay);
     return typeof config.upload === Constant.String ? Math.max(Math.min(gap, Setting.MaxUploadDelay), Setting.MinUploadDelay) : config.delay;
 }
 
