@@ -51,7 +51,29 @@ export function observe(node: Document | ShadowRoot): void {
   try {
 
     let m = api(Constant.MutationObserver);
-    let observer = m in window ? new window[m](measure(handle) as MutationCallback) : null;
+    // For same-origin iframe documents, host the MutationObserver and its callback in the
+    // iframe's own realm. Otherwise, a parent-realm callback reading record.addedNodes[i]
+    // causes Chrome to materialize the iframe's node wrappers in the parent realm, which
+    // breaks `instanceof Text` (and similar identity checks) inside the iframe.
+    // See https://github.com/microsoft/clarity/issues/1049
+    let view = (node as Document).defaultView as any;
+    let target: any = view && view !== window && m in view ? view : window;
+    let callback: MutationCallback;
+    if (target === window) {
+      callback = measure(handle) as MutationCallback;
+    } else {
+      target.__clr = target.__clr || {};
+      target.__clr.handle = measure(handle);
+      try {
+        // Function constructor produces a function in the iframe's realm.
+        callback = new target.Function("r", "this.__clr.handle(r);").bind(target);
+      } catch {
+        // Strict CSP can block Function(); preserve existing behavior in that case.
+        target = window;
+        callback = measure(handle) as MutationCallback;
+      }
+    }
+    let observer = m in target ? new target[m](callback) : null;
     if (observer) {
       observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
       observedNodes.set(node, observer);
@@ -60,7 +82,7 @@ export function observe(node: Document | ShadowRoot): void {
     if (node['defaultView']) {
       proxyStyleRules(node['defaultView']);
     }
-    
+
   } catch (e) {
     internal.log(Code.MutationObserver, Severity.Info, e ? e.name : null);
   }
