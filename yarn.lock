@@ -794,6 +794,11 @@
   resolved "https://registry.yarnpkg.com/@sigstore/core/-/core-3.1.0.tgz#b418de73f56333ad9e369b915173d8c98e9b96d5"
   integrity sha512-o5cw1QYhNQ9IroioJxpzexmPjfCe7gzafd2RY3qnMpxr4ZEja+Jad/U8sgFpaue6bOaF+z7RVkyKVV44FN+N8A==
 
+"@sigstore/core@^3.2.1":
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/@sigstore/core/-/core-3.2.1.tgz#4efd4ab0f59e768b6daf65612024ba925787de72"
+  integrity sha512-qRsxPnCrbC/puegGxKuynfnxgLiHqWStrSjxkoB4YKqq3Z3s4cyZyj42ZdWFAEblNP65C+rBH8EuREHIXoi83g==
+
 "@sigstore/protobuf-specs@^0.5.0":
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@sigstore/protobuf-specs/-/protobuf-specs-0.5.0.tgz#e5f029edcb3a4329853a09b603011e61043eb005"
@@ -820,12 +825,12 @@
     tuf-js "^4.1.0"
 
 "@sigstore/verify@^3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@sigstore/verify/-/verify-3.1.0.tgz#4046d4186421db779501fe87fa5acaa5d4d21b08"
-  integrity sha512-mNe0Iigql08YupSOGv197YdHpPPr+EzDZmfCgMc7RPNaZTw5aLN01nBl6CHJOh3BGtnMIj83EeN4butBchc8Ag==
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/@sigstore/verify/-/verify-3.1.1.tgz#13c1c1cff28fe81f662de29d85ba5ae048fcbd8d"
+  integrity sha512-qv7+G3J2cc6wwFj3yKvXOamzqhMwSk1ogPGmhpS8iXllcPrJaIIBA+4HbttlHVu1pqWTdmaCH/WE7UOC51kdoA==
   dependencies:
     "@sigstore/bundle" "^4.0.0"
-    "@sigstore/core" "^3.1.0"
+    "@sigstore/core" "^3.2.1"
     "@sigstore/protobuf-specs" "^0.5.0"
 
 "@sinclair/typebox@^0.34.0":
