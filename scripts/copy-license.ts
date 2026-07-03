@@ -20,6 +20,6 @@ try {
     copyFileSync(source, destination);
     console.log(`Copied LICENSE to ${path.relative(repoRoot, destination)}`);
 } catch (error) {
-    console.error(`Failed to copy LICENSE from ${source}: ${(error as Error).message}`);
+    console.error(`Failed to copy LICENSE from ${source} to ${destination}: ${(error as Error).message}`);
     process.exit(1);
 }
