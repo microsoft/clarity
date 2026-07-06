@@ -81,8 +81,8 @@ test.describe("animation - pseudo-element capture", () => {
         });
 
         // Sanity check: the browser supports animating a pseudo-element via WAAPI.
+        test.skip(result.pseudoElementSet !== "::before", "KeyframeEffect pseudoElement option not supported in this browser");
         expect(result.pseudoElementSet).toBe("::before");
-
         // Clarity must never read keyframes/timing for a pseudo-element effect.
         const pseudoKeyframeCalls = result.getKeyframesPseudos.filter((p) => p !== "(none)");
         const pseudoTimingCalls = result.getTimingPseudos.filter((p) => p !== "(none)");
