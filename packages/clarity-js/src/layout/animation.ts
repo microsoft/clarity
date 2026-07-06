@@ -89,7 +89,10 @@ function trackAnimationOperation(animation: Animation, name: string) {
     if (core.active()) {
         let effect = <KeyframeEffect>animation.effect;
         let target = effect?.target ? getId(effect.target) : null;
-        if (target !== null && effect.getKeyframes && effect.getTiming) {
+        // Skip pseudo-element animations (e.g. ::view-transition-*, ::before). Calling
+        // getKeyframes()/getTiming() on a pseudo-element-targeted effect crashes Firefox's
+        // content process during View Transitions, and pseudo animations aren't replayable anyway.
+        if (effect && target !== null && !effect.pseudoElement && effect.getKeyframes && effect.getTiming) {
             if (!animation[animationId]) {
                 animation[animationId] = shortid();
                 animation[operationCount] = 0;
