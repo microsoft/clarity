@@ -197,6 +197,7 @@ export function consentv2(consentState: ConsentState = defaultStatus, source: nu
   if (core.active() && consentData.analytics_Storage) {
     config.track = true;
     track(user(), BooleanFlag.True);
+    dimension.log(Dimension.TabId, tab());
     save();
   }
 

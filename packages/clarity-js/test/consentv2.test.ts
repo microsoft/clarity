@@ -33,6 +33,7 @@ const Constant = {
     Denied: "denied",
     CookieKey: "_clck",
     SessionKey: "_clsk",
+    TabKey: "_cltk",
 } as const;
 
 const ConsentSource = {
@@ -567,6 +568,46 @@ test.describe("consentv2 - Production API", () => {
         expect(updatedResult.hasClckCookie).toBe(true);
         expect(updatedResult.clskCookieValue).not.toBe("");
         expect(updatedResult.clckCookieValue).not.toBe("");
+    });
+
+    test("consentv2 assigns a stable tab id on consent grant: track=false → _cltk persisted", async ({ page }) => {
+        // sessionStorage is disabled inside data: URLs, so serve the page from a real (https) origin
+        await page.route("https://clarity.test/**", (route) => route.fulfill({
+            contentType: "text/html",
+            body: "<!DOCTYPE html><html><head></head><body></body></html>"
+        }));
+        await page.goto("https://clarity.test/");
+
+        const clarityJs = readFileSync(clarityJsPath, "utf-8");
+        await page.evaluate((code) => { eval(code); }, clarityJs);
+
+        // Start with track=false (consent-required region, pre-consent): no tab id is assigned yet.
+        const beforeConsent = await page.evaluate(({ tabKey, timeout }) => {
+            return new Promise((resolve) => {
+                (window as any).clarity("start", { projectId: "test", track: false, upload: false });
+                (window as any).clarity("metadata", (_data: any, _upgrade: any, consent: any) => {
+                    if (consent) { resolve({ tabId: sessionStorage.getItem(tabKey) }); }
+                }, false, false, true);
+                setTimeout(() => resolve({ tabId: sessionStorage.getItem(tabKey) }), timeout);
+            });
+        }, { tabKey: Constant.TabKey, timeout: CONSENT_CALLBACK_TIMEOUT });
+
+        expect((beforeConsent as { tabId: string | null }).tabId).toBeNull();
+
+        // Grant consent: a stable tab id is now assigned and persisted to sessionStorage.
+        const afterConsent = await page.evaluate(({ tabKey, timeout }) => {
+            return new Promise((resolve) => {
+                (window as any).clarity("consentv2", { ad_Storage: "granted", analytics_Storage: "granted" });
+                (window as any).clarity("metadata", (_data: any, _upgrade: any, consent: any) => {
+                    if (consent) { resolve({ tabId: sessionStorage.getItem(tabKey) }); }
+                }, false, false, true);
+                setTimeout(() => resolve({ tabId: sessionStorage.getItem(tabKey) }), timeout);
+            });
+        }, { tabKey: Constant.TabKey, timeout: CONSENT_CALLBACK_TIMEOUT });
+
+        const tabId = (afterConsent as { tabId: string | null }).tabId;
+        expect(tabId).not.toBeNull();
+        expect(tabId).not.toBe("");
     });
 
     // ========================
