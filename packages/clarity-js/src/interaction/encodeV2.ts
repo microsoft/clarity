@@ -41,6 +41,11 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     tokens.push(entry.data.id !== undefined ? entry.data.id : Constant.Empty);
                     tokens.push(entry.data.isPrimary === undefined ? "true" : "" + entry.data.isPrimary);
                     tokens.push(pTarget.region || Constant.Empty);
+                    if (entry.event === Event.MouseDown || entry.event === Event.TouchStart) {
+                        tokens.push(entry.data.pressure === undefined ? -1 : Math.round(entry.data.pressure * 1000));
+                        tokens.push(entry.data.width === undefined ? -1 : Math.round(entry.data.width * 100));
+                        tokens.push(entry.data.height === undefined ? -1 : Math.round(entry.data.height * 100));
+                    }
                     queue(tokens);
                     if (entry.data.isPrimary === undefined || entry.data.isPrimary) {
                         baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);

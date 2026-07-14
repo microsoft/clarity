@@ -118,6 +118,9 @@ export interface PointerData {
     y: number;
     id?: number;
     isPrimary?: boolean;
+    pressure?: number;
+    width?: number;
+    height?: number;
 }
 
 export interface ClickData {

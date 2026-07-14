@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { PointerState, Setting } from "@clarity-types/interaction";
+import { PointerData, PointerState, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -14,6 +14,7 @@ let timeout: number = null;
 let hasPrimaryTouch = false;
 let primaryTouchId = 0;
 const activeTouchPointIds = new Set<number>();
+let lastMousePointer: { pressure: number; width: number; height: number } = null;
 
 export function start(): void {
     reset();
@@ -25,10 +26,17 @@ export function observe(root: Node): void {
     bind(root, "mousemove", mouse.bind(this, Event.MouseMove, root), true);
     bind(root, "wheel", mouse.bind(this, Event.MouseWheel, root), true);
     bind(root, "dblclick", mouse.bind(this, Event.DoubleClick, root), true);
+    bind(root, "pointerdown", pointerdown, true);
     bind(root, "touchstart", touch.bind(this, Event.TouchStart, root), true);
     bind(root, "touchend", touch.bind(this, Event.TouchEnd, root), true);
     bind(root, "touchmove", touch.bind(this, Event.TouchMove, root), true);
     bind(root, "touchcancel", touch.bind(this, Event.TouchCancel, root), true);
+}
+
+function pointerdown(evt: PointerEvent): void {
+    if (evt && evt.pointerType === "mouse") {
+        lastMousePointer = { pressure: evt.pressure, width: evt.width, height: evt.height };
+    }
 }
 
 function mouse(event: Event, root: Node, evt: MouseEvent): void {
@@ -43,8 +51,19 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
         y = y ? y + Math.round(distance.y) : y;
     }
 
+    let geometry = event === Event.MouseDown ? lastMousePointer : null;
+    if (event === Event.MouseDown) { lastMousePointer = null; }
+
     // Check for null values before processing this event
-    if (x !== null && y !== null) { handler({ time: time(evt), event, data: { target: target(evt), x, y } }); }
+    if (x !== null && y !== null) {
+        let data: PointerData = { target: target(evt), x, y };
+        if (geometry) {
+            data.pressure = geometry.pressure;
+            data.width = geometry.width;
+            data.height = geometry.height;
+        }
+        handler({ time: time(evt), event, data });
+    }
 }
 
 function touch(event: Event, root: Node, evt: TouchEvent): void {
@@ -82,7 +101,15 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             const isPrimary = hasPrimaryTouch && primaryTouchId === id;
 
             // Check for null values before processing this event
-            if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y, id, isPrimary } }); }
+            if (x !== null && y !== null) {
+                let data: PointerData = { target: target(evt), x, y, id, isPrimary };
+                if (event === Event.TouchStart) {
+                    if (typeof entry.force === "number") { data.pressure = entry.force; }
+                    if (typeof entry.radiusX === "number") { data.width = entry.radiusX * 2; }
+                    if (typeof entry.radiusY === "number") { data.height = entry.radiusY * 2; }
+                }
+                handler({ time: t, event, data });
+            }
 
             // Reset primary touch point id once touch event ends
             if (event === Event.TouchCancel || event === Event.TouchEnd) {
