@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
 import { PointerData, PointerState, Setting } from "@clarity-types/interaction";
+import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -26,7 +27,7 @@ export function observe(root: Node): void {
     bind(root, "mousemove", mouse.bind(this, Event.MouseMove, root), true);
     bind(root, "wheel", mouse.bind(this, Event.MouseWheel, root), true);
     bind(root, "dblclick", mouse.bind(this, Event.DoubleClick, root), true);
-    bind(root, "pointerdown", pointerdown, true);
+    if (config.diagnostics) { bind(root, "pointerdown", pointerdown, true); }
     bind(root, "touchstart", touch.bind(this, Event.TouchStart, root), true);
     bind(root, "touchend", touch.bind(this, Event.TouchEnd, root), true);
     bind(root, "touchmove", touch.bind(this, Event.TouchMove, root), true);
@@ -88,7 +89,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
                 case Event.TouchStart:
                     if (activeTouchPointIds.size === 0) {
                         // Track presence of primary touch separately to handle scenarios when same id is repeated
-                        hasPrimaryTouch = true;  
+                        hasPrimaryTouch = true;
                         primaryTouchId = id;
                     }
                     activeTouchPointIds.add(id);
@@ -103,7 +104,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             // Check for null values before processing this event
             if (x !== null && y !== null) {
                 let data: PointerData = { target: target(evt), x, y, id, isPrimary };
-                if (event === Event.TouchStart) {
+                if (config.diagnostics && event === Event.TouchStart) {
                     if (typeof entry.force === "number") { data.pressure = entry.force; }
                     if (typeof entry.radiusX === "number") { data.width = entry.radiusX * 2; }
                     if (typeof entry.radiusY === "number") { data.height = entry.radiusY * 2; }
