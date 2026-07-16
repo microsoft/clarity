@@ -22,9 +22,9 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 y: tokens[4] as number,
                 id: typeof tokens[5] === "number" ? tokens[5] as number : undefined,
                 isPrimary: tokens[6] === undefined ? undefined : tokens[6] === "true",
-                pressure: typeof tokens[g] === "number" && (tokens[g] as number) >= 0 ? (tokens[g] as number) / 1000 : undefined,
-                width: typeof tokens[g + 1] === "number" && (tokens[g + 1] as number) >= 0 ? (tokens[g + 1] as number) / 100 : undefined,
-                height: typeof tokens[g + 2] === "number" && (tokens[g + 2] as number) >= 0 ? (tokens[g + 2] as number) / 100 : undefined,
+                pressure: typeof tokens[g] === "number" && (tokens[g] as number) >= 0 ? tokens[g] as number : undefined,
+                width: typeof tokens[g + 1] === "number" && (tokens[g + 1] as number) >= 0 ? tokens[g + 1] as number : undefined,
+                height: typeof tokens[g + 2] === "number" && (tokens[g + 2] as number) >= 0 ? tokens[g + 2] as number : undefined,
             };
             return { time, event, data: pointerData };
         case Data.Event.Click:

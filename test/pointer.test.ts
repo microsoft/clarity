@@ -92,5 +92,39 @@ for (const build of ['clarity.min.js', 'clarity.extended.js']) {
             expect(typeof down.data.width).toBe('number');
             expect(typeof down.data.height).toBe('number');
         });
+
+        test('should preserve pointer geometry to four decimal places', async ({ page }) => {
+            await setupPage(page, build, { diagnostics: true });
+
+            await page.evaluate(() => {
+                const child = document.getElementById('child');
+                child.dispatchEvent(new PointerEvent('pointerdown', {
+                    bubbles: true,
+                    pointerType: 'mouse',
+                    pressure: 0.123456,
+                    width: 1.23456,
+                    height: 7.89012,
+                    clientX: 10,
+                    clientY: 20
+                }));
+                child.dispatchEvent(new MouseEvent('mousedown', {
+                    bubbles: true,
+                    clientX: 10,
+                    clientY: 20
+                }));
+            });
+
+            await page.waitForTimeout(200);
+            await page.waitForFunction("payloads && payloads.length > 0");
+
+            const payloads: string[] = await page.evaluate('payloads');
+            const decoded = payloads.map(x => decode(x));
+            const pointers = getPointerEvents(decoded);
+            const down = pointers.find(p => p.event === 13);
+
+            expect(down.data.pressure).toBe(0.1235);
+            expect(down.data.width).toBe(1.2346);
+            expect(down.data.height).toBe(7.8901);
+        });
     });
 }
