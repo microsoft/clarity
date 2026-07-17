@@ -65,7 +65,7 @@ export interface Options {
     logerror?: ErrorLogger;
     useproxy?: LinkHandler;
     onclickMismatch?: ClickLogger;
-    onalphafallback?: AlphaFallbackLogger;
+    onalphaFallback?: AlphaFallbackLogger;
     metadata?: HTMLElement;
     pointer?: boolean;
     canvas?: boolean;

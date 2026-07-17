@@ -142,13 +142,13 @@ export class LayoutHelper {
         this.primaryHtmlNodeId = null;
     }
 
-    public get = (hash, silent: boolean = false) => {
+    public get = (hash: string, silent: boolean = false): HTMLElement => {
         if (hash in this.hashMapBeta && this.hashMapBeta[hash].isConnected) {
             return this.hashMapBeta[hash];
         } else if (hash in this.hashMapAlpha && this.hashMapAlpha[hash].isConnected) {
             // Beta lookup missed but the Alpha (fallback) selector resolved the element.
             // Surface this so we can measure how often Alpha is still required before retiring it.
-            if (!silent && this.state.options.onalphafallback) { this.state.options.onalphafallback(hash); }
+            if (!silent && this.state.options.onalphaFallback) { this.state.options.onalphaFallback(hash); }
             return this.hashMapAlpha[hash];
         }
         return null;
