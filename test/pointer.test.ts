@@ -65,9 +65,9 @@ for (const build of ['clarity.min.js', 'clarity.extended.js']) {
 
             const down = pointers.find(p => p.event === 13);
             expect(down).toBeTruthy();
-            expect(down.data.pressure).toBeUndefined();
-            expect(down.data.width).toBeUndefined();
-            expect(down.data.height).toBeUndefined();
+            expect('pressure' in down.data).toBe(false);
+            expect('width' in down.data).toBe(false);
+            expect('height' in down.data).toBe(false);
         });
 
         test('should record pressure, width and height when diagnostics are enabled', async ({ page }) => {
