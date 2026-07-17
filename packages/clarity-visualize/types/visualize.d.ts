@@ -35,6 +35,9 @@ export type ResizeHandler  = (width: number, height: number) => void;
 export type ErrorLogger = (error: Error) => void;
 export type LinkHandler = (link: string, id: string, linkType: string) => string;
 export type ClickLogger = (args: IClickLoggerArgs) => void;
+// Fired when a hash resolves via the Alpha (fallback) selector map after the Beta lookup missed.
+// Used to measure how often the Alpha selector is still required.
+export type AlphaFallbackLogger = (hash: string) => void;
 
 export interface IClickLoggerArgs {
     time: number;
@@ -62,6 +65,7 @@ export interface Options {
     logerror?: ErrorLogger;
     useproxy?: LinkHandler;
     onclickMismatch?: ClickLogger;
+    onalphafallback?: AlphaFallbackLogger;
     metadata?: HTMLElement;
     pointer?: boolean;
     canvas?: boolean;

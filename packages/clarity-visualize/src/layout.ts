@@ -142,10 +142,13 @@ export class LayoutHelper {
         this.primaryHtmlNodeId = null;
     }
 
-    public get = (hash) => {
+    public get = (hash, silent: boolean = false) => {
         if (hash in this.hashMapBeta && this.hashMapBeta[hash].isConnected) {
             return this.hashMapBeta[hash];
         } else if (hash in this.hashMapAlpha && this.hashMapAlpha[hash].isConnected) {
+            // Beta lookup missed but the Alpha (fallback) selector resolved the element.
+            // Surface this so we can measure how often Alpha is still required before retiring it.
+            if (!silent && this.state.options.onalphafallback) { this.state.options.onalphafallback(hash); }
             return this.hashMapAlpha[hash];
         }
         return null;
@@ -153,8 +156,8 @@ export class LayoutHelper {
 
     private addToHashMap = (data: DecodedLayout.DomData, parent: Node) => {
         // In case of selector collision, prefer the first inserted node
-        this.hashMapAlpha[data.hashAlpha] = this.get(data.hashAlpha) || parent;
-        this.hashMapBeta[data.hashBeta] = this.get(data.hashBeta) || parent;
+        this.hashMapAlpha[data.hashAlpha] = this.get(data.hashAlpha, true) || parent;
+        this.hashMapBeta[data.hashBeta] = this.get(data.hashBeta, true) || parent;
     }
 
     private resize = (el: HTMLElement, width: number, height: number): void => {
