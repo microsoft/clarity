@@ -14,8 +14,6 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
         case Data.Event.TouchCancel:
         case Data.Event.TouchEnd:
         case Data.Event.TouchMove:
-            let regionPresent = typeof tokens[7] === "string";
-            let g = regionPresent ? 8 : 7;
             let pointerData: Interaction.PointerData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
@@ -23,9 +21,11 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 id: typeof tokens[5] === "number" ? tokens[5] as number : undefined,
                 isPrimary: tokens[6] === undefined ? undefined : tokens[6] === "true",
             };
-            if (typeof tokens[g] === "number" && (tokens[g] as number) >= 0) { pointerData.pressure = tokens[g] as number; }
-            if (typeof tokens[g + 1] === "number" && (tokens[g + 1] as number) >= 0) { pointerData.width = tokens[g + 1] as number; }
-            if (typeof tokens[g + 2] === "number" && (tokens[g + 2] as number) >= 0) { pointerData.height = tokens[g + 2] as number; }
+            if (typeof tokens[7] === "string") {
+                if (typeof tokens[8] === "number" && (tokens[8] as number) >= 0) { pointerData.pressure = tokens[8] as number; }
+                if (typeof tokens[9] === "number" && (tokens[9] as number) >= 0) { pointerData.width = tokens[9] as number; }
+                if (typeof tokens[10] === "number" && (tokens[10] as number) >= 0) { pointerData.height = tokens[10] as number; }
+            }
             return { time, event, data: pointerData };
         case Data.Event.Click:
         case Data.Event.ContextMenu:

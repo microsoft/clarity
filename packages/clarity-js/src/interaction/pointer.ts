@@ -165,5 +165,5 @@ export function stop(): void {
 }
 
 function round(value: number): number {
-    return Math.round(value * 10000) / 10000;
+    return Number(value.toPrecision(7));
 }

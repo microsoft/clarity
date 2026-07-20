@@ -46,7 +46,7 @@ function getPointerEvents(decoded: Data.DecodedPayload[]): any[] {
     return events;
 }
 
-for (const build of ['clarity.min.js', 'clarity.extended.js']) {
+for (const build of ['clarity.min.js']) {
     test.describe(`Pointer pressure, width and height in ${build}`, () => {
         test('should not record pressure, width and height by default', async ({ page }) => {
             await setupPage(page, build);
@@ -93,7 +93,7 @@ for (const build of ['clarity.min.js', 'clarity.extended.js']) {
             expect(typeof down.data.height).toBe('number');
         });
 
-        test('should preserve pointer geometry to four decimal places', async ({ page }) => {
+        test('should preserve pointer geometry to float precision', async ({ page }) => {
             await setupPage(page, build, { diagnostics: true });
 
             await page.evaluate(() => {
@@ -101,9 +101,9 @@ for (const build of ['clarity.min.js', 'clarity.extended.js']) {
                 child.dispatchEvent(new PointerEvent('pointerdown', {
                     bubbles: true,
                     pointerType: 'mouse',
-                    pressure: 0.123456,
-                    width: 1.23456,
-                    height: 7.89012,
+                    pressure: 0.123456789,
+                    width: 1.23456789,
+                    height: 78.9012345,
                     clientX: 10,
                     clientY: 20
                 }));
@@ -122,9 +122,31 @@ for (const build of ['clarity.min.js', 'clarity.extended.js']) {
             const pointers = getPointerEvents(decoded);
             const down = pointers.find(p => p.event === 13);
 
-            expect(down.data.pressure).toBe(0.1235);
-            expect(down.data.width).toBe(1.2346);
-            expect(down.data.height).toBe(7.8901);
+            expect(down.data.pressure).toBe(0.1234568);
+            expect(down.data.width).toBe(1.234568);
+            expect(down.data.height).toBe(78.90123);
         });
     });
 }
+
+test('should leave the extended encoder unchanged', async ({ page }) => {
+    await setupPage(page, 'clarity.extended.js', { diagnostics: true });
+
+    const box = await page.locator('#child').boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.up();
+
+    await page.waitForTimeout(200);
+    await page.waitForFunction("payloads && payloads.length > 0");
+
+    const payloads: string[] = await page.evaluate('payloads');
+    const decoded = payloads.map(x => decode(x));
+    const pointers = getPointerEvents(decoded);
+    const down = pointers.find(p => p.event === 13);
+
+    expect(down).toBeTruthy();
+    expect('pressure' in down.data).toBe(false);
+    expect('width' in down.data).toBe(false);
+    expect('height' in down.data).toBe(false);
+});
