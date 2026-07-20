@@ -1,6 +1,5 @@
 import { Event } from "@clarity-types/data";
 import { PointerData, PointerState, Setting } from "@clarity-types/interaction";
-import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -27,7 +26,7 @@ export function observe(root: Node): void {
     bind(root, "mousemove", mouse.bind(this, Event.MouseMove, root), true);
     bind(root, "wheel", mouse.bind(this, Event.MouseWheel, root), true);
     bind(root, "dblclick", mouse.bind(this, Event.DoubleClick, root), true);
-    if (config.diagnostics) { bind(root, "pointerdown", pointerdown, true); }
+    bind(root, "pointerdown", pointerdown, true);
     bind(root, "touchstart", touch.bind(this, Event.TouchStart, root), true);
     bind(root, "touchend", touch.bind(this, Event.TouchEnd, root), true);
     bind(root, "touchmove", touch.bind(this, Event.TouchMove, root), true);
@@ -104,7 +103,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             // Check for null values before processing this event
             if (x !== null && y !== null) {
                 let data: PointerData = { target: target(evt), x, y, id, isPrimary };
-                if (config.diagnostics && event === Event.TouchStart) {
+                if (event === Event.TouchStart) {
                     if (typeof entry.force === "number") { data.pressure = round(entry.force); }
                     if (typeof entry.radiusX === "number") { data.width = round(entry.radiusX * 2); }
                     if (typeof entry.radiusY === "number") { data.height = round(entry.radiusY * 2); }

@@ -1,5 +1,4 @@
 import { Constant, Event, Token } from "@clarity-types/data";
-import config from "@src/core/config";
 import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
@@ -42,7 +41,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     tokens.push(entry.data.id !== undefined ? entry.data.id : Constant.Empty);
                     tokens.push(entry.data.isPrimary === undefined ? "true" : "" + entry.data.isPrimary);
                     tokens.push(Constant.Empty);
-                    if (config.diagnostics && (entry.event === Event.MouseDown || entry.event === Event.TouchStart)) {
+                    if (entry.event === Event.MouseDown || entry.event === Event.TouchStart) {
                         tokens.push(entry.data.pressure === undefined ? -1 : entry.data.pressure);
                         tokens.push(entry.data.width === undefined ? -1 : entry.data.width);
                         tokens.push(entry.data.height === undefined ? -1 : entry.data.height);

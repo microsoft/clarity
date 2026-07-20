@@ -48,7 +48,7 @@ function getPointerEvents(decoded: Data.DecodedPayload[]): any[] {
 
 for (const build of ['clarity.min.js']) {
     test.describe(`Pointer pressure, width and height in ${build}`, () => {
-        test('should not record pressure, width and height by default', async ({ page }) => {
+        test('should record pressure, width and height by default', async ({ page }) => {
             await setupPage(page, build);
 
             const box = await page.locator('#child').boundingBox();
@@ -65,12 +65,13 @@ for (const build of ['clarity.min.js']) {
 
             const down = pointers.find(p => p.event === 13);
             expect(down).toBeTruthy();
-            expect('pressure' in down.data).toBe(false);
-            expect('width' in down.data).toBe(false);
-            expect('height' in down.data).toBe(false);
+            expect(typeof down.data.pressure).toBe('number');
+            expect(down.data.pressure).toBeCloseTo(0.5, 2);
+            expect(typeof down.data.width).toBe('number');
+            expect(typeof down.data.height).toBe('number');
         });
 
-        test('should record pressure, width and height when diagnostics are enabled', async ({ page }) => {
+        test('should record the same geometry when diagnostics are enabled', async ({ page }) => {
             await setupPage(page, build, { diagnostics: true });
 
             const box = await page.locator('#child').boundingBox();
