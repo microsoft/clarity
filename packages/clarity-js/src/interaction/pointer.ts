@@ -35,7 +35,7 @@ export function observe(root: Node): void {
 
 function pointerdown(evt: PointerEvent): void {
     if (evt && evt.pointerType === "mouse") {
-        lastMousePointer = { pressure: round(evt.pressure), width: round(evt.width), height: round(evt.height) };
+        lastMousePointer = { pressure: evt.pressure, width: evt.width, height: evt.height };
     }
 }
 
@@ -104,9 +104,9 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             if (x !== null && y !== null) {
                 let data: PointerData = { target: target(evt), x, y, id, isPrimary };
                 if (event === Event.TouchStart) {
-                    if (typeof entry.force === "number") { data.pressure = round(entry.force); }
-                    if (typeof entry.radiusX === "number") { data.width = round(entry.radiusX * 2); }
-                    if (typeof entry.radiusY === "number") { data.height = round(entry.radiusY * 2); }
+                    if (typeof entry.force === "number") { data.pressure = entry.force; }
+                    if (typeof entry.radiusX === "number") { data.width = entry.radiusX * 2; }
+                    if (typeof entry.radiusY === "number") { data.height = entry.radiusY * 2; }
                 }
                 handler({ time: t, event, data });
             }
@@ -161,8 +161,4 @@ export function stop(): void {
     clearTimeout(timeout);
     // Send out any pending pointer events in the pipeline
     if (state.length > 0) { process(state[state.length - 1].event); }
-}
-
-function round(value: number): number {
-    return Number(value.toPrecision(7));
 }

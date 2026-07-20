@@ -10,6 +10,7 @@ declare global {
     interface Window {
         clarity: (method: string, ...args: any[]) => void;
         payloads: string[];
+        sourcePointerGeometry: { pressure: number; width: number; height: number };
     }
 }
 
@@ -94,12 +95,12 @@ for (const build of ['clarity.min.js']) {
             expect(typeof down.data.height).toBe('number');
         });
 
-        test('should preserve pointer geometry to float precision', async ({ page }) => {
+        test('should preserve pointer geometry without client-side rounding', async ({ page }) => {
             await setupPage(page, build, { diagnostics: true });
 
             await page.evaluate(() => {
                 const child = document.getElementById('child');
-                child.dispatchEvent(new PointerEvent('pointerdown', {
+                const pointerEvent = new PointerEvent('pointerdown', {
                     bubbles: true,
                     pointerType: 'mouse',
                     pressure: 0.123456789,
@@ -107,7 +108,13 @@ for (const build of ['clarity.min.js']) {
                     height: 78.9012345,
                     clientX: 10,
                     clientY: 20
-                }));
+                });
+                window.sourcePointerGeometry = {
+                    pressure: pointerEvent.pressure,
+                    width: pointerEvent.width,
+                    height: pointerEvent.height
+                };
+                child.dispatchEvent(pointerEvent);
                 child.dispatchEvent(new MouseEvent('mousedown', {
                     bubbles: true,
                     clientX: 10,
@@ -119,13 +126,14 @@ for (const build of ['clarity.min.js']) {
             await page.waitForFunction("payloads && payloads.length > 0");
 
             const payloads: string[] = await page.evaluate('payloads');
+            const source = await page.evaluate(() => window.sourcePointerGeometry);
             const decoded = payloads.map(x => decode(x));
             const pointers = getPointerEvents(decoded);
             const down = pointers.find(p => p.event === 13);
 
-            expect(down.data.pressure).toBe(0.1234568);
-            expect(down.data.width).toBe(1.234568);
-            expect(down.data.height).toBe(78.90123);
+            expect(down.data.pressure).toBe(source.pressure);
+            expect(down.data.width).toBe(source.width);
+            expect(down.data.height).toBe(source.height);
         });
     });
 }
