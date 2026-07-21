@@ -127,7 +127,7 @@ export interface PointerData {
     isPrimary?: boolean;
 }
 
-export interface PointerInfoData {
+export interface PointerContactData {
     pointerType: PointerType;
     x: number;
     y: number;
