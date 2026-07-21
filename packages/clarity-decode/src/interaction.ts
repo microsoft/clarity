@@ -5,6 +5,17 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
     let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
     switch (event) {
+        case Data.Event.PointerGeometry:
+            return {
+                time,
+                event,
+                data: {
+                    pointerType: tokens[2] as Interaction.PointerType,
+                    pressure: tokens[3] as number,
+                    width: tokens[4] as number,
+                    height: tokens[5] as number,
+                }
+            };
         case Data.Event.MouseDown:
         case Data.Event.MouseUp:
         case Data.Event.MouseMove:
@@ -21,11 +32,6 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 id: typeof tokens[5] === "number" ? tokens[5] as number : undefined,
                 isPrimary: tokens[6] === undefined ? undefined : tokens[6] === "true",
             };
-            if (typeof tokens[7] === "string") {
-                if (typeof tokens[8] === "number" && (tokens[8] as number) >= 0) { pointerData.pressure = tokens[8] as number; }
-                if (typeof tokens[9] === "number" && (tokens[9] as number) >= 0) { pointerData.width = tokens[9] as number; }
-                if (typeof tokens[10] === "number" && (tokens[10] as number) >= 0) { pointerData.height = tokens[10] as number; }
-            }
             return { time, event, data: pointerData };
         case Data.Event.Click:
         case Data.Event.ContextMenu:

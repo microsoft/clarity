@@ -37,174 +37,147 @@ async function setupPage(page: Page, build: string, options: Record<string, any>
     `));
 }
 
-function getPointerEvents(decoded: Data.DecodedPayload[]): any[] {
-    const events: any[] = [];
-    for (const payload of decoded) {
-        if (payload.pointer) {
-            events.push(...payload.pointer);
-        }
-    }
-    return events;
+async function decodePayloads(page: Page): Promise<Data.DecodedPayload[]> {
+    await page.waitForTimeout(200);
+    await page.evaluate(() => window.clarity("stop"));
+    await page.waitForFunction("payloads && payloads.length > 0");
+    const payloads: string[] = await page.evaluate(() => window.payloads);
+    return payloads.map(payload => decode(payload));
 }
 
-for (const build of ['clarity.min.js']) {
-    test.describe(`Pointer pressure, width and height in ${build}`, () => {
-        test('should record pressure, width and height by default', async ({ page }) => {
-            await setupPage(page, build);
+function getPointerGeometryEvents(decoded: Data.DecodedPayload[]): any[] {
+    return decoded.flatMap(payload => payload.pointerGeometry || []);
+}
 
-            const box = await page.locator('#child').boundingBox();
-            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-            await page.mouse.down();
-            await page.mouse.up();
+function getPointerEvents(decoded: Data.DecodedPayload[]): any[] {
+    return decoded.flatMap(payload => payload.pointer || []);
+}
 
-            await page.waitForTimeout(200);
-            await page.waitForFunction("payloads && payloads.length > 0");
+for (const diagnostics of [false, true]) {
+    test(`should emit standalone mouse geometry with diagnostics ${diagnostics}`, async ({ page }) => {
+        await setupPage(page, 'clarity.min.js', { diagnostics });
 
-            const payloads: string[] = await page.evaluate('payloads');
-            const decoded = payloads.map(x => decode(x));
-            const pointers = getPointerEvents(decoded);
-
-            const down = pointers.find(p => p.event === 13);
-            expect(down).toBeTruthy();
-            expect(typeof down.data.pressure).toBe('number');
-            expect(down.data.pressure).toBeCloseTo(0.5, 2);
-            expect(typeof down.data.width).toBe('number');
-            expect(typeof down.data.height).toBe('number');
-        });
-
-        test('should record the same geometry when diagnostics are enabled', async ({ page }) => {
-            await setupPage(page, build, { diagnostics: true });
-
-            const box = await page.locator('#child').boundingBox();
-            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-            await page.mouse.down();
-            await page.mouse.up();
-
-            await page.waitForTimeout(200);
-            await page.waitForFunction("payloads && payloads.length > 0");
-
-            const payloads: string[] = await page.evaluate('payloads');
-            const decoded = payloads.map(x => decode(x));
-            const pointers = getPointerEvents(decoded);
-
-            const down = pointers.find(p => p.event === 13);
-            expect(down).toBeTruthy();
-            expect(typeof down.data.pressure).toBe('number');
-            expect(down.data.pressure).toBeCloseTo(0.5, 2);
-            expect(typeof down.data.width).toBe('number');
-            expect(typeof down.data.height).toBe('number');
-        });
-
-        test('should preserve pointer geometry without client-side rounding', async ({ page }) => {
-            await setupPage(page, build, { diagnostics: true });
-
-            await page.evaluate(() => {
-                const child = document.getElementById('child');
-                const pointerEvent = new PointerEvent('pointerdown', {
-                    bubbles: true,
-                    pointerType: 'mouse',
-                    pressure: 0.123456789,
-                    width: 1.23456789,
-                    height: 78.9012345,
-                    clientX: 10,
-                    clientY: 20
-                });
-                window.sourcePointerGeometry = {
-                    pressure: pointerEvent.pressure,
-                    width: pointerEvent.width,
-                    height: pointerEvent.height
-                };
-                child.dispatchEvent(pointerEvent);
-                child.dispatchEvent(new MouseEvent('mousedown', {
-                    bubbles: true,
-                    clientX: 10,
-                    clientY: 20
-                }));
+        await page.evaluate(() => {
+            const child = document.getElementById('child');
+            const pointerEvent = new PointerEvent('pointerdown', {
+                bubbles: true,
+                pointerType: 'mouse',
+                pressure: 0.123456789,
+                width: 1.23456789,
+                height: 78.9012345,
+                clientX: 10,
+                clientY: 20
             });
-
-            await page.waitForTimeout(200);
-            await page.waitForFunction("payloads && payloads.length > 0");
-
-            const payloads: string[] = await page.evaluate('payloads');
-            const source = await page.evaluate(() => window.sourcePointerGeometry);
-            const decoded = payloads.map(x => decode(x));
-            const pointers = getPointerEvents(decoded);
-            const down = pointers.find(p => p.event === 13);
-
-            expect(down.data.pressure).toBe(source.pressure);
-            expect(down.data.width).toBe(source.width);
-            expect(down.data.height).toBe(source.height);
+            window.sourcePointerGeometry = {
+                pressure: pointerEvent.pressure,
+                width: pointerEvent.width,
+                height: pointerEvent.height
+            };
+            child.dispatchEvent(pointerEvent);
+            child.dispatchEvent(new MouseEvent('mousedown', {
+                bubbles: true,
+                clientX: 10,
+                clientY: 20
+            }));
         });
 
-        test('should use pointerdown geometry for touch input', async ({ page }) => {
-            await setupPage(page, build);
+        const decoded = await decodePayloads(page);
+        const geometry = getPointerGeometryEvents(decoded);
+        const pointers = getPointerEvents(decoded);
+        const down = pointers.find(pointer => pointer.event === 13);
+        const source = await page.evaluate(() => window.sourcePointerGeometry);
 
-            await page.evaluate(() => {
-                const child = document.getElementById('child');
-                const pointerEvent = new PointerEvent('pointerdown', {
-                    bubbles: true,
-                    pointerType: 'touch',
-                    pressure: 0.7654321,
-                    width: 23.456789,
-                    height: 34.567891,
-                    clientX: 122.49999,
-                    clientY: 146.9999885559082
-                });
-                window.sourcePointerGeometry = {
-                    pressure: pointerEvent.pressure,
-                    width: pointerEvent.width,
-                    height: pointerEvent.height
-                };
-                child.dispatchEvent(pointerEvent);
-
-                const touchEvent = new Event('touchstart', { bubbles: true });
-                Object.defineProperty(touchEvent, 'changedTouches', {
-                    value: [{
-                        identifier: 7,
-                        clientX: 122.50001,
-                        clientY: 147,
-                        force: 0,
-                        radiusX: 100,
-                        radiusY: 200
-                    }]
-                });
-                child.dispatchEvent(touchEvent);
-            });
-
-            await page.waitForTimeout(200);
-            await page.waitForFunction("payloads && payloads.length > 0");
-
-            const payloads: string[] = await page.evaluate('payloads');
-            const source = await page.evaluate(() => window.sourcePointerGeometry);
-            const decoded = payloads.map(x => decode(x));
-            const pointers = getPointerEvents(decoded);
-            const start = pointers.find(p => p.event === 17);
-
-            expect(start.data.pressure).toBe(source.pressure);
-            expect(start.data.width).toBe(source.width);
-            expect(start.data.height).toBe(source.height);
-        });
+        expect(geometry).toHaveLength(1);
+        expect(geometry[0].data.pointerType).toBe(1);
+        expect(geometry[0].data.pressure).toBe(source.pressure);
+        expect(geometry[0].data.width).toBe(source.width);
+        expect(geometry[0].data.height).toBe(source.height);
+        expect(down).toBeTruthy();
+        expect('pressure' in down.data).toBe(false);
+        expect('width' in down.data).toBe(false);
+        expect('height' in down.data).toBe(false);
     });
 }
 
+test('should emit standalone primary touch geometry', async ({ page }) => {
+    await setupPage(page, 'clarity.min.js');
+
+    await page.evaluate(() => {
+        const child = document.getElementById('child');
+        child.dispatchEvent(new PointerEvent('pointerdown', {
+            bubbles: true,
+            pointerType: 'touch',
+            isPrimary: true,
+            pressure: 0.7654321,
+            width: 23.456789,
+            height: 34.567891,
+            clientX: 10,
+            clientY: 20
+        }));
+    });
+
+    const geometry = getPointerGeometryEvents(await decodePayloads(page));
+
+    expect(geometry).toHaveLength(1);
+    expect(geometry[0].data.pointerType).toBe(2);
+    expect(geometry[0].data.pressure).toBeCloseTo(0.7654321, 7);
+    expect(geometry[0].data.width).toBe(23.456789);
+    expect(geometry[0].data.height).toBe(34.567891);
+});
+
+test('should ignore non-primary touch geometry', async ({ page }) => {
+    await setupPage(page, 'clarity.min.js');
+
+    await page.evaluate(() => {
+        document.getElementById('child').dispatchEvent(new PointerEvent('pointerdown', {
+            bubbles: true,
+            pointerType: 'touch',
+            isPrimary: false,
+            pressure: 0.5,
+            width: 20,
+            height: 30
+        }));
+    });
+
+    expect(getPointerGeometryEvents(await decodePayloads(page))).toHaveLength(0);
+});
+
+test('should emit standalone primary pen geometry', async ({ page }) => {
+    await setupPage(page, 'clarity.min.js');
+
+    await page.evaluate(() => {
+        document.getElementById('child').dispatchEvent(new PointerEvent('pointerdown', {
+            bubbles: true,
+            pointerType: 'pen',
+            isPrimary: true,
+            pressure: 0.8,
+            width: 4,
+            height: 5
+        }));
+    });
+
+    const geometry = getPointerGeometryEvents(await decodePayloads(page));
+
+    expect(geometry).toHaveLength(1);
+    expect(geometry[0].data.pointerType).toBe(3);
+    expect(geometry[0].data.pressure).toBeCloseTo(0.8, 7);
+    expect(geometry[0].data.width).toBe(4);
+    expect(geometry[0].data.height).toBe(5);
+});
+
 test('should leave the extended encoder unchanged', async ({ page }) => {
-    await setupPage(page, 'clarity.extended.js', { diagnostics: true });
+    await setupPage(page, 'clarity.extended.js');
 
-    const box = await page.locator('#child').boundingBox();
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.up();
+    await page.evaluate(() => {
+        document.getElementById('child').dispatchEvent(new PointerEvent('pointerdown', {
+            bubbles: true,
+            pointerType: 'touch',
+            isPrimary: true,
+            pressure: 0.7,
+            width: 20,
+            height: 30
+        }));
+    });
 
-    await page.waitForTimeout(200);
-    await page.waitForFunction("payloads && payloads.length > 0");
-
-    const payloads: string[] = await page.evaluate('payloads');
-    const decoded = payloads.map(x => decode(x));
-    const pointers = getPointerEvents(decoded);
-    const down = pointers.find(p => p.event === 13);
-
-    expect(down).toBeTruthy();
-    expect('pressure' in down.data).toBe(false);
-    expect('width' in down.data).toBe(false);
-    expect('height' in down.data).toBe(false);
+    expect(getPointerGeometryEvents(await decodePayloads(page))).toHaveLength(0);
 });

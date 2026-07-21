@@ -19,6 +19,13 @@ export const enum ClickSource {
     Unknown = 4
 }
 
+export const enum PointerType {
+    Unknown = 0,
+    Mouse = 1,
+    Touch = 2,
+    Pen = 3
+}
+
 export const enum Setting {
     LookAhead = 500, // 500ms
     InputLookAhead = 750, // 750ms
@@ -118,9 +125,13 @@ export interface PointerData {
     y: number;
     id?: number;
     isPrimary?: boolean;
-    pressure?: number;
-    width?: number;
-    height?: number;
+}
+
+export interface PointerGeometryData {
+    pointerType: PointerType;
+    pressure: number;
+    width: number;
+    height: number;
 }
 
 export interface ClickData {

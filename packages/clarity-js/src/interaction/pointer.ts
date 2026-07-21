@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { PointerData, PointerState, Setting } from "@clarity-types/interaction";
+import { PointerData, PointerState, PointerType, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -8,21 +8,16 @@ import { iframe } from "@src/layout/dom";
 import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
 import encode from "@src/interaction/encode";
+import encodeGeometry from "@src/interaction/geometry";
 
 export let state: PointerState[] = [];
 let timeout: number = null;
 let hasPrimaryTouch = false;
 let primaryTouchId = 0;
 const activeTouchPointIds = new Set<number>();
-type PointerGeometry = { pressure: number; width: number; height: number };
-type TouchPointerGeometry = PointerGeometry & { x: number; y: number };
-let lastMousePointer: PointerGeometry = null;
-let touchPointers: TouchPointerGeometry[] = [];
 
 export function start(): void {
     reset();
-    lastMousePointer = null;
-    touchPointers = [];
 }
 
 export function observe(root: Node): void {
@@ -39,19 +34,23 @@ export function observe(root: Node): void {
 }
 
 function pointer(evt: PointerEvent): void {
-    if (evt) {
-        let geometry: PointerGeometry = { pressure: evt.pressure, width: evt.width, height: evt.height };
-        if (evt.pointerType === "mouse") {
-            lastMousePointer = geometry;
-        } else if (evt.pointerType === "touch") {
-            touchPointers.push({
-                pressure: geometry.pressure,
-                width: geometry.width,
-                height: geometry.height,
-                x: evt.clientX,
-                y: evt.clientY
-            });
-        }
+    let pointerType = getPointerType(evt.pointerType);
+    let isPrimary = pointerType === PointerType.Mouse || evt.isPrimary;
+    if (pointerType !== PointerType.Unknown && isPrimary) {
+        schedule(encodeGeometry.bind(this, time(evt), pointerType, evt.pressure, evt.width, evt.height));
+    }
+}
+
+function getPointerType(pointerType: string): PointerType {
+    switch (pointerType) {
+        case "mouse":
+            return PointerType.Mouse;
+        case "touch":
+            return PointerType.Touch;
+        case "pen":
+            return PointerType.Pen;
+        default:
+            return PointerType.Unknown;
     }
 }
 
@@ -67,17 +66,9 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
         y = y ? y + Math.round(distance.y) : y;
     }
 
-    let geometry = event === Event.MouseDown ? lastMousePointer : null;
-    if (event === Event.MouseDown) { lastMousePointer = null; }
-
     // Check for null values before processing this event
     if (x !== null && y !== null) {
         let data: PointerData = { target: target(evt), x, y };
-        if (geometry) {
-            data.pressure = geometry.pressure;
-            data.width = geometry.width;
-            data.height = geometry.height;
-        }
         handler({ time: time(evt), event, data });
     }
 }
@@ -119,12 +110,6 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             // Check for null values before processing this event
             if (x !== null && y !== null) {
                 let data: PointerData = { target: target(evt), x, y, id, isPrimary };
-                let geometry = event === Event.TouchStart ? getTouchPointer(entry) : null;
-                if (geometry) {
-                    data.pressure = geometry.pressure;
-                    data.width = geometry.width;
-                    data.height = geometry.height;
-                }
                 handler({ time: t, event, data });
             }
 
@@ -133,17 +118,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
                 if (primaryTouchId === id) { hasPrimaryTouch = false; }
             }
         }
-        if (event === Event.TouchStart) { touchPointers = []; }
     }
-}
-
-function getTouchPointer(entry: Touch): PointerGeometry {
-    for (let i = 0; i < touchPointers.length; i++) {
-        if (Math.abs(touchPointers[i].x - entry.clientX) < 1 && Math.abs(touchPointers[i].y - entry.clientY) < 1) {
-            return touchPointers.splice(i, 1)[0];
-        }
-    }
-    return null;
 }
 
 function handler(current: PointerState): void {
