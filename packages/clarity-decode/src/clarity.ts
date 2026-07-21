@@ -2,7 +2,7 @@ import { Data, version } from "clarity-js";
 import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
 import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent, ConsentEvent } from "../types/data";
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
-import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, PointerEvent, PointerGeometryEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
+import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, PointerEvent, PointerInfoEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
 import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent } from "../types/interaction";
 import { CustomElementEvent, DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
 import { NavigationEvent } from "../types/performance";
@@ -84,9 +84,9 @@ export function decode(input: string): DecodedPayload {
                 if (payload.upload === undefined) { payload.upload = []; }
                 payload.upload.push(data.decode(entry) as UploadEvent);
                 break;
-            case Data.Event.PointerGeometry:
-                if (payload.pointerGeometry === undefined) { payload.pointerGeometry = []; }
-                payload.pointerGeometry.push(interaction.decode(entry) as PointerGeometryEvent);
+            case Data.Event.PointerInfo:
+                if (payload.pointerInfo === undefined) { payload.pointerInfo = []; }
+                payload.pointerInfo.push(interaction.decode(entry) as PointerInfoEvent);
                 break;
             case Data.Event.MouseDown:
             case Data.Event.MouseUp:

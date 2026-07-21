@@ -78,7 +78,7 @@ export const enum Event {
     Focus = 50,
     CustomElement = 51,
     Chat = 52,
-    PointerGeometry = 53,
+    PointerInfo = 53,
 
     // Apps specific events
     WebViewDiscover = 100,

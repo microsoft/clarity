@@ -127,8 +127,10 @@ export interface PointerData {
     isPrimary?: boolean;
 }
 
-export interface PointerGeometryData {
+export interface PointerInfoData {
     pointerType: PointerType;
+    x: number;
+    y: number;
     pressure: number;
     width: number;
     height: number;

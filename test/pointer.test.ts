@@ -10,7 +10,7 @@ declare global {
     interface Window {
         clarity: (method: string, ...args: any[]) => void;
         payloads: string[];
-        sourcePointerGeometry: { pressure: number; width: number; height: number };
+        sourcePointerInfo: { x: number; y: number; pressure: number; width: number; height: number };
     }
 }
 
@@ -45,8 +45,8 @@ async function decodePayloads(page: Page): Promise<Data.DecodedPayload[]> {
     return payloads.map(payload => decode(payload));
 }
 
-function getPointerGeometryEvents(decoded: Data.DecodedPayload[]): any[] {
-    return decoded.flatMap(payload => payload.pointerGeometry || []);
+function getPointerInfoEvents(decoded: Data.DecodedPayload[]): any[] {
+    return decoded.flatMap(payload => payload.pointerInfo || []);
 }
 
 function getPointerEvents(decoded: Data.DecodedPayload[]): any[] {
@@ -54,7 +54,7 @@ function getPointerEvents(decoded: Data.DecodedPayload[]): any[] {
 }
 
 for (const diagnostics of [false, true]) {
-    test(`should emit standalone mouse geometry with diagnostics ${diagnostics}`, async ({ page }) => {
+    test(`should emit standalone mouse info with diagnostics ${diagnostics}`, async ({ page }) => {
         await setupPage(page, 'clarity.min.js', { diagnostics });
 
         await page.evaluate(() => {
@@ -68,7 +68,9 @@ for (const diagnostics of [false, true]) {
                 clientX: 10,
                 clientY: 20
             });
-            window.sourcePointerGeometry = {
+            window.sourcePointerInfo = {
+                x: pointerEvent.pageX,
+                y: pointerEvent.pageY,
                 pressure: pointerEvent.pressure,
                 width: pointerEvent.width,
                 height: pointerEvent.height
@@ -82,16 +84,18 @@ for (const diagnostics of [false, true]) {
         });
 
         const decoded = await decodePayloads(page);
-        const geometry = getPointerGeometryEvents(decoded);
+        const info = getPointerInfoEvents(decoded);
         const pointers = getPointerEvents(decoded);
         const down = pointers.find(pointer => pointer.event === 13);
-        const source = await page.evaluate(() => window.sourcePointerGeometry);
+        const source = await page.evaluate(() => window.sourcePointerInfo);
 
-        expect(geometry).toHaveLength(1);
-        expect(geometry[0].data.pointerType).toBe(1);
-        expect(geometry[0].data.pressure).toBe(source.pressure);
-        expect(geometry[0].data.width).toBe(source.width);
-        expect(geometry[0].data.height).toBe(source.height);
+        expect(info).toHaveLength(1);
+        expect(info[0].data.pointerType).toBe(1);
+        expect(info[0].data.x).toBe(source.x);
+        expect(info[0].data.y).toBe(source.y);
+        expect(info[0].data.pressure).toBe(source.pressure);
+        expect(info[0].data.width).toBe(source.width);
+        expect(info[0].data.height).toBe(source.height);
         expect(down).toBeTruthy();
         expect('pressure' in down.data).toBe(false);
         expect('width' in down.data).toBe(false);
@@ -99,7 +103,7 @@ for (const diagnostics of [false, true]) {
     });
 }
 
-test('should emit standalone primary touch geometry', async ({ page }) => {
+test('should emit standalone primary touch info', async ({ page }) => {
     await setupPage(page, 'clarity.min.js');
 
     await page.evaluate(() => {
@@ -116,16 +120,18 @@ test('should emit standalone primary touch geometry', async ({ page }) => {
         }));
     });
 
-    const geometry = getPointerGeometryEvents(await decodePayloads(page));
+    const info = getPointerInfoEvents(await decodePayloads(page));
 
-    expect(geometry).toHaveLength(1);
-    expect(geometry[0].data.pointerType).toBe(2);
-    expect(geometry[0].data.pressure).toBeCloseTo(0.7654321, 7);
-    expect(geometry[0].data.width).toBe(23.456789);
-    expect(geometry[0].data.height).toBe(34.567891);
+    expect(info).toHaveLength(1);
+    expect(info[0].data.pointerType).toBe(2);
+    expect(info[0].data.x).toBe(10);
+    expect(info[0].data.y).toBe(20);
+    expect(info[0].data.pressure).toBeCloseTo(0.7654321, 7);
+    expect(info[0].data.width).toBe(23.456789);
+    expect(info[0].data.height).toBe(34.567891);
 });
 
-test('should ignore non-primary touch geometry', async ({ page }) => {
+test('should ignore non-primary touch info', async ({ page }) => {
     await setupPage(page, 'clarity.min.js');
 
     await page.evaluate(() => {
@@ -139,10 +145,10 @@ test('should ignore non-primary touch geometry', async ({ page }) => {
         }));
     });
 
-    expect(getPointerGeometryEvents(await decodePayloads(page))).toHaveLength(0);
+    expect(getPointerInfoEvents(await decodePayloads(page))).toHaveLength(0);
 });
 
-test('should emit standalone primary pen geometry', async ({ page }) => {
+test('should emit standalone primary pen info', async ({ page }) => {
     await setupPage(page, 'clarity.min.js');
 
     await page.evaluate(() => {
@@ -156,16 +162,16 @@ test('should emit standalone primary pen geometry', async ({ page }) => {
         }));
     });
 
-    const geometry = getPointerGeometryEvents(await decodePayloads(page));
+    const info = getPointerInfoEvents(await decodePayloads(page));
 
-    expect(geometry).toHaveLength(1);
-    expect(geometry[0].data.pointerType).toBe(3);
-    expect(geometry[0].data.pressure).toBeCloseTo(0.8, 7);
-    expect(geometry[0].data.width).toBe(4);
-    expect(geometry[0].data.height).toBe(5);
+    expect(info).toHaveLength(1);
+    expect(info[0].data.pointerType).toBe(3);
+    expect(info[0].data.pressure).toBeCloseTo(0.8, 7);
+    expect(info[0].data.width).toBe(4);
+    expect(info[0].data.height).toBe(5);
 });
 
-test('should emit standalone geometry in the extended build', async ({ page }) => {
+test('should emit standalone pointer info in the extended build', async ({ page }) => {
     await setupPage(page, 'clarity.extended.js');
 
     await page.evaluate(() => {
@@ -179,11 +185,11 @@ test('should emit standalone geometry in the extended build', async ({ page }) =
         }));
     });
 
-    const geometry = getPointerGeometryEvents(await decodePayloads(page));
+    const info = getPointerInfoEvents(await decodePayloads(page));
 
-    expect(geometry).toHaveLength(1);
-    expect(geometry[0].data.pointerType).toBe(2);
-    expect(geometry[0].data.pressure).toBeCloseTo(0.7, 7);
-    expect(geometry[0].data.width).toBe(20);
-    expect(geometry[0].data.height).toBe(30);
+    expect(info).toHaveLength(1);
+    expect(info[0].data.pointerType).toBe(2);
+    expect(info[0].data.pressure).toBeCloseTo(0.7, 7);
+    expect(info[0].data.width).toBe(20);
+    expect(info[0].data.height).toBe(30);
 });
