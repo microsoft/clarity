@@ -114,10 +114,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             const isPrimary = hasPrimaryTouch && primaryTouchId === id;
 
             // Check for null values before processing this event
-            if (x !== null && y !== null) {
-                let data: PointerData = { target: target(evt), x, y, id, isPrimary };
-                handler({ time: t, event, data });
-            }
+            if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y, id, isPrimary } }); }
 
             // Reset primary touch point id once touch event ends
             if (event === Event.TouchCancel || event === Event.TouchEnd) {
