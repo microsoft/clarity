@@ -135,6 +135,55 @@ for (const build of ['clarity.min.js']) {
             expect(down.data.width).toBe(source.width);
             expect(down.data.height).toBe(source.height);
         });
+
+        test('should use pointerdown geometry for touch input', async ({ page }) => {
+            await setupPage(page, build);
+
+            await page.evaluate(() => {
+                const child = document.getElementById('child');
+                const pointerEvent = new PointerEvent('pointerdown', {
+                    bubbles: true,
+                    pointerType: 'touch',
+                    pressure: 0.7654321,
+                    width: 23.456789,
+                    height: 34.567891,
+                    clientX: 122.49999,
+                    clientY: 146.9999885559082
+                });
+                window.sourcePointerGeometry = {
+                    pressure: pointerEvent.pressure,
+                    width: pointerEvent.width,
+                    height: pointerEvent.height
+                };
+                child.dispatchEvent(pointerEvent);
+
+                const touchEvent = new Event('touchstart', { bubbles: true });
+                Object.defineProperty(touchEvent, 'changedTouches', {
+                    value: [{
+                        identifier: 7,
+                        clientX: 122.50001,
+                        clientY: 147,
+                        force: 0,
+                        radiusX: 100,
+                        radiusY: 200
+                    }]
+                });
+                child.dispatchEvent(touchEvent);
+            });
+
+            await page.waitForTimeout(200);
+            await page.waitForFunction("payloads && payloads.length > 0");
+
+            const payloads: string[] = await page.evaluate('payloads');
+            const source = await page.evaluate(() => window.sourcePointerGeometry);
+            const decoded = payloads.map(x => decode(x));
+            const pointers = getPointerEvents(decoded);
+            const start = pointers.find(p => p.event === 17);
+
+            expect(start.data.pressure).toBe(source.pressure);
+            expect(start.data.width).toBe(source.width);
+            expect(start.data.height).toBe(source.height);
+        });
     });
 }
 

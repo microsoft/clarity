@@ -14,10 +14,15 @@ let timeout: number = null;
 let hasPrimaryTouch = false;
 let primaryTouchId = 0;
 const activeTouchPointIds = new Set<number>();
-let lastMousePointer: { pressure: number; width: number; height: number } = null;
+type PointerGeometry = { pressure: number; width: number; height: number };
+type TouchPointerGeometry = PointerGeometry & { x: number; y: number };
+let lastMousePointer: PointerGeometry = null;
+let touchPointers: TouchPointerGeometry[] = [];
 
 export function start(): void {
     reset();
+    lastMousePointer = null;
+    touchPointers = [];
 }
 
 export function observe(root: Node): void {
@@ -34,8 +39,19 @@ export function observe(root: Node): void {
 }
 
 function pointerdown(evt: PointerEvent): void {
-    if (evt && evt.pointerType === "mouse") {
-        lastMousePointer = { pressure: evt.pressure, width: evt.width, height: evt.height };
+    if (evt) {
+        let geometry: PointerGeometry = { pressure: evt.pressure, width: evt.width, height: evt.height };
+        if (evt.pointerType === "mouse") {
+            lastMousePointer = geometry;
+        } else if (evt.pointerType === "touch") {
+            touchPointers.push({
+                pressure: geometry.pressure,
+                width: geometry.width,
+                height: geometry.height,
+                x: evt.clientX,
+                y: evt.clientY
+            });
+        }
     }
 }
 
@@ -103,10 +119,11 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             // Check for null values before processing this event
             if (x !== null && y !== null) {
                 let data: PointerData = { target: target(evt), x, y, id, isPrimary };
-                if (event === Event.TouchStart) {
-                    if (typeof entry.force === "number") { data.pressure = entry.force; }
-                    if (typeof entry.radiusX === "number") { data.width = entry.radiusX * 2; }
-                    if (typeof entry.radiusY === "number") { data.height = entry.radiusY * 2; }
+                let geometry = event === Event.TouchStart ? getTouchPointer(entry) : null;
+                if (geometry) {
+                    data.pressure = geometry.pressure;
+                    data.width = geometry.width;
+                    data.height = geometry.height;
                 }
                 handler({ time: t, event, data });
             }
@@ -116,7 +133,17 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
                 if (primaryTouchId === id) { hasPrimaryTouch = false; }
             }
         }
+        if (event === Event.TouchStart) { touchPointers = []; }
     }
+}
+
+function getTouchPointer(entry: Touch): PointerGeometry {
+    for (let i = 0; i < touchPointers.length; i++) {
+        if (Math.abs(touchPointers[i].x - entry.clientX) < 1 && Math.abs(touchPointers[i].y - entry.clientY) < 1) {
+            return touchPointers.splice(i, 1)[0];
+        }
+    }
+    return null;
 }
 
 function handler(current: PointerState): void {
