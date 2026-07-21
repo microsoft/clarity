@@ -31,14 +31,14 @@ export function observe(root: Node): void {
     bind(root, "mousemove", mouse.bind(this, Event.MouseMove, root), true);
     bind(root, "wheel", mouse.bind(this, Event.MouseWheel, root), true);
     bind(root, "dblclick", mouse.bind(this, Event.DoubleClick, root), true);
-    bind(root, "pointerdown", pointerdown, true);
+    bind(root, "pointerdown", pointer, true);
     bind(root, "touchstart", touch.bind(this, Event.TouchStart, root), true);
     bind(root, "touchend", touch.bind(this, Event.TouchEnd, root), true);
     bind(root, "touchmove", touch.bind(this, Event.TouchMove, root), true);
     bind(root, "touchcancel", touch.bind(this, Event.TouchCancel, root), true);
 }
 
-function pointerdown(evt: PointerEvent): void {
+function pointer(evt: PointerEvent): void {
     if (evt) {
         let geometry: PointerGeometry = { pressure: evt.pressure, width: evt.width, height: evt.height };
         if (evt.pointerType === "mouse") {
