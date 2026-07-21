@@ -165,7 +165,7 @@ test('should emit standalone primary pen geometry', async ({ page }) => {
     expect(geometry[0].data.height).toBe(5);
 });
 
-test('should leave the extended encoder unchanged', async ({ page }) => {
+test('should emit standalone geometry in the extended build', async ({ page }) => {
     await setupPage(page, 'clarity.extended.js');
 
     await page.evaluate(() => {
@@ -179,5 +179,11 @@ test('should leave the extended encoder unchanged', async ({ page }) => {
         }));
     });
 
-    expect(getPointerGeometryEvents(await decodePayloads(page))).toHaveLength(0);
+    const geometry = getPointerGeometryEvents(await decodePayloads(page));
+
+    expect(geometry).toHaveLength(1);
+    expect(geometry[0].data.pointerType).toBe(2);
+    expect(geometry[0].data.pressure).toBeCloseTo(0.7, 7);
+    expect(geometry[0].data.width).toBe(20);
+    expect(geometry[0].data.height).toBe(30);
 });

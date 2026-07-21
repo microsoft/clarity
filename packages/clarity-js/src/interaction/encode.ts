@@ -40,7 +40,6 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     tokens.push(entry.data.y);
                     tokens.push(entry.data.id !== undefined ? entry.data.id : Constant.Empty);
                     tokens.push(entry.data.isPrimary === undefined ? "true" : "" + entry.data.isPrimary);
-                    tokens.push(Constant.Empty);
                     queue(tokens);
                     if (entry.data.isPrimary === undefined || entry.data.isPrimary) {
                         baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
