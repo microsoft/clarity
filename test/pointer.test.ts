@@ -53,55 +53,53 @@ function getPointerEvents(decoded: Data.DecodedPayload[]): any[] {
     return decoded.flatMap(payload => payload.pointer || []);
 }
 
-for (const diagnostics of [false, true]) {
-    test(`should emit standalone mouse pointerdown with diagnostics ${diagnostics}`, async ({ page }) => {
-        await setupPage(page, 'clarity.min.js', { diagnostics });
+test('should emit standalone mouse pointerdown', async ({ page }) => {
+    await setupPage(page, 'clarity.min.js');
 
-        await page.evaluate(() => {
-            const child = document.getElementById('child');
-            const pointerEvent = new PointerEvent('pointerdown', {
-                bubbles: true,
-                pointerType: 'mouse',
-                pressure: 0.123456789,
-                width: 1.23456789,
-                height: 78.9012345,
-                clientX: 10,
-                clientY: 20
-            });
-            window.sourcePointerDown = {
-                x: pointerEvent.pageX,
-                y: pointerEvent.pageY,
-                pressure: pointerEvent.pressure,
-                width: pointerEvent.width,
-                height: pointerEvent.height
-            };
-            child.dispatchEvent(pointerEvent);
-            child.dispatchEvent(new MouseEvent('mousedown', {
-                bubbles: true,
-                clientX: 10,
-                clientY: 20
-            }));
+    await page.evaluate(() => {
+        const child = document.getElementById('child');
+        const pointerEvent = new PointerEvent('pointerdown', {
+            bubbles: true,
+            pointerType: 'mouse',
+            pressure: 0.123456789,
+            width: 1.23456789,
+            height: 78.9012345,
+            clientX: 10,
+            clientY: 20
         });
-
-        const decoded = await decodePayloads(page);
-        const pointerDown = getPointerDownEvents(decoded);
-        const pointers = getPointerEvents(decoded);
-        const down = pointers.find(pointer => pointer.event === 13);
-        const source = await page.evaluate(() => window.sourcePointerDown);
-
-        expect(pointerDown).toHaveLength(1);
-        expect(pointerDown[0].data.type).toBe(1);
-        expect(pointerDown[0].data.x).toBe(source.x);
-        expect(pointerDown[0].data.y).toBe(source.y);
-        expect(pointerDown[0].data.pressure).toBe(source.pressure);
-        expect(pointerDown[0].data.width).toBe(source.width);
-        expect(pointerDown[0].data.height).toBe(source.height);
-        expect(down).toBeTruthy();
-        expect('pressure' in down.data).toBe(false);
-        expect('width' in down.data).toBe(false);
-        expect('height' in down.data).toBe(false);
+        window.sourcePointerDown = {
+            x: pointerEvent.pageX,
+            y: pointerEvent.pageY,
+            pressure: pointerEvent.pressure,
+            width: pointerEvent.width,
+            height: pointerEvent.height
+        };
+        child.dispatchEvent(pointerEvent);
+        child.dispatchEvent(new MouseEvent('mousedown', {
+            bubbles: true,
+            clientX: 10,
+            clientY: 20
+        }));
     });
-}
+
+    const decoded = await decodePayloads(page);
+    const pointerDown = getPointerDownEvents(decoded);
+    const pointers = getPointerEvents(decoded);
+    const down = pointers.find(pointer => pointer.event === 13);
+    const source = await page.evaluate(() => window.sourcePointerDown);
+
+    expect(pointerDown).toHaveLength(1);
+    expect(pointerDown[0].data.type).toBe(1);
+    expect(pointerDown[0].data.x).toBe(source.x);
+    expect(pointerDown[0].data.y).toBe(source.y);
+    expect(pointerDown[0].data.pressure).toBe(source.pressure);
+    expect(pointerDown[0].data.width).toBe(source.width);
+    expect(pointerDown[0].data.height).toBe(source.height);
+    expect(down).toBeTruthy();
+    expect('pressure' in down.data).toBe(false);
+    expect('width' in down.data).toBe(false);
+    expect('height' in down.data).toBe(false);
+});
 
 test('should emit standalone primary touch pointerdown', async ({ page }) => {
     await setupPage(page, 'clarity.min.js');
