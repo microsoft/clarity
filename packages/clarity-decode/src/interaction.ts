@@ -10,12 +10,15 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 time,
                 event,
                 data: {
-                    type: tokens[2] as Interaction.PointerType,
+                    target: tokens[2] as number,
                     x: tokens[3] as number,
                     y: tokens[4] as number,
-                    pressure: tokens[5] as number,
-                    width: tokens[6] as number,
-                    height: tokens[7] as number,
+                    id: tokens[5] as number,
+                    isPrimary: tokens[6] === "true",
+                    type: tokens[7] as Interaction.PointerType,
+                    pressure: tokens[8] as number,
+                    width: tokens[9] as number,
+                    height: tokens[10] as number,
                 }
             };
         case Data.Event.MouseDown:

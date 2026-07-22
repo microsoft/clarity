@@ -128,9 +128,12 @@ export interface PointerData {
 }
 
 export interface PointerDownData {
-    type: PointerType;
+    target: Target;
     x: number;
     y: number;
+    id: number;
+    isPrimary: boolean;
+    type: PointerType;
     pressure: number;
     width: number;
     height: number;

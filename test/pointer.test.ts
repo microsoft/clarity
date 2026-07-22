@@ -10,7 +10,7 @@ declare global {
     interface Window {
         clarity: (method: string, ...args: any[]) => void;
         payloads: string[];
-        sourcePointerDown: { x: number; y: number; pressure: number; width: number; height: number };
+        sourcePointerDown: { x: number; y: number; id: number; pressure: number; width: number; height: number };
     }
 }
 
@@ -61,6 +61,7 @@ test('should emit standalone mouse pointerdown', async ({ page }) => {
         const pointerEvent = new PointerEvent('pointerdown', {
             bubbles: true,
             pointerType: 'mouse',
+            pointerId: 41,
             pressure: 0.123456789,
             width: 1.23456789,
             height: 78.9012345,
@@ -70,6 +71,7 @@ test('should emit standalone mouse pointerdown', async ({ page }) => {
         window.sourcePointerDown = {
             x: pointerEvent.pageX,
             y: pointerEvent.pageY,
+            id: pointerEvent.pointerId,
             pressure: pointerEvent.pressure,
             width: pointerEvent.width,
             height: pointerEvent.height
@@ -89,6 +91,9 @@ test('should emit standalone mouse pointerdown', async ({ page }) => {
     const source = await page.evaluate(() => window.sourcePointerDown);
 
     expect(pointerDown).toHaveLength(1);
+    expect(pointerDown[0].data.target).toBe(down.data.target);
+    expect(pointerDown[0].data.id).toBe(source.id);
+    expect(pointerDown[0].data.isPrimary).toBe(true);
     expect(pointerDown[0].data.type).toBe(1);
     expect(pointerDown[0].data.x).toBe(source.x);
     expect(pointerDown[0].data.y).toBe(source.y);
@@ -109,6 +114,7 @@ test('should emit standalone primary touch pointerdown', async ({ page }) => {
         child.dispatchEvent(new PointerEvent('pointerdown', {
             bubbles: true,
             pointerType: 'touch',
+            pointerId: 42,
             isPrimary: true,
             pressure: 0.7654321,
             width: 23.456789,
@@ -121,6 +127,9 @@ test('should emit standalone primary touch pointerdown', async ({ page }) => {
     const pointerDown = getPointerDownEvents(await decodePayloads(page));
 
     expect(pointerDown).toHaveLength(1);
+    expect(pointerDown[0].data.target).toBeGreaterThan(0);
+    expect(pointerDown[0].data.id).toBe(42);
+    expect(pointerDown[0].data.isPrimary).toBe(true);
     expect(pointerDown[0].data.type).toBe(2);
     expect(pointerDown[0].data.x).toBe(10);
     expect(pointerDown[0].data.y).toBe(20);
@@ -129,13 +138,14 @@ test('should emit standalone primary touch pointerdown', async ({ page }) => {
     expect(pointerDown[0].data.height).toBe(34.567891);
 });
 
-test('should ignore non-primary touch pointerdown', async ({ page }) => {
+test('should emit standalone non-primary touch pointerdown', async ({ page }) => {
     await setupPage(page, 'clarity.min.js');
 
     await page.evaluate(() => {
         document.getElementById('child').dispatchEvent(new PointerEvent('pointerdown', {
             bubbles: true,
             pointerType: 'touch',
+            pointerId: 43,
             isPrimary: false,
             pressure: 0.5,
             width: 20,
@@ -143,7 +153,12 @@ test('should ignore non-primary touch pointerdown', async ({ page }) => {
         }));
     });
 
-    expect(getPointerDownEvents(await decodePayloads(page))).toHaveLength(0);
+    const pointerDown = getPointerDownEvents(await decodePayloads(page));
+
+    expect(pointerDown).toHaveLength(1);
+    expect(pointerDown[0].data.id).toBe(43);
+    expect(pointerDown[0].data.isPrimary).toBe(false);
+    expect(pointerDown[0].data.type).toBe(2);
 });
 
 test('should emit standalone primary pen pointerdown', async ({ page }) => {
@@ -153,6 +168,7 @@ test('should emit standalone primary pen pointerdown', async ({ page }) => {
         document.getElementById('child').dispatchEvent(new PointerEvent('pointerdown', {
             bubbles: true,
             pointerType: 'pen',
+            pointerId: 44,
             isPrimary: true,
             pressure: 0.8,
             width: 4,
@@ -163,6 +179,8 @@ test('should emit standalone primary pen pointerdown', async ({ page }) => {
     const pointerDown = getPointerDownEvents(await decodePayloads(page));
 
     expect(pointerDown).toHaveLength(1);
+    expect(pointerDown[0].data.id).toBe(44);
+    expect(pointerDown[0].data.isPrimary).toBe(true);
     expect(pointerDown[0].data.type).toBe(3);
     expect(pointerDown[0].data.pressure).toBeCloseTo(0.8, 7);
     expect(pointerDown[0].data.width).toBe(4);
@@ -176,6 +194,7 @@ test('should emit standalone pointerdown in the extended build', async ({ page }
         document.getElementById('child').dispatchEvent(new PointerEvent('pointerdown', {
             bubbles: true,
             pointerType: 'touch',
+            pointerId: 45,
             isPrimary: true,
             pressure: 0.7,
             width: 20,
@@ -186,6 +205,9 @@ test('should emit standalone pointerdown in the extended build', async ({ page }
     const pointerDown = getPointerDownEvents(await decodePayloads(page));
 
     expect(pointerDown).toHaveLength(1);
+    expect(pointerDown[0].data.target).toBeGreaterThan(0);
+    expect(pointerDown[0].data.id).toBe(45);
+    expect(pointerDown[0].data.isPrimary).toBe(true);
     expect(pointerDown[0].data.type).toBe(2);
     expect(pointerDown[0].data.pressure).toBeCloseTo(0.7, 7);
     expect(pointerDown[0].data.width).toBe(20);

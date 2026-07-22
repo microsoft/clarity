@@ -36,9 +36,12 @@ export function observe(root: Node): void {
 function pointer(root: Node, evt: PointerEvent): void {
     let pointerType = getPointerType(evt.pointerType);
     let isPrimary = pointerType === PointerType.Mouse || evt.isPrimary;
-    let [x, y] = coordinates(root, evt);
-    if (pointerType !== PointerType.Unknown && isPrimary && x !== null && y !== null) {
-        schedule(encodeDown.bind(this, time(evt), pointerType, x, y, evt.pressure, evt.width, evt.height));
+    let [x, y]: [number, number] = coordinates(root, evt);
+    if (pointerType !== PointerType.Unknown && x !== null && y !== null) {
+        schedule(encodeDown.bind(
+            this, time(evt), target(evt), x, y, evt.pointerId, isPrimary,
+            pointerType, evt.pressure, evt.width, evt.height
+        ));
     }
 }
 
@@ -56,7 +59,7 @@ function getPointerType(pointerType: string): PointerType {
 }
 
 function mouse(event: Event, root: Node, evt: MouseEvent): void {
-    let [x, y] = coordinates(root, evt);
+    let [x, y]: [number, number] = coordinates(root, evt);
 
     // Check for null values before processing this event
     if (x !== null && y !== null) {
