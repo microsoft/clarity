@@ -10,7 +10,7 @@ declare global {
     interface Window {
         clarity: (method: string, ...args: any[]) => void;
         payloads: string[];
-        sourcePointerContact: { x: number; y: number; pressure: number; width: number; height: number };
+        sourcePointerDown: { x: number; y: number; pressure: number; width: number; height: number };
     }
 }
 
@@ -45,8 +45,8 @@ async function decodePayloads(page: Page): Promise<Data.DecodedPayload[]> {
     return payloads.map(payload => decode(payload));
 }
 
-function getPointerContactEvents(decoded: Data.DecodedPayload[]): any[] {
-    return decoded.flatMap(payload => payload.pointerContact || []);
+function getPointerDownEvents(decoded: Data.DecodedPayload[]): any[] {
+    return decoded.flatMap(payload => payload.pointerDown || []);
 }
 
 function getPointerEvents(decoded: Data.DecodedPayload[]): any[] {
@@ -54,7 +54,7 @@ function getPointerEvents(decoded: Data.DecodedPayload[]): any[] {
 }
 
 for (const diagnostics of [false, true]) {
-    test(`should emit standalone mouse contact with diagnostics ${diagnostics}`, async ({ page }) => {
+    test(`should emit standalone mouse pointerdown with diagnostics ${diagnostics}`, async ({ page }) => {
         await setupPage(page, 'clarity.min.js', { diagnostics });
 
         await page.evaluate(() => {
@@ -68,7 +68,7 @@ for (const diagnostics of [false, true]) {
                 clientX: 10,
                 clientY: 20
             });
-            window.sourcePointerContact = {
+            window.sourcePointerDown = {
                 x: pointerEvent.pageX,
                 y: pointerEvent.pageY,
                 pressure: pointerEvent.pressure,
@@ -84,18 +84,18 @@ for (const diagnostics of [false, true]) {
         });
 
         const decoded = await decodePayloads(page);
-        const contact = getPointerContactEvents(decoded);
+        const pointerDown = getPointerDownEvents(decoded);
         const pointers = getPointerEvents(decoded);
         const down = pointers.find(pointer => pointer.event === 13);
-        const source = await page.evaluate(() => window.sourcePointerContact);
+        const source = await page.evaluate(() => window.sourcePointerDown);
 
-        expect(contact).toHaveLength(1);
-        expect(contact[0].data.pointerType).toBe(1);
-        expect(contact[0].data.x).toBe(source.x);
-        expect(contact[0].data.y).toBe(source.y);
-        expect(contact[0].data.pressure).toBe(source.pressure);
-        expect(contact[0].data.width).toBe(source.width);
-        expect(contact[0].data.height).toBe(source.height);
+        expect(pointerDown).toHaveLength(1);
+        expect(pointerDown[0].data.type).toBe(1);
+        expect(pointerDown[0].data.x).toBe(source.x);
+        expect(pointerDown[0].data.y).toBe(source.y);
+        expect(pointerDown[0].data.pressure).toBe(source.pressure);
+        expect(pointerDown[0].data.width).toBe(source.width);
+        expect(pointerDown[0].data.height).toBe(source.height);
         expect(down).toBeTruthy();
         expect('pressure' in down.data).toBe(false);
         expect('width' in down.data).toBe(false);
@@ -103,7 +103,7 @@ for (const diagnostics of [false, true]) {
     });
 }
 
-test('should emit standalone primary touch contact', async ({ page }) => {
+test('should emit standalone primary touch pointerdown', async ({ page }) => {
     await setupPage(page, 'clarity.min.js');
 
     await page.evaluate(() => {
@@ -120,18 +120,18 @@ test('should emit standalone primary touch contact', async ({ page }) => {
         }));
     });
 
-    const contact = getPointerContactEvents(await decodePayloads(page));
+    const pointerDown = getPointerDownEvents(await decodePayloads(page));
 
-    expect(contact).toHaveLength(1);
-    expect(contact[0].data.pointerType).toBe(2);
-    expect(contact[0].data.x).toBe(10);
-    expect(contact[0].data.y).toBe(20);
-    expect(contact[0].data.pressure).toBeCloseTo(0.7654321, 7);
-    expect(contact[0].data.width).toBe(23.456789);
-    expect(contact[0].data.height).toBe(34.567891);
+    expect(pointerDown).toHaveLength(1);
+    expect(pointerDown[0].data.type).toBe(2);
+    expect(pointerDown[0].data.x).toBe(10);
+    expect(pointerDown[0].data.y).toBe(20);
+    expect(pointerDown[0].data.pressure).toBeCloseTo(0.7654321, 7);
+    expect(pointerDown[0].data.width).toBe(23.456789);
+    expect(pointerDown[0].data.height).toBe(34.567891);
 });
 
-test('should ignore non-primary touch contact', async ({ page }) => {
+test('should ignore non-primary touch pointerdown', async ({ page }) => {
     await setupPage(page, 'clarity.min.js');
 
     await page.evaluate(() => {
@@ -145,10 +145,10 @@ test('should ignore non-primary touch contact', async ({ page }) => {
         }));
     });
 
-    expect(getPointerContactEvents(await decodePayloads(page))).toHaveLength(0);
+    expect(getPointerDownEvents(await decodePayloads(page))).toHaveLength(0);
 });
 
-test('should emit standalone primary pen contact', async ({ page }) => {
+test('should emit standalone primary pen pointerdown', async ({ page }) => {
     await setupPage(page, 'clarity.min.js');
 
     await page.evaluate(() => {
@@ -162,16 +162,16 @@ test('should emit standalone primary pen contact', async ({ page }) => {
         }));
     });
 
-    const contact = getPointerContactEvents(await decodePayloads(page));
+    const pointerDown = getPointerDownEvents(await decodePayloads(page));
 
-    expect(contact).toHaveLength(1);
-    expect(contact[0].data.pointerType).toBe(3);
-    expect(contact[0].data.pressure).toBeCloseTo(0.8, 7);
-    expect(contact[0].data.width).toBe(4);
-    expect(contact[0].data.height).toBe(5);
+    expect(pointerDown).toHaveLength(1);
+    expect(pointerDown[0].data.type).toBe(3);
+    expect(pointerDown[0].data.pressure).toBeCloseTo(0.8, 7);
+    expect(pointerDown[0].data.width).toBe(4);
+    expect(pointerDown[0].data.height).toBe(5);
 });
 
-test('should emit standalone pointer contact in the extended build', async ({ page }) => {
+test('should emit standalone pointerdown in the extended build', async ({ page }) => {
     await setupPage(page, 'clarity.extended.js');
 
     await page.evaluate(() => {
@@ -185,11 +185,11 @@ test('should emit standalone pointer contact in the extended build', async ({ pa
         }));
     });
 
-    const contact = getPointerContactEvents(await decodePayloads(page));
+    const pointerDown = getPointerDownEvents(await decodePayloads(page));
 
-    expect(contact).toHaveLength(1);
-    expect(contact[0].data.pointerType).toBe(2);
-    expect(contact[0].data.pressure).toBeCloseTo(0.7, 7);
-    expect(contact[0].data.width).toBe(20);
-    expect(contact[0].data.height).toBe(30);
+    expect(pointerDown).toHaveLength(1);
+    expect(pointerDown[0].data.type).toBe(2);
+    expect(pointerDown[0].data.pressure).toBeCloseTo(0.7, 7);
+    expect(pointerDown[0].data.width).toBe(20);
+    expect(pointerDown[0].data.height).toBe(30);
 });

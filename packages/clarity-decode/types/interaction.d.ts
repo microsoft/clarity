@@ -21,7 +21,7 @@ export interface ClickEvent extends PartialEvent { data: ClickData; }
 export interface ContextMenuEvent extends PartialEvent { data: ClickData; }
 export interface ClipboardEvent extends PartialEvent { data: Interaction.ClipboardData; }
 export interface PointerEvent extends PartialEvent { data: Interaction.PointerData; }
-export interface PointerContactEvent extends PartialEvent { data: Interaction.PointerContactData; }
+export interface PointerDownEvent extends PartialEvent { data: Interaction.PointerDownData; }
 export interface ResizeEvent extends PartialEvent { data: Interaction.ResizeData; }
 export interface ScrollEvent extends PartialEvent { data: Interaction.ScrollData; }
 export interface SelectionEvent extends PartialEvent { data: Interaction.SelectionData; }
@@ -36,7 +36,7 @@ export interface InteractionEvent extends PartialEvent {
     Interaction.ClipboardData |
     Interaction.InputData |
     Interaction.PointerData |
-    Interaction.PointerContactData |
+    Interaction.PointerDownData |
     Interaction.ResizeData |
     Interaction.ScrollData |
     Interaction.SelectionData |

@@ -5,12 +5,12 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
     let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
     switch (event) {
-        case Data.Event.PointerContact:
+        case Data.Event.PointerDown:
             return {
                 time,
                 event,
                 data: {
-                    pointerType: tokens[2] as Interaction.PointerType,
+                    type: tokens[2] as Interaction.PointerType,
                     x: tokens[3] as number,
                     y: tokens[4] as number,
                     pressure: tokens[5] as number,

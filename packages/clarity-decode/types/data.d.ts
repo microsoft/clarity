@@ -1,6 +1,6 @@
 import { Data } from "clarity-js";
 import { DiagnosticEvent, FraudEvent, LogEvent, ScriptErrorEvent } from "./diagnostic";
-import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, InteractionEvent, PointerEvent, PointerContactEvent, ResizeEvent, SubmitEvent } from "./interaction";
+import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, InteractionEvent, PointerEvent, PointerDownEvent, ResizeEvent, SubmitEvent } from "./interaction";
 import { ScrollEvent, SelectionEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent } from "./interaction";
 import { DocumentEvent, DomEvent, LayoutEvent, RegionEvent, CustomElementEvent } from "./layout";
 import { NavigationEvent, PerformanceEvent } from "./performance";
@@ -57,7 +57,7 @@ export interface DecodedPayload {
     script?: ScriptErrorEvent[];
     input?: InputEvent[];
     pointer?: PointerEvent[];
-    pointerContact?: PointerContactEvent[];
+    pointerDown?: PointerDownEvent[];
     click?: ClickEvent[];
     contextMenu?: ContextMenuEvent[];
     clipboard?: ClipboardEvent[];

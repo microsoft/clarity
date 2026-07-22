@@ -8,7 +8,7 @@ import { iframe } from "@src/layout/dom";
 import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
 import encode from "@src/interaction/encode";
-import encodeContact from "@src/interaction/contact";
+import encodeDown from "@src/interaction/down";
 
 export let state: PointerState[] = [];
 let timeout: number = null;
@@ -38,7 +38,7 @@ function pointer(root: Node, evt: PointerEvent): void {
     let isPrimary = pointerType === PointerType.Mouse || evt.isPrimary;
     let [x, y] = coordinates(root, evt);
     if (pointerType !== PointerType.Unknown && isPrimary && x !== null && y !== null) {
-        schedule(encodeContact.bind(this, time(evt), pointerType, x, y, evt.pressure, evt.width, evt.height));
+        schedule(encodeDown.bind(this, time(evt), pointerType, x, y, evt.pressure, evt.width, evt.height));
     }
 }
 
