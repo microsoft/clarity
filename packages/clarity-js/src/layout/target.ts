@@ -13,7 +13,7 @@ export function target(evt: UIEvent): Node {
     return node && node.nodeType === Node.DOCUMENT_NODE ? (node as Document).documentElement : node;
 }
 
-export function metadata(node: Node, event: Event, text: string = null, track: boolean = true): TargetMetadata {
+export function metadata(node: Node, event: Event, text: string = null): TargetMetadata {
     // If the node is null, we return a reserved value for id: 0. Valid assignment of id begins from 1+.
     let output: TargetMetadata = { id: 0, hash: null, privacy: Privacy.Text, region: Constant.Empty };
     if (node) {
@@ -24,8 +24,8 @@ export function metadata(node: Node, event: Event, text: string = null, track: b
             output.hash = value.hash;
             output.privacy = nodeMetadata.privacy;
             output.region = value.region ? region.get(value.region) : Constant.Empty;
-            if (track && value.region) { region.track(value.region, event); }
-            if (track && nodeMetadata.fraud) { fraud.check(nodeMetadata.fraud, value.id, text || value.data.value); }
+            if (value.region) { region.track(value.region, event); }
+            if (nodeMetadata.fraud) { fraud.check(nodeMetadata.fraud, value.id, text || value.data.value); }
         }
     }
 
