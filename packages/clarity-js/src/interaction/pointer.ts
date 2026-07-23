@@ -4,11 +4,11 @@ import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
+import { queue } from "@src/data/upload";
 import { iframe } from "@src/layout/dom";
 import { offset } from "@src/layout/offset";
-import { target } from "@src/layout/target";
+import { metadata, target } from "@src/layout/target";
 import encode from "@src/interaction/encode";
-import encodeDown from "@src/interaction/down";
 
 export let state: PointerState[] = [];
 let timeout: number = null;
@@ -42,6 +42,20 @@ function pointer(root: Node, evt: PointerEvent): void {
             this, time(evt), target(evt), x, y, evt.pointerId, isPrimary,
             pointerType, evt.pressure, evt.width, evt.height
         ));
+    }
+}
+
+async function encodeDown(
+    downTime: number, targetNode: Node, x: number, y: number, id: number,
+    isPrimary: boolean, pointerType: PointerType, pressure: number,
+    width: number, height: number
+): Promise<void> {
+    let pointerTarget = metadata(targetNode, Event.PointerDown, null, false);
+    if (pointerTarget.id > 0) {
+        queue([
+            downTime, Event.PointerDown, pointerTarget.id, x, y, id,
+            "" + isPrimary, pointerType, pressure, width, height
+        ]);
     }
 }
 
