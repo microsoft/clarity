@@ -19,13 +19,13 @@ export function metadata(node: Node, event: Event, text: string = null): TargetM
     if (node) {
         let value = dom.get(node);
         if (value !== null) {
-            let nodeMetadata = value.metadata;
+            let metadata = value.metadata;
             output.id = value.id;
             output.hash = value.hash;
-            output.privacy = nodeMetadata.privacy;
+            output.privacy = metadata.privacy;
             output.region = value.region ? region.get(value.region) : Constant.Empty;
             if (value.region) { region.track(value.region, event); }
-            if (nodeMetadata.fraud) { fraud.check(nodeMetadata.fraud, value.id, text || value.data.value); }
+            if (metadata.fraud) { fraud.check(metadata.fraud, value.id, text || value.data.value); }
         }
     }
 
