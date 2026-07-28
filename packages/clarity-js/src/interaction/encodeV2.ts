@@ -1,4 +1,5 @@
 import { Constant, Event, Token } from "@clarity-types/data";
+import { PointerType } from "@clarity-types/interaction";
 import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
@@ -17,6 +18,20 @@ import * as timeline from "@src/interaction/timeline";
 import * as unload from "@src/interaction/unload";
 import * as visibility from "@src/interaction/visibility";
 import * as focus from "@src/interaction/focus";
+
+export async function encodeDown(
+    downTime: number, targetNode: Node, x: number, y: number, id: number,
+    isPrimary: boolean, pointerType: PointerType, pressure: number,
+    width: number, height: number
+): Promise<void> {
+    let pointerTarget = metadata(targetNode, Event.PointerDown);
+    if (pointerTarget.id > 0) {
+        queue([
+            downTime, Event.PointerDown, pointerTarget.id, x, y, id,
+            "" + isPrimary, pointerType, pressure, width, height
+        ]);
+    }
+}
 
 export default async function (type: Event, ts: number = null): Promise<void> {
     let t = ts || time();
