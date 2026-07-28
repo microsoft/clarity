@@ -127,10 +127,7 @@ export interface PointerData {
     isPrimary?: boolean;
 }
 
-export interface PointerDownData {
-    target: Target;
-    x: number;
-    y: number;
+export interface PointerDownData extends PointerData {
     id: number;
     isPrimary: boolean;
     type: PointerType;
