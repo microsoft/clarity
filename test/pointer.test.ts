@@ -62,6 +62,7 @@ test('should emit standalone mouse pointerdown', async ({ page }) => {
             bubbles: true,
             pointerType: 'mouse',
             pointerId: 41,
+            isPrimary: true,
             pressure: 0.123456789,
             width: 1.23456789,
             height: 78.9012345,
@@ -104,6 +105,29 @@ test('should emit standalone mouse pointerdown', async ({ page }) => {
     expect('pressure' in down.data).toBe(false);
     expect('width' in down.data).toBe(false);
     expect('height' in down.data).toBe(false);
+});
+
+test('should preserve synthetic mouse primary state', async ({ page }) => {
+    await setupPage(page, 'clarity.min.js');
+
+    await page.evaluate(() => {
+        document.getElementById('child').dispatchEvent(new PointerEvent('pointerdown', {
+            bubbles: true,
+            pointerType: 'mouse',
+            pointerId: 46,
+            isPrimary: false,
+            pressure: 0,
+            width: 1,
+            height: 1
+        }));
+    });
+
+    const pointerDown = getPointerDownEvents(await decodePayloads(page));
+
+    expect(pointerDown).toHaveLength(1);
+    expect(pointerDown[0].data.id).toBe(46);
+    expect(pointerDown[0].data.isPrimary).toBe(false);
+    expect(pointerDown[0].data.type).toBe(1);
 });
 
 test('should emit standalone primary touch pointerdown', async ({ page }) => {

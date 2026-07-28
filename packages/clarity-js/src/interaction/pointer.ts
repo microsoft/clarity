@@ -35,11 +35,10 @@ export function observe(root: Node): void {
 
 function pointer(root: Node, evt: PointerEvent): void {
     let pointerType = getPointerType(evt.pointerType);
-    let isPrimary = pointerType === PointerType.Mouse || evt.isPrimary;
     let [x, y]: [number, number] = coordinates(root, evt);
     if (pointerType !== PointerType.Unknown && x !== null && y !== null) {
         schedule(encodeDown.bind(
-            this, time(evt), target(evt), x, y, evt.pointerId, isPrimary,
+            this, time(evt), target(evt), x, y, evt.pointerId, evt.isPrimary,
             pointerType, evt.pressure, evt.width, evt.height
         ));
     }
