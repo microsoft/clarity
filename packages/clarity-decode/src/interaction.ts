@@ -5,6 +5,22 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
     let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
     switch (event) {
+        case Data.Event.PointerDown:
+            return {
+                time,
+                event,
+                data: {
+                    target: tokens[2] as number,
+                    x: tokens[3] as number,
+                    y: tokens[4] as number,
+                    id: tokens[5] as number,
+                    isPrimary: tokens[6] === "true",
+                    type: tokens[7] as Interaction.PointerType,
+                    pressure: tokens[8] as number,
+                    width: tokens[9] as number,
+                    height: tokens[10] as number,
+                }
+            };
         case Data.Event.MouseDown:
         case Data.Event.MouseUp:
         case Data.Event.MouseMove:

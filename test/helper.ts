@@ -4,6 +4,9 @@ import { resolve } from 'path';
 import type { Page } from '@playwright/test';
 import type { Core, Data, Layout } from "clarity-decode";
 
+const inputEvent = 27;
+const changeEvent = 42;
+
 declare global {
     interface Window {
         clarity: (method: string, ...args: any[]) => void,
@@ -31,7 +34,11 @@ export async function markup(page: Page, file: string, override?: Core.Config): 
     await page.locator('#pwd').type('p1ssw0rd');
     await page.locator('#eml').fill('');
     await page.locator('#eml').type('hello@world.com');
-    await page.waitForFunction("payloads && payloads.length > 2");
+    await page.waitForFunction(eventTypes => {
+        const events: unknown[][] = window.payloads.flatMap(payload => JSON.parse(payload).a || []);
+        return events.some(event => event[1] === eventTypes.input)
+            && events.filter(event => event[1] === eventTypes.change).length >= 2;
+    }, { input: inputEvent, change: changeEvent });
     return await page.evaluate('payloads');
 }
 

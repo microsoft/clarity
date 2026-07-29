@@ -17,6 +17,8 @@ test.describe('Masking Tests', () => {
         const click = clicks(decoded)[0];
         const input = inputs(decoded)[0];
         const group = changes(decoded);
+        const searchChange = group.find(change => change.data.type === 'search');
+        const passwordChange = group.find(change => change.data.type === 'password');
         
         // Non-sensitive fields continue to pass through with sensitive bits masked off
         expect(heading).toBe("Thanks for your order #▫▪▪▫▫▫▪▪");
@@ -35,13 +37,11 @@ test.describe('Masking Tests', () => {
         expect(input.data.value).toBe("••••• •••• •••• ••••");
         expect(group.length).toBe(2);
         // Search change - we should captured mangled input and hash
-        expect(group[0].data.type).toBe("search");
-        expect(group[0].data.value).toBe("••••• •••• •••• ••••");
-        expect(group[0].data.checksum).toBe("oxedq");
+        expect(searchChange?.data.value).toBe("••••• •••• •••• ••••");
+        expect(searchChange?.data.checksum).toBe("oxedq");
         // Password change - we should capture placeholder value and empty hash
-        expect(group[1].data.type).toBe("password");
-        expect(group[1].data.value).toBe("••••");
-        expect(group[1].data.checksum).toBe("");
+        expect(passwordChange?.data.value).toBe("••••");
+        expect(passwordChange?.data.checksum).toBe("");
     });
 
     test('should mask all text in strict mode', async ({ page }) => {

@@ -22,6 +22,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
     let t = ts || time();
     let tokens: Token[] = [t, type];
     switch (type) {
+        case Event.PointerDown:
         case Event.MouseDown:
         case Event.MouseUp:
         case Event.MouseMove:
@@ -40,9 +41,16 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     tokens.push(entry.data.y);
                     tokens.push(entry.data.id !== undefined ? entry.data.id : Constant.Empty);
                     tokens.push(entry.data.isPrimary === undefined ? "true" : "" + entry.data.isPrimary);
-                    tokens.push(pTarget.region || Constant.Empty);
+                    if (entry.event === Event.PointerDown) {
+                        tokens.push(entry.data.type!);
+                        tokens.push(entry.data.pressure!);
+                        tokens.push(entry.data.width!);
+                        tokens.push(entry.data.height!);
+                    } else {
+                        tokens.push(pTarget.region || Constant.Empty);
+                    }
                     queue(tokens);
-                    if (entry.data.isPrimary === undefined || entry.data.isPrimary) {
+                    if (entry.event !== Event.PointerDown && (entry.data.isPrimary === undefined || entry.data.isPrimary)) {
                         baseline.track(entry.event, entry.data.x, entry.data.y, entry.time);
                     }
                 }

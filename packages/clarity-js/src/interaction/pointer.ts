@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { PointerState, Setting } from "@clarity-types/interaction";
+import { PointerData, PointerState, PointerType, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -25,13 +25,59 @@ export function observe(root: Node): void {
     bind(root, "mousemove", mouse.bind(this, Event.MouseMove, root), true);
     bind(root, "wheel", mouse.bind(this, Event.MouseWheel, root), true);
     bind(root, "dblclick", mouse.bind(this, Event.DoubleClick, root), true);
+    bind(root, "pointerdown", pointer.bind(this, root), true);
     bind(root, "touchstart", touch.bind(this, Event.TouchStart, root), true);
     bind(root, "touchend", touch.bind(this, Event.TouchEnd, root), true);
     bind(root, "touchmove", touch.bind(this, Event.TouchMove, root), true);
     bind(root, "touchcancel", touch.bind(this, Event.TouchCancel, root), true);
 }
 
+function pointer(root: Node, evt: PointerEvent): void {
+    let pointerType = getPointerType(evt.pointerType);
+    let [x, y]: [number, number] = coordinates(root, evt);
+    if (pointerType !== PointerType.Unknown && x !== null && y !== null) {
+        handler({
+            time: time(evt),
+            event: Event.PointerDown,
+            data: {
+                target: target(evt),
+                x,
+                y,
+                id: evt.pointerId,
+                isPrimary: evt.isPrimary,
+                type: pointerType,
+                pressure: evt.pressure,
+                width: evt.width,
+                height: evt.height
+            }
+        });
+    }
+}
+
+function getPointerType(pointerType: string): PointerType {
+    switch (pointerType) {
+        case "mouse":
+            return PointerType.Mouse;
+        case "touch":
+            return PointerType.Touch;
+        case "pen":
+            return PointerType.Pen;
+        default:
+            return PointerType.Unknown;
+    }
+}
+
 function mouse(event: Event, root: Node, evt: MouseEvent): void {
+    let [x, y]: [number, number] = coordinates(root, evt);
+
+    // Check for null values before processing this event
+    if (x !== null && y !== null) {
+        let data: PointerData = { target: target(evt), x, y };
+        handler({ time: time(evt), event, data });
+    }
+}
+
+function coordinates(root: Node, evt: MouseEvent | PointerEvent): [number, number] {
     let frame = iframe(root);
     let d = frame && frame.contentDocument ? frame.contentDocument.documentElement : document.documentElement;
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
@@ -42,9 +88,7 @@ function mouse(event: Event, root: Node, evt: MouseEvent): void {
         x = x ? x + Math.round(distance.x) : x;
         y = y ? y + Math.round(distance.y) : y;
     }
-
-    // Check for null values before processing this event
-    if (x !== null && y !== null) { handler({ time: time(evt), event, data: { target: target(evt), x, y } }); }
+    return [x, y];
 }
 
 function touch(event: Event, root: Node, evt: TouchEvent): void {
@@ -69,7 +113,7 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
                 case Event.TouchStart:
                     if (activeTouchPointIds.size === 0) {
                         // Track presence of primary touch separately to handle scenarios when same id is repeated
-                        hasPrimaryTouch = true;  
+                        hasPrimaryTouch = true;
                         primaryTouchId = id;
                     }
                     activeTouchPointIds.add(id);

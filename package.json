@@ -1,8 +1,8 @@
 {
   "name": "clarity",
   "private": true,
-  "version": "0.8.68",
-  "repository": "git+https://github.com/microsoft/clarity.git",
+  "version": "0.8.69-beta",
+  "repository": "https://github.com/microsoft/clarity.git",
   "author": "Sarvesh Nagpal <sarveshn@microsoft.com>",
   "license": "MIT",
   "workspaces": {
