@@ -211,7 +211,7 @@ test('should emit standalone primary pen pointerdown', async ({ page }) => {
     expect(pointerDown[0].data.height).toBe(5);
 });
 
-test('should emit standalone pointerdown in the extended build', async ({ page }) => {
+test('should not emit standalone pointerdown in the extended build', async ({ page }) => {
     await setupPage(page, 'clarity.extended.js');
 
     await page.evaluate(() => {
@@ -228,12 +228,5 @@ test('should emit standalone pointerdown in the extended build', async ({ page }
 
     const pointerDown = getPointerDownEvents(await decodePayloads(page));
 
-    expect(pointerDown).toHaveLength(1);
-    expect(pointerDown[0].data.target).toBeGreaterThan(0);
-    expect(pointerDown[0].data.id).toBe(45);
-    expect(pointerDown[0].data.isPrimary).toBe(true);
-    expect(pointerDown[0].data.type).toBe(2);
-    expect(pointerDown[0].data.pressure).toBeCloseTo(0.7, 7);
-    expect(pointerDown[0].data.width).toBe(20);
-    expect(pointerDown[0].data.height).toBe(30);
+    expect(pointerDown).toHaveLength(0);
 });

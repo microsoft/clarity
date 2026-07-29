@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { PointerData, PointerState, PointerType, Setting } from "@clarity-types/interaction";
+import { PointerData, PointerDownState, PointerState, PointerType, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -7,9 +7,10 @@ import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { iframe } from "@src/layout/dom";
 import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
-import encode, { encodeDown } from "@src/interaction/encode";
+import encode from "@src/interaction/encode";
 
 export let state: PointerState[] = [];
+export let down: PointerDownState[] = [];
 let timeout: number = null;
 let hasPrimaryTouch = false;
 let primaryTouchId = 0;
@@ -17,6 +18,7 @@ const activeTouchPointIds = new Set<number>();
 
 export function start(): void {
     reset();
+    resetDown();
 }
 
 export function observe(root: Node): void {
@@ -36,10 +38,22 @@ function pointer(root: Node, evt: PointerEvent): void {
     let pointerType = getPointerType(evt.pointerType);
     let [x, y]: [number, number] = coordinates(root, evt);
     if (pointerType !== PointerType.Unknown && x !== null && y !== null) {
-        schedule(encodeDown.bind(
-            this, time(evt), target(evt), x, y, evt.pointerId, evt.isPrimary,
-            pointerType, evt.pressure, evt.width, evt.height
-        ));
+        down.push({
+            time: time(evt),
+            event: Event.PointerDown,
+            data: {
+                target: target(evt),
+                x,
+                y,
+                id: evt.pointerId,
+                isPrimary: evt.isPrimary,
+                type: pointerType,
+                pressure: evt.pressure,
+                width: evt.width,
+                height: evt.height
+            }
+        });
+        process(Event.PointerDown);
     }
 }
 
@@ -151,6 +165,10 @@ function process(event: Event): void {
 
 export function reset(): void {
     state = [];
+}
+
+export function resetDown(): void {
+    down = [];
 }
 
 function similar(last: PointerState, current: PointerState): boolean {

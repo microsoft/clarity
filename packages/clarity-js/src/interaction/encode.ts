@@ -1,5 +1,4 @@
 import { Constant, Event, Token } from "@clarity-types/data";
-import { PointerType } from "@clarity-types/interaction";
 import * as scrub from "@src/core/scrub";
 import { time } from "@src/core/time";
 import * as baseline from "@src/data/baseline";
@@ -19,24 +18,25 @@ import * as unload from "@src/interaction/unload";
 import * as visibility from "@src/interaction/visibility";
 import * as focus from "@src/interaction/focus";
 
-export async function encodeDown(
-    downTime: number, targetNode: Node, x: number, y: number, id: number,
-    isPrimary: boolean, pointerType: PointerType, pressure: number,
-    width: number, height: number
-): Promise<void> {
-    let pointerTarget = metadata(targetNode, Event.PointerDown);
-    if (pointerTarget.id > 0) {
-        queue([
-            downTime, Event.PointerDown, pointerTarget.id, x, y, id,
-            "" + isPrimary, pointerType, pressure, width, height
-        ]);
-    }
-}
-
 export default async function (type: Event, ts: number = null): Promise<void> {
     let t = ts || time();
     let tokens: Token[] = [t, type];
     switch (type) {
+        case Event.PointerDown:
+            for (let entry of pointer.down) {
+                let downTarget = metadata(entry.data.target as Node, entry.event);
+                if (downTarget.id > 0) {
+                    tokens = [
+                        entry.time, entry.event, downTarget.id,
+                        entry.data.x, entry.data.y, entry.data.id,
+                        "" + entry.data.isPrimary, entry.data.type,
+                        entry.data.pressure, entry.data.width, entry.data.height
+                    ];
+                    queue(tokens);
+                }
+            }
+            pointer.resetDown();
+            break;
         case Event.MouseDown:
         case Event.MouseUp:
         case Event.MouseMove:
