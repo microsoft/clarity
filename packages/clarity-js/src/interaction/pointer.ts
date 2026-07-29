@@ -8,7 +8,6 @@ import { iframe } from "@src/layout/dom";
 import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
 import encode from "@src/interaction/encode";
-import { capturePointerDown } from "@src/interaction/variant";
 
 export let state: PointerState[] = [];
 let timeout: number = null;
@@ -26,7 +25,7 @@ export function observe(root: Node): void {
     bind(root, "mousemove", mouse.bind(this, Event.MouseMove, root), true);
     bind(root, "wheel", mouse.bind(this, Event.MouseWheel, root), true);
     bind(root, "dblclick", mouse.bind(this, Event.DoubleClick, root), true);
-    if (capturePointerDown) { bind(root, "pointerdown", pointer.bind(this, root), true); }
+    bind(root, "pointerdown", pointer.bind(this, root), true);
     bind(root, "touchstart", touch.bind(this, Event.TouchStart, root), true);
     bind(root, "touchend", touch.bind(this, Event.TouchEnd, root), true);
     bind(root, "touchmove", touch.bind(this, Event.TouchMove, root), true);
