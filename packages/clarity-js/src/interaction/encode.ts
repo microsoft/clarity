@@ -26,12 +26,16 @@ export default async function (type: Event, ts: number = null): Promise<void> {
             for (let entry of pointer.down) {
                 let downTarget = metadata(entry.data.target as Node, entry.event);
                 if (downTarget.id > 0) {
-                    tokens = [
-                        entry.time, entry.event, downTarget.id,
-                        entry.data.x, entry.data.y, entry.data.id,
-                        "" + entry.data.isPrimary, entry.data.type,
-                        entry.data.pressure, entry.data.width, entry.data.height
-                    ];
+                    tokens = [entry.time, entry.event];
+                    tokens.push(downTarget.id);
+                    tokens.push(entry.data.x);
+                    tokens.push(entry.data.y);
+                    tokens.push(entry.data.id);
+                    tokens.push("" + entry.data.isPrimary);
+                    tokens.push(entry.data.type);
+                    tokens.push(entry.data.pressure);
+                    tokens.push(entry.data.width);
+                    tokens.push(entry.data.height);
                     queue(tokens);
                 }
             }
