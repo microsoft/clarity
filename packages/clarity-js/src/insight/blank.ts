@@ -1,5 +1,4 @@
 export let state = [];
-export let down = [];
 export let sheetAdoptionState = [];
 export let sheetUpdateState = [];
 export let data = null;
@@ -8,7 +7,6 @@ export let data = null;
 
 export function start(): void {}
 export function reset(): void {}
-export function resetDown(): void {}
 export function stop(): void {}
 export function log(): void {}
 export function observe(): void {}

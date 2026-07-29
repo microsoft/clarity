@@ -49,12 +49,6 @@ export interface PointerState {
     data: PointerData;
 }
 
-export interface PointerDownState {
-    time: number;
-    event: number;
-    data: PointerDownData;
-}
-
 export interface ClickState {
     time: number;
     event: number;
@@ -131,6 +125,10 @@ export interface PointerData {
     y: number;
     id?: number;
     isPrimary?: boolean;
+    type?: PointerType;
+    pressure?: number;
+    width?: number;
+    height?: number;
 }
 
 export interface PointerDownData {

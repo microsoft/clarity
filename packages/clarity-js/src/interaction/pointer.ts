@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { PointerData, PointerDownState, PointerState, PointerType, Setting } from "@clarity-types/interaction";
+import { PointerData, PointerState, PointerType, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -8,9 +8,9 @@ import { iframe } from "@src/layout/dom";
 import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
 import encode from "@src/interaction/encode";
+import { capturePointerDown } from "@src/interaction/variant";
 
 export let state: PointerState[] = [];
-export let down: PointerDownState[] = [];
 let timeout: number = null;
 let hasPrimaryTouch = false;
 let primaryTouchId = 0;
@@ -18,7 +18,6 @@ const activeTouchPointIds = new Set<number>();
 
 export function start(): void {
     reset();
-    resetDown();
 }
 
 export function observe(root: Node): void {
@@ -27,7 +26,7 @@ export function observe(root: Node): void {
     bind(root, "mousemove", mouse.bind(this, Event.MouseMove, root), true);
     bind(root, "wheel", mouse.bind(this, Event.MouseWheel, root), true);
     bind(root, "dblclick", mouse.bind(this, Event.DoubleClick, root), true);
-    bind(root, "pointerdown", pointer.bind(this, root), true);
+    if (capturePointerDown) { bind(root, "pointerdown", pointer.bind(this, root), true); }
     bind(root, "touchstart", touch.bind(this, Event.TouchStart, root), true);
     bind(root, "touchend", touch.bind(this, Event.TouchEnd, root), true);
     bind(root, "touchmove", touch.bind(this, Event.TouchMove, root), true);
@@ -38,7 +37,7 @@ function pointer(root: Node, evt: PointerEvent): void {
     let pointerType = getPointerType(evt.pointerType);
     let [x, y]: [number, number] = coordinates(root, evt);
     if (pointerType !== PointerType.Unknown && x !== null && y !== null) {
-        down.push({
+        handler({
             time: time(evt),
             event: Event.PointerDown,
             data: {
@@ -53,7 +52,6 @@ function pointer(root: Node, evt: PointerEvent): void {
                 height: evt.height
             }
         });
-        process(Event.PointerDown);
     }
 }
 
@@ -165,10 +163,6 @@ function process(event: Event): void {
 
 export function reset(): void {
     state = [];
-}
-
-export function resetDown(): void {
-    down = [];
 }
 
 function similar(last: PointerState, current: PointerState): boolean {

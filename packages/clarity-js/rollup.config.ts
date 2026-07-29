@@ -57,7 +57,8 @@ export default [
       alias({
         entries: [
           { find: '@src/layout/region', replacement: '@src/layout/regionV2' },
-          { find: '@src/interaction/encode', replacement: '@src/interaction/encodeV2' }
+          { find: '@src/interaction/encode', replacement: '@src/interaction/encodeV2' },
+          { find: '@src/interaction/variant', replacement: '@src/interaction/variantV2' }
         ]
       }),
       resolve(),

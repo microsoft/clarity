@@ -22,9 +22,6 @@ export default async function (type: Event, ts: number = null): Promise<void> {
     let t = ts || time();
     let tokens: Token[] = [t, type];
     switch (type) {
-        case Event.PointerDown:
-            pointer.resetDown();
-            break;
         case Event.MouseDown:
         case Event.MouseUp:
         case Event.MouseMove:
