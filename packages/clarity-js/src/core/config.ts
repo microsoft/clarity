@@ -1,4 +1,5 @@
 import { Config, Time } from "@clarity-types/core";
+import { Setting } from "@clarity-types/data";
 
 let config: Config = {
     projectId: null,
@@ -26,6 +27,7 @@ let config: Config = {
     includeSubdomains: true,
     modules: [],
     diagnostics: false,
+    restart: Setting.RestartDelay,
 };
 
 export default config;
