@@ -47,7 +47,7 @@ export function reset(): void {
     };
 }
 
-export function track(event: Event, x: number, y: number, time?: number): void {
+export function track(event: Event, x: number, y: number, time: number): void {
     switch (event) {
         case Event.Document:
             buffer.docWidth = x;

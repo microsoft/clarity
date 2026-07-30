@@ -19,12 +19,16 @@
     "build:devtools": "yarn workspace clarity-devtools build",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "bump-version": "ts-node scripts/bump-version.ts"
+    "bump-version": "ts-node scripts/bump-version.ts",
+    "test:unit": "yarn workspace clarity-js test:unit"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
     "lerna": "^9.0.7",
     "parse-url": "^8.1.0",
+    "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2"
   },
   "resolutions": {
