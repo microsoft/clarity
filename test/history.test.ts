@@ -80,4 +80,73 @@ test.describe('History Tests', () => {
 
         expect(foundCallStackLog).toBe(true);
     });
+
+    // Verifies the configurable SPA restart delay: on a URL change, history.ts schedules the
+    // restart via window.setTimeout(restart, config.restart). We spy on setTimeout and assert
+    // the recorded delay matches the value passed to clarity("start", ...).
+    test('should schedule the SPA restart using the configured restart delay', async ({ page }) => {
+        const htmlPath = resolve(__dirname, './html/core.html');
+        const html = readFileSync(htmlPath, 'utf8');
+        const clarityJs = readFileSync(resolve(__dirname, '../packages/clarity-js/build/clarity.min.js'), 'utf8');
+        await page.goto(pathToFileURL(htmlPath).toString());
+        await page.setContent(html.replace('</body>', `
+            <script>
+              window.payloads = [];
+              window.__timeoutDelays = [];
+              const __nativeSetTimeout = window.setTimeout;
+              window.setTimeout = function (handler, timeout) {
+                if (typeof timeout === 'number') { window.__timeoutDelays.push(timeout); }
+                return __nativeSetTimeout.apply(this, arguments);
+              };
+              ${clarityJs};
+              clarity("start", { delay: 100, restart: 1234, projectId: "test", upload: (p) => { window.payloads.push(p); window.clarity("upgrade", "test"); } });
+            </script>
+            </body>
+        `));
+
+        await page.waitForFunction('window.payloads && window.payloads.length > 0', null, { timeout: 10000 });
+
+        await page.evaluate(() => {
+            (window as any).__timeoutDelays.length = 0;
+            history.pushState({}, "", location.pathname + "?spa=" + Date.now());
+        });
+
+        await page.waitForFunction(() => (window as any).__timeoutDelays.includes(1234), null, { timeout: 5000 });
+        const delays = await page.evaluate(() => (window as any).__timeoutDelays) as number[];
+        expect(delays).toContain(1234);
+    });
+
+    // Regression guard: passing restart: undefined must not zero-out the delay (setTimeout would
+    // otherwise treat undefined as 0 and restart immediately). It must fall back to the 250ms default.
+    test('should fall back to the default restart delay when restart is undefined', async ({ page }) => {
+        const htmlPath = resolve(__dirname, './html/core.html');
+        const html = readFileSync(htmlPath, 'utf8');
+        const clarityJs = readFileSync(resolve(__dirname, '../packages/clarity-js/build/clarity.min.js'), 'utf8');
+        await page.goto(pathToFileURL(htmlPath).toString());
+        await page.setContent(html.replace('</body>', `
+            <script>
+              window.payloads = [];
+              window.__timeoutDelays = [];
+              const __nativeSetTimeout = window.setTimeout;
+              window.setTimeout = function (handler, timeout) {
+                if (typeof timeout === 'number') { window.__timeoutDelays.push(timeout); }
+                return __nativeSetTimeout.apply(this, arguments);
+              };
+              ${clarityJs};
+              clarity("start", { delay: 100, restart: undefined, projectId: "test", upload: (p) => { window.payloads.push(p); window.clarity("upgrade", "test"); } });
+            </script>
+            </body>
+        `));
+
+        await page.waitForFunction('window.payloads && window.payloads.length > 0', null, { timeout: 10000 });
+
+        await page.evaluate(() => {
+            (window as any).__timeoutDelays.length = 0;
+            history.pushState({}, "", location.pathname + "?spa=" + Date.now());
+        });
+
+        await page.waitForFunction(() => (window as any).__timeoutDelays.includes(250), null, { timeout: 5000 });
+        const delays = await page.evaluate(() => (window as any).__timeoutDelays) as number[];
+        expect(delays).toContain(250);
+    });
 });

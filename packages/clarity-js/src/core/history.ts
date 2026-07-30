@@ -1,6 +1,6 @@
 import { BooleanFlag, Code, Constant, Metric, Setting, Severity } from "@clarity-types/data";
 import * as clarity from "@src/clarity";
-import * as core from "@src/core"
+import * as core from "@src/core";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import * as internal from "@src/diagnostic/internal";
@@ -52,7 +52,7 @@ function compute(): void {
     if (url !== getCurrentUrl()) {
         // If the url changed, start tracking it as a new page
         clarity.stop();
-        window.setTimeout(restart, config.restart);
+        window.setTimeout(restart, config.restart ?? Setting.RestartDelay);
     }
 }
 
