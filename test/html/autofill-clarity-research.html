@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Browser Autofill Detection Research for Clarity Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fb;
+      --paper: #ffffff;
+      --ink: #17202a;
+      --muted: #586575;
+      --line: #d9e0ea;
+      --accent: #0f766e;
+      --accent-soft: #e3f4f1;
+      --warn: #8a5a00;
+      --warn-soft: #fff6d7;
+      --bad: #9f1239;
+      --bad-soft: #ffe4ec;
+      --code: #f2f5f9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    header {
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap {
+      width: min(1120px, calc(100vw - 40px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding: 36px 0 24px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.2;
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 900px;
+      font-size: clamp(2rem, 5vw, 3.6rem);
+    }
+
+    h2 {
+      margin-top: 42px;
+      font-size: 1.65rem;
+    }
+
+    h3 {
+      margin-top: 24px;
+      font-size: 1.05rem;
+    }
+
+    p {
+      margin: 12px 0 0;
+      max-width: 880px;
+    }
+
+    a {
+      color: #0b5cad;
+    }
+
+    code,
+    pre {
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.93em;
+    }
+
+    code {
+      background: var(--code);
+      border-radius: 4px;
+      padding: 0.12em 0.28em;
+    }
+
+    pre {
+      overflow: auto;
+      background: #111827;
+      color: #edf2f7;
+      border-radius: 8px;
+      padding: 16px;
+      line-height: 1.45;
+      max-width: 980px;
+    }
+
+    main {
+      padding: 24px 0 56px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+      color: var(--muted);
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: #fff;
+      font-size: 0.9rem;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .box {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .box.good {
+      border-color: #9ed8cf;
+      background: var(--accent-soft);
+    }
+
+    .box.warn {
+      border-color: #f1d176;
+      background: var(--warn-soft);
+    }
+
+    .box.bad {
+      border-color: #f6a7bd;
+      background: var(--bad-soft);
+    }
+
+    .box h3 {
+      margin-top: 0;
+    }
+
+    .box p {
+      margin-top: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #eef3f8;
+      font-weight: 650;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 22px;
+      max-width: 920px;
+    }
+
+    li + li {
+      margin-top: 7px;
+    }
+
+    .callout {
+      border-left: 5px solid var(--accent);
+      background: #ffffff;
+      margin-top: 18px;
+      padding: 14px 16px;
+      max-width: 920px;
+    }
+
+    .callout.warning {
+      border-left-color: var(--warn);
+    }
+
+    .callout.risk {
+      border-left-color: var(--bad);
+    }
+
+    .status {
+      display: inline-block;
+      min-width: 74px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 0.82rem;
+      text-align: center;
+      font-weight: 650;
+    }
+
+    .status.strong {
+      background: var(--accent-soft);
+      color: #07564f;
+    }
+
+    .status.medium {
+      background: var(--warn-soft);
+      color: var(--warn);
+    }
+
+    .status.weak {
+      background: var(--bad-soft);
+      color: var(--bad);
+    }
+
+    footer {
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      padding: 24px 0 40px;
+    }
+
+    @media (max-width: 860px) {
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .wrap {
+        width: min(100vw - 24px, 1120px);
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap hero">
+      <h1>Browser Autofill Detection Research for a Local Clarity Lab</h1>
+      <p>
+        This report summarizes what a local test page can observe when form fields are filled by browser autofill,
+        copy/paste, script-driven fills, password managers, and browser automation. It is intended to guide the next
+        HTML lab page that embeds a Microsoft Clarity tag.
+      </p>
+      <div class="meta">
+        <span class="pill">Prepared: July 22, 2026</span>
+        <span class="pill">Target: local browser test page</span>
+        <span class="pill">Clarity project id: pending</span>
+        <span class="pill">Theme: light</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section>
+      <div class="summary">
+        <article class="box good">
+          <h3>Best current browser signal</h3>
+          <p>
+            Chrome has introduced a dedicated <code>autofill</code> event as an origin trial starting in Chrome 147.
+            It fires before the browser fills the form and exposes planned autofill values plus a <code>refill</code>
+            function. It is promising, but it is not a stable cross-browser baseline yet.
+          </p>
+        </article>
+        <article class="box warn">
+          <h3>Best practical stable signal</h3>
+          <p>
+            CSS <code>:autofill</code> and <code>:-webkit-autofill</code> can identify fields currently styled as
+            browser-autofilled. This is useful, but limited. The state disappears when the user edits the field, and
+            support/behavior varies.
+          </p>
+        </article>
+        <article class="box bad">
+          <h3>Main limitation</h3>
+          <p>
+            Page JavaScript cannot perfectly prove intent. It can distinguish ordinary paste and simple script fills
+            well, but it cannot always distinguish browser autofill from sophisticated automation or extension-based
+            password managers.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Executive Finding</h2>
+      <p>
+        The local page should not rely on a single event. It should build a timeline and classify each value change
+        from several signals: <code>autofill</code> where available, CSS autofill state, <code>beforeinput</code>,
+        <code>input</code>, <code>change</code>, <code>paste</code>, <code>drop</code>, keyboard/pointer context,
+        <code>event.isTrusted</code>, <code>navigator.webdriver</code>, value-property interception, mutation
+        observers, and periodic value snapshots.
+      </p>
+      <div class="callout warning">
+        <strong>Recommended framing:</strong> label each detected change as a candidate with evidence, not as a
+        definitive truth. For example: <code>browser-autofill-likely</code>, <code>paste-observed</code>,
+        <code>script-fill-observed</code>, <code>webdriver-or-automation-suspected</code>, and
+        <code>unknown-value-change</code>.
+      </div>
+    </section>
+
+    <section>
+      <h2>Observed Signals</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Signal</th>
+            <th>What it tells us</th>
+            <th>How strong</th>
+            <th>Failure modes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>autofill</code> event</td>
+            <td>
+              Direct signal that the browser is about to autofill a form. Chrome's origin-trial event includes an
+              <code>autofillValues</code> array and a <code>refill</code> hook for dynamic forms.
+            </td>
+            <td><span class="status strong">Strong</span></td>
+            <td>Chrome origin trial only as of this report; not a stable cross-browser API.</td>
+          </tr>
+          <tr>
+            <td><code>:autofill</code> / <code>:-webkit-autofill</code></td>
+            <td>
+              The element currently matches the browser autofill pseudo-class. Can be sampled with
+              <code>element.matches()</code> and observed through a CSS <code>animationstart</code> hook.
+            </td>
+            <td><span class="status strong">Strong</span></td>
+            <td>State can be lost after editing; support is not uniform; does not detect paste or script fills.</td>
+          </tr>
+          <tr>
+            <td><code>paste</code> event</td>
+            <td>
+              The user initiated paste through browser UI. This is the cleanest differentiator for normal copy/paste.
+            </td>
+            <td><span class="status strong">Strong</span></td>
+            <td>Synthetic paste events can be dispatched but are untrusted; extensions may bypass ordinary event flow.</td>
+          </tr>
+          <tr>
+            <td><code>InputEvent.inputType</code></td>
+            <td>
+              Identifies edit categories such as <code>insertText</code>, <code>insertFromPaste</code>,
+              <code>insertFromDrop</code>, undo, delete, and composition changes.
+            </td>
+            <td><span class="status medium">Medium</span></td>
+            <td>Not all input changes provide useful inputType; autofill historically looks generic or silent.</td>
+          </tr>
+          <tr>
+            <td><code>event.isTrusted</code></td>
+            <td>
+              Separates many browser/user-agent generated events from events sent with <code>dispatchEvent()</code>.
+            </td>
+            <td><span class="status medium">Medium</span></td>
+            <td>Trusted does not always mean human; untrusted is a strong synthetic-event clue.</td>
+          </tr>
+          <tr>
+            <td>Value setter interception</td>
+            <td>
+              A local wrapper around input value and checked setters can catch page scripts that assign
+              <code>input.value</code> or <code>input.checked</code>.
+            </td>
+            <td><span class="status medium">Medium</span></td>
+            <td>Can miss native browser autofill, low-level automation, assignments before the wrapper runs, or code
+              that uses native setters directly.</td>
+          </tr>
+          <tr>
+            <td>Polling/snapshots</td>
+            <td>
+              Detects silent value changes by comparing value length/hash snapshots across animation frames, load,
+              focus, visibility changes, and submit.
+            </td>
+            <td><span class="status medium">Medium</span></td>
+            <td>Detects that a value changed, but not why.</td>
+          </tr>
+          <tr>
+            <td><code>navigator.webdriver</code></td>
+            <td>
+              Indicates when the browser exposes that it is under WebDriver control.
+            </td>
+            <td><span class="status weak">Weak</span></td>
+            <td>Useful when true; not proof when false. Automation can sometimes suppress or avoid this signal.</td>
+          </tr>
+          <tr>
+            <td>Event timing and clustering</td>
+            <td>
+              Browser autofill often changes several related fields in a tight cluster with no preceding keystrokes or
+              paste event. Manual typing has key/input cadence. Paste has a paste marker.
+            </td>
+            <td><span class="status weak">Weak</span></td>
+            <td>High-fidelity automation can mimic timing. Users can also use unusual workflows.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Distinguishing Autofill, Paste, and Automation</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Fill source</th>
+            <th>Expected evidence</th>
+            <th>Classifier label</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Browser autofill</td>
+            <td>
+              Dedicated <code>autofill</code> event if available; CSS <code>:autofill</code> match; multiple related
+              fields change together; no paste event; little or no keydown cadence.
+            </td>
+            <td><code>browser-autofill-likely</code></td>
+          </tr>
+          <tr>
+            <td>Copy/paste</td>
+            <td>
+              <code>paste</code> event, usually <code>InputEvent.inputType === "insertFromPaste"</code>, field focused,
+              and value change follows immediately.
+            </td>
+            <td><code>paste-observed</code></td>
+          </tr>
+          <tr>
+            <td>Drag/drop text</td>
+            <td>
+              <code>drop</code> event and often <code>InputEvent.inputType === "insertFromDrop"</code>.
+            </td>
+            <td><code>drop-observed</code></td>
+          </tr>
+          <tr>
+            <td>Simple script or bot fill</td>
+            <td>
+              Value setter wrapper fires; any emitted input/change events are <code>isTrusted === false</code>; no CSS
+              autofill state; no human input lead-in.
+            </td>
+            <td><code>script-fill-observed</code></td>
+          </tr>
+          <tr>
+            <td>Browser automation using keystrokes</td>
+            <td>
+              <code>navigator.webdriver</code> may be true; keydown/input sequence may look like typing, but timing can
+              be too regular and no prior pointer context is needed.
+            </td>
+            <td><code>automation-suspected</code></td>
+          </tr>
+          <tr>
+            <td>Password manager or extension fill</td>
+            <td>
+              May look like script fill, may dispatch synthetic events, may fill on focus, and may not match
+              <code>:autofill</code>. Treat separately from browser-native autofill.
+            </td>
+            <td><code>manager-or-extension-fill-suspected</code></td>
+          </tr>
+          <tr>
+            <td>Unknown silent value change</td>
+            <td>
+              Snapshot sees value changed, but no event, no setter hook, no CSS autofill state, and no automation flag.
+            </td>
+            <td><code>unknown-value-change</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Clarity Implications</h2>
+      <p>
+        The local Clarity source in this repo records input interactions from <code>input</code> events and includes
+        an event trust bit. It also has clipboard tracking for <code>cut</code>, <code>copy</code>, and
+        <code>paste</code>. That makes the proposed lab valuable because it can show cases where page JavaScript sees
+        a signal that Clarity will likely record, and cases where a browser autofill changes values silently.
+      </p>
+      <ul>
+        <li>
+          Local source note: <code>packages/clarity-js/src/interaction/input.ts</code> binds
+          <code>input</code> and stores <code>evt.isTrusted</code>.
+        </li>
+        <li>
+          Local source note: <code>packages/clarity-js/src/interaction/clipboard.ts</code> binds
+          <code>cut</code>, <code>copy</code>, and <code>paste</code>.
+        </li>
+        <li>
+          Local source note: <code>packages/clarity-js/src/interaction/click.ts</code> records click trust and has
+          diagnostic source logic for untrusted clicks.
+        </li>
+      </ul>
+      <div class="callout risk">
+        <strong>Privacy constraint:</strong> Microsoft Clarity documentation says input box content, numbers, and email
+        addresses are classified as sensitive and masked content is not uploaded. The lab should still use fake
+        autofill profiles and mask the on-page event log by default, because copied values displayed outside input
+        controls can become ordinary page text.
+      </div>
+    </section>
+
+    <section>
+      <h2>Recommended Local Lab Design</h2>
+      <ol>
+        <li>
+          Serve the page from <code>http://localhost</code>, not directly through <code>file://</code>. This more
+          closely matches production browser behavior and avoids surprises with third-party scripts, storage, and
+          origin-bound browser features.
+        </li>
+        <li>
+          Insert the Clarity tag early, but install local instrumentation before it when testing network and event
+          capture ordering. The lab can accept the Clarity project id from a query string or a visible setup field
+          until a permanent id is provided.
+        </li>
+        <li>
+          Include several real autofill-friendly forms with explicit <code>autocomplete</code> tokens:
+          <code>name</code>, <code>email</code>, <code>tel</code>, <code>street-address</code>,
+          <code>address-line1</code>, <code>address-level2</code>, <code>postal-code</code>,
+          <code>username</code>, <code>current-password</code>, <code>new-password</code>, and
+          <code>one-time-code</code>.
+        </li>
+        <li>
+          Log captured events in a fixed event stream: <code>focus</code>, <code>blur</code>, <code>keydown</code>,
+          <code>keyup</code>, <code>beforeinput</code>, <code>input</code>, <code>change</code>, <code>paste</code>,
+          <code>copy</code>, <code>cut</code>, <code>drop</code>, <code>animationstart</code>, <code>autofill</code>,
+          <code>submit</code>, and <code>visibilitychange</code>.
+        </li>
+        <li>
+          Record event metadata: timestamp, target id/name/type/autocomplete, active element, value length, stable
+          per-session value hash, <code>inputType</code>, <code>data</code> length, <code>isTrusted</code>,
+          keyboard key/code, modifier keys, pointer state, <code>navigator.webdriver</code>, user activation state,
+          and current CSS autofill match.
+        </li>
+        <li>
+          Add test controls for controlled non-browser fills: assign <code>.value</code> only; assign and dispatch
+          synthetic <code>input</code>/<code>change</code>; call <code>setRangeText()</code>; trigger
+          <code>HTMLElement.click()</code>; and run batched multi-field script fills.
+        </li>
+        <li>
+          Monkey-patch <code>fetch</code>, <code>XMLHttpRequest</code>, and <code>navigator.sendBeacon</code> before
+          loading Clarity so the page can show outgoing Clarity request URLs, method, body length, and timestamps
+          without dumping payload bodies.
+        </li>
+        <li>
+          Send Clarity custom events and tags for the page's classifier output, for example
+          <code>clarity("event", "fill_browser_autofill_likely")</code> and
+          <code>clarity("set", "last_fill_candidate", "paste-observed")</code>.
+        </li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Implementation Sketch</h2>
+      <h3>CSS autofill instrumentation</h3>
+      <pre><code>const autofillSelectors = [":autofill", ":-webkit-autofill"];
+
+function matchesAutofill(element) {
+  return autofillSelectors.some((selector) =&gt; {
+    try {
+      return element.matches(selector);
+    } catch {
+      return false;
+    }
+  });
+}
+
+document.addEventListener("animationstart", (event) =&gt; {
+  if (event.animationName === "autofill-start") {
+    logFillSignal(event.target, "css-autofill-animation", event);
+  }
+}, true);</code></pre>
+
+      <h3>Value setter instrumentation</h3>
+      <pre><code>function wrapInputValueSetter() {
+  const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+  Object.defineProperty(HTMLInputElement.prototype, "value", {
+    configurable: true,
+    get: descriptor.get,
+    set(value) {
+      logFillSignal(this, "value-setter", { valueLength: String(value).length });
+      return descriptor.set.call(this, value);
+    }
+  });
+}</code></pre>
+
+      <h3>Classification model</h3>
+      <pre><code>function classify(change) {
+  if (change.autofillEvent || change.cssAutofill) return "browser-autofill-likely";
+  if (change.pasteEvent || change.inputType === "insertFromPaste") return "paste-observed";
+  if (change.dropEvent || change.inputType === "insertFromDrop") return "drop-observed";
+  if (change.valueSetter || change.syntheticEvent) return "script-fill-observed";
+  if (navigator.webdriver || change.machineLikeCadence) return "automation-suspected";
+  return "unknown-value-change";
+}</code></pre>
+    </section>
+
+    <section>
+      <h2>Research Notes</h2>
+      <ul>
+        <li>
+          <code>:autofill</code> is explicitly defined as matching an <code>input</code> element whose value has been
+          autofilled by the browser, but MDN marks it as limited availability.
+        </li>
+        <li>
+          The generic <code>input</code> and <code>change</code> events describe that a value changed or was committed;
+          they do not identify the value source. Chrome's autofill event article calls out that limitation directly.
+        </li>
+        <li>
+          The <code>paste</code> event is a strong differentiator because it is fired when the user initiates paste
+          through browser UI. Pair it with <code>inputType === "insertFromPaste"</code> when available.
+        </li>
+        <li>
+          <code>event.isTrusted</code> is useful for catching synthetic events from <code>dispatchEvent()</code>, but
+          trusted events can still be generated by the user agent for programmatic browser operations.
+        </li>
+        <li>
+          <code>navigator.webdriver</code> is useful when true. It should not be used as a negative proof that no
+          automation exists.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Open Questions for the Lab</h2>
+      <ul>
+        <li>
+          Which browsers should be included in the first test pass: Chrome stable, Chrome Canary with origin trial,
+          Edge, Safari, Firefox, or a narrower set?
+        </li>
+        <li>
+          Should the on-page log show actual values, value hashes, or both behind a toggle? The safest default is
+          lengths and hashes only.
+        </li>
+        <li>
+          Should the page load the public Clarity snippet from Microsoft, the local repo build, or support both modes?
+        </li>
+        <li>
+          Should the report and lab include a Playwright/WebDriver script to generate automation baselines?
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Sources</h2>
+      <ul>
+        <li>
+          Chrome Developers:
+          <a href="https://developer.chrome.com/blog/autofill-event-origin-trial">The autofill event is in origin trial</a>.
+        </li>
+        <li>
+          Chrome Developers:
+          <a href="https://developer.chrome.com/docs/identity/autofill">Autofill overview</a>.
+        </li>
+        <li>
+          MDN:
+          <a href="https://developer.mozilla.org/docs/Web/CSS/Reference/Selectors/%3Aautofill">CSS <code>:autofill</code> pseudo-class</a>.
+        </li>
+        <li>
+          MDN:
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/Element/input_event"><code>input</code> event</a>,
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/change_event"><code>change</code> event</a>,
+          and <a href="https://developer.mozilla.org/en-US/docs/Web/API/InputEvent/inputType"><code>InputEvent.inputType</code></a>.
+        </li>
+        <li>
+          MDN:
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/Element/paste_event"><code>paste</code> event</a>
+          and <a href="https://developer.mozilla.org/en-US/docs/Web/API/ClipboardEvent">ClipboardEvent</a>.
+        </li>
+        <li>
+          MDN:
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted"><code>Event.isTrusted</code></a>
+          and <a href="https://developer.mozilla.org/en-US/docs/Web/API/Navigator/webdriver"><code>navigator.webdriver</code></a>.
+        </li>
+        <li>
+          MDN:
+          <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/autocomplete">HTML <code>autocomplete</code> attribute</a>.
+        </li>
+        <li>
+          Microsoft Learn:
+          <a href="https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-setup">How to setup Clarity manually</a>,
+          <a href="https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-api">Clarity client API</a>,
+          and <a href="https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-masking">Masking content</a>.
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      This document is a planning artifact for a local experiment page. It should be updated after collecting browser
+      traces from the first lab implementation.
+    </div>
+  </footer>
+</body>
+</html>

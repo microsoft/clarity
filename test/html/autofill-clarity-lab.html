@@ -1,0 +1,2171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Autofill Clarity Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fa;
+      --surface: #ffffff;
+      --ink: #18212f;
+      --muted: #5e6b7c;
+      --line: #d8e0ea;
+      --line-strong: #bdc8d6;
+      --accent: #0f766e;
+      --accent-ink: #074f49;
+      --accent-soft: #e2f4f1;
+      --warning: #8a5a00;
+      --warning-soft: #fff5d6;
+      --danger: #9f1239;
+      --danger-soft: #ffe4ec;
+      --info: #2456a6;
+      --info-soft: #e8f0ff;
+      --code: #eef2f7;
+      --shadow: 0 10px 26px rgba(21, 31, 46, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      height: 100%;
+    }
+
+    body {
+      min-height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    @keyframes autofill-start {
+      from { outline-color: rgba(15, 118, 110, 0.1); }
+      to { outline-color: rgba(15, 118, 110, 0.95); }
+    }
+
+    @keyframes autofill-cancel {
+      from { outline-color: rgba(159, 18, 57, 0.1); }
+      to { outline-color: rgba(159, 18, 57, 0.8); }
+    }
+
+    input:-webkit-autofill,
+    textarea:-webkit-autofill,
+    select:-webkit-autofill {
+      animation-name: autofill-start;
+      animation-duration: 1ms;
+      animation-iteration-count: 1;
+      box-shadow: 0 0 0 1000px #e2f4f1 inset;
+    }
+
+    input:autofill,
+    textarea:autofill,
+    select:autofill {
+      animation-name: autofill-start;
+      animation-duration: 1ms;
+      animation-iteration-count: 1;
+      box-shadow: 0 0 0 1000px #e2f4f1 inset;
+    }
+
+    a {
+      color: #0b5cad;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      min-height: 34px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: #8fa1b7;
+      background: #f8fafc;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button.danger {
+      border-color: #f0a8bb;
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    code {
+      background: var(--code);
+      border-radius: 4px;
+      padding: 0.1em 0.28em;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 1px 0 rgba(21, 31, 46, 0.02);
+    }
+
+    .topbar-inner {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 14px 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .status-strip {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 10px 0;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 9px 10px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stat-value {
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 650;
+    }
+
+    .layout {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 0 0 24px;
+      display: grid;
+      grid-template-columns: minmax(360px, 0.74fr) minmax(560px, 1.26fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .panel-body {
+      padding: 14px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .form-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 0.92rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 9px;
+      outline: 2px solid transparent;
+      outline-offset: 1px;
+      transition: border-color 120ms ease, outline-color 120ms ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      outline-color: rgba(15, 118, 110, 0.18);
+    }
+
+    textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    .field-wide {
+      grid-column: 1 / -1;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      user-select: none;
+      min-height: 34px;
+    }
+
+    .toggle-row input {
+      width: 16px;
+      height: 16px;
+    }
+
+    .log-layout {
+      display: grid;
+      gap: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .tab {
+      border: 0;
+      background: transparent;
+      min-height: 30px;
+      padding: 5px 9px;
+    }
+
+    .tab[aria-selected="true"] {
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: 0 1px 2px rgba(21, 31, 46, 0.08);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 52vh;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 7px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #eef3f8;
+      color: #344154;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tbody tr {
+      cursor: pointer;
+    }
+
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    tbody tr.selected {
+      background: var(--info-soft);
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.82rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.78rem;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .badge.autofill {
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+    }
+
+    .badge.paste,
+    .badge.drop {
+      background: var(--info-soft);
+      color: var(--info);
+    }
+
+    .badge.script,
+    .badge.synthetic,
+    .badge.automation {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .badge.unknown {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .badge.manual,
+    .badge.system {
+      background: #eef2f7;
+      color: #3d4a5c;
+    }
+
+    .details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0f172a;
+      color: #e5edf7;
+      min-height: 180px;
+      max-height: 300px;
+      overflow: auto;
+      padding: 12px;
+      white-space: pre-wrap;
+    }
+
+    .details.empty {
+      color: #98a6ba;
+    }
+
+    .network-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mini-list {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 210px;
+      background: #fff;
+    }
+
+    .mini-list table {
+      min-width: 560px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 1120px) {
+      .topbar-inner,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+      }
+
+      .status-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar-inner,
+      .status-strip,
+      .layout {
+        width: min(100vw - 20px, 1480px);
+      }
+
+      .status-strip,
+      .grid,
+      .button-grid,
+      .network-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-wrap {
+        max-height: 48vh;
+      }
+    }
+  </style>
+  <script>
+    (function installEarlyAutofillLabProbes() {
+      var salt = String(Date.now()) + ":" + String(Math.random()).slice(2);
+      var early = window.__autofillLabEarly = window.__autofillLabEarly || {
+        salt: salt,
+        setter: [],
+        network: [],
+        nextSetterId: 1,
+        nextNetworkId: 1
+      };
+
+      function now() {
+        return Math.round(performance.now() * 10) / 10;
+      }
+
+      function hashText(value) {
+        var input = String(early.salt || "") + ":" + String(value == null ? "" : value);
+        var hash = 2166136261;
+        for (var index = 0; index < input.length; index++) {
+          hash ^= input.charCodeAt(index);
+          hash = Math.imul(hash, 16777619);
+        }
+        return ("00000000" + (hash >>> 0).toString(16)).slice(-8);
+      }
+
+      function valueMeta(value) {
+        var text = value == null ? "" : String(value);
+        return { length: text.length, empty: text.length === 0, hash: hashText(text) };
+      }
+
+      function targetMeta(element) {
+        if (!element || !element.tagName) {
+          return { tag: "unknown" };
+        }
+
+        return {
+          tag: element.tagName.toLowerCase(),
+          id: element.id || "",
+          name: element.getAttribute("name") || "",
+          type: element.getAttribute("type") || element.type || "",
+          autocomplete: element.getAttribute("autocomplete") || "",
+          label: element.id || element.getAttribute("name") || element.getAttribute("autocomplete") || element.tagName.toLowerCase()
+        };
+      }
+
+      function safeCurrentValue(element, propertyName) {
+        try {
+          if (propertyName === "checked") {
+            return element.checked ? "true" : "false";
+          }
+          return element.value == null ? "" : String(element.value);
+        } catch (error) {
+          return "";
+        }
+      }
+
+      function stackHint() {
+        try {
+          var stack = new Error().stack || "";
+          return stack.split("\n").slice(2, 6).map(function(line) { return line.trim(); });
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function pushSetter(item) {
+        item.id = early.nextSetterId++;
+        item.at = now();
+        early.setter.push(item);
+        if (early.setter.length > 400) {
+          early.setter.shift();
+        }
+        try {
+          window.dispatchEvent(new CustomEvent("__autofillLabSetter", { detail: item }));
+        } catch (error) {
+          /* noop */
+        }
+      }
+
+      function wrapProperty(proto, propertyName, ownerName) {
+        if (!proto || proto["__autofillLabWrapped_" + propertyName]) {
+          return;
+        }
+
+        var descriptor = Object.getOwnPropertyDescriptor(proto, propertyName);
+        if (!descriptor || typeof descriptor.get !== "function" || typeof descriptor.set !== "function") {
+          return;
+        }
+
+        Object.defineProperty(proto, "__autofillLabWrapped_" + propertyName, { value: true });
+        Object.defineProperty(proto, propertyName, {
+          configurable: true,
+          enumerable: descriptor.enumerable,
+          get: function() {
+            return descriptor.get.call(this);
+          },
+          set: function(value) {
+            var before = safeCurrentValue(this, propertyName);
+            var result = descriptor.set.call(this, value);
+            var after = safeCurrentValue(this, propertyName);
+            pushSetter({
+              source: "value-setter",
+              owner: ownerName,
+              property: propertyName,
+              target: targetMeta(this),
+              before: valueMeta(before),
+              after: valueMeta(after),
+              assigned: valueMeta(value),
+              changed: before !== after,
+              stack: stackHint()
+            });
+            return result;
+          }
+        });
+      }
+
+      wrapProperty(window.HTMLInputElement && window.HTMLInputElement.prototype, "value", "HTMLInputElement");
+      wrapProperty(window.HTMLTextAreaElement && window.HTMLTextAreaElement.prototype, "value", "HTMLTextAreaElement");
+      wrapProperty(window.HTMLSelectElement && window.HTMLSelectElement.prototype, "value", "HTMLSelectElement");
+      wrapProperty(window.HTMLInputElement && window.HTMLInputElement.prototype, "checked", "HTMLInputElement");
+
+      function bodySize(data) {
+        if (data == null) return 0;
+        if (typeof data === "string") return data.length;
+        if (data instanceof Blob) return data.size;
+        if (data instanceof ArrayBuffer) return data.byteLength;
+        if (data && typeof data.byteLength === "number") return data.byteLength;
+        if (data instanceof FormData) return -1;
+        try {
+          return JSON.stringify(data).length;
+        } catch (error) {
+          return -1;
+        }
+      }
+
+      function requestUrl(input) {
+        try {
+          if (typeof input === "string") return input;
+          if (input && input.url) return input.url;
+          return String(input);
+        } catch (error) {
+          return "unknown";
+        }
+      }
+
+      function pushNetwork(item) {
+        item.id = early.nextNetworkId++;
+        item.at = now();
+        item.wallTime = new Date().toISOString();
+        early.network.push(item);
+        if (early.network.length > 300) {
+          early.network.shift();
+        }
+        try {
+          window.dispatchEvent(new CustomEvent("__autofillLabNetwork", { detail: item }));
+        } catch (error) {
+          /* noop */
+        }
+      }
+
+      if (window.fetch && !window.fetch.__autofillLabWrapped) {
+        var originalFetch = window.fetch;
+        var wrappedFetch = function(input, init) {
+          var started = now();
+          var method = (init && init.method) || (input && input.method) || "GET";
+          var body = init && "body" in init ? init.body : input && input.body;
+          pushNetwork({ source: "fetch:start", method: method, url: requestUrl(input), bodyBytes: bodySize(body) });
+          return originalFetch.apply(this, arguments).then(function(response) {
+            pushNetwork({
+              source: "fetch:end",
+              method: method,
+              url: requestUrl(input),
+              status: response.status,
+              ok: response.ok,
+              elapsedMs: Math.round((now() - started) * 10) / 10
+            });
+            return response;
+          }, function(error) {
+            pushNetwork({
+              source: "fetch:error",
+              method: method,
+              url: requestUrl(input),
+              error: error && error.message ? error.message : String(error),
+              elapsedMs: Math.round((now() - started) * 10) / 10
+            });
+            throw error;
+          });
+        };
+        wrappedFetch.__autofillLabWrapped = true;
+        window.fetch = wrappedFetch;
+      }
+
+      if (window.XMLHttpRequest && !window.XMLHttpRequest.prototype.__autofillLabWrapped) {
+        var xhrOpen = window.XMLHttpRequest.prototype.open;
+        var xhrSend = window.XMLHttpRequest.prototype.send;
+        window.XMLHttpRequest.prototype.__autofillLabWrapped = true;
+        window.XMLHttpRequest.prototype.open = function(method, url) {
+          this.__autofillLabMethod = method || "GET";
+          this.__autofillLabUrl = requestUrl(url);
+          return xhrOpen.apply(this, arguments);
+        };
+        window.XMLHttpRequest.prototype.send = function(body) {
+          var xhr = this;
+          var started = now();
+          pushNetwork({
+            source: "xhr:start",
+            method: xhr.__autofillLabMethod || "GET",
+            url: xhr.__autofillLabUrl || "unknown",
+            bodyBytes: bodySize(body)
+          });
+          xhr.addEventListener("loadend", function() {
+            pushNetwork({
+              source: "xhr:end",
+              method: xhr.__autofillLabMethod || "GET",
+              url: xhr.__autofillLabUrl || "unknown",
+              status: xhr.status,
+              elapsedMs: Math.round((now() - started) * 10) / 10
+            });
+          });
+          return xhrSend.apply(this, arguments);
+        };
+      }
+
+      if (navigator.sendBeacon && !navigator.sendBeacon.__autofillLabWrapped) {
+        var originalBeacon = navigator.sendBeacon.bind(navigator);
+        var wrappedBeacon = function(url, data) {
+          var ok = originalBeacon(url, data);
+          pushNetwork({
+            source: "sendBeacon",
+            method: "BEACON",
+            url: requestUrl(url),
+            bodyBytes: bodySize(data),
+            accepted: ok
+          });
+          return ok;
+        };
+        wrappedBeacon.__autofillLabWrapped = true;
+        navigator.sendBeacon = wrappedBeacon;
+      }
+    })();
+  </script>
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "xqhbzl0bxo");
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div>
+          <h1>Autofill Clarity Lab</h1>
+          <div class="subtitle">
+            Project <code>xqhbzl0bxo</code> · <span id="originText">origin pending</span>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button id="markerButton" type="button" class="primary">Send Marker</button>
+          <button id="exportButton" type="button">Export JSON</button>
+          <button id="clearButton" type="button">Clear Logs</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="status-strip" aria-label="Lab status">
+      <div class="stat">
+        <div class="stat-label">Clarity</div>
+        <div class="stat-value" id="clarityStatus">queued</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Events</div>
+        <div class="stat-value" id="eventCount">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Last Class</div>
+        <div class="stat-value" id="lastClass">none</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Autofill Fields</div>
+        <div class="stat-value" id="autofillCount">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">WebDriver</div>
+        <div class="stat-value" id="webdriverStatus">pending</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Network</div>
+        <div class="stat-value" id="networkCount">0</div>
+      </div>
+    </section>
+
+    <main class="layout">
+      <section class="stack">
+        <article class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Autofill Targets</h2>
+          </div>
+          <div class="panel-body">
+            <form id="labForm" class="stack" autocomplete="on" data-clarity-mask="true">
+              <div class="form-section">
+                <h3 class="section-title">Account</h3>
+                <div class="grid">
+                  <div class="field">
+                    <label for="loginUsername">Username</label>
+                    <input id="loginUsername" name="username" type="text" autocomplete="username" placeholder="alex@example.test">
+                  </div>
+                  <div class="field">
+                    <label for="loginEmail">Email</label>
+                    <input id="loginEmail" name="email" type="email" autocomplete="email" placeholder="alex@example.test">
+                  </div>
+                  <div class="field">
+                    <label for="currentPassword">Current password</label>
+                    <input id="currentPassword" name="current-password" type="password" autocomplete="current-password" placeholder="password">
+                  </div>
+                  <div class="field">
+                    <label for="oneTimeCode">One-time code</label>
+                    <input id="oneTimeCode" name="one-time-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="123456">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3 class="section-title">Contact</h3>
+                <div class="grid">
+                  <div class="field">
+                    <label for="givenName">Given name</label>
+                    <input id="givenName" name="given-name" type="text" autocomplete="given-name" placeholder="Alex">
+                  </div>
+                  <div class="field">
+                    <label for="familyName">Family name</label>
+                    <input id="familyName" name="family-name" type="text" autocomplete="family-name" placeholder="Morgan">
+                  </div>
+                  <div class="field">
+                    <label for="phone">Phone</label>
+                    <input id="phone" name="tel" type="tel" autocomplete="tel" placeholder="+1 555 010 1234">
+                  </div>
+                  <div class="field">
+                    <label for="company">Organization</label>
+                    <input id="company" name="organization" type="text" autocomplete="organization" placeholder="Example Co">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3 class="section-title">Address</h3>
+                <div class="grid">
+                  <div class="field field-wide">
+                    <label for="streetAddress">Street address</label>
+                    <textarea id="streetAddress" name="street-address" autocomplete="street-address" placeholder="1 Example Way"></textarea>
+                  </div>
+                  <div class="field">
+                    <label for="city">City</label>
+                    <input id="city" name="address-level2" type="text" autocomplete="address-level2" placeholder="Redmond">
+                  </div>
+                  <div class="field">
+                    <label for="region">State</label>
+                    <input id="region" name="address-level1" type="text" autocomplete="address-level1" placeholder="WA">
+                  </div>
+                  <div class="field">
+                    <label for="postalCode">Postal code</label>
+                    <input id="postalCode" name="postal-code" type="text" autocomplete="postal-code" placeholder="98052">
+                  </div>
+                  <div class="field">
+                    <label for="country">Country</label>
+                    <select id="country" name="country" autocomplete="country-name">
+                      <option value=""></option>
+                      <option value="United States">United States</option>
+                      <option value="Canada">Canada</option>
+                      <option value="United Kingdom">United Kingdom</option>
+                      <option value="Australia">Australia</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3 class="section-title">Payment</h3>
+                <div class="grid">
+                  <div class="field">
+                    <label for="ccName">Card name</label>
+                    <input id="ccName" name="cc-name" type="text" autocomplete="cc-name" placeholder="Alex Morgan">
+                  </div>
+                  <div class="field">
+                    <label for="ccNumber">Card number</label>
+                    <input id="ccNumber" name="cc-number" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="4111 1111 1111 1111">
+                  </div>
+                  <div class="field">
+                    <label for="ccExp">Expiration</label>
+                    <input id="ccExp" name="cc-exp" type="text" autocomplete="cc-exp" placeholder="12/30">
+                  </div>
+                  <div class="field">
+                    <label for="ccCsc">Security code</label>
+                    <input id="ccCsc" name="cc-csc" type="password" inputmode="numeric" autocomplete="cc-csc" placeholder="123">
+                  </div>
+                </div>
+              </div>
+
+              <div class="button-grid">
+                <button id="submitButton" type="submit" class="primary">Submit Form</button>
+                <button id="clearFormButton" type="button">Clear Form</button>
+              </div>
+            </form>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Programmatic Fill Controls</h2>
+          </div>
+          <div class="panel-body">
+            <div class="button-grid">
+              <button id="silentFillButton" type="button">Silent Multi-field Fill</button>
+              <button id="syntheticFillButton" type="button">Fill + Synthetic Events</button>
+              <button id="singleSetterButton" type="button">Single Setter Fill</button>
+              <button id="pasteLikeButton" type="button">Synthetic Paste-like Fill</button>
+              <button id="setRangeButton" type="button">setRangeText Fill</button>
+              <button id="clickAutomationButton" type="button">Synthetic Click</button>
+            </div>
+            <label class="toggle-row" for="rawToggle">
+              <input id="rawToggle" type="checkbox">
+              Show raw values locally
+            </label>
+          </div>
+        </article>
+      </section>
+
+      <section class="log-layout">
+        <article class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Event Stream</h2>
+            <div class="tabs" role="tablist" aria-label="Log filter">
+              <button class="tab" id="tabAll" type="button" aria-selected="true" data-filter="all">All</button>
+              <button class="tab" id="tabFill" type="button" aria-selected="false" data-filter="fill">Fills</button>
+              <button class="tab" id="tabClarity" type="button" aria-selected="false" data-filter="clarity">Clarity</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap" data-clarity-mask="true">
+              <table aria-label="Event log">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>ms</th>
+                    <th>source</th>
+                    <th>event type</th>
+                    <th>target</th>
+                    <th>class</th>
+                    <th>trusted</th>
+                    <th>input</th>
+                    <th>value</th>
+                    <th>notes</th>
+                  </tr>
+                </thead>
+                <tbody id="eventRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Selected Event</h2>
+          </div>
+          <div class="panel-body">
+            <pre id="detailsPane" class="details empty" data-clarity-mask="true">Select an event row.</pre>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Requests and Classifier Counts</h2>
+          </div>
+          <div class="panel-body">
+            <div class="network-grid">
+              <div class="mini-list" data-clarity-mask="true">
+                <table aria-label="Network log">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>ms</th>
+                      <th>source</th>
+                      <th>status</th>
+                      <th>url</th>
+                    </tr>
+                  </thead>
+                  <tbody id="networkRows"></tbody>
+                </table>
+              </div>
+              <div class="mini-list" data-clarity-mask="true">
+                <table aria-label="Classifier counts">
+                  <thead>
+                    <tr>
+                      <th>class</th>
+                      <th>count</th>
+                    </tr>
+                  </thead>
+                  <tbody id="counterRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function runAutofillClarityLab() {
+      "use strict";
+
+      var PROJECT_ID = "xqhbzl0bxo";
+      var MAX_EVENTS = 900;
+      var MAX_NETWORK = 300;
+      var FIELD_SELECTOR = "input, textarea, select";
+      var FILL_CLASSES = [
+        "browser-autofill-likely",
+        "paste-observed",
+        "drop-observed",
+        "script-fill-observed",
+        "synthetic-event-observed",
+        "automation-suspected",
+        "unknown-value-change"
+      ];
+
+      var state = {
+        events: [],
+        network: [],
+        counters: Object.create(null),
+        snapshots: new WeakMap(),
+        selectedId: null,
+        filter: "all",
+        showRaw: false,
+        nextId: 1,
+        lastClass: "none",
+        lastSignalTimes: {
+          keydown: -Infinity,
+          focus: -Infinity,
+          blur: -Infinity,
+          paste: -Infinity,
+          drop: -Infinity,
+          drag: -Infinity,
+          pointer: -Infinity,
+          selection: -Infinity,
+          composition: -Infinity,
+          input: -Infinity,
+          change: -Infinity,
+          autofill: -Infinity,
+          setter: -Infinity
+        },
+        autofillFields: new Set(),
+        currentScriptAction: null
+      };
+
+      var els = {};
+      var fakeProfile = {
+        loginUsername: "alex.autofill@example.test",
+        loginEmail: "alex.autofill@example.test",
+        currentPassword: "Correct-Horse-Local-Only",
+        oneTimeCode: "482913",
+        givenName: "Alex",
+        familyName: "Morgan",
+        phone: "+1 555 010 1234",
+        company: "Example Research Co",
+        streetAddress: "1 Example Way\nSuite 200",
+        city: "Redmond",
+        region: "WA",
+        postalCode: "98052",
+        country: "United States",
+        ccName: "Alex Morgan",
+        ccNumber: "4111111111111111",
+        ccExp: "12/30",
+        ccCsc: "123"
+      };
+
+      document.addEventListener("DOMContentLoaded", init);
+
+      function init() {
+        cacheElements();
+        els.originText.textContent = location.origin === "null" ? "file origin" : location.origin;
+        els.webdriverStatus.textContent = navigator.webdriver ? "true" : "false";
+
+        bindControls();
+        bindDomEventLoggers();
+        processEarlySetterEvents();
+        processEarlyNetworkEvents();
+        subscribeEarlyQueues();
+        initializeSnapshots();
+        startSnapshotLoop();
+        renderAll();
+
+        logSystem("lab-ready", document.documentElement, {
+          projectId: PROJECT_ID,
+          href: location.href,
+          userAgent: navigator.userAgent,
+          webdriver: Boolean(navigator.webdriver),
+          language: navigator.language,
+          platform: navigator.platform || "",
+          userActivation: userActivationMeta()
+        });
+
+        clarityCall("event", "autofill_lab_loaded");
+        clarityCall("set", "autofill_lab_project", PROJECT_ID);
+      }
+
+      function cacheElements() {
+        els.originText = document.getElementById("originText");
+        els.clarityStatus = document.getElementById("clarityStatus");
+        els.eventCount = document.getElementById("eventCount");
+        els.lastClass = document.getElementById("lastClass");
+        els.autofillCount = document.getElementById("autofillCount");
+        els.webdriverStatus = document.getElementById("webdriverStatus");
+        els.networkCount = document.getElementById("networkCount");
+        els.eventRows = document.getElementById("eventRows");
+        els.networkRows = document.getElementById("networkRows");
+        els.counterRows = document.getElementById("counterRows");
+        els.detailsPane = document.getElementById("detailsPane");
+        els.labForm = document.getElementById("labForm");
+        els.rawToggle = document.getElementById("rawToggle");
+      }
+
+      function bindControls() {
+        document.getElementById("clearButton").addEventListener("click", clearLogs);
+        document.getElementById("exportButton").addEventListener("click", exportJson);
+        document.getElementById("markerButton").addEventListener("click", function() {
+          logSystem("manual-marker", document.activeElement || document.body, {
+            activeTarget: targetMeta(document.activeElement),
+            counters: state.counters
+          });
+          clarityCall("event", "autofill_lab_manual_marker");
+          clarityCall("set", "autofill_lab_last_marker", String(Date.now()));
+        });
+
+        document.getElementById("clearFormButton").addEventListener("click", function() {
+          runScriptAction("clear-form", function() {
+            fields().forEach(function(field) {
+              if (field.type === "checkbox" || field.type === "radio") {
+                field.checked = false;
+              } else {
+                field.value = "";
+              }
+            });
+          });
+          scanForSilentValueChanges("clear-form-scan");
+        });
+
+        document.getElementById("silentFillButton").addEventListener("click", function() {
+          runScriptAction("silent-multi-field-fill", function() {
+            Object.keys(fakeProfile).forEach(function(id) {
+              var field = document.getElementById(id);
+              if (field) field.value = fakeProfile[id];
+            });
+          });
+          scanForSilentValueChanges("silent-fill-scan");
+          clarityCall("event", "autofill_lab_silent_script_fill");
+        });
+
+        document.getElementById("syntheticFillButton").addEventListener("click", function() {
+          runScriptAction("synthetic-input-change-fill", function() {
+            Object.keys(fakeProfile).forEach(function(id) {
+              var field = document.getElementById(id);
+              if (!field) return;
+              field.value = fakeProfile[id];
+              dispatchSyntheticInput(field, "insertReplacementText", "");
+              field.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }));
+            });
+          });
+          scanForSilentValueChanges("synthetic-fill-scan");
+          clarityCall("event", "autofill_lab_synthetic_script_fill");
+        });
+
+        document.getElementById("singleSetterButton").addEventListener("click", function() {
+          var target = document.getElementById("loginEmail");
+          runScriptAction("single-setter-fill", function() {
+            target.value = "single.setter@example.test";
+          });
+          scanForSilentValueChanges("single-setter-scan");
+          clarityCall("event", "autofill_lab_single_setter_fill");
+        });
+
+        document.getElementById("pasteLikeButton").addEventListener("click", function() {
+          var target = document.getElementById("loginUsername");
+          runScriptAction("synthetic-paste-like-fill", function() {
+            target.focus();
+            try {
+              target.dispatchEvent(new ClipboardEvent("paste", {
+                bubbles: true,
+                cancelable: true,
+                clipboardData: new DataTransfer()
+              }));
+            } catch (error) {
+              target.dispatchEvent(new Event("paste", { bubbles: true, cancelable: true }));
+            }
+            target.value = "synthetic.paste@example.test";
+            dispatchSyntheticInput(target, "insertFromPaste", "synthetic.paste@example.test");
+          });
+          scanForSilentValueChanges("synthetic-paste-like-scan");
+          clarityCall("event", "autofill_lab_synthetic_paste_like_fill");
+        });
+
+        document.getElementById("setRangeButton").addEventListener("click", function() {
+          var target = document.getElementById("oneTimeCode");
+          runScriptAction("set-range-text-fill", function() {
+            target.focus();
+            target.value = "";
+            target.setRangeText("135790", 0, 0, "end");
+            dispatchSyntheticInput(target, "insertText", "135790");
+          });
+          scanForSilentValueChanges("set-range-text-scan");
+          clarityCall("event", "autofill_lab_set_range_text_fill");
+        });
+
+        document.getElementById("clickAutomationButton").addEventListener("click", function() {
+          var target = document.getElementById("submitButton");
+          runScriptAction("synthetic-click", function() {
+            target.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, detail: 1 }));
+          });
+          clarityCall("event", "autofill_lab_synthetic_click");
+        });
+
+        els.rawToggle.addEventListener("change", function() {
+          state.showRaw = els.rawToggle.checked;
+          logSystem("raw-toggle", els.rawToggle, { enabled: state.showRaw });
+          renderAll();
+        });
+
+        Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(tab) {
+          tab.addEventListener("click", function() {
+            state.filter = tab.getAttribute("data-filter");
+            Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(item) {
+              item.setAttribute("aria-selected", item === tab ? "true" : "false");
+            });
+            renderEvents();
+          });
+        });
+
+        els.labForm.addEventListener("submit", function(event) {
+          event.preventDefault();
+          try {
+            new FormData(els.labForm);
+          } catch (error) {
+            logSystem("formdata-construction-error", els.labForm, { error: error.message });
+          }
+          logDomEvent(event, "form-submit");
+          clarityCall("event", "autofill_lab_form_submit");
+        }, true);
+      }
+
+      function bindDomEventLoggers() {
+        [
+          "focus",
+          "blur",
+          "focusin",
+          "focusout",
+          "keydown",
+          "keypress",
+          "keyup",
+          "beforeinput",
+          "input",
+          "change",
+          "compositionstart",
+          "compositionupdate",
+          "compositionend",
+          "paste",
+          "copy",
+          "cut",
+          "dragstart",
+          "dragenter",
+          "dragover",
+          "dragleave",
+          "dragend",
+          "drop",
+          "pointerdown",
+          "pointerup",
+          "pointercancel",
+          "mousedown",
+          "mouseup",
+          "click",
+          "dblclick",
+          "auxclick",
+          "contextmenu",
+          "touchstart",
+          "touchend",
+          "touchcancel",
+          "select",
+          "invalid",
+          "reset",
+          "formdata",
+          "animationstart",
+          "animationend",
+          "animationcancel",
+          "search",
+          "autofill"
+        ].forEach(function(type) {
+          document.addEventListener(type, function(event) {
+            logDomEvent(event, "dom");
+          }, true);
+        });
+
+        document.addEventListener("selectionchange", function(event) {
+          state.lastSignalTimes.selection = performance.now();
+          logDomEvent(event, "document");
+        }, true);
+
+        document.addEventListener("readystatechange", function(event) {
+          logDomEvent(event, "document");
+        }, true);
+
+        document.addEventListener("visibilitychange", function(event) {
+          logDomEvent(event, "document");
+          scanForSilentValueChanges("visibilitychange-scan");
+        }, true);
+
+        window.addEventListener("beforeprint", function(event) {
+          logDomEvent(event, "window");
+        }, true);
+
+        window.addEventListener("afterprint", function(event) {
+          logDomEvent(event, "window");
+        }, true);
+
+        window.addEventListener("pageshow", function(event) {
+          logDomEvent(event, "window");
+          scanForSilentValueChanges("pageshow-scan");
+        }, true);
+
+        window.addEventListener("pagehide", function(event) {
+          logDomEvent(event, "window");
+        }, true);
+      }
+
+      function processEarlySetterEvents() {
+        var early = window.__autofillLabEarly;
+        if (!early || !early.setter) return;
+        early.setter.forEach(logSetterEvent);
+      }
+
+      function processEarlyNetworkEvents() {
+        var early = window.__autofillLabEarly;
+        if (!early || !early.network) return;
+        early.network.forEach(logNetworkEvent);
+      }
+
+      function subscribeEarlyQueues() {
+        window.addEventListener("__autofillLabSetter", function(event) {
+          logSetterEvent(event.detail);
+        });
+        window.addEventListener("__autofillLabNetwork", function(event) {
+          logNetworkEvent(event.detail);
+        });
+      }
+
+      function initializeSnapshots() {
+        fields().forEach(function(field) {
+          state.snapshots.set(field, fieldSnapshot(field));
+        });
+      }
+
+      function startSnapshotLoop() {
+        setInterval(function() {
+          scanForSilentValueChanges("interval-scan");
+          renderStatusOnly();
+        }, 300);
+      }
+
+      function fields() {
+        return Array.prototype.slice.call(document.querySelectorAll(FIELD_SELECTOR));
+      }
+
+      function runScriptAction(name, fn) {
+        state.currentScriptAction = name;
+        try {
+          logSystem("script-action-start", document.activeElement || document.body, { action: name });
+          fn();
+          logSystem("script-action-end", document.activeElement || document.body, { action: name });
+        } finally {
+          state.currentScriptAction = null;
+        }
+      }
+
+      function dispatchSyntheticInput(target, inputType, data) {
+        try {
+          target.dispatchEvent(new InputEvent("input", {
+            bubbles: true,
+            cancelable: true,
+            inputType: inputType,
+            data: data
+          }));
+        } catch (error) {
+          target.dispatchEvent(new Event("input", { bubbles: true, cancelable: true }));
+        }
+      }
+
+      function logSetterEvent(item) {
+        state.lastSignalTimes.setter = performance.now();
+        var synthetic = {
+          source: item.source || "value-setter",
+          type: "setter",
+          target: resolveTarget(item.target),
+          targetMeta: item.target || {},
+          trusted: false,
+          classification: "script-fill-observed",
+          details: {
+            source: item.source,
+            owner: item.owner,
+            property: item.property,
+            target: item.target,
+            before: item.before,
+            after: item.after,
+            assigned: item.assigned,
+            changed: item.changed,
+            stack: item.stack,
+            scriptAction: state.currentScriptAction
+          },
+          value: item.after || {},
+          notes: item.changed ? "setter changed value" : "setter assigned same value",
+          fillRelated: true
+        };
+        addEvent(synthetic);
+        if (synthetic.target) {
+          state.snapshots.set(synthetic.target, fieldSnapshot(synthetic.target));
+        }
+        clarityClassSignal("script-fill-observed", synthetic.target || document.body);
+      }
+
+      function logNetworkEvent(item) {
+        var entry = {
+          id: item.id || state.network.length + 1,
+          at: item.at,
+          wallTime: item.wallTime,
+          source: item.source,
+          method: item.method,
+          url: item.url,
+          status: "status" in item ? item.status : "",
+          ok: "ok" in item ? item.ok : "",
+          accepted: "accepted" in item ? item.accepted : "",
+          bodyBytes: item.bodyBytes,
+          elapsedMs: item.elapsedMs,
+          error: item.error
+        };
+        state.network.push(entry);
+        if (state.network.length > MAX_NETWORK) {
+          state.network.shift();
+        }
+        renderNetwork();
+      }
+
+      function logDomEvent(event, source) {
+        var target = event.target || document;
+        var isField = isFormField(target);
+        var snapBefore = isField ? state.snapshots.get(target) : null;
+        var value = isField ? fieldSnapshot(target) : null;
+        var changed = Boolean(snapBefore && value && snapBefore.hash !== value.hash);
+        var classification = classifyDomEvent(event, target, changed, value);
+
+        if (event.type === "keydown") state.lastSignalTimes.keydown = performance.now();
+        if (event.type === "focus" || event.type === "focusin") state.lastSignalTimes.focus = performance.now();
+        if (event.type === "blur" || event.type === "focusout") state.lastSignalTimes.blur = performance.now();
+        if (event.type === "paste") state.lastSignalTimes.paste = performance.now();
+        if (event.type === "drop") state.lastSignalTimes.drop = performance.now();
+        if (event.type.indexOf("drag") === 0) state.lastSignalTimes.drag = performance.now();
+        if (event.type.indexOf("composition") === 0) state.lastSignalTimes.composition = performance.now();
+        if (event.type === "select" || event.type === "selectionchange") state.lastSignalTimes.selection = performance.now();
+        if (event.type.indexOf("pointer") === 0 || event.type.indexOf("mouse") === 0 || event.type.indexOf("touch") === 0 || event.type === "click" || event.type === "dblclick" || event.type === "auxclick" || event.type === "contextmenu") state.lastSignalTimes.pointer = performance.now();
+        if (event.type === "input") state.lastSignalTimes.input = performance.now();
+        if (event.type === "change") state.lastSignalTimes.change = performance.now();
+        if (classification === "browser-autofill-likely") state.lastSignalTimes.autofill = performance.now();
+
+        var entry = {
+          source: source || "dom",
+          type: event.type,
+          target: isField ? target : null,
+          targetMeta: targetMeta(target),
+          trusted: "isTrusted" in event ? event.isTrusted : null,
+          classification: classification,
+          value: value,
+          valueChanged: changed,
+          inputType: event.inputType || "",
+          details: eventDetails(event, target, value, snapBefore),
+          notes: notesForEvent(event, target, classification, changed),
+          fillRelated: isFillRelated(classification, event),
+          rawValue: state.showRaw && isField ? currentValue(target) : undefined
+        };
+
+        addEvent(entry);
+
+        if (isField && value) {
+          state.snapshots.set(target, value);
+          if (classification === "browser-autofill-likely") {
+            state.autofillFields.add(fieldKey(target));
+          }
+        }
+
+        if (entry.fillRelated) {
+          clarityClassSignal(classification, target);
+        }
+      }
+
+      function logSystem(type, target, details) {
+        addEvent({
+          source: "system",
+          type: type,
+          target: isFormField(target) ? target : null,
+          targetMeta: targetMeta(target),
+          trusted: null,
+          classification: "system",
+          details: details || {},
+          value: isFormField(target) ? fieldSnapshot(target) : null,
+          notes: "",
+          fillRelated: type.indexOf("fill") >= 0
+        });
+      }
+
+      function addEvent(entry) {
+        entry.id = state.nextId++;
+        entry.at = Math.round(performance.now() * 10) / 10;
+        entry.wallTime = new Date().toISOString();
+        entry.webdriver = Boolean(navigator.webdriver);
+        entry.activeElement = targetMeta(document.activeElement);
+        entry.userActivation = userActivationMeta();
+
+        state.events.push(entry);
+        if (state.events.length > MAX_EVENTS) {
+          state.events.shift();
+        }
+
+        state.lastClass = entry.classification || "unknown";
+        state.counters[state.lastClass] = (state.counters[state.lastClass] || 0) + 1;
+        state.selectedId = entry.id;
+        renderAll();
+      }
+
+      function scanForSilentValueChanges(source) {
+        fields().forEach(function(field) {
+          var before = state.snapshots.get(field);
+          var after = fieldSnapshot(field);
+          if (!before) {
+            state.snapshots.set(field, after);
+            return;
+          }
+          if (before.hash === after.hash) {
+            return;
+          }
+
+          var cssAutofill = matchesAutofill(field);
+          var classification = cssAutofill ? "browser-autofill-likely" : inferSilentClassification(field);
+          var entry = {
+            source: source,
+            type: "snapshot-change",
+            target: field,
+            targetMeta: targetMeta(field),
+            trusted: null,
+            classification: classification,
+            value: after,
+            valueChanged: true,
+            details: {
+              before: before,
+              after: after,
+              cssAutofill: cssAutofill,
+              ageSinceKeydownMs: age("keydown"),
+              ageSincePasteMs: age("paste"),
+              ageSinceSetterMs: age("setter"),
+              ageSinceInputMs: age("input"),
+              ageSinceChangeMs: age("change"),
+              scriptAction: state.currentScriptAction
+            },
+            notes: "value changed outside direct event log",
+            fillRelated: true,
+            rawValue: state.showRaw ? currentValue(field) : undefined
+          };
+          state.snapshots.set(field, after);
+          if (classification === "browser-autofill-likely") {
+            state.autofillFields.add(fieldKey(field));
+          }
+          addEvent(entry);
+          clarityClassSignal(classification, field);
+        });
+      }
+
+      function inferSilentClassification(field) {
+        if (state.currentScriptAction || age("setter") < 700) return "script-fill-observed";
+        if (age("paste") < 700) return "paste-observed";
+        if (age("drop") < 700) return "drop-observed";
+        if (navigator.webdriver) return "automation-suspected";
+        if (age("keydown") > 1000 && age("input") > 1000) return "unknown-value-change";
+        return "manual-edit-likely";
+      }
+
+      function classifyDomEvent(event, target, valueChanged) {
+        var inputType = event.inputType || "";
+        var cssAutofill = isFormField(target) && matchesAutofill(target);
+
+        if (event.type === "autofill") return "browser-autofill-likely";
+        if (event.type === "animationstart" && event.animationName === "autofill-start") return "browser-autofill-likely";
+        if (cssAutofill && (event.type === "input" || event.type === "change" || valueChanged)) return "browser-autofill-likely";
+        if (event.type === "paste" || inputType === "insertFromPaste") return "paste-observed";
+        if (event.type === "drop" || inputType === "insertFromDrop") return "drop-observed";
+        if ("isTrusted" in event && event.isTrusted === false) return "synthetic-event-observed";
+        if (navigator.webdriver && (event.type === "keydown" || event.type === "input" || event.type === "click")) return "automation-suspected";
+        if ((event.type === "input" || event.type === "beforeinput") && inputType === "insertText") return "manual-edit-likely";
+        if (event.type === "input" || event.type === "change") return "manual-edit-likely";
+        return "system";
+      }
+
+      function notesForEvent(event, target, classification, valueChanged) {
+        var notes = [];
+        if (valueChanged) notes.push("value changed");
+        if (isFormField(target) && matchesAutofill(target)) notes.push("css autofill match");
+        if (event.inputType) notes.push("inputType=" + event.inputType);
+        if ("isTrusted" in event) notes.push(event.isTrusted ? "trusted" : "untrusted");
+        if (navigator.webdriver) notes.push("webdriver");
+        if (event.animationName) notes.push("animation=" + event.animationName);
+        if (classification === "browser-autofill-likely") notes.push("autofill candidate");
+        return notes.join("; ");
+      }
+
+      function isFillRelated(classification, event) {
+        return FILL_CLASSES.indexOf(classification) >= 0 ||
+          event.type === "beforeinput" ||
+          event.type === "input" ||
+          event.type === "change" ||
+          event.type === "paste" ||
+          event.type === "drop" ||
+          event.type === "compositionend" ||
+          event.type === "search" ||
+          event.type === "autofill";
+      }
+
+      function eventDetails(event, target, value, previous) {
+        var details = {
+          eventType: event.type,
+          eventInterface: event && event.constructor ? event.constructor.name : '',
+          eventPhase: event.eventPhase,
+          timeStamp: Math.round(event.timeStamp * 10) / 10,
+          trusted: "isTrusted" in event ? event.isTrusted : null,
+          cancelable: event.cancelable,
+          defaultPrevented: event.defaultPrevented,
+          bubbles: event.bubbles,
+          composed: event.composed,
+          target: targetMeta(target),
+          activeElement: targetMeta(document.activeElement),
+          value: value,
+          previousValue: previous || null,
+          cssAutofill: isFormField(target) ? matchesAutofill(target) : false,
+          webdriver: Boolean(navigator.webdriver),
+          visibilityState: document.visibilityState,
+          documentHasFocus: document.hasFocus(),
+          userActivation: userActivationMeta(),
+          ageSinceKeydownMs: age("keydown"),
+          ageSincePasteMs: age("paste"),
+          ageSinceDropMs: age("drop"),
+          ageSinceDragMs: age("drag"),
+          ageSincePointerMs: age("pointer"),
+          ageSinceFocusMs: age("focus"),
+          ageSinceBlurMs: age("blur"),
+          ageSinceSelectionMs: age("selection"),
+          ageSinceCompositionMs: age("composition"),
+          ageSinceSetterMs: age("setter"),
+          scriptAction: state.currentScriptAction
+        };
+
+        if (isFormField(target)) {
+          try {
+            details.selectionStart = typeof target.selectionStart === "number" ? target.selectionStart : null;
+            details.selectionEnd = typeof target.selectionEnd === "number" ? target.selectionEnd : null;
+            details.selectionDirection = target.selectionDirection || "";
+          } catch (error) {
+            details.selectionError = error.message;
+          }
+          if (target.validity) {
+            details.validity = {
+              willValidate: Boolean(target.willValidate),
+              valid: target.validity.valid,
+              valueMissing: target.validity.valueMissing,
+              typeMismatch: target.validity.typeMismatch,
+              patternMismatch: target.validity.patternMismatch,
+              tooLong: target.validity.tooLong,
+              tooShort: target.validity.tooShort,
+              rangeUnderflow: target.validity.rangeUnderflow,
+              rangeOverflow: target.validity.rangeOverflow,
+              stepMismatch: target.validity.stepMismatch,
+              badInput: target.validity.badInput,
+              customError: target.validity.customError,
+              validationMessageLength: target.validationMessage ? target.validationMessage.length : 0
+            };
+          }
+        }
+
+        if (window.InputEvent && event instanceof InputEvent) {
+          details.inputType = event.inputType || "";
+          details.dataLength = event.data == null ? 0 : String(event.data).length;
+          details.dataHash = event.data == null ? "" : hashText(event.data);
+          details.isComposing = event.isComposing;
+        }
+
+        if (window.KeyboardEvent && event instanceof KeyboardEvent) {
+          details.key = safeKey(event.key);
+          details.code = event.code;
+          details.location = event.location;
+          details.repeat = event.repeat;
+          details.altKey = event.altKey;
+          details.ctrlKey = event.ctrlKey;
+          details.metaKey = event.metaKey;
+          details.shiftKey = event.shiftKey;
+        }
+
+        if (window.ClipboardEvent && event instanceof ClipboardEvent) {
+          var clipboardText = "";
+          try {
+            clipboardText = event.clipboardData ? event.clipboardData.getData("text/plain") : "";
+          } catch (error) {
+            clipboardText = "";
+          }
+          details.clipboardTypes = event.clipboardData ? Array.prototype.slice.call(event.clipboardData.types || []) : [];
+          details.clipboardTextLength = clipboardText.length;
+          details.clipboardTextHash = clipboardText ? hashText(clipboardText) : "";
+        }
+
+        if (window.FocusEvent && event instanceof FocusEvent) {
+          details.relatedTarget = targetMeta(event.relatedTarget);
+        }
+
+        if (window.CompositionEvent && event instanceof CompositionEvent) {
+          details.compositionDataLength = event.data == null ? 0 : String(event.data).length;
+          details.compositionDataHash = event.data == null ? "" : hashText(event.data);
+        }
+
+        if (window.DragEvent && event instanceof DragEvent) {
+          var dragText = "";
+          try {
+            dragText = event.dataTransfer ? event.dataTransfer.getData("text/plain") : "";
+          } catch (error) {
+            dragText = "";
+          }
+          details.dataTransferTypes = event.dataTransfer ? Array.prototype.slice.call(event.dataTransfer.types || []) : [];
+          details.dataTransferTextLength = dragText.length;
+          details.dataTransferTextHash = dragText ? hashText(dragText) : "";
+          details.dataTransferFiles = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files.length : 0;
+        }
+
+        if (window.FormDataEvent && event instanceof FormDataEvent) {
+          details.formDataKeys = [];
+          event.formData.forEach(function(value, key) {
+            details.formDataKeys.push({ key: key, length: value instanceof File ? value.size : String(value).length });
+          });
+        }
+
+        if (window.PageTransitionEvent && event instanceof PageTransitionEvent) {
+          details.persisted = event.persisted;
+        }
+
+        if (window.PointerEvent && event instanceof PointerEvent) {
+          details.pointerId = event.pointerId;
+          details.pointerType = event.pointerType;
+          details.isPrimary = event.isPrimary;
+          details.pressure = event.pressure;
+          details.width = event.width;
+          details.height = event.height;
+        }
+
+        if (window.TouchEvent && event instanceof TouchEvent) {
+          details.touchCount = event.touches ? event.touches.length : 0;
+          details.changedTouchCount = event.changedTouches ? event.changedTouches.length : 0;
+        }
+
+        if (window.MouseEvent && event instanceof MouseEvent) {
+          details.button = event.button;
+          details.buttons = event.buttons;
+          details.detail = event.detail;
+          details.clientX = Math.round(event.clientX);
+          details.clientY = Math.round(event.clientY);
+        }
+
+        if (event.type === "autofill") {
+          details.autofillValues = sanitizeAutofillValues(event.autofillValues);
+          details.hasRefill = typeof event.refill === "function";
+        }
+
+        if (event.animationName) {
+          details.animationName = event.animationName;
+        }
+
+        return details;
+      }
+
+      function sanitizeAutofillValues(values) {
+        if (!values) return null;
+        try {
+          return Array.prototype.slice.call(values).map(function(item) {
+            var output = {};
+            Object.keys(item || {}).forEach(function(key) {
+              var value = item[key];
+              if (typeof value === "string") {
+                output[key] = valueMeta(value);
+              } else if (value && value.tagName) {
+                output[key] = targetMeta(value);
+              } else {
+                output[key] = value;
+              }
+            });
+            return output;
+          });
+        } catch (error) {
+          return { error: error.message };
+        }
+      }
+
+      function clarityClassSignal(classification, target) {
+        var normalized = String(classification || "unknown").replace(/[^a-z0-9_]+/gi, "_").toLowerCase();
+        clarityCall("event", "fill_" + normalized);
+        clarityCall("set", "last_fill_class", normalized);
+        clarityCall("set", "last_fill_target", fieldKey(target));
+      }
+
+      function clarityCall() {
+        var args = Array.prototype.slice.call(arguments);
+        var callable = typeof window.clarity === "function";
+        addEvent({
+          source: "clarity-api",
+          type: args[0] || "call",
+          target: null,
+          targetMeta: { label: "window.clarity" },
+          trusted: null,
+          classification: "system",
+          details: { callable: callable, args: args },
+          value: null,
+          notes: callable ? "clarity call sent" : "clarity function missing",
+          fillRelated: false
+        });
+        els.clarityStatus.textContent = callable ? "callable" : "missing";
+        if (callable) {
+          try {
+            window.clarity.apply(window, args);
+          } catch (error) {
+            addEvent({
+              source: "clarity-api",
+              type: "error",
+              target: null,
+              targetMeta: { label: "window.clarity" },
+              trusted: null,
+              classification: "system",
+              details: { args: args, error: error.message },
+              value: null,
+              notes: "clarity call failed",
+              fillRelated: false
+            });
+          }
+        }
+      }
+
+      function matchesAutofill(element) {
+        if (!isFormField(element)) return false;
+        return [":autofill", ":-webkit-autofill"].some(function(selector) {
+          try {
+            return element.matches(selector);
+          } catch (error) {
+            return false;
+          }
+        });
+      }
+
+      function fieldSnapshot(field) {
+        var value = currentValue(field);
+        return {
+          length: value.length,
+          empty: value.length === 0,
+          hash: hashText(value),
+          checked: "checked" in field ? Boolean(field.checked) : null,
+          selectedIndex: "selectedIndex" in field ? field.selectedIndex : null,
+          cssAutofill: matchesAutofill(field)
+        };
+      }
+
+      function currentValue(field) {
+        if (!field) return "";
+        if (field.type === "checkbox" || field.type === "radio") {
+          return field.checked ? "true" : "false";
+        }
+        return field.value == null ? "" : String(field.value);
+      }
+
+      function valueMeta(value) {
+        var text = value == null ? "" : String(value);
+        return { length: text.length, empty: text.length === 0, hash: hashText(text) };
+      }
+
+      function hashText(value) {
+        var early = window.__autofillLabEarly || {};
+        var input = String(early.salt || "") + ":" + String(value == null ? "" : value);
+        var hash = 2166136261;
+        for (var index = 0; index < input.length; index++) {
+          hash ^= input.charCodeAt(index);
+          hash = Math.imul(hash, 16777619);
+        }
+        return ("00000000" + (hash >>> 0).toString(16)).slice(-8);
+      }
+
+      function targetMeta(target) {
+        if (!target || !target.tagName) {
+          return { tag: target === document ? "document" : "unknown", label: target === document ? "document" : "unknown" };
+        }
+
+        var label = target.id ||
+          target.getAttribute("name") ||
+          target.getAttribute("autocomplete") ||
+          target.getAttribute("aria-label") ||
+          target.textContent && target.textContent.trim().slice(0, 40) ||
+          target.tagName.toLowerCase();
+
+        return {
+          tag: target.tagName.toLowerCase(),
+          id: target.id || "",
+          name: target.getAttribute("name") || "",
+          type: target.getAttribute("type") || target.type || "",
+          autocomplete: target.getAttribute("autocomplete") || "",
+          label: label
+        };
+      }
+
+      function resolveTarget(meta) {
+        if (!meta) return null;
+        if (meta.id) return document.getElementById(meta.id);
+        if (meta.name) return document.querySelector("[name='" + cssEscape(meta.name) + "']");
+        return null;
+      }
+
+      function cssEscape(value) {
+        if (window.CSS && typeof window.CSS.escape === "function") {
+          return window.CSS.escape(value);
+        }
+        return String(value).replace(/'/g, "\\'");
+      }
+
+      function fieldKey(target) {
+        if (!target || !target.tagName) return "none";
+        return target.id || target.getAttribute("name") || target.getAttribute("autocomplete") || target.tagName.toLowerCase();
+      }
+
+      function isFormField(target) {
+        return target && target.matches && target.matches(FIELD_SELECTOR);
+      }
+
+      function safeKey(key) {
+        if (!key) return "";
+        if (key.length === 1) return "printable:" + key.charCodeAt(0);
+        return key;
+      }
+
+      function userActivationMeta() {
+        if (!navigator.userActivation) return null;
+        return {
+          isActive: navigator.userActivation.isActive,
+          hasBeenActive: navigator.userActivation.hasBeenActive
+        };
+      }
+
+      function age(kind) {
+        var value = state.lastSignalTimes[kind];
+        if (!Number.isFinite(value)) return null;
+        return Math.max(0, Math.round((performance.now() - value) * 10) / 10);
+      }
+
+      function clearLogs() {
+        state.events = [];
+        state.network = [];
+        state.counters = Object.create(null);
+        state.selectedId = null;
+        state.lastClass = "none";
+        state.autofillFields.clear();
+        state.nextId = 1;
+        initializeSnapshots();
+        renderAll();
+        logSystem("logs-cleared", document.activeElement || document.body, {});
+      }
+
+      function exportJson() {
+        var payload = {
+          createdAt: new Date().toISOString(),
+          location: location.href,
+          projectId: PROJECT_ID,
+          showRawValues: state.showRaw,
+          webdriver: Boolean(navigator.webdriver),
+          userAgent: navigator.userAgent,
+          counters: state.counters,
+          events: state.events.map(serializeEventForExport),
+          network: state.network
+        };
+        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "autofill-clarity-lab-" + Date.now() + ".json";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+        clarityCall("event", "autofill_lab_export_json");
+      }
+
+      function serializeEventForExport(entry) {
+        var copy = Object.assign({}, entry);
+        copy.target = entry.targetMeta || null;
+        delete copy.targetMeta;
+        return copy;
+      }
+
+      function renderAll() {
+        renderStatusOnly();
+        renderEvents();
+        renderNetwork();
+        renderCounters();
+        renderDetails();
+      }
+
+      function renderStatusOnly() {
+        els.eventCount.textContent = String(state.events.length);
+        els.lastClass.textContent = state.lastClass;
+        els.autofillCount.textContent = String(state.autofillFields.size);
+        els.webdriverStatus.textContent = navigator.webdriver ? "true" : "false";
+        els.networkCount.textContent = String(state.network.length);
+        if (typeof window.clarity === "function") {
+          els.clarityStatus.textContent = "callable";
+        }
+      }
+
+      function renderEvents() {
+        var rows = filteredEvents().slice(-350).reverse().map(function(entry) {
+          var selected = entry.id === state.selectedId ? " class=\"selected\"" : "";
+          var target = entry.targetMeta || {};
+          var value = entry.value ? valueSummary(entry.value, entry.rawValue) : "";
+          return "<tr data-id=\"" + entry.id + "\"" + selected + ">" +
+            "<td class=\"mono\">" + entry.id + "</td>" +
+            "<td class=\"mono\">" + escapeHtml(entry.at) + "</td>" +
+            "<td>" + escapeHtml(entry.source) + "</td>" +
+            "<td class=\"mono\">" + escapeHtml(displayEventType(entry)) + "</td>" +
+            "<td class=\"mono\">" + escapeHtml(target.label || target.id || target.tag || "") + "</td>" +
+            "<td>" + badge(entry.classification) + "</td>" +
+            "<td>" + trustedText(entry.trusted) + "</td>" +
+            "<td class=\"mono\">" + escapeHtml(entry.inputType || "") + "</td>" +
+            "<td class=\"mono\">" + escapeHtml(value) + "</td>" +
+            "<td>" + escapeHtml(entry.notes || "") + "</td>" +
+          "</tr>";
+        }).join("");
+
+        els.eventRows.innerHTML = rows || "<tr><td colspan=\"10\">No events.</td></tr>";
+        Array.prototype.forEach.call(els.eventRows.querySelectorAll("tr[data-id]"), function(row) {
+          row.addEventListener("click", function() {
+            state.selectedId = Number(row.getAttribute("data-id"));
+            renderEvents();
+            renderDetails();
+          });
+        });
+      }
+
+      function filteredEvents() {
+        if (state.filter === "fill") {
+          return state.events.filter(function(entry) { return entry.fillRelated; });
+        }
+        if (state.filter === "clarity") {
+          return state.events.filter(function(entry) { return entry.source === "clarity-api" || /clarity/i.test(JSON.stringify(entry.details || {})); });
+        }
+        return state.events;
+      }
+
+      function renderNetwork() {
+        if (!els.networkRows) return;
+        var rows = state.network.slice(-120).reverse().map(function(entry) {
+          var status = entry.error || entry.status || (entry.accepted === "" ? "" : "accepted=" + entry.accepted);
+          return "<tr>" +
+            "<td class=\"mono\">" + entry.id + "</td>" +
+            "<td class=\"mono\">" + escapeHtml(entry.at) + "</td>" +
+            "<td>" + escapeHtml(entry.source || "") + "</td>" +
+            "<td class=\"mono\">" + escapeHtml(status) + "</td>" +
+            "<td class=\"mono\">" + escapeHtml(compactUrl(entry.url || "")) + "</td>" +
+          "</tr>";
+        }).join("");
+        els.networkRows.innerHTML = rows || "<tr><td colspan=\"5\">No requests observed.</td></tr>";
+        renderStatusOnly();
+      }
+
+      function renderCounters() {
+        var keys = Object.keys(state.counters).sort(function(a, b) {
+          return state.counters[b] - state.counters[a];
+        });
+        els.counterRows.innerHTML = keys.map(function(key) {
+          return "<tr><td>" + badge(key) + "</td><td class=\"mono\">" + state.counters[key] + "</td></tr>";
+        }).join("") || "<tr><td colspan=\"2\">No counters.</td></tr>";
+      }
+
+      function renderDetails() {
+        var selected = state.events.find(function(entry) { return entry.id === state.selectedId; });
+        if (!selected) {
+          els.detailsPane.textContent = "Select an event row.";
+          els.detailsPane.classList.add("empty");
+          return;
+        }
+        els.detailsPane.classList.remove("empty");
+        els.detailsPane.textContent = JSON.stringify(serializeEventForExport(selected), null, 2);
+      }
+
+      function valueSummary(meta, rawValue) {
+        var text = "len=" + meta.length + " hash=" + meta.hash;
+        if (meta.cssAutofill) text += " autofill-css";
+        if (state.showRaw && rawValue !== undefined) text += " raw=" + rawValue;
+        return text;
+      }
+
+      function displayEventType(entry) {
+        if (!entry) return "";
+        if (entry.source === "clarity-api" && entry.details && entry.details.args) {
+          var args = entry.details.args;
+          var method = args[0] || entry.type || "call";
+          var name = args.length > 1 ? ": " + args[1] : "";
+          return "clarity(\"" + method + "\")" + name;
+        }
+        if (entry.details && entry.details.eventInterface) {
+          return String(entry.type || "") + " (" + entry.details.eventInterface + ")";
+        }
+        return String(entry.type || "");
+      }
+      function trustedText(value) {
+        if (value === true) return "true";
+        if (value === false) return "false";
+        return "";
+      }
+
+      function badge(classification) {
+        var key = classification || "unknown";
+        var css = "unknown";
+        if (key.indexOf("autofill") >= 0) css = "autofill";
+        else if (key.indexOf("paste") >= 0) css = "paste";
+        else if (key.indexOf("drop") >= 0) css = "drop";
+        else if (key.indexOf("script") >= 0) css = "script";
+        else if (key.indexOf("synthetic") >= 0) css = "synthetic";
+        else if (key.indexOf("automation") >= 0) css = "automation";
+        else if (key.indexOf("manual") >= 0) css = "manual";
+        else if (key.indexOf("system") >= 0) css = "system";
+        return "<span class=\"badge " + css + "\">" + escapeHtml(key) + "</span>";
+      }
+
+      function compactUrl(url) {
+        try {
+          var parsed = new URL(url, location.href);
+          var path = parsed.pathname.length > 42 ? parsed.pathname.slice(0, 42) + "..." : parsed.pathname;
+          return parsed.hostname + path;
+        } catch (error) {
+          return String(url).slice(0, 80);
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+    })();
+  </script>
+</body>
+</html>
