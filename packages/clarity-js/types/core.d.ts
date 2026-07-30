@@ -142,6 +142,7 @@ export interface Config {
     includeSubdomains?: boolean;
     modules?: string[];
     diagnostics?: boolean;
+    restart?: number;
 }
 
 export const enum Constant {
