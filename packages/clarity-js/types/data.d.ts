@@ -240,6 +240,15 @@ export const enum BooleanFlag {
     True = 1
 }
 
+export const enum AgenticBrowserSignal {
+    None = 0,
+    ClaudeAgentGlowBorder = 1,
+    ClaudeAgentGlowBorderInner = 2,
+    ClaudeAgentStopContainer = 3,
+    ClaudeAgentStopButton = 4,
+    ClaudePhantomCursor = 5
+}
+
 export const enum GCMConsent {
     Unknown = 0,
     Granted = 1,
@@ -354,6 +363,7 @@ export const enum Constant {
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
+    AgenticBrowserSignal = "<!>ABS",
     Mask = "•", // Placeholder character for explicitly masked content
     Digit = "▫", // Placeholder character for digits
     Letter = "▪", // Placeholder character for letters
