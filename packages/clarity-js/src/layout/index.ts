@@ -6,6 +6,7 @@ import { start as regStart, stop as regStop } from "@src/layout/region";
 import { start as styStart, stop as styStop } from "@src/layout/style";
 import { start as animStart, stop as animStop } from "@src/layout/animation";
 import { start as custStart, stop as custStop } from "@src/layout/custom";
+import { start as agentStart } from "@src/layout/agent";
 import { bind } from "@src/core/event";
 import config from "@src/core/config";
 
@@ -13,6 +14,7 @@ export { hashText } from "@src/layout/dom";
 
 export function start(): void {
     // The order below is important and is determined by interdependencies of modules
+    agentStart();
     docStart();
     regStart();
     domStart();
