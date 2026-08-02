@@ -3,7 +3,7 @@ import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEv
 import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent, ConsentEvent } from "../types/data";
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
-import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent } from "../types/interaction";
+import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent, ChatEvent } from "../types/interaction";
 import { CustomElementEvent, DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
 import { NavigationEvent } from "../types/performance";
 
@@ -152,6 +152,10 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Focus:
                 if (payload.focus === undefined) { payload.focus = []; }
                 payload.focus.push(interaction.decode(entry) as FocusEvent);
+                break;
+            case Data.Event.Chat:
+                if (payload.chat === undefined) { payload.chat = []; }
+                payload.chat.push(interaction.decode(entry) as ChatEvent);
                 break;
             case Data.Event.Box:
                 /* Deprecated - Intentionally, no-op. For backward compatibility. */

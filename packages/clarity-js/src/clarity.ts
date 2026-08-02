@@ -24,7 +24,7 @@ const modules: Module[] = [
   { start: layoutStart, stop: layoutStop },
   { start: interStart, stop: interStop },
   { start: perfStart, stop: perfStop },
-  { start: dynStart, stop: dynStop },
+  { start: dynStart, stop: dynStop }
 ];
 
 export function start(config: Config = null): void {

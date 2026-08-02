@@ -29,6 +29,14 @@ export interface TimelineEvent extends PartialEvent { data: TimelineData; }
 export interface UnloadEvent extends PartialEvent { data: Interaction.UnloadData; }
 export interface VisibilityEvent extends PartialEvent { data: Interaction.VisibilityData; }
 export interface FocusEvent extends PartialEvent { data: Interaction.FocusData; }
+
+export interface ChatData {
+    action: number;         // Agent.Action enum value
+    isBrandAgent: boolean;  // true when originating from a brand agent
+    cid: string | null;     // conversation id (brand agent only)
+}
+export interface ChatEvent extends PartialEvent { data: ChatData; }
+
 export interface InteractionEvent extends PartialEvent {
     data: ClickData |
     Interaction.ChangeData |
@@ -42,5 +50,6 @@ export interface InteractionEvent extends PartialEvent {
     TimelineData |
     Interaction.UnloadData |
     Interaction.VisibilityData |
-    Interaction.FocusData;
+    Interaction.FocusData |
+    ChatData;
 }

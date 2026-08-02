@@ -34,6 +34,82 @@ test.describe('decode function', () => {
         expect(result.contextMenu[0].data.button).toBe(2);
     });
 
+    const chatEnvelope: any[] = ["0.8.20", 1, 0, 506, "p", "u", "s", 2, 0, 0, 0, "https://test.com/"];
+
+    test('chat event with isBrandAgent=true and cid should decode brand agent metadata', () => {
+        const payload = {
+            e: chatEnvelope,
+            a: [
+                [100, 52, 5, 1, "conv-42"],
+                [110, 52, 7, 1, "conv-42"],
+            ],
+        };
+
+        const result = decode(JSON.stringify(payload));
+
+        expect(result.chat).toBeDefined();
+        expect(result.chat.length).toBe(2);
+
+        expect(result.chat[0].time).toBe(100);
+        expect(result.chat[0].data.action).toBe(5);
+        expect(result.chat[0].data.isBrandAgent).toBe(true);
+        expect(result.chat[0].data.cid).toBe("conv-42");
+
+        expect(result.chat[1].data.action).toBe(7);
+        expect(result.chat[1].data.isBrandAgent).toBe(true);
+        expect(result.chat[1].data.cid).toBe("conv-42");
+    });
+
+    test('chat event with isBrandAgent=false should decode as regular agent (empty cid -> null)', () => {
+        const payload = {
+            e: chatEnvelope,
+            a: [
+                [200, 52, 5, 0, ""],
+                [210, 52, 6, 0, ""],
+            ],
+        };
+
+        const result = decode(JSON.stringify(payload));
+
+        expect(result.chat).toBeDefined();
+        expect(result.chat.length).toBe(2);
+        expect(result.chat[0].data.action).toBe(5);
+        expect(result.chat[0].data.isBrandAgent).toBe(false);
+        expect(result.chat[0].data.cid).toBeNull();
+        expect(result.chat[1].data.isBrandAgent).toBe(false);
+        expect(result.chat[1].data.cid).toBeNull();
+    });
+
+    test('chat event with empty cid string should normalize to null', () => {
+        const payload = {
+            e: chatEnvelope,
+            a: [
+                [400, 52, 6, 1, ""],
+            ],
+        };
+
+        const result = decode(JSON.stringify(payload));
+
+        expect(result.chat[0].data.isBrandAgent).toBe(true);
+        expect(result.chat[0].data.cid).toBeNull();
+    });
+
+    test('mixed chat payload (brand + regular) should bucket both correctly', () => {
+        const payload = {
+            e: chatEnvelope,
+            a: [
+                [10, 52, 5, 1, "abc"],   // brand agent
+                [20, 52, 5, 0, ""],      // regular agent
+            ],
+        };
+
+        const result = decode(JSON.stringify(payload));
+
+        expect(result.chat.length).toBe(2);
+        expect(result.chat.map(c => c.data.isBrandAgent)).toEqual([true, false]);
+        expect(result.chat.map(c => c.data.cid)).toEqual(["abc", null]);
+    });
+
     test('visibility event should be backward compatible to support string values', () => {
         // This is a very simple test that focuses on basic decoding functionality
         const testPayload = {

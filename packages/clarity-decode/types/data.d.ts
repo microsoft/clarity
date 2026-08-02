@@ -1,7 +1,7 @@
 import { Data } from "clarity-js";
 import { DiagnosticEvent, FraudEvent, LogEvent, ScriptErrorEvent } from "./diagnostic";
 import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, InteractionEvent, PointerEvent, ResizeEvent, SubmitEvent } from "./interaction";
-import { ScrollEvent, SelectionEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent } from "./interaction";
+import { ScrollEvent, SelectionEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent, ChatEvent } from "./interaction";
 import { DocumentEvent, DomEvent, LayoutEvent, RegionEvent, CustomElementEvent } from "./layout";
 import { NavigationEvent, PerformanceEvent } from "./performance";
 import { PartialEvent } from "./core";
@@ -30,6 +30,7 @@ export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
 export interface ExtractEvent extends PartialEvent { data: Data.ExtractData; }
 export interface ConsentEvent extends PartialEvent { data: Data.ConsentData; }
+
 export interface DataEvent extends PartialEvent {
     data: Data.BaselineData |
     Data.DimensionData | 
@@ -84,6 +85,7 @@ export interface DecodedPayload {
     extract?: ExtractEvent[];
     consent?: ConsentEvent[];
     customElement?: CustomElementEvent[];
+    chat?: ChatEvent[];
 }
 
 export interface DecodedVersion {

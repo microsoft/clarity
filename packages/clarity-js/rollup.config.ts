@@ -124,7 +124,8 @@ export default [
       alias({
         entries: [
           { find: /@src\/dynamic\/agent\/tidio.*/, replacement: '@src/dynamic/agent/blank' },
-          { find: /@src\/dynamic\/agent\/crisp.*/, replacement: '@src/dynamic/agent/blank' }
+          { find: /@src\/dynamic\/agent\/crisp.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/brandagent.*/, replacement: '@src/dynamic/agent/blank' }
         ]
       }),
       resolve(),
@@ -144,7 +145,8 @@ export default [
       alias({
         entries: [
           { find: /@src\/dynamic\/agent\/livechat.*/, replacement: '@src/dynamic/agent/blank' },
-          { find: /@src\/dynamic\/agent\/crisp.*/, replacement: '@src/dynamic/agent/blank' }
+          { find: /@src\/dynamic\/agent\/crisp.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/brandagent.*/, replacement: '@src/dynamic/agent/blank' }
         ]
       }),
       resolve(),
@@ -164,7 +166,29 @@ export default [
       alias({
         entries: [
           { find: /@src\/dynamic\/agent\/livechat.*/, replacement: '@src/dynamic/agent/blank' },
-          { find: /@src\/dynamic\/agent\/tidio.*/, replacement: '@src/dynamic/agent/blank' }
+          { find: /@src\/dynamic\/agent\/tidio.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/brandagent.*/, replacement: '@src/dynamic/agent/blank' }
+        ]
+      }),
+      resolve(),
+      typescript(),
+      terser(terserOpts),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/dynamic/agent/index.ts",
+    output: [ { file: pkg.brandagent, format: "iife", exports: "named", freeze: false } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: /@src\/dynamic\/agent\/livechat.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/tidio.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/crisp.*/, replacement: '@src/dynamic/agent/blank' }
         ]
       }),
       resolve(),
