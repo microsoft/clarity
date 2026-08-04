@@ -1,9 +1,8 @@
 import { AgenticBrowserSignal, Dimension } from "@clarity-types/data";
-import { Constant } from "@clarity-types/layout";
 import * as dimension from "@src/data/dimension";
 
-export function detect(attributes: { [key: string]: string }): void {
-    let signal = identify(attributes[Constant.Id]);
+export function detect(id: string): void {
+    let signal = identify(id);
     if (signal) { dimension.log(Dimension.AgenticBrowserSignal, signal.toString()); }
 }
 
