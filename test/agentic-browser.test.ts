@@ -13,7 +13,7 @@ declare global {
     }
 }
 
-const Variable = "<!>ABS";
+const AgenticBrowserSignalDimension = 39;
 const Signals = {
     ClaudeAgentGlowBorder: "1",
     ClaudeAgentGlowBorderInner: "2",
@@ -49,9 +49,9 @@ async function collect(page: Page): Promise<string[]> {
     const payloads = await page.evaluate((): string[] => window.payloads);
     const signals: string[] = [];
     for (const payload of payloads.map((value: string): Data.DecodedPayload => decode(value))) {
-        for (const event of payload.variable || []) {
-            if (event.data && event.data[Variable]) {
-                signals.push(...event.data[Variable]);
+        for (const event of payload.dimension || []) {
+            if (event.data && event.data[AgenticBrowserSignalDimension]) {
+                signals.push(...event.data[AgenticBrowserSignalDimension]);
             }
         }
     }
@@ -146,7 +146,7 @@ test.describe("Agentic browser markers", (): void => {
         expect(await collect(page)).toEqual([Signals.ClaudeAgentStopButton]);
     });
 
-    test("does not emit a variable for similar ids", async ({ page }): Promise<void> => {
+    test("does not emit a dimension for similar ids", async ({ page }): Promise<void> => {
         await start(page, `<div id="claude-agent-stop-container-copy"></div>`);
 
         expect(await collect(page)).toEqual([]);

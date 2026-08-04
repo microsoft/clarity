@@ -1,19 +1,10 @@
-import { AgenticBrowserSignal, Constant as DataConstant } from "@clarity-types/data";
+import { AgenticBrowserSignal, Dimension } from "@clarity-types/data";
 import { Constant } from "@clarity-types/layout";
-import { set } from "@src/data/variable";
-
-let seen: boolean[] = [];
-
-export function start(): void {
-    seen = [];
-}
+import * as dimension from "@src/data/dimension";
 
 export function detect(attributes: { [key: string]: string }): void {
     let signal = identify(attributes[Constant.Id]);
-    if (signal && !seen[signal]) {
-        seen[signal] = true;
-        set(DataConstant.AgenticBrowserSignal, signal.toString());
-    }
+    if (signal) { dimension.log(Dimension.AgenticBrowserSignal, signal.toString()); }
 }
 
 function identify(id: string): AgenticBrowserSignal {
