@@ -95,7 +95,8 @@ export default function (node: Node, source: Source, timestamp: number): Node {
             let element = (node as HTMLElement);
             let tag = element.tagName;
             let attributes = getAttributes(element);
-            agent.detect(attributes[Constant.Id]);
+            let id = attributes[Constant.Id];
+            if (id) { agent.detect(id); }
             // In some cases, external libraries like vue-fragment, can modify parentNode property to not be in sync with the DOM
             // For correctness, we first look at parentElement and if it not present then fall back to using parentNode
             parent = node.parentElement ? node.parentElement : (node.parentNode ? node.parentNode as HTMLElement : null);
