@@ -183,7 +183,8 @@ export const enum Dimension {
     TimezoneOffset = 35,
     Consent = 36,
     InteractionNextPaint = 37,
-    GlobalPrivacyControl = 38
+    GlobalPrivacyControl = 38,
+    AgenticBrowserSignal = 39
     // 200-300 reserved for internal use
 }
 
@@ -355,7 +356,6 @@ export const enum Constant {
     UserId = "userId",
     SessionId = "sessionId",
     PageId = "pageId",
-    AgenticBrowserSignal = "<!>ABS",
     Mask = "•", // Placeholder character for explicitly masked content
     Digit = "▫", // Placeholder character for digits
     Letter = "▪", // Placeholder character for letters
