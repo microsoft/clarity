@@ -183,6 +183,9 @@ async function upload(final: boolean = false): Promise<void> {
     // In all other cases, we continue to send back string value
     let payload = stringify(encoded);
     let zipped = last ? null : await compress(payload);
+    // Guard: stop() may have been called while compress() was awaiting (async race condition).
+    // envelope.stop() sets envelope.data = null, so we must re-check before accessing envelope.data.sequence.
+    if (!envelope.data) { return; }
     metric.sum(Metric.TotalBytes, zipped ? zipped.length : payload.length);
     send(payload, zipped, envelope.data.sequence, last);
 }
@@ -300,7 +303,9 @@ function done(sequence: number): void {
 function delay(): number {
     // Progressively increase delay as we continue to send more payloads from the client to the server
     // If we are not uploading data to a server, and instead invoking UploadCallback, in that case keep returning configured value
-    let gap = config.lean === false && discoverBytes > 0 ? Setting.MinUploadDelay : envelope.data.sequence * config.delay;
+    let gap = config.lean === false && discoverBytes > 0
+        ? Setting.MinUploadDelay
+        : (envelope.data ? envelope.data.sequence * config.delay : Setting.MinUploadDelay);
     return typeof config.upload === Constant.String ? Math.max(Math.min(gap, Setting.MaxUploadDelay), Setting.MinUploadDelay) : config.delay;
 }
 
