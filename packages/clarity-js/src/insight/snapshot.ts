@@ -14,6 +14,16 @@ export function start(): void {
     doc.start();
     getId(document.documentElement); // Pre-discover ID for page root
     interaction.observe(document);
+
+    // observe other document nodes
+    const iframes = document.querySelectorAll("iframe");
+    for (let i = 0; i < iframes.length; i++) {
+        const iframe = iframes[i];
+        if (iframe.contentDocument) {
+            getId(iframe.contentDocument.documentElement); // Pre-discover ID for iframe root
+            interaction.observe(iframe.contentDocument);
+        }
+    }
 }
 
 export function stop(): void {
