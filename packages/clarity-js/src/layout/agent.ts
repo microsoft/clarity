@@ -18,6 +18,8 @@ function identify(id: string): AgenticBrowserSignal {
             return AgenticBrowserSignal.ClaudeAgentStopButton;
         case "claude-phantom-cursor":
             return AgenticBrowserSignal.ClaudePhantomCursor;
+        case "codex-agent-overlay-root":
+            return AgenticBrowserSignal.CodexAgentOverlayRoot;
         default:
             return AgenticBrowserSignal.None;
     }
