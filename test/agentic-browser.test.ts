@@ -15,12 +15,8 @@ declare global {
 
 const AgenticBrowserSignalDimension = 39;
 const Signals = {
-    ClaudeAgentGlowBorder: "1",
-    ClaudeAgentGlowBorderInner: "2",
-    ClaudeAgentStopContainer: "3",
-    ClaudeAgentStopButton: "4",
-    ClaudePhantomCursor: "5",
-    CodexAgentOverlayRoot: "6",
+    Claude: "1",
+    Codex: "6",
 } as const;
 
 async function start(page: Page, markup: string = ""): Promise<void> {
@@ -69,19 +65,13 @@ test.describe("Agentic browser markers", (): void => {
             <div id="claude-phantom-cursor"></div>
         `);
 
-        expect((await collect(page)).sort()).toEqual([
-            Signals.ClaudeAgentGlowBorder,
-            Signals.ClaudeAgentGlowBorderInner,
-            Signals.ClaudeAgentStopContainer,
-            Signals.ClaudeAgentStopButton,
-            Signals.ClaudePhantomCursor,
-        ].sort());
+        expect(await collect(page)).toEqual([Signals.Claude]);
     });
 
     test("captures the Codex overlay root", async ({ page }): Promise<void> => {
         await start(page, `<div id="codex-agent-overlay-root"></div>`);
 
-        expect(await collect(page)).toEqual([Signals.CodexAgentOverlayRoot]);
+        expect(await collect(page)).toEqual([Signals.Codex]);
     });
 
     test("captures a marker inserted after load", async ({ page }): Promise<void> => {
@@ -92,7 +82,7 @@ test.describe("Agentic browser markers", (): void => {
             document.body.appendChild(marker);
         });
 
-        expect(await collect(page)).toEqual([Signals.ClaudeAgentGlowBorder]);
+        expect(await collect(page)).toEqual([Signals.Claude]);
     });
 
     test("captures an id assigned after insertion", async ({ page }): Promise<void> => {
@@ -107,22 +97,22 @@ test.describe("Agentic browser markers", (): void => {
             document.getElementById("pending-marker").id = "claude-agent-stop-container";
         });
 
-        expect(await collect(page)).toEqual([Signals.ClaudeAgentStopContainer]);
+        expect(await collect(page)).toEqual([Signals.Claude]);
     });
 
     test("retains a transient marker removed before upload", async ({ page }): Promise<void> => {
         await start(page);
         await page.evaluate((): void => {
-            const marker = document.createElement("button");
-            marker.id = "claude-agent-stop-button";
+            const marker = document.createElement("div");
+            marker.id = "claude-agent-stop-container";
             document.body.appendChild(marker);
             marker.remove();
         });
 
-        expect(await collect(page)).toEqual([Signals.ClaudeAgentStopButton]);
+        expect(await collect(page)).toEqual([Signals.Claude]);
     });
 
-    test("emits each marker once per page", async ({ page }): Promise<void> => {
+    test("emits each agent once per page", async ({ page }): Promise<void> => {
         await start(page);
         await page.evaluate((): void => {
             for (let i = 0; i < 2; i++) {
@@ -132,7 +122,7 @@ test.describe("Agentic browser markers", (): void => {
             }
         });
 
-        expect(await collect(page)).toEqual([Signals.ClaudePhantomCursor]);
+        expect(await collect(page)).toEqual([Signals.Claude]);
     });
 
     test("captures a marker in an open shadow root", async ({ page }): Promise<void> => {
@@ -145,22 +135,24 @@ test.describe("Agentic browser markers", (): void => {
             host.attachShadow({ mode: "open" }).appendChild(marker);
         });
 
-        expect(await collect(page)).toEqual([Signals.ClaudePhantomCursor]);
+        expect(await collect(page)).toEqual([Signals.Claude]);
     });
 
     test("captures a marker in a same-origin iframe", async ({ page }): Promise<void> => {
         await start(page);
         await page.evaluate((): void => {
             const frame = document.createElement("iframe");
-            frame.srcdoc = "<div id='claude-agent-stop-button'></div>";
+            frame.srcdoc = "<div id='claude-agent-stop-container'></div>";
             document.body.appendChild(frame);
         });
 
-        expect(await collect(page)).toEqual([Signals.ClaudeAgentStopButton]);
+        expect(await collect(page)).toEqual([Signals.Claude]);
     });
 
-    test("does not emit a dimension for similar markers", async ({ page }): Promise<void> => {
+    test("ignores child and similar markers", async ({ page }): Promise<void> => {
         await start(page, `
+            <div id="claude-agent-glow-border-inner"></div>
+            <button id="claude-agent-stop-button"></button>
             <div id="claude-agent-stop-container-copy"></div>
             <div id="codex-agent-overlay-root-copy"></div>
         `);
