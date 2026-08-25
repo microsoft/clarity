@@ -16,6 +16,7 @@ import * as dom from "@src/layout/dom";
 import * as metric from "@src/data/metric";
 import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
+import * as agent from "@src/layout/agent";
 import traverse from "@src/layout/traverse";
 import processNode from "./node";
 import config from "@src/core/config";
@@ -146,7 +147,7 @@ async function processMutation(timer: Timer, mutation: MutationRecord, instance:
       processNode(target, Source.CharacterData, timestamp);
       break;
     case Constant.ChildList:
-      processNodeList(mutation.addedNodes, Source.ChildListAdd, timer, timestamp);
+      processNodeList(mutation.addedNodes, Source.ChildListAdd, timer, timestamp, target);
       processNodeList(mutation.removedNodes, Source.ChildListRemove, timer, timestamp);
       break;
     case Constant.Throttle:
@@ -262,11 +263,12 @@ function names(nodes: NodeList): string {
   return output.join();
 }
 
-async function processNodeList(list: NodeList, source: Source, timer: Timer, timestamp: number): Promise<void> {
+async function processNodeList(list: NodeList, source: Source, timer: Timer, timestamp: number, parent: Node = null): Promise<void> {
   let length = list ? list.length : 0;
   for (let i = 0; i < length; i++) {
     const node = list[i];
     if (source === Source.ChildListAdd) {
+      agent.detect(node, parent);
       traverse(node, timer, source, timestamp);
     } else {
       let state = task.state(timer);

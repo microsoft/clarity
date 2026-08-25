@@ -6,6 +6,7 @@ import { start as regStart, stop as regStop } from "@src/layout/region";
 import { start as styStart, stop as styStop } from "@src/layout/style";
 import { start as animStart, stop as animStop } from "@src/layout/animation";
 import { start as custStart, stop as custStop } from "@src/layout/custom";
+import { start as agentStart, scan as agentScan } from "@src/layout/agent";
 import { bind } from "@src/core/event";
 import config from "@src/core/config";
 
@@ -16,8 +17,10 @@ export function start(): void {
     docStart();
     regStart();
     domStart();
+    agentStart();
     if (config.delayDom) {
         bind(window, 'load', () => {
+            agentScan();
             mutStart();
         });
     } else {
