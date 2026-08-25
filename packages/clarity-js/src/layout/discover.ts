@@ -5,6 +5,7 @@ import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import { time } from "@src/core/time";
 import { id } from "@src/data/metadata";
+import * as agent from "@src/layout/agent";
 import * as doc from "@src/layout/document";
 import encode from "@src/layout/encode";
 import * as region from "@src/layout/region";
@@ -24,6 +25,7 @@ async function discover(): Promise<void> {
     let ts = time();
     let timer: Timer = { id: id(), cost: Metric.LayoutCost };
     task.start(timer);
+    agent.discover();
     await traverse(document, timer, Source.Discover, ts);
     checkDocumentStyles(document, ts);
     await encode(Event.Discover, timer, ts);
