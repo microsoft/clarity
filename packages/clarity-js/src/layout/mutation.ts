@@ -11,7 +11,6 @@ import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { id } from "@src/data/metadata";
 import * as summary from "@src/data/summary";
 import * as internal from "@src/diagnostic/internal";
-import * as agent from "@src/layout/agent";
 import * as doc from "@src/layout/document";
 import * as dom from "@src/layout/dom";
 import * as metric from "@src/data/metric";
@@ -117,9 +116,6 @@ function handle(m: MutationRecord[]): void {
 }
 
 async function processMutation(timer: Timer, mutation: MutationRecord, instance: number, timestamp: number): Promise<void> {
-  if (mutation.type === Constant.ChildList || mutation.attributeName === Constant.Id) {
-    agent.mutation(mutation);
-  }
   let state = task.state(timer);
 
   if (state === Task.Wait) {
