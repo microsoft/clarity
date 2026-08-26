@@ -248,7 +248,8 @@ export const enum AgenticBrowserSignal {
     ClaudeAgentStopContainer = 3,
     ClaudeAgentStopButton = 4,
     ClaudePhantomCursor = 5,
-    CodexAgentOverlayRoot = 6
+    CodexAgentOverlayRoot = 6,
+    CodexBrowserSidebarCommentsRoot = 7
 }
 
 export const enum GCMConsent {

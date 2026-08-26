@@ -25,7 +25,8 @@ export function detect(node: Node, parent: Node = null): void {
 
     let element = node as HTMLElement;
     let signal = identify(element.id, parent || element.parentElement);
-    let index = signal === AgenticBrowserSignal.CodexAgentOverlayRoot ? 1 : 0;
+    let index = signal === AgenticBrowserSignal.CodexAgentOverlayRoot ||
+        signal === AgenticBrowserSignal.CodexBrowserSidebarCommentsRoot ? 1 : 0;
     if (signal && !seen[index]) {
         seen[index] = true;
         dimension.log(Dimension.AgenticBrowserSignal, signal.toString());
@@ -40,8 +41,13 @@ function identify(id: string, parent: Node): AgenticBrowserSignal {
             case ClaudePhantomCursor:
                 return AgenticBrowserSignal.ClaudePhantomCursor;
         }
-    } else if (parent === document.documentElement && (id === CodexOverlayRoot || id === CodexSidebarRoot)) {
-        return AgenticBrowserSignal.CodexAgentOverlayRoot;
+    } else if (parent === document.documentElement) {
+        switch (id) {
+            case CodexOverlayRoot:
+                return AgenticBrowserSignal.CodexAgentOverlayRoot;
+            case CodexSidebarRoot:
+                return AgenticBrowserSignal.CodexBrowserSidebarCommentsRoot;
+        }
     }
 
     return AgenticBrowserSignal.None;

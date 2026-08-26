@@ -18,6 +18,7 @@ const Signals = {
     ClaudeAgentGlowBorder: "1",
     ClaudePhantomCursor: "5",
     CodexAgentOverlayRoot: "6",
+    CodexBrowserSidebarCommentsRoot: "7",
 } as const;
 
 async function start(page: Page, markup: string = "", config: string = "", afterStart: string = ""): Promise<void> {
@@ -99,7 +100,7 @@ test.describe("Agentic browser presence", (): void => {
             document.documentElement.appendChild(marker);
         </script>`);
 
-        expect(await collect(page)).toEqual([Signals.CodexAgentOverlayRoot]);
+        expect(await collect(page)).toEqual([Signals.CodexBrowserSidebarCommentsRoot]);
     });
 
     test("captures a Codex sidebar root inserted after load", async ({ page }): Promise<void> => {
@@ -110,7 +111,7 @@ test.describe("Agentic browser presence", (): void => {
             document.documentElement.appendChild(marker);
         });
 
-        expect(await collect(page)).toEqual([Signals.CodexAgentOverlayRoot]);
+        expect(await collect(page)).toEqual([Signals.CodexBrowserSidebarCommentsRoot]);
     });
 
     test("captures both products when both are present", async ({ page }): Promise<void> => {
@@ -122,7 +123,7 @@ test.describe("Agentic browser presence", (): void => {
 
         expect((await collect(page)).sort()).toEqual([
             Signals.ClaudeAgentGlowBorder,
-            Signals.CodexAgentOverlayRoot,
+            Signals.CodexBrowserSidebarCommentsRoot,
         ]);
     });
 
@@ -133,7 +134,7 @@ test.describe("Agentic browser presence", (): void => {
             document.documentElement.appendChild(marker);
         `);
 
-        expect(await collect(page)).toEqual([Signals.CodexAgentOverlayRoot]);
+        expect(await collect(page)).toEqual([Signals.CodexBrowserSidebarCommentsRoot]);
     });
 
     test("retains a transient Codex overlay root", async ({ page }): Promise<void> => {

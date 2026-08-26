@@ -340,9 +340,10 @@ child of HTML for the Chrome extension and `codex-browser-sidebar-comments-root`
 direct child of HTML for the ChatGPT in-app browser.
 
 The ChatGPT in-app browser completed the verifier task and added
-`codex-browser-sidebar-comments-root` directly beneath HTML. Because telemetry is
-formally presence-only and the app scenario is in scope, this root maps to the
-existing Codex presence value.
+`codex-browser-sidebar-comments-root` directly beneath HTML. The Chrome extension
+overlay retains signal value `6`, while the in-app sidebar uses the distinct signal
+value `7`. Backend presence queries can roll up both values without misidentifying
+which surface produced the signal.
 
 A genuine ChatGPT Chrome extension run produced the active Codex marker:
 
