@@ -369,6 +369,9 @@ Focused browser tests also cover:
 The root-presence trial is now the preferred client candidate. It matches the formal
 presence-only requirement, passed the existing-marker and mutation scenarios, passed
 the genuine startup-existing capture, covered every marker-positive historical
-playback through the glow root, reduced the detector slice by 96% to 99.8%, and is 14
-gzip bytes smaller than the lowercase-`c` implementation. Additional genuine Claude
-extension and Desktop repetitions remain useful for confidence in the root contract.
+playback through the glow root, and reduced the detector slice by 96% to 99.8%.
+The final candidate, including both Codex surfaces and per-product deduplication, is
+75,133 raw bytes and 26,752 deterministic gzip bytes. That is 338 raw bytes and 56
+gzip bytes larger than the earlier lowercase-`c` implementation; the improvement is
+in detector runtime rather than final bundle size. Additional genuine Claude extension
+and Desktop repetitions remain useful for confidence in the root contract.
