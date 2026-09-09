@@ -85,6 +85,11 @@ export function setCookie(key: string, value: string, time: number): void {
     } catch {
       rootDomain = Constant.Empty;
     }
-    document.cookie = rootDomain ? cookie + Constant.Semicolon + Constant.Domain + rootDomain : cookie;
+    let output = rootDomain ? cookie + Constant.Semicolon + Constant.Domain + rootDomain : cookie;
+    document.cookie = output;
+    // Retry with a partitioned cookie when regular cookie storage is unavailable in an embedded context.
+    if (window.top !== window && (getCookie(key) || Constant.Empty) !== value) {
+      document.cookie = output + Constant.Partitioned;
+    }
   }
 }
