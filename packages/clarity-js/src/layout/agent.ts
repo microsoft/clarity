@@ -4,7 +4,6 @@ import * as dimension from "@src/data/dimension";
 const ClaudeGlowBorder = "claude-agent-glow-border";
 const ClaudePhantomCursor = "claude-phantom-cursor";
 const CodexOverlayRoot = "codex-agent-overlay-root";
-const CodexSidebarRoot = "codex-browser-sidebar-comments-root";
 
 let seen: boolean[] = [];
 
@@ -17,7 +16,6 @@ export function scan(): void {
     detect(document.getElementById(ClaudeGlowBorder));
     detect(document.getElementById(ClaudePhantomCursor));
     detect(document.getElementById(CodexOverlayRoot));
-    detect(document.getElementById(CodexSidebarRoot));
 }
 
 export function detect(node: Node, parent: Node = null): void {
@@ -25,8 +23,7 @@ export function detect(node: Node, parent: Node = null): void {
 
     let element = node as HTMLElement;
     let signal = identify(element.id, parent || element.parentElement);
-    let index = signal === AgenticBrowserSignal.CodexAgentOverlayRoot ||
-        signal === AgenticBrowserSignal.CodexBrowserSidebarCommentsRoot ? 1 : 0;
+    let index = signal === AgenticBrowserSignal.CodexAgentOverlayRoot ? 1 : 0;
     if (signal && !seen[index]) {
         seen[index] = true;
         dimension.log(Dimension.AgenticBrowserSignal, signal.toString());
@@ -45,8 +42,6 @@ function identify(id: string, parent: Node): AgenticBrowserSignal {
         switch (id) {
             case CodexOverlayRoot:
                 return AgenticBrowserSignal.CodexAgentOverlayRoot;
-            case CodexSidebarRoot:
-                return AgenticBrowserSignal.CodexBrowserSidebarCommentsRoot;
         }
     }
 

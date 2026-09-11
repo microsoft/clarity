@@ -18,7 +18,6 @@ const Signals = {
     ClaudeAgentGlowBorder: "1",
     ClaudePhantomCursor: "5",
     CodexAgentOverlayRoot: "6",
-    CodexBrowserSidebarCommentsRoot: "7",
 } as const;
 
 async function start(page: Page, markup: string = "", config: string = "", afterStart: string = ""): Promise<void> {
@@ -93,48 +92,27 @@ test.describe("Agentic browser presence", (): void => {
         expect(await collect(page)).toEqual([Signals.CodexAgentOverlayRoot]);
     });
 
-    test("captures an existing Codex sidebar root", async ({ page }): Promise<void> => {
-        await start(page, `<script>
-            const marker = document.createElement("div");
-            marker.id = "codex-browser-sidebar-comments-root";
-            document.documentElement.appendChild(marker);
-        </script>`);
-
-        expect(await collect(page)).toEqual([Signals.CodexBrowserSidebarCommentsRoot]);
-    });
-
-    test("captures a Codex sidebar root inserted after load", async ({ page }): Promise<void> => {
-        await start(page);
-        await page.evaluate((): void => {
-            const marker = document.createElement("div");
-            marker.id = "codex-browser-sidebar-comments-root";
-            document.documentElement.appendChild(marker);
-        });
-
-        expect(await collect(page)).toEqual([Signals.CodexBrowserSidebarCommentsRoot]);
-    });
-
     test("captures both products when both are present", async ({ page }): Promise<void> => {
         await start(page, `<div id="claude-agent-glow-border"></div><script>
             const marker = document.createElement("div");
-            marker.id = "codex-browser-sidebar-comments-root";
+            marker.id = "codex-agent-overlay-root";
             document.documentElement.appendChild(marker);
         </script>`);
 
         expect((await collect(page)).sort()).toEqual([
             Signals.ClaudeAgentGlowBorder,
-            Signals.CodexBrowserSidebarCommentsRoot,
+            Signals.CodexAgentOverlayRoot,
         ]);
     });
 
     test("rescans for roots when DOM observation is delayed", async ({ page }): Promise<void> => {
         await start(page, "", ", delayDom: true", `
             const marker = document.createElement("div");
-            marker.id = "codex-browser-sidebar-comments-root";
+            marker.id = "codex-agent-overlay-root";
             document.documentElement.appendChild(marker);
         `);
 
-        expect(await collect(page)).toEqual([Signals.CodexBrowserSidebarCommentsRoot]);
+        expect(await collect(page)).toEqual([Signals.CodexAgentOverlayRoot]);
     });
 
     test("retains a transient Codex overlay root", async ({ page }): Promise<void> => {
@@ -245,6 +223,9 @@ test.describe("Agentic browser presence", (): void => {
                 const marker = document.createElement("div");
                 marker.id = "claude-agent-glow-border";
                 document.documentElement.appendChild(marker);
+                const retired = document.createElement("div");
+                retired.id = "codex-browser-sidebar-comments-root";
+                document.documentElement.appendChild(retired);
             </script>
         `);
 
