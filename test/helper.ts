@@ -2,8 +2,10 @@ import { readFileSync } from 'fs';
 import { pathToFileURL } from 'url';
 import { resolve } from 'path';
 import type { Page } from '@playwright/test';
-import { Data } from "clarity-decode";
-import type { Core, Layout } from "clarity-decode";
+import type { Core, Data, Layout } from "clarity-decode";
+
+const inputEvent: Data.Event.Input = 27;
+const changeEvent: Data.Event.Change = 42;
 
 declare global {
     interface Window {
@@ -36,7 +38,7 @@ export async function markup(page: Page, file: string, override?: Core.Config): 
         const events: unknown[][] = window.payloads.flatMap(payload => JSON.parse(payload).a || []);
         return events.some(event => event[1] === eventTypes.input)
             && events.filter(event => event[1] === eventTypes.change).length >= 2;
-    }, { input: Data.Event.Input, change: Data.Event.Change });
+    }, { input: inputEvent, change: changeEvent });
     return await page.evaluate('payloads');
 }
 
