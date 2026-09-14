@@ -19,6 +19,13 @@ export const enum ClickSource {
     Unknown = 4
 }
 
+export const enum PointerType {
+    Unknown = 0,
+    Mouse = 1,
+    Touch = 2,
+    Pen = 3
+}
+
 export const enum Setting {
     LookAhead = 500, // 500ms
     InputLookAhead = 750, // 750ms
@@ -36,11 +43,30 @@ export const enum Clipboard {
 }
 
 /* Helper Interfaces */
-export interface PointerState {
+export type PointerEventType =
+    Event.MouseMove |
+    Event.MouseDown |
+    Event.MouseUp |
+    Event.MouseWheel |
+    Event.DoubleClick |
+    Event.TouchStart |
+    Event.TouchEnd |
+    Event.TouchMove |
+    Event.TouchCancel;
+
+export interface PointerEventState {
     time: number;
-    event: number;
+    event: PointerEventType;
     data: PointerData;
 }
+
+export interface PointerDownState {
+    time: number;
+    event: Event.PointerDown;
+    data: PointerDownData;
+}
+
+export type PointerState = PointerEventState | PointerDownState;
 
 export interface ClickState {
     time: number;
@@ -118,6 +144,22 @@ export interface PointerData {
     y: number;
     id?: number;
     isPrimary?: boolean;
+    type?: PointerType;
+    pressure?: number;
+    width?: number;
+    height?: number;
+}
+
+export interface PointerDownData {
+    target: Target;
+    x: number;
+    y: number;
+    id: number;
+    isPrimary: boolean;
+    type: PointerType;
+    pressure: number;
+    width: number;
+    height: number;
 }
 
 export interface ClickData {
