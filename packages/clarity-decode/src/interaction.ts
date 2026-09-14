@@ -15,15 +15,14 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
         case Data.Event.TouchCancel:
         case Data.Event.TouchEnd:
         case Data.Event.TouchMove:
-            let pointerDown = event === Data.Event.PointerDown;
             let pointerData: Interaction.PointerData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
                 y: tokens[4] as number,
-                id: pointerDown ? tokens[5] as number : typeof tokens[5] === "number" ? tokens[5] as number : undefined,
-                isPrimary: pointerDown || tokens[6] !== undefined ? tokens[6] === "true" : undefined,
+                id: typeof tokens[5] === "number" ? tokens[5] as number : undefined,
+                isPrimary: tokens[6] === undefined ? undefined : tokens[6] === "true",
             };
-            if (pointerDown) {
+            if (event === Data.Event.PointerDown) {
                 pointerData.type = tokens[7] as Interaction.PointerType;
                 pointerData.pressure = tokens[8] as number;
                 pointerData.width = tokens[9] as number;
