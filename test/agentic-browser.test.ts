@@ -247,7 +247,7 @@ test.describe("Agentic browser presence", (): void => {
         expect(await collect(page)).toEqual([]);
     });
 
-    test("does not emit a dimension for nested or similar markers", async ({ page }): Promise<void> => {
+    test("finds a valid root after nested or similar markers", async ({ page }): Promise<void> => {
         await start(page, `
             <div><div id="claude-agent-glow-border"></div></div>
             <div id="claude-agent-glow-border-copy"></div>
@@ -263,6 +263,6 @@ test.describe("Agentic browser presence", (): void => {
             </script>
         `);
 
-        expect(await collect(page)).toEqual([]);
+        expect(await collect(page)).toEqual([Signals.CodexBrowserSidebarCommentsRoot]);
     });
 });
