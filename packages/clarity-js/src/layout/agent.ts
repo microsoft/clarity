@@ -16,7 +16,6 @@ const enum AgenticBrowser {
 
 export function start(): void {
     seen = new Set();
-    scan();
 }
 
 export function scan(): void {
