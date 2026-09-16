@@ -18,13 +18,6 @@ export function start(): void {
     seen = new Set();
 }
 
-export function scan(): void {
-    detect(find(ClaudeGlowBorder, document.body));
-    detect(find(ClaudePhantomCursor, document.body));
-    detect(find(CodexOverlayRoot, document.documentElement));
-    detect(find(CodexSidebarRoot, document.documentElement));
-}
-
 export function detect(node: Node, parent: Node = null): void {
     if (seen.has(AgenticBrowser.Claude) && seen.has(AgenticBrowser.Codex) ||
         !node || node.nodeType !== Node.ELEMENT_NODE) { return; }
@@ -36,18 +29,6 @@ export function detect(node: Node, parent: Node = null): void {
         seen.add(browser);
         dimension.log(Dimension.AgenticBrowserSignal, signal.toString());
     }
-}
-
-function find(id: string, parent: HTMLElement): HTMLElement {
-    let element = document.getElementById(id);
-    if (!element || !parent || element.parentElement === parent) { return element; }
-
-    for (let i = 0; i < parent.children.length; i++) {
-        element = parent.children[i] as HTMLElement;
-        if (element.id === id) { return element; }
-    }
-
-    return null;
 }
 
 function classify(signal: AgenticBrowserSignal): AgenticBrowser {

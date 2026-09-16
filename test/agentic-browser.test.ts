@@ -139,16 +139,6 @@ test.describe("Agentic browser presence", (): void => {
         ]);
     });
 
-    test("rescans for roots when DOM observation is delayed", async ({ page }): Promise<void> => {
-        await start(page, "", ", delayDom: true", `
-            const marker = document.createElement("div");
-            marker.id = "codex-agent-overlay-root";
-            document.documentElement.appendChild(marker);
-        `);
-
-        expect(await collect(page)).toEqual([Signals.CodexAgentOverlayRoot]);
-    });
-
     test("retains a transient Codex overlay root", async ({ page }): Promise<void> => {
         await start(page);
         await page.evaluate((): void => {
