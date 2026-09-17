@@ -1,0 +1,27 @@
+<!doctype html>
+<html><body>
+  <iframe id="f" name="iframe-1" srcdoc="<html><body><h1 id='h'>Hello, world!</h1></body></html>"></iframe>
+  <script>
+    window.checks = function(label){
+      const f = document.getElementById('f');
+      const idoc = f.contentDocument;
+      const iwin = f.contentWindow;
+      const h1 = idoc.getElementById('h');
+      const tn = h1 ? h1.firstChild : null;
+      return {
+        label: label,
+        tnVal: tn && tn.nodeValue,
+        instanceofTextIframe: tn instanceof iwin.Text,
+        instanceofTextParent: tn instanceof window.Text,
+        ctorIsIframeText: tn && tn.constructor === iwin.Text,
+        protoMatch: tn && Object.getPrototypeOf(tn) === iwin.Text.prototype
+      };
+    };
+    window.editAsHtml = function(){
+      const f = document.getElementById('f');
+      const idoc = f.contentDocument;
+      const h1 = idoc.getElementById('h');
+      h1.outerHTML = "<h1 id='h'>Edited text!</h1>";
+    };
+  </script>
+</body></html>
