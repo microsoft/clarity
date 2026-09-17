@@ -69,7 +69,10 @@ test.describe("Agentic browser presence", (): void => {
             <div id="claude-phantom-cursor"></div>
         `);
 
-        expect(await collect(page)).toEqual([Signals.ClaudeAgentGlowBorder]);
+        expect(await collect(page)).toEqual([
+            Signals.ClaudeAgentGlowBorder,
+            Signals.ClaudePhantomCursor,
+        ]);
     });
 
     test("captures an existing Codex overlay root", async ({ page }): Promise<void> => {
@@ -114,7 +117,7 @@ test.describe("Agentic browser presence", (): void => {
         expect(await collect(page)).toEqual([Signals.CodexBrowserSidebarCommentsRoot]);
     });
 
-    test("emits only one signal across Codex roots", async ({ page }): Promise<void> => {
+    test("emits independent signals across Codex roots", async ({ page }): Promise<void> => {
         await start(page, `<script>
             for (const id of ["codex-agent-overlay-root", "codex-browser-sidebar-comments-root"]) {
                 const marker = document.createElement("div");
@@ -123,7 +126,10 @@ test.describe("Agentic browser presence", (): void => {
             }
         </script>`);
 
-        expect(await collect(page)).toEqual([Signals.CodexAgentOverlayRoot]);
+        expect(await collect(page)).toEqual([
+            Signals.CodexAgentOverlayRoot,
+            Signals.CodexBrowserSidebarCommentsRoot,
+        ]);
     });
 
     test("captures both products when both are present", async ({ page }): Promise<void> => {
