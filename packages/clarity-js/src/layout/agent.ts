@@ -6,41 +6,13 @@ const ClaudePhantomCursor = "claude-phantom-cursor";
 const CodexOverlayRoot = "codex-agent-overlay-root";
 const CodexSidebarRoot = "codex-browser-sidebar-comments-root";
 
-let seen: Set<AgenticBrowser> = null;
-
-const enum AgenticBrowser {
-    None = 0,
-    Claude = 1,
-    Codex = 2
-}
-
-export function start(): void {
-    seen = new Set();
-}
-
 export function detect(node: Node, parent: Node = null): void {
-    if (seen.has(AgenticBrowser.Claude) && seen.has(AgenticBrowser.Codex) ||
-        !node || node.nodeType !== Node.ELEMENT_NODE) { return; }
+    if (!node || node.nodeType !== Node.ELEMENT_NODE) { return; }
 
     let element = node as HTMLElement;
     let signal = identify(element.id, parent || element.parentElement);
-    let browser = classify(signal);
-    if (browser !== AgenticBrowser.None && !seen.has(browser)) {
-        seen.add(browser);
+    if (signal !== AgenticBrowserSignal.None) {
         dimension.log(Dimension.AgenticBrowserSignal, signal.toString());
-    }
-}
-
-function classify(signal: AgenticBrowserSignal): AgenticBrowser {
-    switch (signal) {
-        case AgenticBrowserSignal.ClaudeAgentGlowBorder:
-        case AgenticBrowserSignal.ClaudePhantomCursor:
-            return AgenticBrowser.Claude;
-        case AgenticBrowserSignal.CodexAgentOverlayRoot:
-        case AgenticBrowserSignal.CodexBrowserSidebarCommentsRoot:
-            return AgenticBrowser.Codex;
-        default:
-            return AgenticBrowser.None;
     }
 }
 
