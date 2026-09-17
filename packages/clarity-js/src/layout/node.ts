@@ -95,12 +95,11 @@ export default function (node: Node, source: Source, timestamp: number): Node {
             let element = (node as HTMLElement);
             let tag = element.tagName;
             let attributes = getAttributes(element);
+            let elementId = attributes[Constant.Id];
             // In some cases, external libraries like vue-fragment, can modify parentNode property to not be in sync with the DOM
             // For correctness, we first look at parentElement and if it not present then fall back to using parentNode
             parent = node.parentElement ? node.parentElement : (node.parentNode ? node.parentNode as HTMLElement : null);
-            if (source === Source.Discover) {
-                agent.detect(node, parent);
-            }
+            if (elementId) { agent.detect(elementId, parent); }
             // If we encounter a node that is part of SVG namespace, prefix the tag with SVG_PREFIX
             if (element.namespaceURI === Constant.SvgNamespace) { tag = Constant.SvgPrefix + tag; }
 
