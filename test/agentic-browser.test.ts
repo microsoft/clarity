@@ -145,7 +145,7 @@ test.describe("Agentic browser presence", (): void => {
         ]);
     });
 
-    test("retains a transient Codex overlay root", async ({ page }): Promise<void> => {
+    test("ignores a transient Codex overlay root", async ({ page }): Promise<void> => {
         await start(page);
         await page.evaluate((): void => {
             const marker = document.createElement("div");
@@ -154,7 +154,7 @@ test.describe("Agentic browser presence", (): void => {
             marker.remove();
         });
 
-        expect(await collect(page)).toEqual([Signals.CodexAgentOverlayRoot]);
+        expect(await collect(page)).toEqual([]);
     });
 
     test("captures a marker inserted after load", async ({ page }): Promise<void> => {
@@ -168,7 +168,7 @@ test.describe("Agentic browser presence", (): void => {
         expect(await collect(page)).toEqual([Signals.ClaudeAgentGlowBorder]);
     });
 
-    test("ignores an id assigned after insertion", async ({ page }): Promise<void> => {
+    test("captures an id assigned after insertion", async ({ page }): Promise<void> => {
         await start(page);
         await page.evaluate((): void => {
             const marker = document.createElement("div");
@@ -180,7 +180,7 @@ test.describe("Agentic browser presence", (): void => {
             document.getElementById("pending-marker").id = "claude-agent-glow-border";
         });
 
-        expect(await collect(page)).toEqual([]);
+        expect(await collect(page)).toEqual([Signals.ClaudeAgentGlowBorder]);
     });
 
     test("captures an id assigned synchronously after insertion", async ({ page }): Promise<void> => {
@@ -194,7 +194,7 @@ test.describe("Agentic browser presence", (): void => {
         expect(await collect(page)).toEqual([Signals.ClaudeAgentGlowBorder]);
     });
 
-    test("retains a transient marker removed before upload", async ({ page }): Promise<void> => {
+    test("ignores a transient marker removed before processing", async ({ page }): Promise<void> => {
         await start(page);
         await page.evaluate((): void => {
             const marker = document.createElement("div");
@@ -203,7 +203,7 @@ test.describe("Agentic browser presence", (): void => {
             marker.remove();
         });
 
-        expect(await collect(page)).toEqual([Signals.ClaudeAgentGlowBorder]);
+        expect(await collect(page)).toEqual([]);
     });
 
     test("emits each marker once per page", async ({ page }): Promise<void> => {
