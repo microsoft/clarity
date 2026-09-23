@@ -309,12 +309,19 @@ export class LayoutHelper {
             let insert = this.insertAfter;
 
             let tag = node.tag;
-            if (tag && tag.indexOf(Layout.Constant.IFramePrefix) === 0) { tag = node.tag.substr(Layout.Constant.IFramePrefix.length); }
+            if (tag && tag.indexOf(Layout.Constant.IFramePrefix) === 0) { tag = node.tag.slice(Layout.Constant.IFramePrefix.length); }
             if (parent === null && node.parent !== null && node.parent > -1 && tag !== "HTML") {
                 // We are referencing a parent for this node that hasn't been created yet. Push it to a list of nodes to
                 // try once we are finished with other nodes within this event. Though we don't require HTML tags to
                 // have a parent as they are typically the root.
                 retryEvent.data.push(node);
+                continue;
+            }
+            let unprefixedTag = tag && tag.indexOf(Layout.Constant.SvgPrefix) === 0 ? tag.slice(Layout.Constant.SvgPrefix.length) : tag;
+            if (unprefixedTag && unprefixedTag.toUpperCase() === "SCRIPT") {
+                node.value = null;
+                insert(node, parent, doc.createComment("script"), pivot);
+                if (node.id) { this.events[node.id] = node; }
                 continue;
             }
             switch (tag) {
@@ -462,13 +469,6 @@ export class LayoutHelper {
                     this.setAttributes(iframeElement, node);
                     insert(node, parent, iframeElement, pivot);
                     break;
-                case "SCRIPT":
-                    {
-                        node.id = -1; // We want to ensure children of script tags are not processed
-                        node.value = null; // We don't want to set any potential script content
-                        this.insertDefaultElement(node, parent, pivot, doc, insert);
-                        break;
-                    }
                 default:
                     this.insertDefaultElement(node, parent, pivot, doc, insert);
                     break;
