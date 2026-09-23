@@ -28,6 +28,7 @@ let config: Config = {
     modules: [],
     diagnostics: false,
     restart: Setting.RestartDelay,
+    pageHeadings: false,
 };
 
 export default config;

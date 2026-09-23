@@ -143,6 +143,7 @@ export interface Config {
     modules?: string[];
     diagnostics?: boolean;
     restart?: number;
+    pageHeadings?: boolean;
 }
 
 export const enum Constant {

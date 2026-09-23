@@ -11,8 +11,10 @@ import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
 import * as custom from "@src/layout/custom";
+import * as headings from "@src/layout/headings";
 import { checkDocumentStyles } from "@src/layout/style";
 import { electron } from "@src/data/metadata";
+import config from "@src/core/config";
 
 const IGNORE_ATTRIBUTES = ["title", "alt", "onload", "onfocus", "onerror", "data-drupal-form-submit-last", "aria-label", "integrity", "crossorigin"];
 const newlineRegex = /[\r\n]+/g;
@@ -93,6 +95,9 @@ export default function (node: Node, source: Source, timestamp: number): Node {
         case Node.ELEMENT_NODE:
             let element = (node as HTMLElement);
             let tag = element.tagName;
+            if (config.pageHeadings && source === Source.Discover) {
+                headings.observe(element, tag);
+            }
             let attributes = getAttributes(element);
             // In some cases, external libraries like vue-fragment, can modify parentNode property to not be in sync with the DOM
             // For correctness, we first look at parentElement and if it not present then fall back to using parentNode
