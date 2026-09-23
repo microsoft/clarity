@@ -319,8 +319,9 @@ export class LayoutHelper {
             }
             let unprefixedTag = tag && tag.indexOf(Layout.Constant.SvgPrefix) === 0 ? tag.slice(Layout.Constant.SvgPrefix.length) : tag;
             if (unprefixedTag && unprefixedTag.toUpperCase() === "SCRIPT") {
-                node.value = null;
-                insert(node, parent, doc.createComment("script"), pivot);
+                let scriptElement = this.element(node.id);
+                scriptElement = scriptElement && scriptElement.nodeType === NodeType.COMMENT_NODE ? scriptElement : doc.createComment("script");
+                insert(node, parent, scriptElement, pivot);
                 if (node.id) { this.events[node.id] = node; }
                 continue;
             }
