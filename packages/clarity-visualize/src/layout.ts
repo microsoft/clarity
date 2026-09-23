@@ -308,6 +308,8 @@ export class LayoutHelper {
             let pivot = this.element(node.previous);
             let insert = this.insertAfter;
 
+            if (parent && parent.nodeType === NodeType.COMMENT_NODE) { continue; }
+
             let tag = node.tag;
             if (tag && tag.indexOf(Layout.Constant.IFramePrefix) === 0) { tag = node.tag.slice(Layout.Constant.IFramePrefix.length); }
             if (parent === null && node.parent !== null && node.parent > -1 && tag !== "HTML") {
