@@ -20,7 +20,7 @@ import * as extract from "@src/data/extract";
 import * as style from "@src/layout/style";
 import { report } from "@src/core/report";
 import { signalsEvent } from "@src/data/signal";
-import { snapshot } from "@src/insight/snapshot";
+import { snapshot } from "@src/layout/snapshot";
 import * as dynamic from "@src/core/dynamic";
 
 let discoverBytes: number = 0;
