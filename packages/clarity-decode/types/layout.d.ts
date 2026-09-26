@@ -28,8 +28,6 @@ export interface DomData {
     value?: string;
     width?: number;
     height?: number;
-    selectorAlpha?: string;
-    hashAlpha?: string;
     selectorBeta?: string;
     hashBeta?: string;
     checksum?: string;

@@ -20,7 +20,6 @@ export const enum Source {
 }
 
 export const enum Selector {
-    Alpha = 0,
     Beta = 1,
     Default = 1
 }

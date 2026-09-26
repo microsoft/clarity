@@ -3,16 +3,11 @@ import { Constant, Selector, SelectorInput } from "../../types/layout";
 import { ExcludeClassNamesList } from "./constants";
 
 const excludeClassNames = ExcludeClassNamesList;
-let selectorMap: { [selector: string]: number[] } = {};
 
-export function reset(): void {
-    selectorMap = {};
-}
-
-export function get(input: SelectorInput, type: Selector): string {
+export function get(input: SelectorInput): string {
     let a = input.attributes;
-    let prefix = input.prefix ? input.prefix[type] : null;
-    let suffix = type === Selector.Alpha ? Constant.Tilde + (input.position-1) : ":nth-of-type(" + input.position + ")";
+    let prefix = input.prefix ? input.prefix[Selector.Beta] : null;
+    let suffix = ":nth-of-type(" + input.position + ")";
     switch (input.tag) {
         case "STYLE":
         case "TITLE":
@@ -31,17 +26,7 @@ export function get(input: SelectorInput, type: Selector): string {
             let id = Constant.Id in a && a[Constant.Id].length > 0 ? a[Constant.Id] : null;
             let classes = input.tag !== Constant.BodyTag && Constant.Class in a && a[Constant.Class].length > 0 ? a[Constant.Class].trim().split(/\s+/).filter(c => filter(c)).join(Constant.Period) : null;
             if (classes && classes.length > 0) {
-                if (type === Selector.Alpha) {
-                    // In Alpha mode, update selector to use class names, with relative positioning within the parent id container.
-                    // If the node has valid class name(s) then drop relative positioning within the parent path to keep things simple.
-                    let key = getDomPath(prefix) + input.tag + Constant.Dot + classes;
-                    if (!(key in selectorMap)) { selectorMap[key] = []; }
-                    if (!selectorMap[key].includes(input.id)) { selectorMap[key].push(input.id); }
-                    selector = key + Constant.Tilde + selectorMap[key].indexOf(input.id);
-                } else {
-                    // In Beta mode, we continue to look at query selectors in context of the full page
-                    selector = prefix + input.tag + "." + classes + suffix
-                }
+                selector = prefix + input.tag + "." + classes + suffix;
             }
             // Update selector to use "id" field when available. There are two exceptions:
             // (1) if "id" appears to be an auto generated string token, e.g. guid or a random id containing digits
@@ -59,16 +44,6 @@ function getDomPrefix(prefix: string): string {
   if (domStart < 0) { return Constant.Empty; }
 
   return prefix.substring(0, prefix.indexOf(Constant.Separator, domStart) + 1);
-}
-
-function getDomPath(input: string): string {
-    let parts = input.split(Constant.Separator);
-    for (let i = 0; i < parts.length; i++) {
-        let tIndex = parts[i].indexOf(Constant.Tilde);
-        let dIndex = parts[i].indexOf(Constant.Dot);
-        parts[i] = parts[i].substring(0, dIndex > 0 ? dIndex : (tIndex > 0 ? tIndex : parts[i].length));
-    }
-    return parts.join(Constant.Separator);
 }
 
 // Check if the given input string has digits or excluded class names
