@@ -14,7 +14,6 @@ export class EnrichHelper {
     public reset = (): void => {
         this.children = {};
         this.nodes = {};
-        helper.selector.reset();
     }
 
     public selectors = (event: DecodedLayout.DomEvent): DecodedLayout.DomEvent => {
@@ -45,12 +44,11 @@ export class EnrichHelper {
 
             let prefix: [string, string] = parent ? [null, parent.beta] : null;
             let input: Layout.SelectorInput = { id: d.id, tag: d.tag, prefix, position: node.position, attributes };
-            let selectorBeta = helper.selector.get(input, Layout.Selector.Beta);
+            let selectorBeta = helper.selector.get(input);
             d.selectorBeta = selectorBeta.length > 0 ? selectorBeta : null;
             d.hashBeta = selectorBeta.length > 0 ? helper.hash(d.selectorBeta) : null;
 
             /* Track state for future reference */
-            node.alpha = null;
             node.beta = selectorBeta;
             this.nodes[d.id] = node;
             if (d.parent) { this.children[d.parent] = children; }                             
