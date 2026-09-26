@@ -114,7 +114,6 @@ export class LayoutHelper {
     fonts: Promise<void>[] = [];
     nodes = {};
     events = {};
-    hashMapAlpha = {};
     hashMapBeta = {};
     adoptedStyleSheets = {};
     animations = {};
@@ -137,27 +136,20 @@ export class LayoutHelper {
         this.stylesheets = [];
         this.fonts = [];
         this.events = {};
-        this.hashMapAlpha = {};
         this.hashMapBeta = {};
         this.primaryHtmlNodeId = null;
     }
 
-    public get = (hash: string, silent: boolean = false): HTMLElement => {
+    public get = (hash: string): HTMLElement => {
         if (hash in this.hashMapBeta && this.hashMapBeta[hash].isConnected) {
             return this.hashMapBeta[hash];
-        } else if (hash in this.hashMapAlpha && this.hashMapAlpha[hash].isConnected) {
-            // Beta lookup missed but the Alpha (fallback) selector resolved the element.
-            // Surface this so we can measure how often Alpha is still required before retiring it.
-            if (!silent && this.state.options.onalphaFallback) { this.state.options.onalphaFallback(hash); }
-            return this.hashMapAlpha[hash];
         }
         return null;
     }
 
     private addToHashMap = (data: DecodedLayout.DomData, parent: Node) => {
         // In case of selector collision, prefer the first inserted node
-        this.hashMapAlpha[data.hashAlpha] = this.get(data.hashAlpha, true) || parent;
-        this.hashMapBeta[data.hashBeta] = this.get(data.hashBeta, true) || parent;
+        this.hashMapBeta[data.hashBeta] = this.get(data.hashBeta) || parent;
     }
 
     private resize = (el: HTMLElement, width: number, height: number): void => {
@@ -600,7 +592,6 @@ export class LayoutHelper {
 
         // Clarity attributes
         attributes[Constant.Id] = `${data.id}`;
-        attributes[Constant.HashAlpha] = `${data.hashAlpha}`;
         attributes[Constant.HashBeta] = `${data.hashBeta}`;
 
         let tag = node.nodeType === NodeType.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
