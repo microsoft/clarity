@@ -316,6 +316,7 @@ export const enum Constant {
     Space = " ",
     Expires = "expires=",
     Domain = "domain=",
+    Partitioned = ";SameSite=None;Secure;Partitioned",
     Dropped = "*na*",
     Comma = ",",
     Dot = ".",
