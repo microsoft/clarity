@@ -76,7 +76,6 @@ export interface NodeData {
     parent: number;
     previous: number;
     position?: number;
-    alpha?: string;
     beta?: string;
 }
 
