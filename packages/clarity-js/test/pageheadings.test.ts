@@ -5,7 +5,7 @@ import { Config } from "../types/core";
 
 const clarityJsPath = join(__dirname, "../build/clarity.min.js");
 const DimensionEvent = 1;
-const PageHeadingsDimension = 202;
+const PageHeadingsDimension = 40;
 
 type CaptureWindow = typeof window & {
     clarity: (command: "start" | "stop", config?: Config) => void;
