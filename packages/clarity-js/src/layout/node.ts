@@ -95,9 +95,6 @@ export default function (node: Node, source: Source, timestamp: number): Node {
         case Node.ELEMENT_NODE:
             let element = (node as HTMLElement);
             let tag = element.tagName;
-            if (config.pageHeadings && source === Source.Discover) {
-                headings.observe(element, tag);
-            }
             let attributes = getAttributes(element);
             // In some cases, external libraries like vue-fragment, can modify parentNode property to not be in sync with the DOM
             // For correctness, we first look at parentElement and if it not present then fall back to using parentNode
@@ -213,6 +210,9 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     if (element.shadowRoot) { child = element.shadowRoot; }
                     domFn(node, parent, data, source);
                     break;
+            }
+            if (config.pageHeadings && source === Source.Discover) {
+                headings.observe(element, tag);
             }
             break;
         default:

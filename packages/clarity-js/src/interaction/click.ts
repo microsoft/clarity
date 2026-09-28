@@ -5,6 +5,7 @@ import { FunctionNames } from "@clarity-types/performance";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
+import { normalizeText } from "@src/core/text";
 import { time } from "@src/core/time";
 import { iframe } from "@src/layout/dom";
 import { offset } from "@src/layout/offset";
@@ -106,9 +107,7 @@ function text(element: Node): TextInfo {
         // Grab text using "textContent" for most HTMLElements, however, use "value" for HTMLInputElements and "alt" for HTMLImageElement.
         let t = element.textContent || String((element as HTMLInputElement).value || '') || (element as HTMLImageElement).alt;
         if (t) {
-            // Replace multiple occurrence of space characters with a single white space
-            // Also, trim any spaces at the beginning or at the end of string
-            const trimmedText =  t.replace(/\s+/g, Constant.Space).trim();
+            const trimmedText = normalizeText(t);
             // Finally, send only first few characters as specified by the Setting
             output = trimmedText.substring(0, Setting.ClickText);
             isFullText = output.length === trimmedText.length;

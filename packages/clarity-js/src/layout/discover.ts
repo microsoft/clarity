@@ -1,4 +1,4 @@
-import { Priority, Timer } from "@clarity-types/core";
+import { Priority, Task, Timer } from "@clarity-types/core";
 import { Event, Metric } from "@clarity-types/data";
 import { Source } from "@clarity-types/layout";
 import measure from "@src/core/measure";
@@ -27,8 +27,11 @@ async function discover(): Promise<void> {
     let timer: Timer = { id: id(), cost: Metric.LayoutCost };
     task.start(timer);
     await traverse(document, timer, Source.Discover, ts);
+    if (task.state(timer) === Task.Stop) { return; }
+
     if (config.pageHeadings) { headings.compute(); }
     checkDocumentStyles(document, ts);
     await encode(Event.Discover, timer, ts);
+    if (task.state(timer) === Task.Stop) { return; }
     task.stop(timer);
 }

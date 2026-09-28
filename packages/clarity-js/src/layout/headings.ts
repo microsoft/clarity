@@ -1,9 +1,12 @@
+import { Privacy } from "@clarity-types/core";
 import { Dimension } from "@clarity-types/data";
+import * as scrub from "@src/core/scrub";
+import { normalizeText } from "@src/core/text";
 import * as dimension from "@src/data/dimension";
+import * as dom from "@src/layout/dom";
 
 const MaxHeadings = 3;
 const MaxHeadingLength = 30;
-const whitespace = /\s+/g;
 
 interface Heading {
     element: HTMLElement;
@@ -26,22 +29,23 @@ export function observe(element: HTMLElement, tag: string): void {
         return;
     }
 
-    const value = normalize(element.textContent);
-    if (!value) {
-        return;
-    }
-
     let index = 0;
-    while (index < headings.length && !isBefore(element, headings[index].element)) {
+    while (index < headings.length) {
+        // tslint:disable-next-line:no-bitwise
+        if (element.compareDocumentPosition(headings[index].element) & Node.DOCUMENT_POSITION_FOLLOWING) { break; }
         index++;
     }
+    if (index >= MaxHeadings) { return; }
 
-    if (index < MaxHeadings) {
-        headings.splice(index, 0, { element, value });
-        if (headings.length > MaxHeadings) {
-            headings.pop();
-        }
-    }
+    const target = dom.get(element);
+    const privacy = target ? target.metadata.privacy : Privacy.Text;
+    if (privacy !== Privacy.None && privacy !== Privacy.Sensitive) { return; }
+
+    const value = normalizeText(element.textContent || "").substring(0, MaxHeadingLength);
+    if (!value || scrub.text(value, "click", privacy) !== value) { return; }
+
+    headings.splice(index, 0, { element, value });
+    if (headings.length > MaxHeadings) { headings.pop(); }
 }
 
 export function compute(): void {
@@ -53,13 +57,4 @@ export function compute(): void {
 
 function isHeading(tag: string): boolean {
     return tag.length === 2 && tag.charCodeAt(0) === 72 && tag.charCodeAt(1) >= 49 && tag.charCodeAt(1) <= 54;
-}
-
-function isBefore(element: HTMLElement, other: HTMLElement): boolean {
-    // tslint:disable-next-line:no-bitwise
-    return (element.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
-}
-
-function normalize(value: string): string {
-    return value ? value.replace(whitespace, " ").trim().substring(0, MaxHeadingLength) : "";
 }
