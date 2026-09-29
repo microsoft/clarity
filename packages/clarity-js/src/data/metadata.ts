@@ -102,7 +102,7 @@ export function start(): void {
 function webMcp(target: Document | Navigator): boolean {
   try {
     const context: unknown = target["modelContext"];
-    return !!context && (typeof context === "object" || typeof context === "function");
+    return !!context && typeof context === "object";
   } catch {
     return false;
   }
