@@ -52,6 +52,7 @@ export function start(): void {
   dimension.log(Dimension.Timezone, timezone);
   dimension.log(Dimension.TimezoneOffset, timezoneOffset);
   dimension.log(Dimension.GlobalPrivacyControl, "" + !!(navigator && navigator["globalPrivacyControl"]));
+  dimension.log(Dimension.WebMcpDetected, webMcp(document) || webMcp(navigator) ? "1" : null);
 
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);
@@ -96,6 +97,15 @@ export function start(): void {
   trackConsent.config(consent);
   // Track ids using a cookie if configuration allows it
   track(u);
+}
+
+function webMcp(target: Document | Navigator): boolean {
+  try {
+    const context: unknown = target["modelContext"];
+    return !!context && (typeof context === "object" || typeof context === "function");
+  } catch {
+    return false;
+  }
 }
 
 function userAgentData(): void {
@@ -340,4 +350,3 @@ function user(): User {
   }
   return output;
 }
-
