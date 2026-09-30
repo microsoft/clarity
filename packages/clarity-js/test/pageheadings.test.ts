@@ -87,23 +87,40 @@ test.describe("page headings", () => {
             await page.setContent("<h1></h1>");
             await page.evaluate((value: string): void => { document.querySelector("h1").textContent = value; }, entry.input);
 
-            expect(await collect(page, true)).toEqual(entry.expected ? [JSON.stringify([entry.expected])] : []);
+            expect(await collect(page, true)).toEqual(entry.expected ? [JSON.stringify([{ tag: "H1", text: entry.expected }])] : []);
         });
     }
 
-    test("captures the first three non-empty headings in document order", async ({ page }) => {
+    test("captures the first three non-empty headings with their tags in document order", async ({ page }) => {
         await page.setContent(`
-            <div><h1>  First   heading  </h1></div>
+            <div><h4>  First   heading  </h4></div>
             <h2>Second heading</h2>
-            <section><h3>Third heading with more than thirty characters</h3></section>
-            <h4>Fourth heading</h4>
+            <section><h6>Third heading with more than thirty characters</h6></section>
+            <h1>Fourth heading</h1>
         `);
 
         const values = await collect(page, true);
 
         expect(values).toEqual([
-            JSON.stringify(["First heading", "Second heading", "Third heading with more than t"])
+            JSON.stringify([
+                { tag: "H4", text: "First heading" },
+                { tag: "H2", text: "Second heading" },
+                { tag: "H6", text: "Third heading with more than t" }
+            ])
         ]);
+    });
+
+    test("bounds tagged JSON to 610 characters with maximum text escaping", async ({ page }) => {
+        await page.setContent("<h1 data-clarity-unmask></h1><h2 data-clarity-unmask></h2><h3 data-clarity-unmask></h3>");
+        const text = "\u0001".repeat(30);
+        await page.evaluate((value: string): void => {
+            document.querySelectorAll("h1,h2,h3").forEach((heading: Element): void => { heading.textContent = value; });
+        }, text);
+
+        const values = await collect(page, true);
+
+        expect(values).toEqual([JSON.stringify([{ tag: "H1", text }, { tag: "H2", text }, { tag: "H3", text }])]);
+        expect(values[0].length).toBe(610);
     });
 
     test("skips empty and shadow-root headings", async ({ page }) => {
@@ -115,7 +132,7 @@ test.describe("page headings", () => {
 
         const values = await collect(page, true);
 
-        expect(values).toEqual([JSON.stringify(["Visible"])]);
+        expect(values).toEqual([JSON.stringify([{ tag: "H2", text: "Visible" }])]);
     });
 
     test("emits nothing when disabled or when no headings exist", async ({ page }) => {
@@ -136,7 +153,9 @@ test.describe("page headings", () => {
             <h2>Later heading</h2>
         `);
 
-        expect(await collect(page, true)).toEqual([JSON.stringify(["Checkout", "Delivery", "Payment"])]);
+        expect(await collect(page, true)).toEqual([JSON.stringify([
+            { tag: "H4", text: "Checkout" }, { tag: "H5", text: "Delivery" }, { tag: "H6", text: "Payment" }
+        ])]);
     });
 
     test("honors configured masking and automatic class masking", async ({ page }) => {
@@ -146,7 +165,7 @@ test.describe("page headings", () => {
             <h3>Public</h3>
         `);
 
-        expect(await collect(page, true, { mask: [".private-heading"] })).toEqual([JSON.stringify(["Public"])]);
+        expect(await collect(page, true, { mask: [".private-heading"] })).toEqual([JSON.stringify([{ tag: "H3", text: "Public" }])]);
     });
 
     test("checks only the captured prefix while combining text across child elements", async ({ page }) => {
@@ -157,7 +176,9 @@ test.describe("page headings", () => {
             <h4>Checkout</h4>
         `);
 
-        expect(await collect(page, true)).toEqual([JSON.stringify(["A".repeat(30), "Checkout"])]);
+        expect(await collect(page, true)).toEqual([JSON.stringify([
+            { tag: "H1", text: "A".repeat(30) }, { tag: "H4", text: "Checkout" }
+        ])]);
     });
 
     test("honors heading unmask settings but not a child's unmask setting", async ({ page }) => {
@@ -170,7 +191,9 @@ test.describe("page headings", () => {
         `);
 
         expect(await collect(page, true, { unmask: [".public-heading"] })).toEqual([
-            JSON.stringify(["Order 12345", "Save 20%", "Checkout"])
+            JSON.stringify([
+                { tag: "H1", text: "Order 12345" }, { tag: "H4", text: "Save 20%" }, { tag: "H5", text: "Checkout" }
+            ])
         ]);
     });
 
@@ -182,25 +205,31 @@ test.describe("page headings", () => {
             <h4 data-clarity-unmask>Contact <span data-clarity-mask>Alice</span></h4>
         `);
 
-        expect(await collect(page, true)).toEqual([JSON.stringify(["Checkout", "Account Alice", "Contact Alice"])]);
+        expect(await collect(page, true)).toEqual([JSON.stringify([
+            { tag: "H1", text: "Checkout" }, { tag: "H2", text: "Account Alice" }, { tag: "H4", text: "Contact Alice" }
+        ])]);
     });
 
     test("uses document text order and preserves duplicate headings", async ({ page }) => {
         await page.setContent("<h1>A <b>B</b> C</h1><h2>Same</h2><h3>Same</h3>");
 
-        expect(await collect(page, true)).toEqual([JSON.stringify(["A B C", "Same", "Same"])]);
+        expect(await collect(page, true)).toEqual([JSON.stringify([
+            { tag: "H1", text: "A B C" }, { tag: "H2", text: "Same" }, { tag: "H3", text: "Same" }
+        ])]);
     });
 
     test("keeps existing currency and ordinary-name heuristic behavior", async ({ page }) => {
         await page.setContent("<h1>Welcome Alice</h1><h2>Price $99</h2><h3>Save 20%</h3>");
 
-        expect(await collect(page, true)).toEqual([JSON.stringify(["Welcome Alice", "Price $99"])]);
+        expect(await collect(page, true)).toEqual([JSON.stringify([
+            { tag: "H1", text: "Welcome Alice" }, { tag: "H2", text: "Price $99" }
+        ])]);
     });
 
     test("uses privacy records when lean mode buffers replay", async ({ page }) => {
         await page.setContent("<h1 data-clarity-mask>Private</h1><h2>Order 123</h2><h3>Checkout</h3>");
 
-        expect(await collect(page, true, { lean: true })).toEqual([JSON.stringify(["Checkout"])]);
+        expect(await collect(page, true, { lean: true })).toEqual([JSON.stringify([{ tag: "H3", text: "Checkout" }])]);
     });
 
     test("does not fall back to raw text when lean and lite leave privacy records unavailable", async ({ page }) => {
@@ -222,7 +251,9 @@ test.describe("page headings", () => {
             <h3 data-clarity-unmask>Order 123</h3>
         `);
 
-        expect(await collect(page, true, { content: false })).toEqual([JSON.stringify(["Checkout", "Order 123"])]);
+        expect(await collect(page, true, { content: false })).toEqual([JSON.stringify([
+            { tag: "H2", text: "Checkout" }, { tag: "H3", text: "Order 123" }
+        ])]);
     });
 
     test("excludes iframe and shadow text within otherwise eligible headings", async ({ page }) => {
@@ -235,7 +266,9 @@ test.describe("page headings", () => {
         });
         await page.waitForFunction((): boolean => document.querySelector("iframe").contentDocument.readyState === "complete");
 
-        expect(await collect(page, true)).toEqual([JSON.stringify(["Light heading", "Next"])]);
+        expect(await collect(page, true)).toEqual([JSON.stringify([
+            { tag: "H1", text: "Light heading" }, { tag: "H2", text: "Next" }
+        ])]);
     });
 
     test("avoids text reads for later headings once three earlier headings qualify", async ({ page }) => {
@@ -256,7 +289,9 @@ test.describe("page headings", () => {
 
         expect(await collect(page, false)).toEqual([]);
         expect(await page.evaluate((): number => (window as CaptureWindow).headingTextReads)).toBe(0);
-        expect(await collect(page, true)).toEqual([JSON.stringify(["Heading", "Heading", "Heading"])]);
+        expect(await collect(page, true)).toEqual([JSON.stringify([
+            { tag: "H1", text: "Heading" }, { tag: "H1", text: "Heading" }, { tag: "H1", text: "Heading" }
+        ])]);
         expect(await page.evaluate((): number => (window as CaptureWindow).headingTextReads)).toBe(3);
     });
 
@@ -271,7 +306,7 @@ test.describe("page headings", () => {
             await current.waitForTimeout(100);
         });
 
-        expect(values).toEqual([JSON.stringify(["Original"])]);
+        expect(values).toEqual([JSON.stringify([{ tag: "H1", text: "Original" }])]);
     });
 
     test("does not collect later headings when lite mode upgrades", async ({ page }) => {
@@ -293,7 +328,7 @@ test.describe("page headings", () => {
         expect(await collect(page, true)).toEqual([]);
 
         await page.setContent("<h1>Checkout</h1>");
-        expect(await collect(page, true)).toEqual([JSON.stringify(["Checkout"])]);
+        expect(await collect(page, true)).toEqual([JSON.stringify([{ tag: "H1", text: "Checkout" }])]);
     });
 
     test("does not let cancelled discovery consume the next lifecycle's candidates", async ({ page }) => {
@@ -315,6 +350,6 @@ test.describe("page headings", () => {
             return output;
         });
 
-        expect(extract(payloads)).toEqual([JSON.stringify(["Restarted"])]);
+        expect(extract(payloads)).toEqual([JSON.stringify([{ tag: "H1", text: "Restarted" }])]);
     });
 });

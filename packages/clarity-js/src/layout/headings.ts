@@ -9,7 +9,8 @@ const MaxHeadingLength = 30;
 
 interface Heading {
     element: HTMLElement;
-    value: string;
+    tag: string;
+    text: string;
 }
 
 let headings: Heading[] = null;
@@ -40,17 +41,18 @@ export function observe(element: HTMLElement, tag: string): void {
     const privacy = target ? target.metadata.privacy : Privacy.Text;
     if (privacy !== Privacy.None && privacy !== Privacy.Sensitive) { return; }
 
-    const value = element.textContent.replace(/\s+/g, " ").trim().substring(0, MaxHeadingLength);
-    if (!value || scrub.text(value, "click", privacy) !== value) { return; }
+    const text = element.textContent.replace(/\s+/g, " ").trim().substring(0, MaxHeadingLength);
+    if (!text || scrub.text(text, "click", privacy) !== text) { return; }
 
-    headings.splice(index, 0, { element, value });
+    headings.splice(index, 0, { element, tag, text });
     if (headings.length > MaxHeadings) { headings.pop(); }
 }
 
 export function compute(): void {
     if (headings === null) { return; }
     if (headings.length > 0) {
-        dimension.log(Dimension.PageHeadings, JSON.stringify(headings.map((heading: Heading): string => heading.value)));
+        const values = headings.map(({ tag, text }: Heading): { tag: string; text: string } => ({ tag, text }));
+        dimension.log(Dimension.PageHeadings, JSON.stringify(values));
     }
     headings = null;
 }
