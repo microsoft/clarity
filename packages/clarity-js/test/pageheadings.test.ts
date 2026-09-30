@@ -16,6 +16,7 @@ type CaptureWindow = typeof window & {
         (command: "upgrade" | "event", key: string): void;
     };
     headingTextReads: number;
+    resumeHeadingDiscovery: () => void;
 };
 
 async function collect(
@@ -54,7 +55,7 @@ async function collect(
     if (afterCapture) { await afterCapture(page); }
     await page.evaluate(() => (window as CaptureWindow).clarity("stop"));
     await expect.poll(() => payloads.some(payload => JSON.parse(payload).e[9] === 1)).toBe(true);
-    if (config.lean && !afterCapture) {
+    if (config.lean && !afterCapture && !beforeResponse) {
         expect(payloads.every(payload => (JSON.parse(payload).p || []).length === 0)).toBe(true);
     }
     await page.unroute(upload, handler);
@@ -215,7 +216,7 @@ test.describe("page headings requested by collect", () => {
         expect(await collect(page, true)).toEqual([JSON.stringify([{ tag: "H2", text: "Light DOM" }])]);
     });
 
-    test("does not read heading text without a command and reads only three when sampled", async ({ page }) => {
+    test("buffers three headings during discovery without uploading unsampled values or rescanning on request", async ({ page }) => {
         await page.setContent("<h1>Heading</h1>".repeat(200));
         await page.evaluate(() => {
             const capture = window as CaptureWindow;
@@ -228,16 +229,77 @@ test.describe("page headings requested by collect", () => {
             });
         });
         expect(await collect(page, false)).toEqual([]);
-        expect(await page.evaluate(() => (window as CaptureWindow).headingTextReads)).toBe(0);
-        expect(await collect(page, true)).toEqual([JSON.stringify(Array(3).fill({ tag: "H1", text: "Heading" }))]);
         expect(await page.evaluate(() => (window as CaptureWindow).headingTextReads)).toBe(3);
+        expect(await collect(page, true, {}, undefined, async current => {
+            expect(await current.evaluate(() => (window as CaptureWindow).headingTextReads)).toBe(6);
+        })).toEqual([JSON.stringify(Array(3).fill({ tag: "H1", text: "Heading" }))]);
+        expect(await page.evaluate(() => (window as CaptureWindow).headingTextReads)).toBe(6);
     });
 
-    test("captures response-time text rather than initial-discovery text", async ({ page }) => {
+    test("keeps discovery-time text when the DOM changes before the response", async ({ page }) => {
         await page.setContent("<h1>Original</h1>");
         expect(await collect(page, true, {}, undefined, async current => {
             await current.evaluate(() => { document.querySelector("h1").textContent = "Changed"; });
-        })).toEqual([JSON.stringify([{ tag: "H1", text: "Changed" }])]);
+        })).toEqual([JSON.stringify([{ tag: "H1", text: "Original" }])]);
+    });
+
+    for (const count of [1, 2, 3]) {
+        test(`waits for discovery of ${count} headings when HEADINGS arrives during suspension`, async ({ page }) => {
+            const entries = [
+                { tag: "H1", text: "First" }, { tag: "H2", text: "Second" }, { tag: "H3", text: "Third" }
+            ].slice(0, count);
+            await page.setContent(entries.map(entry => `<${entry.tag}>${entry.text}</${entry.tag}>`).join(""));
+            await page.evaluate(() => {
+                const capture = window as CaptureWindow;
+                const descriptor = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
+                const now = performance.now.bind(performance);
+                let resume: () => void;
+                capture.headingTextReads = 0;
+                Object.defineProperty(window, "requestIdleCallback", {
+                    configurable: true,
+                    value: (callback: (deadline: { timeRemaining: () => number }) => void): void => {
+                        resume = () => callback({ timeRemaining: () => 1000 });
+                    }
+                });
+                Object.defineProperty(HTMLHeadingElement.prototype, "textContent", {
+                    configurable: true,
+                    get(this: HTMLHeadingElement): string {
+                        capture.headingTextReads++;
+                        if (capture.headingTextReads === 1) {
+                            Object.defineProperty(performance, "now", { configurable: true, value: () => now() + 1000 });
+                        }
+                        return descriptor.get.call(this);
+                    },
+                    set: descriptor.set
+                });
+                capture.resumeHeadingDiscovery = (): void => {
+                    Object.defineProperty(performance, "now", { configurable: true, value: now });
+                    if (!resume) { throw new Error("Discovery did not suspend"); }
+                    resume();
+                };
+            });
+
+            expect(await collect(page, true, {}, async current => {
+                expect(await current.evaluate(() => (window as CaptureWindow).headingTextReads)).toBe(1);
+                const pending = current.waitForResponse(response => response.url() === upload);
+                await current.evaluate(() => (window as CaptureWindow).clarity("event", "before-discovery-finishes"));
+                expect(extract([(await pending).request().postData()])).toEqual([]);
+                await current.evaluate(() => (window as CaptureWindow).resumeHeadingDiscovery());
+                await expect.poll(() => current.evaluate(() => (window as CaptureWindow).headingTextReads)).toBe(count);
+                await current.waitForTimeout(50);
+            })).toEqual([JSON.stringify(entries)]);
+        });
+    }
+
+    test("does not fill an empty initial buffer from later lite-upgrade discovery", async ({ page }) => {
+        await page.setContent("<p>No initial headings</p>");
+        expect(await collect(page, true, { lean: true, lite: true }, undefined, async current => {
+            await current.evaluate(() => {
+                document.body.insertAdjacentHTML("beforeend", "<h1>Too late</h1>");
+                (window as CaptureWindow).clarity("upgrade", "before-headings-response");
+            });
+            await current.waitForTimeout(100);
+        })).toEqual([]);
     });
 
     test("does not refresh after capture on mutations or upgrade", async ({ page }) => {
@@ -272,6 +334,74 @@ test.describe("page headings requested by collect", () => {
         expect(await collect(page, true)).toEqual([JSON.stringify([{ tag: "H1", text: "First" }])]);
         await page.setContent("<h2>Second</h2>");
         expect(await collect(page, true)).toEqual([JSON.stringify([{ tag: "H2", text: "Second" }])]);
+    });
+
+    test("does not retain an unsampled buffer across starts", async ({ page }) => {
+        await page.setContent("<h1>Not requested</h1>");
+        expect(await collect(page, false)).toEqual([]);
+        await page.setContent("<h2>Restarted</h2>");
+        expect(await collect(page, true)).toEqual([JSON.stringify([{ tag: "H2", text: "Restarted" }])]);
+    });
+
+    test("does not let cancelled discovery close the restarted buffer", async ({ page }) => {
+        const payloads: string[] = [];
+        const errors: string[] = [];
+        page.on("pageerror", error => errors.push(error.message));
+        await page.setContent("<h1>Cancelled</h1>");
+        await page.evaluate(() => {
+            const now = performance.now.bind(performance);
+            Object.defineProperty(window, "requestIdleCallback", {
+                configurable: true,
+                value: (callback: (deadline: { timeRemaining: () => number }) => void): void => {
+                    window.setTimeout(() => {
+                        Object.defineProperty(performance, "now", { configurable: true, value: now });
+                        callback({ timeRemaining: () => 1000 });
+                    }, 50);
+                }
+            });
+        });
+        await page.route(upload, async route => {
+            const payload = route.request().postData();
+            payloads.push(payload);
+            const envelope = JSON.parse(payload).e;
+            const first = envelope[1] === 1 && envelope[9] === 0;
+            await route.fulfill({
+                status: first ? 200 : 204, contentType: "text/plain",
+                body: first ? "HEADINGS\nACTION restarted" : ""
+            });
+        });
+        await page.addScriptTag({ path: join(__dirname, "../build/clarity.min.js") });
+        await page.evaluate((endpoint: string) => {
+            Object.defineProperty(window, "CompressionStream", { value: undefined, configurable: true });
+            const capture = window as CaptureWindow;
+            const options: Config = {
+                projectId: "test", track: false, delay: 50, upload: endpoint,
+                action: (): void => document.documentElement.setAttribute("data-restarted", "true")
+            };
+            capture.clarity("start", options);
+            capture.clarity("stop");
+            document.body.innerHTML = "<h2>Restarted</h2><h3>Second</h3><h4>Third</h4>";
+            const descriptor = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
+            const now = performance.now.bind(performance);
+            capture.headingTextReads = 0;
+            Object.defineProperty(HTMLHeadingElement.prototype, "textContent", {
+                configurable: true,
+                get(this: HTMLHeadingElement): string {
+                    if (++capture.headingTextReads === 1) {
+                        Object.defineProperty(performance, "now", { configurable: true, value: () => now() + 1000 });
+                    }
+                    return descriptor.get.call(this);
+                },
+                set: descriptor.set
+            });
+            capture.clarity("start", options);
+        }, upload);
+        await expect(page.locator("html")).toHaveAttribute("data-restarted", "true");
+        await page.evaluate(() => (window as CaptureWindow).clarity("stop"));
+        await expect.poll(() => extract(payloads)).toEqual([JSON.stringify([
+            { tag: "H2", text: "Restarted" }, { tag: "H3", text: "Second" }, { tag: "H4", text: "Third" }
+        ])]);
+        expect(errors).toEqual([]);
     });
 
     for (const build of [

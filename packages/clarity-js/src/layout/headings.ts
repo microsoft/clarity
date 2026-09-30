@@ -7,23 +7,46 @@ import * as dom from "@src/layout/dom";
 const MaxHeadings = 3;
 const MaxHeadingLength = 30;
 
-export function compute(): void {
-    const headings: { tag: string; text: string }[] = [];
-    const queue: Element[] = [document.documentElement];
-    while (queue.length > 0 && headings.length < MaxHeadings) {
-        const element = queue.shift();
-        for (let child = element.firstElementChild; child; child = child.nextElementSibling) { queue.push(child); }
-        const tag = element.tagName;
-        if (tag.length === 2 && tag.charCodeAt(0) === 72 && tag.charCodeAt(1) >= 49 && tag.charCodeAt(1) <= 54) {
-            const target = dom.get(element);
-            const privacy = target ? target.metadata.privacy : Privacy.Text;
-            const text = element.textContent.replace(/\s+/g, " ").trim().substring(0, MaxHeadingLength);
-            headings.push({ tag, text: scrub.text(text, "click", privacy).substring(0, MaxHeadingLength) });
-        }
+let headings: { tag: string; text: string }[] = null;
+let ready = false;
+let requested = false;
+
+export function start(): void {
+    headings = [];
+    ready = false;
+    requested = false;
+}
+
+export function stop(): void {
+    headings = null;
+}
+
+export function observe(element: HTMLElement, tag: string): void {
+    if (headings === null || ready || headings.length === MaxHeadings ||
+        tag.length !== 2 || tag.charCodeAt(0) !== 72 || tag.charCodeAt(1) < 49 || tag.charCodeAt(1) > 54 ||
+        element.ownerDocument !== document || (element.getRootNode && element.getRootNode() !== document)) {
+        return;
     }
+
+    const target = dom.get(element);
+    const privacy = target ? target.metadata.privacy : Privacy.Text;
+    const text = element.textContent.replace(/\s+/g, " ").trim().substring(0, MaxHeadingLength);
+    headings.push({ tag, text: scrub.text(text, "click", privacy).substring(0, MaxHeadingLength) });
+}
+
+export function finish(): void {
+    ready = true;
+    if (requested) { compute(); }
+}
+
+export function compute(): void {
+    if (headings === null) { return; }
+    requested = true;
+    if (!ready) { return; }
 
     const values = headings.filter(heading => heading.text.length > 0);
     if (values.length > 0) {
         dimension.log(Dimension.PageHeadings, JSON.stringify(values));
     }
+    headings = null;
 }
