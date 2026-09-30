@@ -52,7 +52,7 @@ export function start(): void {
   dimension.log(Dimension.Timezone, timezone);
   dimension.log(Dimension.TimezoneOffset, timezoneOffset);
   dimension.log(Dimension.GlobalPrivacyControl, "" + !!(navigator && navigator["globalPrivacyControl"]));
-  dimension.log(Dimension.WebMcpDetected, webMcp(document) || webMcp(navigator) ? "1" : null);
+  dimension.log(Dimension.WebMcpDetected, webMcp() ? "1" : null);
 
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);
@@ -99,9 +99,9 @@ export function start(): void {
   track(u);
 }
 
-function webMcp(target: Document | Navigator): boolean {
+function webMcp(): boolean {
   try {
-    const context: unknown = target["modelContext"];
+    const context: unknown = document["modelContext"];
     return !!context && typeof context === "object";
   } catch {
     return false;
