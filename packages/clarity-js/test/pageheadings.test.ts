@@ -8,7 +8,10 @@ const DimensionEvent = 1;
 const PageHeadingsDimension = 41;
 
 type CaptureWindow = typeof window & {
-    clarity: (command: "start" | "stop", config?: Config) => void;
+    clarity: {
+        (command: "start" | "stop", config?: Config): void;
+        (command: "upgrade", key: string): void;
+    };
     headingPayloads: string[];
     headingTextReads: number;
 };
@@ -69,6 +72,24 @@ test.describe("page headings", () => {
     test.beforeEach(async ({ page }) => {
         await page.route("**/*", (route) => route.abort());
     });
+
+    const cases = [
+        { name: "preserves ordinary text", input: "Checkout", expected: "Checkout" },
+        { name: "omits empty text", input: "", expected: "" },
+        { name: "omits whitespace-only text", input: " \t\r\n\u00a0 ", expected: "" },
+        { name: "collapses and trims whitespace", input: " \tAlpha\u00a0  Beta\r\nGamma ", expected: "Alpha Beta Gamma" },
+        { name: "truncates normalized text", input: " \t" + "long".repeat(20), expected: "long".repeat(20).substring(0, 30) },
+        { name: "omits text changed by scrubbing", input: "Order 123 alice@example.com", expected: "" }
+    ];
+
+    for (const entry of cases) {
+        test(entry.name, async ({ page }) => {
+            await page.setContent("<h1></h1>");
+            await page.evaluate((value: string): void => { document.querySelector("h1").textContent = value; }, entry.input);
+
+            expect(await collect(page, true)).toEqual(entry.expected ? [JSON.stringify([entry.expected])] : []);
+        });
+    }
 
     test("captures the first three non-empty headings in document order", async ({ page }) => {
         await page.setContent(`
@@ -251,6 +272,20 @@ test.describe("page headings", () => {
         });
 
         expect(values).toEqual([JSON.stringify(["Original"])]);
+    });
+
+    test("does not collect later headings when lite mode upgrades", async ({ page }) => {
+        await page.setContent("<h1>Original</h1>");
+
+        const values = await collect(page, true, { lean: true, lite: true }, async (current: Page): Promise<void> => {
+            await current.evaluate((): void => {
+                document.querySelector("h1").textContent = "Changed";
+                (window as CaptureWindow).clarity("upgrade", "headings-test");
+            });
+            await current.waitForTimeout(400);
+        });
+
+        expect(values).toEqual([]);
     });
 
     test("resets rejected candidate state between starts", async ({ page }) => {

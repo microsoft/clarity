@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { normalizeText } from "@src/core/text";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { Config } from "../types/core";
@@ -30,23 +29,7 @@ function clicks(payloads: string[]): ClickValue[] {
     return output;
 }
 
-test.describe("text normalization", () => {
-    const cases = [
-        { name: "preserves ordinary text", input: "Checkout", expected: "Checkout" },
-        { name: "handles empty text", input: "", expected: "" },
-        { name: "removes whitespace-only text", input: " \t\r\n\u00a0 ", expected: "" },
-        { name: "collapses and trims whitespace", input: " \tAlpha\u00a0  Beta\r\nGamma ", expected: "Alpha Beta Gamma" },
-        { name: "does not truncate", input: "long".repeat(20), expected: "long".repeat(20) },
-        { name: "does not apply privacy rules", input: "Order 123 alice@example.com", expected: "Order 123 alice@example.com" }
-    ];
-
-    for (const entry of cases) {
-        test(entry.name, () => {
-            expect(normalizeText(entry.input)).toBe(entry.expected);
-            expect(normalizeText(entry.input)).toBe(entry.expected);
-        });
-    }
-
+test.describe("click text", () => {
     test("preserves click fallbacks, empty values, truncation, completeness and privacy", async ({ page }) => {
         const fixtures = [
             { id: "plain", html: "<button id='plain'>  Buy\t now </button>", text: "Buy now", isFullText: 1 },
