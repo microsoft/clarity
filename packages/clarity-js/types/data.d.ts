@@ -142,6 +142,7 @@ export const enum Metric {
     InteractionNextPaint = 37,
     HistoryClear = 38,
     AngularZone = 39,
+    WebMcpDetected = 40,
     // 200-300 reserved for internal use
 }
 
@@ -184,8 +185,7 @@ export const enum Dimension {
     TimezoneOffset = 35,
     Consent = 36,
     InteractionNextPaint = 37,
-    GlobalPrivacyControl = 38,
-    WebMcpDetected = 40
+    GlobalPrivacyControl = 38
     // 200-300 reserved for internal use
 }
 

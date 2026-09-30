@@ -52,12 +52,12 @@ export function start(): void {
   dimension.log(Dimension.Timezone, timezone);
   dimension.log(Dimension.TimezoneOffset, timezoneOffset);
   dimension.log(Dimension.GlobalPrivacyControl, "" + !!(navigator && navigator["globalPrivacyControl"]));
-  dimension.log(Dimension.WebMcpDetected, webMcp() ? "1" : null);
 
   // Capture additional metadata as metrics
   metric.max(Metric.ClientTimestamp, s.ts);
   metric.max(Metric.Playback, BooleanFlag.False);
   metric.max(Metric.Electron, electron);
+  metric.max(Metric.WebMcpDetected, webMcp() ? BooleanFlag.True : null);
 
   const zone = (window as any)?.[CoreConstant.Zone];
   const isZone = zone && CoreConstant.Symbol in zone;
