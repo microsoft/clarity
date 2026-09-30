@@ -342,6 +342,7 @@ export const enum Constant {
     Signal = "SIGNAL",
     Extract = "EXTRACT",
     Snapshot = "SNAPSHOT",
+    PageHeadings = "HEADINGS",
     Module = "MODULE",
     UserHint = "userHint",
     UserType = "userType",

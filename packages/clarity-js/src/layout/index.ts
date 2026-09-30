@@ -6,7 +6,6 @@ import { start as regStart, stop as regStop } from "@src/layout/region";
 import { start as styStart, stop as styStop } from "@src/layout/style";
 import { start as animStart, stop as animStop } from "@src/layout/animation";
 import { start as custStart, stop as custStop } from "@src/layout/custom";
-import { start as headStart, stop as headStop } from "@src/layout/headings";
 import { bind } from "@src/core/event";
 import config from "@src/core/config";
 
@@ -27,7 +26,6 @@ export function start(): void {
     // IMPORTANT: Start custom element detection BEFORE discover
     // This ensures pre-existing custom elements are registered before DOM traversal
     custStart();
-    headStart();
     discStart();
     styStart();
     animStart();
@@ -41,5 +39,4 @@ export function stop(): void {
     styStop();
     animStop();
     custStop();
-    headStop();
 }
