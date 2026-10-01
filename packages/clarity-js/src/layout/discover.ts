@@ -15,10 +15,10 @@ import * as headings from "@src/layout/headings";
 
 export function start(): void {
     task.schedule(discover, Priority.High).then((): void => {
-        measure(headings.compute)();
         measure(doc.compute)();
         measure(region.compute)();
         measure(scroll.compute)();
+        measure(headings.compute)();
     });
 }
 
