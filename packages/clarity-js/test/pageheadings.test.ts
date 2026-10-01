@@ -69,7 +69,7 @@ function extract(payloads: string[]): string[] {
         for (const tokens of events) {
             if (tokens[1] !== 1) { continue; }
             for (let i = 2; i < tokens.length - 1; i += 2) {
-                if (tokens[i] === 41) {
+                if (tokens[i] === 40) {
                     const entries = tokens[i + 1];
                     expect(Array.isArray(entries)).toBe(true);
                     if (Array.isArray(entries)) { values.push(...entries); }

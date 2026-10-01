@@ -186,7 +186,7 @@ export const enum Dimension {
     Consent = 36,
     InteractionNextPaint = 37,
     GlobalPrivacyControl = 38,
-    PageHeadings = 41
+    PageHeadings = 40
     // 200-300 reserved for internal use
 }
 
