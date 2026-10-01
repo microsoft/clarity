@@ -22,7 +22,7 @@ export function stop(): void {
 }
 
 export function compute(): void { /* Intentionally Blank */ }
-export function request(): void { /* Intentionally Blank */ }
+export function request(): void {}
 export function iframe(): boolean { return false; }
 export function offset(): OffsetDistance { return { x: 0, y: 0 }; }
 export function hashText(): void { /* Intentionally Blank */ }
