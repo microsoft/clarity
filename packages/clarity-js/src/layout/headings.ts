@@ -6,6 +6,9 @@ import * as dom from "@src/layout/dom";
 
 const MaxHeadings = 3;
 const MaxHeadingLength = 30;
+const HeadingPrefixCode = 72;
+const MinHeadingLevelCode = 49;
+const MaxHeadingLevelCode = 54;
 
 let headings: { tag: string; text: string }[] = null;
 let ready = false;
@@ -23,7 +26,8 @@ export function stop(): void {
 
 export function observe(element: HTMLElement, tag: string): void {
     if (headings === null || ready || headings.length === MaxHeadings ||
-        tag.length !== 2 || tag.charCodeAt(0) !== 72 || tag.charCodeAt(1) < 49 || tag.charCodeAt(1) > 54 ||
+        tag.length !== 2 || tag.charCodeAt(0) !== HeadingPrefixCode ||
+        tag.charCodeAt(1) < MinHeadingLevelCode || tag.charCodeAt(1) > MaxHeadingLevelCode ||
         element.ownerDocument !== document || (element.getRootNode && element.getRootNode() !== document)) {
         return;
     }
