@@ -34,19 +34,18 @@ export function observe(element: HTMLElement, tag: string): void {
     headings.push({ tag, text: scrub.text(text, "click", privacy).substring(0, MaxHeadingLength) });
 }
 
-export function finish(): void {
-    ready = true;
-    if (requested) { compute(); }
+export function request(): void {
+    requested = true;
+    if (ready) { compute(); }
 }
 
 export function compute(): void {
-    if (headings === null) { return; }
-    requested = true;
-    if (!ready) { return; }
-
-    const values = headings.filter(heading => heading.text.length > 0);
-    if (values.length > 0) {
-        dimension.log(Dimension.PageHeadings, JSON.stringify(values));
+    ready = true;
+    if (requested && headings !== null) {
+        const values = headings.filter(heading => heading.text.length > 0);
+        if (values.length > 0) {
+            dimension.log(Dimension.PageHeadings, JSON.stringify(values));
+        }
+        headings = null;
     }
-    headings = null;
 }

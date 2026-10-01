@@ -21,7 +21,7 @@ import * as style from "@src/layout/style";
 import { report } from "@src/core/report";
 import { signalsEvent } from "@src/data/signal";
 import { snapshot } from "@src/layout/snapshot";
-import { compute as headings } from "@src/layout/headings";
+import { request as headings } from "@src/layout/headings";
 import * as dynamic from "@src/core/dynamic";
 
 let discoverBytes: number = 0;
