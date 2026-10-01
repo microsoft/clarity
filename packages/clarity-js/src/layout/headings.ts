@@ -1,0 +1,57 @@
+import { Privacy } from "@clarity-types/core";
+import { Dimension } from "@clarity-types/data";
+import * as scrub from "@src/core/scrub";
+import * as dimension from "@src/data/dimension";
+import * as dom from "@src/layout/dom";
+
+const MaxHeadings = 3;
+const MaxHeadingLength = 30;
+const HeadingPrefixCode = 72;
+const MinHeadingLevelCode = 49;
+const MaxHeadingLevelCode = 54;
+
+let headings: { tag: string; text: string }[] = null;
+let ready = false;
+let requested = false;
+
+export function start(): void {
+    headings = [];
+    ready = false;
+    requested = false;
+}
+
+export function stop(): void {
+    headings = null;
+}
+
+export function observe(element: HTMLElement, tag: string): void {
+    if (headings === null || ready || headings.length === MaxHeadings ||
+        tag.length !== 2 || tag.charCodeAt(0) !== HeadingPrefixCode ||
+        tag.charCodeAt(1) < MinHeadingLevelCode || tag.charCodeAt(1) > MaxHeadingLevelCode ||
+        element.ownerDocument !== document || (element.getRootNode && element.getRootNode() !== document)) {
+        return;
+    }
+
+    const target = dom.get(element);
+    const privacy = target ? target.metadata.privacy : Privacy.Text;
+    const text = element.textContent.replace(/\s+/g, " ").trim().substring(0, MaxHeadingLength);
+    // Truncation must not leave half a surrogate pair in the upload string.
+    const value = scrub.text(text, "click", privacy).substring(0, MaxHeadingLength).replace(/[\uD800-\uDBFF]$/, "");
+    headings.push({ tag, text: value });
+}
+
+export function request(): void {
+    requested = true;
+    if (ready) { compute(); }
+}
+
+export function compute(): void {
+    ready = true;
+    if (requested && headings !== null) {
+        const values = headings.filter(heading => heading.text.length > 0);
+        if (values.length > 0) {
+            dimension.log(Dimension.PageHeadings, values.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
+        }
+        headings = null;
+    }
+}

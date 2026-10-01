@@ -185,7 +185,8 @@ export const enum Dimension {
     TimezoneOffset = 35,
     Consent = 36,
     InteractionNextPaint = 37,
-    GlobalPrivacyControl = 38
+    GlobalPrivacyControl = 38,
+    PageHeadings = 40
     // 200-300 reserved for internal use
 }
 
@@ -342,6 +343,7 @@ export const enum Constant {
     Signal = "SIGNAL",
     Extract = "EXTRACT",
     Snapshot = "SNAPSHOT",
+    PageHeadings = "HEADINGS",
     Module = "MODULE",
     UserHint = "userHint",
     UserType = "userType",

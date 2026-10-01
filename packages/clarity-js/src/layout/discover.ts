@@ -11,12 +11,14 @@ import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
 import { checkDocumentStyles } from "@src/layout/style";
 import * as scroll from "@src/interaction/scroll";
+import * as headings from "@src/layout/headings";
 
 export function start(): void {
     task.schedule(discover, Priority.High).then((): void => {
         measure(doc.compute)();
         measure(region.compute)();
         measure(scroll.compute)();
+        measure(headings.compute)();
     });
 }
 
