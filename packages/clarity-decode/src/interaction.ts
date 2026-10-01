@@ -41,6 +41,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
         case Data.Event.Click:
         case Data.Event.ContextMenu:
             let clickHashes = (tokens[12] as string).split(Data.Constant.Dot);
+            let clickHash = clickHashes[0] || clickHashes[Layout.Selector.Beta] || Data.Constant.Empty;
             let clickData: ClickData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
@@ -52,8 +53,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 context: tokens[9] as number,
                 text: tokens[10] as string,
                 link: tokens[11] as string,
-                hash: clickHashes[0],
-                hashBeta: clickHashes.length > 0 ? clickHashes[1] : null,
+                hash: clickHash,
+                hashBeta: clickHashes.length > Layout.Selector.Beta ? clickHashes[Layout.Selector.Beta] : null,
                 trust: tokens.length > 13 ? tokens[13] as number : Data.BooleanFlag.True,
                 isFullText: tokens.length > 14 ? tokens[14] as number : null,
                 w: tokens.length > 15 ? tokens[15] as number : 0,
@@ -106,14 +107,15 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             return { time, event, data: scrollData };
         case Data.Event.Timeline:
             let timelineHashes = (tokens[3] as string).split(Data.Constant.Dot);
+            let timelineHash = timelineHashes[0] || timelineHashes[Layout.Selector.Beta] || Data.Constant.Empty;
             let timelineData: TimelineData = {
                 type: tokens[2] as number,
-                hash: timelineHashes[Layout.Selector.Alpha],
+                hash: timelineHash,
                 x: tokens[4] as number,
                 y: tokens[5] as number,
                 reaction: tokens[6] as number,
                 context: tokens[7] as number,
-                hashBeta: timelineHashes.length > 0 ? timelineHashes[Layout.Selector.Beta] : null
+                hashBeta: timelineHashes.length > Layout.Selector.Beta ? timelineHashes[Layout.Selector.Beta] : null
             };
             return { time, event, data: timelineData };
         case Data.Event.Visibility:

@@ -14,7 +14,6 @@ export class EnrichHelper {
     public reset = (): void => {
         this.children = {};
         this.nodes = {};
-        helper.selector.reset();
     }
 
     public selectors = (event: DecodedLayout.DomEvent): DecodedLayout.DomEvent => {
@@ -43,22 +42,13 @@ export class EnrichHelper {
             /* Get current position */
             node.position = this.position(d.id, d.tag, node, children, children.map(c => this.nodes[c]));
 
-            /* For backward compatibility, continue populating current selector and hash like before in addition to beta selector and hash */
-            let input: Layout.SelectorInput = { id: d.id, tag: d.tag, prefix: parent ? [parent.alpha, parent.beta] : null, position: node.position, attributes };
-
-            // Get stable selector
-            // We intentionally use "null" value for empty selectors to keep parity with v0.6.25 and before.
-            let selectorAlpha = helper.selector.get(input, Layout.Selector.Alpha);
-            d.selectorAlpha = selectorAlpha.length > 0 ? selectorAlpha : null;
-            d.hashAlpha = selectorAlpha.length > 0 ? helper.hash(d.selectorAlpha) : null;
-            
-            // Get beta selector
-            let selectorBeta = helper.selector.get(input, Layout.Selector.Beta);
+            let prefix: [string, string] = parent ? [null, parent.beta] : null;
+            let input: Layout.SelectorInput = { id: d.id, tag: d.tag, prefix, position: node.position, attributes };
+            let selectorBeta = helper.selector.get(input);
             d.selectorBeta = selectorBeta.length > 0 ? selectorBeta : null;
             d.hashBeta = selectorBeta.length > 0 ? helper.hash(d.selectorBeta) : null;
 
             /* Track state for future reference */
-            node.alpha = selectorAlpha;
             node.beta = selectorBeta;
             this.nodes[d.id] = node;
             if (d.parent) { this.children[d.parent] = children; }                             
