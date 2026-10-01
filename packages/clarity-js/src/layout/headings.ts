@@ -35,7 +35,9 @@ export function observe(element: HTMLElement, tag: string): void {
     const target = dom.get(element);
     const privacy = target ? target.metadata.privacy : Privacy.Text;
     const text = element.textContent.replace(/\s+/g, " ").trim().substring(0, MaxHeadingLength);
-    headings.push({ tag, text: scrub.text(text, "click", privacy).substring(0, MaxHeadingLength) });
+    // Truncation must not leave half a surrogate pair in the upload string.
+    const value = scrub.text(text, "click", privacy).substring(0, MaxHeadingLength).replace(/[\uD800-\uDBFF]$/, "");
+    headings.push({ tag, text: value });
 }
 
 export function request(): void {
@@ -48,7 +50,7 @@ export function compute(): void {
     if (requested && headings !== null) {
         const values = headings.filter(heading => heading.text.length > 0);
         if (values.length > 0) {
-            dimension.log(Dimension.PageHeadings, JSON.stringify(values));
+            dimension.log(Dimension.PageHeadings, values.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
         }
         headings = null;
     }

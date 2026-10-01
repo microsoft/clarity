@@ -94,37 +94,40 @@ test.describe("page headings requested by collect", () => {
 
     test("selects only the first three BFS headings and preserves normalized tags and duplicates", async ({ page }) => {
         await page.setContent("<h0>Invalid</h0><h7>Invalid</h7><h10>Invalid</h10><a1>Invalid</a1>" +
-            "<div><h4>Nested first</h4></div><h1> Same 123 </h1><h1>Same   123</h1>" +
+            "<div><h4>Nested first</h4></div><h1> Same\r\n\t123 </h1><h1>Same   123</h1>" +
             `<h6>  ${"long".repeat(20)} </h6>`);
-        expect(await collect(page, true)).toEqual([JSON.stringify([
-            { tag: "H1", text: `Same ${digit.repeat(3)}` }, { tag: "H1", text: `Same ${digit.repeat(3)}` },
-            { tag: "H6", text: "long".repeat(20).substring(0, 30) }
-        ])]);
+        expect(await collect(page, true)).toEqual([
+            `H1:Same ${digit.repeat(3)}\nH1:Same ${digit.repeat(3)}\nH6:${"long".repeat(20).substring(0, 30)}`
+        ]);
     });
 
     test("honors target masking and unmasking without backfilling empty selection slots", async ({ page }) => {
         await page.setContent("<h1> \t </h1><h2 data-clarity-mask><span data-clarity-unmask>Private</span></h2>" +
             "<h3 data-clarity-unmask>Order 123</h3><h4>Not selected</h4>");
-        expect(await collect(page, true)).toEqual([JSON.stringify([
-            { tag: "H2", text: maskedToken }, { tag: "H3", text: "Order 123" }
-        ])]);
+        expect(await collect(page, true)).toEqual([`H2:${maskedToken}\nH3:Order 123`]);
         await page.setContent("<h1></h1><h2> </h2><h3>\t</h3><h4>Not selected</h4>");
         expect(await collect(page, true)).toEqual([]);
     });
 
-    test("bounds escaped JSON to 610 characters and scrubbed text to 30 UTF-16 units", async ({ page }) => {
+    test("preserves compact record boundaries and bounds values to 101 UTF-16 units", async ({ page }) => {
         await page.setContent("<h1 data-clarity-unmask></h1><h2 data-clarity-unmask></h2><h3 data-clarity-unmask></h3>");
-        const text = "\u0001".repeat(30);
+        const text = "\u0001".repeat(28) + "\ud83d\udca1";
         await page.evaluate((value: string) => {
             document.querySelectorAll("h1,h2,h3").forEach(heading => { heading.textContent = value; });
         }, text);
         const values = await collect(page, true);
-        expect(values).toEqual([JSON.stringify([{ tag: "H1", text }, { tag: "H2", text }, { tag: "H3", text }])]);
-        expect(values[0].length).toBe(610);
+        expect(values).toEqual([`H1:${text}\nH2:${text}\nH3:${text}`]);
+        expect(values[0].length).toBe(101);
+        await page.setContent("<h2 data-clarity-unmask></h2>");
+        const punctuation = "H1: A=B:C|D~E\\n \"x\"";
+        await page.evaluate((value: string) => { document.querySelector("h2").textContent = value; }, punctuation);
+        expect(await collect(page, true)).toEqual([`H2:${punctuation}`]);
+        await page.evaluate((value: string) => { document.querySelector("h2").textContent = value; }, "a".repeat(29) + "\ud83d\udca1");
+        expect(await collect(page, true)).toEqual([`H2:${"a".repeat(29)}`]);
         await page.setContent(`<h1 data-clarity-mask>${"A".repeat(30)}</h1>`);
         const masked = mask.repeat(5) + (" " + mask.repeat(4)).repeat(5);
         expect(masked.length).toBe(30);
-        expect(await collect(page, true)).toEqual([JSON.stringify([{ tag: "H1", text: masked }])]);
+        expect(await collect(page, true)).toEqual([`H1:${masked}`]);
     });
 
     test("buffers three headings during discovery without uploading unsampled values or rescanning on request", async ({ page }) => {
@@ -144,7 +147,7 @@ test.describe("page headings requested by collect", () => {
         expect(await collect(page, true, {}, undefined, async current => {
             expect(await current.evaluate(() => (window as CaptureWindow).headingTextReads)).toBe(6);
             await current.evaluate(() => { document.querySelector("h1").textContent = "Changed"; });
-        })).toEqual([JSON.stringify(Array(3).fill({ tag: "H1", text: "Heading" }))]);
+        })).toEqual(["H1:Heading\nH1:Heading\nH1:Heading"]);
         expect(await page.evaluate(() => (window as CaptureWindow).headingTextReads)).toBe(6);
     });
 
@@ -189,7 +192,7 @@ test.describe("page headings requested by collect", () => {
             await current.evaluate(() => (window as CaptureWindow).resumeHeadingDiscovery());
             await expect.poll(() => current.evaluate(() => (window as CaptureWindow).headingTextReads)).toBe(3);
             await current.waitForTimeout(50);
-        })).toEqual([JSON.stringify(entries)]);
+        })).toEqual(["H1:First\nH2:Second\nH3:Third"]);
     });
 
     test("keeps an empty main-document selection closed on upgrade and resets it on a new start", async ({ page }) => {
@@ -205,7 +208,7 @@ test.describe("page headings requested by collect", () => {
             await current.waitForTimeout(100);
         })).toEqual([]);
         await page.setContent("<h2>Restarted</h2>");
-        expect(await collect(page, true)).toEqual([JSON.stringify([{ tag: "H2", text: "Restarted" }])]);
+        expect(await collect(page, true)).toEqual(["H2:Restarted"]);
     });
 
     test("does not let cancelled discovery close the restarted buffer", async ({ page }) => {
@@ -263,9 +266,7 @@ test.describe("page headings requested by collect", () => {
         }, upload);
         await expect(page.locator("html")).toHaveAttribute("data-restarted", "true");
         await page.evaluate(() => (window as CaptureWindow).clarity("stop"));
-        await expect.poll(() => extract(payloads)).toEqual([JSON.stringify([
-            { tag: "H2", text: "Restarted" }, { tag: "H3", text: "Second" }, { tag: "H4", text: "Third" }
-        ])]);
+        await expect.poll(() => extract(payloads)).toEqual(["H2:Restarted\nH3:Second\nH4:Third"]);
         expect(errors).toEqual([]);
     });
 
@@ -278,7 +279,7 @@ test.describe("page headings requested by collect", () => {
         test(`${build.file} handles HEADINGS in lean/lite mode with missing privacy records`, async ({ page }) => {
             await page.setContent("<h1 data-clarity-unmask>Checkout</h1>");
             const values = await collect(page, true, { lean: true, lite: true }, undefined, undefined, build.file);
-            expect(values).toEqual(build.enabled ? [JSON.stringify([{ tag: "H1", text: maskedToken }])] : []);
+            expect(values).toEqual(build.enabled ? [`H1:${maskedToken}`] : []);
         });
     }
 });
