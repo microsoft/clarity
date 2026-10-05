@@ -8,10 +8,19 @@ const mask = "\u2022";
 const digit = "\u25ab";
 
 type CaptureWindow = typeof window & {
-    clarity: (command: "start" | "stop", config?: Config) => void;
+    clarity: {
+        (command: "start" | "stop", config?: Config): void;
+        (command: "upgrade", key: string): void;
+    };
+    headingReads: number;
+    headingTraversals: number;
+    headingResume: () => void;
 };
 
-async function collect(page: Page, sampled: boolean, beforeResponse?: (page: Page) => Promise<void>): Promise<string[]> {
+async function collect(
+    page: Page, sampled: boolean, beforeResponse?: (page: Page) => Promise<void>,
+    config: Partial<Config> = {}, afterStart?: (page: Page) => Promise<void>
+): Promise<string[]> {
     const payloads: string[] = [];
     const errors: string[] = [];
     const onError = (error: Error): number => errors.push(error.message);
@@ -32,12 +41,13 @@ async function collect(page: Page, sampled: boolean, beforeResponse?: (page: Pag
         document.documentElement.removeAttribute("data-headings-response");
     });
     await page.addScriptTag({ path: join(__dirname, "../build/clarity.min.js") });
-    await page.evaluate((endpoint: string): void => {
+    await page.evaluate((settings: { endpoint: string; config: Partial<Config> }): void => {
         (window as CaptureWindow).clarity("start", {
-            projectId: "test", track: false, delay: 50, upload: endpoint,
+            projectId: "test", track: false, delay: 50, upload: settings.endpoint, ...settings.config,
             action: (value: string): void => document.documentElement.setAttribute("data-headings-response", value)
         });
-    }, upload);
+    }, { endpoint: upload, config });
+    if (afterStart) { await afterStart(page); }
     await expect(page.locator("html")).toHaveAttribute("data-headings-response", "headings-complete");
     expect(extract([payloads[0]])).toEqual([]);
     await page.evaluate(() => (window as CaptureWindow).clarity("stop"));
@@ -81,10 +91,14 @@ test.describe("page headings requested by collect", () => {
     test("collects three normalized BFS headings with a surrogate-safe compact text cap", async ({ page }) => {
         await page.setContent("<h0>Invalid</h0><h7>Invalid</h7><h10>Invalid</h10><a1>Invalid</a1>" +
             "<div><h4>Nested first</h4></div><h1> Same\r\n\t123 </h1><h1>Same   123</h1>" +
-            `<h6 data-clarity-unmask>${"a".repeat(29)}\ud83d\udca1</h6>`);
+            `<h6 data-clarity-unmask>${"a".repeat(59)}\ud83d\udca1</h6>`);
         expect(await collect(page, true)).toEqual([
-            `H1:Same ${digit.repeat(3)}\nH1:Same ${digit.repeat(3)}\nH6:${"a".repeat(29)}`
+            `H1:Same ${digit.repeat(3)}\nH1:Same ${digit.repeat(3)}\nH6:${"a".repeat(59)}`
         ]);
+        await page.setContent([1, 2, 3].map(level => `<h${level} data-clarity-unmask>${"a".repeat(61)}</h${level}>`).join(""));
+        const maximum = [1, 2, 3].map(level => `H${level}:${"a".repeat(60)}`).join("\n");
+        expect(maximum.length).toBe(191);
+        expect(await collect(page, true)).toEqual([maximum]);
     });
 
     test("honors privacy and empty slots, waits for authorization, and resets on restart", async ({ page }) => {
@@ -94,10 +108,65 @@ test.describe("page headings requested by collect", () => {
         expect(await collect(page, false)).toEqual([]);
         expect(await collect(page, true, async current => {
             await current.evaluate(() => { document.querySelector("h3").textContent = "Changed after capture"; });
-        })).toEqual([`H2:${mask.repeat(5)} ${mask.repeat(4)}\nH3:${text}`]);
+        })).toEqual([`H3:${text}`]);
         await page.setContent("<h1></h1><h2> </h2><h3>\t</h3><h4>Not selected</h4>");
+        expect(await collect(page, true)).toEqual([]);
+        await page.setContent("<h1 data-clarity-mask>Private</h1><h4>123</h4><h5>Version 123</h5>");
+        expect(await collect(page, true)).toEqual([`H4:${digit.repeat(3)}\nH5:Version ${digit.repeat(3)}`]);
+        await page.setContent(`<h1 data-clarity-unmask>${mask} ${mask}</h1>` +
+            "<h2 data-clarity-mask>Private</h2><h3 data-clarity-mask>Also private</h3><h4>Not selected</h4>");
         expect(await collect(page, true)).toEqual([]);
         await page.setContent("<h2>Restarted</h2>");
         expect(await collect(page, true)).toEqual(["H2:Restarted"]);
+    });
+
+    test("closes suspended initial selection before queued lite-upgrade rediscovery", async ({ page }) => {
+        await page.setContent("<h1 data-clarity-unmask>Original</h1><div>Tail</div>");
+        await page.evaluate(() => {
+            const current = window as CaptureWindow;
+            const descriptor = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
+            const firstChild = Object.getOwnPropertyDescriptor(Node.prototype, "firstChild");
+            const now = performance.now.bind(performance);
+            current.headingReads = 0;
+            current.headingTraversals = 0;
+            Object.defineProperty(document, "firstChild", {
+                configurable: true,
+                get(): Node {
+                    current.headingTraversals++;
+                    return firstChild.get.call(this);
+                }
+            });
+            Object.defineProperty(window, "requestIdleCallback", {
+                configurable: true,
+                value: (callback: (deadline: { timeRemaining: () => number }) => void): number => {
+                    current.headingResume = () => {
+                        Object.defineProperty(performance, "now", { configurable: true, value: now });
+                        callback({ timeRemaining: () => 1000 });
+                    };
+                    return 1;
+                }
+            });
+            Object.defineProperty(HTMLHeadingElement.prototype, "textContent", {
+                configurable: true,
+                get(): string {
+                    const value = descriptor.get.call(this);
+                    if (++current.headingReads === 1) {
+                        Object.defineProperty(performance, "now", { configurable: true, value: () => now() + 1000 });
+                    }
+                    return value;
+                },
+                set: descriptor.set
+            });
+        });
+        const values = await collect(page, true, undefined, { lite: true, lean: true }, async current => {
+            await current.waitForFunction(() => (window as CaptureWindow).headingResume !== undefined);
+            await current.evaluate(() => {
+                (window as CaptureWindow).clarity("upgrade", "heading-test");
+                (window as CaptureWindow).headingResume();
+            });
+        });
+        expect(await page.evaluate(() => (window as CaptureWindow).headingTraversals)).toBe(2);
+        expect(await page.evaluate(() => (window as CaptureWindow).headingReads)).toBe(1);
+        expect(values).toEqual([]);
     });
 });

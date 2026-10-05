@@ -18,7 +18,6 @@ export function start(): void {
         measure(doc.compute)();
         measure(region.compute)();
         measure(scroll.compute)();
-        measure(headings.compute)();
     });
 }
 
@@ -30,4 +29,6 @@ async function discover(): Promise<void> {
     checkDocumentStyles(document, ts);
     await encode(Event.Discover, timer, ts);
     task.stop(timer);
+    // Close selection before queued rediscovery, without finalizing a restarted lifecycle.
+    if (timer.id === id()) { measure(headings.compute)(); }
 }

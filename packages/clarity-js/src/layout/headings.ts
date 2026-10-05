@@ -5,7 +5,7 @@ import * as dimension from "@src/data/dimension";
 import * as dom from "@src/layout/dom";
 
 const MaxHeadings = 3;
-const MaxHeadingLength = 30;
+const MaxHeadingLength = 60;
 const HeadingPrefixCode = 72;
 const MinHeadingLevelCode = 49;
 const MaxHeadingLevelCode = 54;
@@ -48,7 +48,7 @@ export function request(): void {
 export function compute(): void {
     ready = true;
     if (requested && headings !== null) {
-        const values = headings.filter(heading => heading.text.length > 0);
+        const values = headings.filter(heading => heading.text.length > 0 && !/^[\u2022\s]+$/.test(heading.text));
         if (values.length > 0) {
             dimension.log(Dimension.PageHeadings, values.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
         }
