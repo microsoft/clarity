@@ -6,6 +6,7 @@ import * as dom from "@src/layout/dom";
 
 const MaxHeadings = 3;
 const MaxHeadingLength = 60;
+// Keep text with at least one non-bullet, non-whitespace character.
 const HeadingContentPattern = /[^\u2022\s]/;
 
 let headings: { tag: string; text: string }[] = null;
@@ -23,18 +24,32 @@ export function stop(): void {
 }
 
 export function observe(element: HTMLElement, tag: string): void {
-    if (headings === null || discoveryComplete || headings.length === MaxHeadings ||
-        tag.length !== 2 || tag[0] !== "H" || tag[1] < "1" || tag[1] > "6" ||
-        element.ownerDocument !== document || (element.getRootNode && element.getRootNode() !== document)) {
+    // Only collect while selection is open and a slot remains.
+    if (headings === null || discoveryComplete || headings.length === MaxHeadings) {
+        return;
+    }
+
+    // Only H1-H6 elements qualify.
+    if (tag.length !== 2 || tag[0] !== "H" || tag[1] < "1" || tag[1] > "6") {
+        return;
+    }
+
+    // Exclude iframe documents and shadow roots.
+    if (element.ownerDocument !== document ||
+        (element.getRootNode && element.getRootNode() !== document)) {
         return;
     }
 
     const target = dom.get(element);
     const privacy = target ? target.metadata.privacy : Privacy.Text;
-    const text = element.textContent.replace(/\s+/g, " ").trim().substring(0, MaxHeadingLength);
-    // Truncation must not leave half a surrogate pair in the upload string.
-    const value = scrub.text(text, "click", privacy).substring(0, MaxHeadingLength).replace(/[\uD800-\uDBFF]$/, "");
-    headings.push({ tag, text: value });
+
+    // Collapse whitespace to single spaces, trim, then cap the captured prefix.
+    const normalizedText = element.textContent.replace(/\s+/g, " ").trim().substring(0, MaxHeadingLength);
+    const scrubbedText = scrub.text(normalizedText, "click", privacy).substring(0, MaxHeadingLength)
+        // Discard an unfinished Unicode pair if truncation split a character.
+        .replace(/[\uD800-\uDBFF]$/, "");
+
+    headings.push({ tag, text: scrubbedText });
 }
 
 export function request(): void {
@@ -46,9 +61,10 @@ export function compute(): void {
     discoveryComplete = true;
     if (!authorized || headings === null) { return; }
 
-    const values = headings.filter(heading => HeadingContentPattern.test(heading.text));
-    if (values.length > 0) {
-        dimension.log(Dimension.PageHeadings, values.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
+    const headingsWithContent = headings.filter(heading => HeadingContentPattern.test(heading.text));
+    if (headingsWithContent.length > 0) {
+        // Encode each heading as H1:Checkout; separate headings with newlines.
+        dimension.log(Dimension.PageHeadings, headingsWithContent.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
     }
     headings = null;
 }
