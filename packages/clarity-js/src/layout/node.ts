@@ -210,7 +210,11 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     domFn(node, parent, data, source);
                     break;
             }
-            if (source === Source.Discover) { headings.observe(element, tag); }
+
+            // Collect during discovery, after the element's privacy is resolved.
+            if (source === Source.Discover) {
+                headings.observe(element, tag);
+            }
             break;
         default:
             break;

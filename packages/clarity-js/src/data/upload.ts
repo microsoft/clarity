@@ -338,7 +338,7 @@ function response(payload: string): void {
                 config.lean = false; // Disable lean mode to ensure we can send playback information to server.
                 snapshot();
                 break;
-            case Constant.PageHeadings:
+            case Constant.Headings:
                 headings();
                 break;
         }

@@ -29,6 +29,9 @@ async function discover(): Promise<void> {
     checkDocumentStyles(document, ts);
     await encode(Event.Discover, timer, ts);
     task.stop(timer);
-    // Close selection before queued rediscovery, without finalizing a restarted lifecycle.
-    if (timer.id === id()) { measure(headings.compute)(); }
+
+    // Finish this page's heading selection before queued rediscovery.
+    if (timer.id === id()) {
+        measure(headings.compute)();
+    }
 }
