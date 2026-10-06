@@ -6,18 +6,15 @@ import * as dom from "@src/layout/dom";
 
 const MaxHeadings = 3;
 const MaxHeadingLength = 60;
-const HeadingPrefixCode = 72;
-const MinHeadingLevelCode = 49;
-const MaxHeadingLevelCode = 54;
 
 let headings: { tag: string; text: string }[] = null;
-let ready = false;
-let requested = false;
+let discoveryComplete = false;
+let authorized = false;
 
 export function start(): void {
     headings = [];
-    ready = false;
-    requested = false;
+    discoveryComplete = false;
+    authorized = false;
 }
 
 export function stop(): void {
@@ -25,9 +22,8 @@ export function stop(): void {
 }
 
 export function observe(element: HTMLElement, tag: string): void {
-    if (headings === null || ready || headings.length === MaxHeadings ||
-        tag.length !== 2 || tag.charCodeAt(0) !== HeadingPrefixCode ||
-        tag.charCodeAt(1) < MinHeadingLevelCode || tag.charCodeAt(1) > MaxHeadingLevelCode ||
+    if (headings === null || discoveryComplete || headings.length === MaxHeadings ||
+        tag.length !== 2 || tag[0] !== "H" || tag[1] < "1" || tag[1] > "6" ||
         element.ownerDocument !== document || (element.getRootNode && element.getRootNode() !== document)) {
         return;
     }
@@ -41,17 +37,17 @@ export function observe(element: HTMLElement, tag: string): void {
 }
 
 export function request(): void {
-    requested = true;
-    if (ready) { compute(); }
+    authorized = true;
+    if (discoveryComplete) { compute(); }
 }
 
 export function compute(): void {
-    ready = true;
-    if (requested && headings !== null) {
-        const values = headings.filter(heading => heading.text.length > 0);
-        if (values.length > 0) {
-            dimension.log(Dimension.PageHeadings, values.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
-        }
-        headings = null;
+    discoveryComplete = true;
+    if (!authorized || headings === null) { return; }
+
+    const values = headings.filter(heading => heading.text.length > 0);
+    if (values.length > 0) {
+        dimension.log(Dimension.PageHeadings, values.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
     }
+    headings = null;
 }
