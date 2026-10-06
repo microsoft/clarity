@@ -48,7 +48,7 @@ export function request(): void {
 export function compute(): void {
     ready = true;
     if (requested && headings !== null) {
-        const values = headings.filter(heading => heading.text.length > 0 && !/^[\u2022\s]+$/.test(heading.text));
+        const values = headings.filter(heading => heading.text.length > 0);
         if (values.length > 0) {
             dimension.log(Dimension.PageHeadings, values.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
         }

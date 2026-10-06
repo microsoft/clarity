@@ -6,6 +6,7 @@ const origin = "https://clarity.test/";
 const upload = `${origin}collect`;
 const mask = "\u2022";
 const digit = "\u25ab";
+const maskedToken = `${mask.repeat(5)} ${mask.repeat(4)}`;
 
 type CaptureWindow = typeof window & {
     clarity: {
@@ -108,14 +109,14 @@ test.describe("page headings requested by collect", () => {
         expect(await collect(page, false)).toEqual([]);
         expect(await collect(page, true, async current => {
             await current.evaluate(() => { document.querySelector("h3").textContent = "Changed after capture"; });
-        })).toEqual([`H3:${text}`]);
+        })).toEqual([`H2:${maskedToken}\nH3:${text}`]);
         await page.setContent("<h1></h1><h2> </h2><h3>\t</h3><h4>Not selected</h4>");
         expect(await collect(page, true)).toEqual([]);
         await page.setContent("<h1 data-clarity-mask>Private</h1><h4>123</h4><h5>Version 123</h5>");
-        expect(await collect(page, true)).toEqual([`H4:${digit.repeat(3)}\nH5:Version ${digit.repeat(3)}`]);
+        expect(await collect(page, true)).toEqual([`H1:${maskedToken}\nH4:${digit.repeat(3)}\nH5:Version ${digit.repeat(3)}`]);
         await page.setContent(`<h1 data-clarity-unmask>${mask} ${mask}</h1>` +
             "<h2 data-clarity-mask>Private</h2><h3 data-clarity-mask>Also private</h3><h4>Not selected</h4>");
-        expect(await collect(page, true)).toEqual([]);
+        expect(await collect(page, true)).toEqual([`H1:${mask} ${mask}\nH2:${maskedToken}\nH3:${maskedToken} ${mask.repeat(4)}`]);
         await page.setContent("<h2>Restarted</h2>");
         expect(await collect(page, true)).toEqual(["H2:Restarted"]);
     });
@@ -167,6 +168,6 @@ test.describe("page headings requested by collect", () => {
         });
         expect(await page.evaluate(() => (window as CaptureWindow).headingTraversals)).toBe(2);
         expect(await page.evaluate(() => (window as CaptureWindow).headingReads)).toBe(1);
-        expect(values).toEqual([]);
+        expect(values).toEqual([`H1:${maskedToken}`]);
     });
 });
