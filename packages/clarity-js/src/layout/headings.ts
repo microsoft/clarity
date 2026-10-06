@@ -6,6 +6,7 @@ import * as dom from "@src/layout/dom";
 
 const MaxHeadings = 3;
 const MaxHeadingLength = 60;
+const HeadingContentPattern = /[^\u2022\s]/;
 
 let headings: { tag: string; text: string }[] = null;
 let discoveryComplete = false;
@@ -45,7 +46,7 @@ export function compute(): void {
     discoveryComplete = true;
     if (!authorized || headings === null) { return; }
 
-    const values = headings.filter(heading => /[^\u2022\s]/.test(heading.text));
+    const values = headings.filter(heading => HeadingContentPattern.test(heading.text));
     if (values.length > 0) {
         dimension.log(Dimension.PageHeadings, values.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
     }
