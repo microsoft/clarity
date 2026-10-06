@@ -45,7 +45,7 @@ export function compute(): void {
     discoveryComplete = true;
     if (!authorized || headings === null) { return; }
 
-    const values = headings.filter(heading => heading.text.length > 0);
+    const values = headings.filter(heading => /[^\u2022\s]/.test(heading.text));
     if (values.length > 0) {
         dimension.log(Dimension.PageHeadings, values.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
     }
