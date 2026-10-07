@@ -11,7 +11,6 @@ import * as region from "@src/layout/region";
 import traverse from "@src/layout/traverse";
 import { checkDocumentStyles } from "@src/layout/style";
 import * as scroll from "@src/interaction/scroll";
-import * as headings from "@src/layout/headings";
 
 export function start(): void {
     task.schedule(discover, Priority.High).then((): void => {
@@ -29,9 +28,4 @@ async function discover(): Promise<void> {
     checkDocumentStyles(document, ts);
     await encode(Event.Discover, timer, ts);
     task.stop(timer);
-
-    // Finish this page's heading selection before queued rediscovery.
-    if (timer.id === id()) {
-        measure(headings.compute)();
-    }
 }

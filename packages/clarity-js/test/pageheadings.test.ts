@@ -19,7 +19,8 @@ type CaptureWindow = typeof window & {
 
 async function collect(
     page: Page, sampled: boolean, beforeResponse?: (page: Page) => Promise<void>,
-    config: Partial<Config> = {}, afterStart?: (page: Page) => Promise<void>
+    config: Partial<Config> = {}, afterStart?: (page: Page) => Promise<void>,
+    afterResponse?: (page: Page) => Promise<void>, build: string = "clarity.min.js"
 ): Promise<string[]> {
     const payloads: string[] = [];
     const errors: string[] = [];
@@ -40,7 +41,7 @@ async function collect(
         Object.defineProperty(window, "CompressionStream", { value: undefined, configurable: true });
         document.documentElement.removeAttribute("data-headings-response");
     });
-    await page.addScriptTag({ path: join(__dirname, "../build/clarity.min.js") });
+    await page.addScriptTag({ path: join(__dirname, "../build", build) });
     await page.evaluate((settings: { endpoint: string; config: Partial<Config> }): void => {
         (window as CaptureWindow).clarity("start", {
             projectId: "test", track: false, delay: 50, upload: settings.endpoint, ...settings.config,
@@ -50,6 +51,7 @@ async function collect(
     if (afterStart) { await afterStart(page); }
     await expect(page.locator("html")).toHaveAttribute("data-headings-response", "headings-complete");
     expect(extract([payloads[0]])).toEqual([]);
+    if (afterResponse) { await afterResponse(page); }
     await page.evaluate(() => (window as CaptureWindow).clarity("stop"));
     await expect.poll(() => payloads.some(payload => JSON.parse(payload).e[9] === 1)).toBe(true);
     await page.unroute(upload, handler);
@@ -116,11 +118,16 @@ test.describe("page headings requested by collect", () => {
         await page.setContent(`<h1 data-clarity-unmask>${mask}\t\u00a0\ufeff${mask}</h1>` +
             "<h2 data-clarity-mask>Private</h2><h3 data-clarity-mask>Also private</h3><h4>Not selected</h4>");
         expect(await collect(page, true)).toEqual([]);
-        await page.setContent("<h2>Restarted</h2>");
+        await page.setContent("<div id='shadow'></div><iframe></iframe><h2>Restarted</h2>");
+        await page.evaluate(() => {
+            document.querySelector("#shadow").attachShadow({ mode: "open" }).innerHTML = "<h1>Shadow</h1>";
+            document.querySelector("iframe").contentDocument.body.innerHTML = "<h1>Iframe</h1>";
+        });
         expect(await collect(page, true)).toEqual(["H2:Restarted"]);
+        expect(await collect(page, false)).toEqual([]);
     });
 
-    test("closes suspended initial selection before queued lite-upgrade rediscovery", async ({ page }) => {
+    test("fills remaining slots during queued lite-upgrade rediscovery", async ({ page }) => {
         await page.setContent("<h1 data-clarity-unmask>Original</h1><div>Tail</div>");
         await page.evaluate(() => {
             const current = window as CaptureWindow;
@@ -164,9 +171,68 @@ test.describe("page headings requested by collect", () => {
                 (window as CaptureWindow).clarity("upgrade", "heading-test");
                 (window as CaptureWindow).headingResume();
             });
+        }, async current => {
+            await current.waitForFunction(() => (window as CaptureWindow).headingReads === 2);
         });
         expect(await page.evaluate(() => (window as CaptureWindow).headingTraversals)).toBe(2);
-        expect(await page.evaluate(() => (window as CaptureWindow).headingReads)).toBe(1);
-        expect(values).toEqual([]);
+        expect(await page.evaluate(() => (window as CaptureWindow).headingReads)).toBe(2);
+        expect(values).toEqual(["H1:Original"]);
     });
+
+    test("publishes at most three cumulative snapshots after permission arrives before any heading", async ({ page }) => {
+        const texts = ["a", "b", "c"].map(text => text.repeat(61));
+        await page.setContent(texts.map((text, index) =>
+            `<h${index + 1} data-clarity-unmask>${text}</h${index + 1}>`).join("") + "<h4>Not selected</h4>");
+        await page.evaluate(() => {
+            const current = window as CaptureWindow;
+            const firstChild = Object.getOwnPropertyDescriptor(Node.prototype, "firstChild");
+            const textContent = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
+            const now = performance.now.bind(performance);
+            current.headingReads = 0;
+            Object.defineProperty(document, "firstChild", {
+                configurable: true,
+                get(): Node {
+                    Object.defineProperty(performance, "now", { configurable: true, value: () => now() + 1000 });
+                    return firstChild.get.call(this);
+                }
+            });
+            Object.defineProperty(window, "requestIdleCallback", {
+                configurable: true,
+                value: (callback: (deadline: { timeRemaining: () => number }) => void): number => {
+                    current.headingResume = () => {
+                        Object.defineProperty(performance, "now", { configurable: true, value: now });
+                        callback({ timeRemaining: () => 1000 });
+                    };
+                    return 1;
+                }
+            });
+            Object.defineProperty(HTMLHeadingElement.prototype, "textContent", {
+                configurable: true,
+                get(): string {
+                    current.headingReads++;
+                    return textContent.get.call(this);
+                },
+                set: textContent.set
+            });
+        });
+        const values = await collect(page, true, async current => {
+            await current.waitForFunction(() => (window as CaptureWindow).headingResume !== undefined);
+        }, { lean: true }, undefined, async current => {
+            expect(await current.evaluate(() => (window as CaptureWindow).headingReads)).toBe(0);
+            await current.evaluate(() => (window as CaptureWindow).headingResume());
+            await current.waitForFunction(() => (window as CaptureWindow).headingReads === 3);
+        });
+        const records = texts.map((text, index) => `H${index + 1}:${text.substring(0, 60)}`);
+        expect(values).toEqual(records.map((_, index) => records.slice(0, index + 1).join("\n")));
+        expect(values.map(value => value.length)).toEqual([63, 127, 191]);
+        expect(values.join("").length).toBe(381);
+    });
+
+    for (const build of ["clarity.min.js", "clarity.extended.js", "clarity.insight.js", "clarity.performance.js"]) {
+        test(`${build} retains its heading behavior in lean mode`, async ({ page }) => {
+            await page.setContent("<h1 data-clarity-unmask>Lean heading</h1>");
+            const values = await collect(page, true, undefined, { lean: true }, undefined, undefined, build);
+            expect(values).toEqual(build === "clarity.min.js" || build === "clarity.extended.js" ? ["H1:Lean heading"] : []);
+        });
+    }
 });

@@ -10,12 +10,10 @@ const MaxHeadingLength = 60;
 const HeadingContentPattern = /[^\u2022\s]/;
 
 let headings: { tag: string; text: string }[] = null;
-let discoveryComplete = false;
 let authorized = false;
 
 export function start(): void {
     headings = [];
-    discoveryComplete = false;
     authorized = false;
 }
 
@@ -24,8 +22,8 @@ export function stop(): void {
 }
 
 export function observe(element: HTMLElement, tag: string): void {
-    // Only collect while selection is open and a slot remains.
-    if (headings === null || discoveryComplete || headings.length === MaxHeadings) {
+    // Masked and empty headings also consume a slot.
+    if (headings === null || headings.length === MaxHeadings) {
         return;
     }
 
@@ -50,21 +48,19 @@ export function observe(element: HTMLElement, tag: string): void {
         .replace(/[\uD800-\uDBFF]$/, "");
 
     headings.push({ tag, text: scrubbedText });
+    publish();
 }
 
 export function request(): void {
     authorized = true;
-    if (discoveryComplete) { compute(); }
+    publish();
 }
 
-export function compute(): void {
-    discoveryComplete = true;
+function publish(): void {
     if (!authorized || headings === null) { return; }
 
-    const headingsWithContent = headings.filter(heading => HeadingContentPattern.test(heading.text));
-    if (headingsWithContent.length > 0) {
-        // Encode each heading as H1:Checkout; separate headings with newlines.
-        dimension.log(Dimension.PageHeadings, headingsWithContent.map(heading => `${heading.tag}:${heading.text}`).join("\n"));
-    }
-    headings = null;
+    // Encode each heading as H1:Checkout; separate headings with newlines.
+    const value = headings.filter(heading => HeadingContentPattern.test(heading.text))
+        .map(heading => `${heading.tag}:${heading.text}`).join("\n");
+    dimension.log(Dimension.PageHeadings, value);
 }
