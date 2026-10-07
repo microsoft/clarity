@@ -11,14 +11,17 @@ const HeadingContentPattern = /[^\u2022\s]/;
 
 let headings: { tag: string; text: string }[] = null;
 let authorized = false;
+let snapshot: string = null;
 
 export function start(): void {
     headings = [];
     authorized = false;
+    snapshot = null;
 }
 
 export function stop(): void {
     headings = null;
+    snapshot = null;
 }
 
 export function observe(element: HTMLElement, tag: string): void {
@@ -48,6 +51,14 @@ export function observe(element: HTMLElement, tag: string): void {
         .replace(/[\uD800-\uDBFF]$/, "");
 
     headings.push({ tag, text: scrubbedText });
+}
+
+export function complete(): void {
+    if (headings === null) { return; }
+
+    // Encode each heading as H1:Checkout; separate headings with newlines.
+    snapshot = headings.filter(heading => HeadingContentPattern.test(heading.text))
+        .map(heading => `${heading.tag}:${heading.text}`).join("\n");
     publish();
 }
 
@@ -57,10 +68,7 @@ export function request(): void {
 }
 
 function publish(): void {
-    if (!authorized || headings === null) { return; }
-
-    // Encode each heading as H1:Checkout; separate headings with newlines.
-    const value = headings.filter(heading => HeadingContentPattern.test(heading.text))
-        .map(heading => `${heading.tag}:${heading.text}`).join("\n");
-    dimension.log(Dimension.PageHeadings, value);
+    if (authorized && snapshot !== null) {
+        dimension.log(Dimension.PageHeadings, snapshot);
+    }
 }
