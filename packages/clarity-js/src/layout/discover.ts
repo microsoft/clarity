@@ -26,7 +26,6 @@ async function discover(): Promise<void> {
     let timer: Timer = { id: id(), cost: Metric.LayoutCost };
     task.start(timer);
     await traverse(document, timer, Source.Discover, ts);
-    // Traversal can also return when its SDK run has been canceled.
     if (task.state(timer) !== Task.Stop) { headings.complete(); }
     checkDocumentStyles(document, ts);
     await encode(Event.Discover, timer, ts);
