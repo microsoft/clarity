@@ -52,3 +52,33 @@ privacy overrides and cache reuse, authorization, completion/cancellation, and
 the intentional lean-plus-lite skip. The unrelated SNAPSHOT cases are unchanged.
 This prototype changes collection timing and masked-placeholder formatting, not
 the backend sampling rate, HEADINGS command, dimension ID or replay wire format.
+
+### Synthetic performance comparison
+
+Build both worktrees first. The baseline must be checked out at c2928d8.
+From this repository root, run:
+
+```powershell
+$env:HEADING_BENCH_SAMPLES = "20"
+node packages\clarity-js\test\pageheadings.benchmark.cjs C:\repos\clarity-baseline C:\results\headings
+```
+
+The benchmark alternates the real minified SDKs on eight synthetic pages, with
+two warmups. It records the SDK's existing LayoutCost metric, synchronous start
+duration, output equality, bundle sizes, and separate diagnostic scrub counts.
+This measures the whole DOM pipeline, not isolated heading time or production
+Web Vitals. Six-mode controls compare Discover/Mutation replay tokens and prove
+that heading preparation/completion does not read or scrub raw text again.
+
+Results are saved as benchmark.json and an offline report.html. Requests are
+intercepted locally; no telemetry leaves the browser. The benchmark is opt-in,
+outside the four default heading cases, and imposes no flaky speed threshold.
+Lean + lite is reported as a scope difference, not a like-for-like performance win.
+
+The local 20-sample comparison found a clear benefit on the synthetic
+long-sensitive-text page: median LayoutCost fell from150ms to79ms, with text
+scrubs reduced from6 to3. A typical page stayed at21ms; fragmented and masked
+fragmented headings rose from38ms to40ms and33ms to35ms respectively. These
+figures are whole-pipeline synthetic results, not a universal speedup: preparing
+all candidate text IDs adds work when the original collector needed only a short
+prefix. The normal bundle grew by542 minified bytes /201 gzip bytes.
