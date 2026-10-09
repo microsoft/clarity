@@ -1,6 +1,5 @@
-import { Privacy } from "@clarity-types/core";
 import { Constant as DataConstant, Dimension } from "@clarity-types/data";
-import { Constant, NodeValue } from "@clarity-types/layout";
+import { Constant } from "@clarity-types/layout";
 import config from "@src/core/config";
 import * as dimension from "@src/data/dimension";
 import * as dom from "@src/layout/dom";
@@ -80,15 +79,15 @@ export function prepare(): void {
     }
 }
 
-export function capture(value: NodeValue, text: string, mangle: boolean): void {
-    if (textValues === null || !(value.id in textValues)) { return; }
-    const trimmedText = text.trim();
-    if (mangle && value.metadata.privacy !== Privacy.Snapshot && trimmedText.length > 0) {
+export function capture(id: number, text: string, lengthEncoded: boolean): void {
+    if (textValues === null || !(id in textValues)) { return; }
+    const trimmedText = lengthEncoded ? text.trim() : Constant.Empty;
+    if (trimmedText.length > 0) {
         // Playback encodes masked text as a base-36 length, not readable content.
         const length = Math.min(parseInt(trimmedText, 36), MaxHeadingLength);
         text = text.replace(trimmedText, Array(length + 1).join(DataConstant.Mask));
     }
-    textValues[value.id] = text;
+    textValues[id] = text;
 }
 
 export function complete(): void {
@@ -122,7 +121,7 @@ function collectText(textIds: number[]): string {
         if (text.length === MaxHeadingLength) { break; }
     }
 
-    const prefix = text.trim().substring(0, MaxHeadingLength);
+    const prefix = text.trim();
     return prefix.replace(IncompleteUnicodeEndingPattern, Constant.Empty);
 }
 
