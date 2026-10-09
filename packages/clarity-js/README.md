@@ -42,6 +42,7 @@ not encoded in the pass remains pending rather than using raw cached text.
 
 Masked playback length codes become bounded bullet placeholders for heading
 formatting. Their internal spacing is not recoverable from the length code;
-permitted text and playback tokens are unchanged. Temporary node lookups are
-released after completion. Candidate/output limits do not bound every subtree
+permitted text and playback tokens are unchanged. Temporary text references and
+ordered node-ID arrays are released after completion, including unused candidates.
+Candidate/output limits do not bound every subtree
 visit, encoder cost or temporary reference count.

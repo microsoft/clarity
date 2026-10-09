@@ -106,7 +106,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                     const text = scrub.text(data[key], data.tag, privacy, mangle);
                                     tokens.push(text);
                                     if (type === Event.Discover && data.tag === Constant.TextTag) {
-                                        headings.capture(value.id, text, mangle && privacy !== Privacy.Snapshot);
+                                        headings.captureText(value.id, text, mangle && privacy !== Privacy.Snapshot);
                                     }
                                     break;
                             }

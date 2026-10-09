@@ -12,20 +12,20 @@ const HeadingContentPattern = /[^\u2022\s]/;
 const IncompleteUnicodeEndingPattern = /[\uD800-\uDBFF]$/;
 
 let headings: { id: number; tag: string; text: string; textIds: number[] }[] = null;
-let textValues: { [id: number]: string } = null;
+let textPieces: { [id: number]: string } = null;
 let authorized = false;
 let serializedHeadings: string = null;
 
 export function start(): void {
     headings = [];
-    textValues = null;
+    textPieces = null;
     authorized = false;
     serializedHeadings = null;
 }
 
 export function stop(): void {
     headings = null;
-    textValues = null;
+    textPieces = null;
     serializedHeadings = null;
 }
 
@@ -48,13 +48,13 @@ export function observe(element: HTMLElement, tag: string): void {
 
     const target = dom.get(element);
     if (target && !headings.some(heading => heading.id === target.id)) {
-        headings.push({ id: target.id, tag, text: null, textIds: [] });
+        headings.push({ id: target.id, tag, text: null, textIds: null });
     }
 }
 
 export function prepare(): void {
     if (headings === null) { return; }
-    textValues = {};
+    textPieces = {};
     for (const heading of headings) {
         if (heading.text !== null) { continue; }
         heading.textIds = [];
@@ -68,7 +68,7 @@ export function prepare(): void {
             }
             if (record.data.tag === Constant.TextTag) {
                 heading.textIds.push(record.id);
-                textValues[record.id] = null;
+                textPieces[record.id] = null;
                 continue;
             }
             // Reverse insertion preserves document order without reading node text.
@@ -79,19 +79,19 @@ export function prepare(): void {
     }
 }
 
-export function capture(id: number, text: string, lengthEncoded: boolean): void {
-    if (textValues === null || !(id in textValues)) { return; }
-    const trimmedText = lengthEncoded ? text.trim() : Constant.Empty;
-    if (trimmedText.length > 0) {
+export function captureText(id: number, text: string, lengthEncoded: boolean): void {
+    if (textPieces === null || !(id in textPieces)) { return; }
+    const lengthCode = lengthEncoded ? text.trim() : Constant.Empty;
+    if (lengthCode.length > 0) {
         // Playback encodes masked text as a base-36 length, not readable content.
-        const length = Math.min(parseInt(trimmedText, 36), MaxHeadingLength);
-        text = text.replace(trimmedText, Array(length + 1).join(DataConstant.Mask));
+        const maskedLength = Math.min(parseInt(lengthCode, 36), MaxHeadingLength);
+        text = text.replace(lengthCode, Array(maskedLength + 1).join(DataConstant.Mask));
     }
-    textValues[id] = text;
+    textPieces[id] = text;
 }
 
 export function complete(): void {
-    if (headings === null || textValues === null) { return; }
+    if (headings === null || textPieces === null) { return; }
 
     const selected: string[] = [];
     for (const heading of headings) {
@@ -103,7 +103,8 @@ export function complete(): void {
             if (selected.length === MaxHeadings) { break; }
         }
     }
-    textValues = null;
+    for (const heading of headings) { heading.textIds = null; }
+    textPieces = null;
 
     // Encode each heading as H1:Checkout; separate headings with newlines.
     serializedHeadings = selected.join("\n");
@@ -113,7 +114,7 @@ export function complete(): void {
 function collectText(textIds: number[]): string {
     let text: string = Constant.Empty;
     for (const id of textIds) {
-        const piece = textValues[id];
+        const piece = textPieces[id];
         // Do not manufacture a partial heading if this pass did not encode its text.
         if (piece === null) { return null; }
         const normalizedText = (text + piece).replace(/\s+/g, " ").replace(/^ /, Constant.Empty);
