@@ -24,3 +24,24 @@ If you haven't already done so, start contributing by following instructions **[
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 Happy coding!
+
+## Experimental page headings: encoder reuse
+
+This review branch reuses text already scrubbed by the DOM encoder. Discovery
+retains at most ten main-document heading candidates and prepares their text-node
+IDs in document order. The encoder supplies those nodes' existing scrubbed values;
+only successful encoding can finalize up to three readable, 60-unit headings.
+There is no second textContent read or privacy scrub.
+The first collect response is permission, not an encoding-completion signal.
+Visits ending before encoding finishes can lose headings that the original
+pre-encoding collector would have prepared.
+
+Lean + lite intentionally skips collection. Ordinary lean mode can still collect
+from encoded records without uploading replay. A heading whose required text was
+not encoded in the pass remains pending rather than using raw cached text.
+
+Masked playback length codes become bounded bullet placeholders for heading
+formatting. Their internal spacing is not recoverable from the length code;
+permitted text and playback tokens are unchanged. Temporary node lookups are
+released after completion. Candidate/output limits do not bound every subtree
+visit, encoder cost or temporary reference count.

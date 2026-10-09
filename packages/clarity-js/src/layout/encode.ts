@@ -15,6 +15,7 @@ import * as region from "@src/layout/region";
 import * as style from "@src/layout/style";
 import * as animation from "@src/layout/animation";
 import * as custom from "@src/layout/custom";
+import * as headings from "./headings";
 
 export default async function (type: Event, timer: Timer = null, ts: number = null): Promise<void> {
     let eventTime = ts || time()
@@ -102,7 +103,11 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                                     break;
                                 case "value":
                                     fraud.check(value.metadata.fraud, value.id, data[key]);
-                                    tokens.push(scrub.text(data[key], data.tag, privacy, mangle));
+                                    const text = scrub.text(data[key], data.tag, privacy, mangle);
+                                    tokens.push(text);
+                                    if (type === Event.Discover && data.tag === Constant.TextTag) {
+                                        headings.capture(value, text, mangle);
+                                    }
                                     break;
                             }
                         }

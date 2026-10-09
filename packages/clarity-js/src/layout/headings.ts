@@ -1,6 +1,7 @@
-import { Dimension } from "@clarity-types/data";
-import { Constant } from "@clarity-types/layout";
-import * as scrub from "@src/core/scrub";
+import { Privacy } from "@clarity-types/core";
+import { Constant as DataConstant, Dimension } from "@clarity-types/data";
+import { Constant, NodeValue } from "@clarity-types/layout";
+import config from "@src/core/config";
 import * as dimension from "@src/data/dimension";
 import * as dom from "@src/layout/dom";
 
@@ -11,24 +12,27 @@ const MaxHeadingLength = 60;
 const HeadingContentPattern = /[^\u2022\s]/;
 const IncompleteUnicodeEndingPattern = /[\uD800-\uDBFF]$/;
 
-let headings: { id: number; tag: string; text: string }[] = null;
+let headings: { id: number; tag: string; text: string; textIds: number[] }[] = null;
+let textValues: { [id: number]: string } = null;
 let authorized = false;
 let serializedHeadings: string = null;
 
 export function start(): void {
     headings = [];
+    textValues = null;
     authorized = false;
     serializedHeadings = null;
 }
 
 export function stop(): void {
     headings = null;
+    textValues = null;
     serializedHeadings = null;
 }
 
 export function observe(element: HTMLElement, tag: string): void {
     // Masked and empty headings consume candidate slots, not output slots.
-    if (headings === null || headings.length === MaxHeadingCandidates) {
+    if (headings === null || (config.lean && config.lite) || headings.length === MaxHeadingCandidates) {
         return;
     }
 
@@ -45,53 +49,77 @@ export function observe(element: HTMLElement, tag: string): void {
 
     const target = dom.get(element);
     if (target && !headings.some(heading => heading.id === target.id)) {
-        headings.push({ id: target.id, tag, text: null });
+        headings.push({ id: target.id, tag, text: null, textIds: [] });
     }
 }
 
-export function complete(): void {
+export function prepare(): void {
     if (headings === null) { return; }
+    textValues = {};
+    for (const heading of headings) {
+        if (heading.text !== null) { continue; }
+        heading.textIds = [];
+        const pendingIds = [heading.id];
+        while (pendingIds.length > 0) {
+            const record = dom.getValue(pendingIds.pop());
+            if (!record || !record.metadata.active) { continue; }
+            if (record.data.tag === Constant.ShadowDomTag ||
+                record.data.tag === Constant.PolyfillShadowDomTag || record.data.tag === Constant.IFrameTag) {
+                continue;
+            }
+            if (record.data.tag === Constant.TextTag) {
+                heading.textIds.push(record.id);
+                textValues[record.id] = null;
+                continue;
+            }
+            // Reverse insertion preserves document order without reading node text.
+            for (let i = record.children.length - 1; i >= 0; i--) {
+                pendingIds.push(record.children[i]);
+            }
+        }
+    }
+}
+
+export function capture(value: NodeValue, text: string, mangle: boolean): void {
+    if (textValues === null || !(value.id in textValues)) { return; }
+    const trimmedText = text.trim();
+    if (mangle && value.metadata.privacy !== Privacy.Snapshot && trimmedText.length > 0) {
+        // Playback encodes masked text as a base-36 length, not readable content.
+        const length = Math.min(parseInt(trimmedText, 36), MaxHeadingLength);
+        text = text.replace(trimmedText, Array(length + 1).join(DataConstant.Mask));
+    }
+    textValues[value.id] = text;
+}
+
+export function complete(): void {
+    if (headings === null || textValues === null) { return; }
 
     const selected: string[] = [];
     for (const heading of headings) {
         if (heading.text === null) {
-            heading.text = collectText(heading.id);
+            heading.text = collectText(heading.textIds);
         }
-        if (HeadingContentPattern.test(heading.text)) {
+        if (heading.text !== null && HeadingContentPattern.test(heading.text)) {
             selected.push(`${heading.tag}:${heading.text}`);
             if (selected.length === MaxHeadings) { break; }
         }
     }
+    textValues = null;
 
     // Encode each heading as H1:Checkout; separate headings with newlines.
     serializedHeadings = selected.join("\n");
     publish();
 }
 
-function collectText(headingId: number): string {
-    const pendingIds = [headingId];
+function collectText(textIds: number[]): string {
     let text: string = Constant.Empty;
-
-    while (pendingIds.length > 0 && text.length < MaxHeadingLength) {
-        const record = dom.getValue(pendingIds.pop());
-        if (!record || !record.metadata.active) { continue; }
-
-        if (record.data.tag === Constant.ShadowDomTag ||
-            record.data.tag === Constant.PolyfillShadowDomTag || record.data.tag === Constant.IFrameTag) {
-            continue;
-        }
-
-        if (record.data.tag === Constant.TextTag) {
-            const scrubbedPiece = scrub.text(record.data.value, Constant.TextTag, record.metadata.privacy);
-            const normalizedText = (text + scrubbedPiece).replace(/\s+/g, " ").replace(/^ /, Constant.Empty);
-            text = normalizedText.substring(0, MaxHeadingLength);
-            continue;
-        }
-
-        // Reverse insertion makes the stack visit children in document order.
-        for (let i = record.children.length - 1; i >= 0; i--) {
-            pendingIds.push(record.children[i]);
-        }
+    for (const id of textIds) {
+        const piece = textValues[id];
+        // Do not manufacture a partial heading if this pass did not encode its text.
+        if (piece === null) { return null; }
+        const normalizedText = (text + piece).replace(/\s+/g, " ").replace(/^ /, Constant.Empty);
+        text = normalizedText.substring(0, MaxHeadingLength);
+        if (text.length === MaxHeadingLength) { break; }
     }
 
     const prefix = text.trim().substring(0, MaxHeadingLength);

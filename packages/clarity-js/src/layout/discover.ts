@@ -26,8 +26,9 @@ async function discover(): Promise<void> {
     let timer: Timer = { id: id(), cost: Metric.LayoutCost };
     task.start(timer);
     await traverse(document, timer, Source.Discover, ts);
-    if (task.state(timer) !== Task.Stop) { headings.complete(); }
+    if (task.state(timer) !== Task.Stop) { headings.prepare(); }
     checkDocumentStyles(document, ts);
     await encode(Event.Discover, timer, ts);
+    if (task.state(timer) !== Task.Stop) { headings.complete(); }
     task.stop(timer);
 }

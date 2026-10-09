@@ -46,7 +46,11 @@ async function collect(
     }, { endpoint: upload, config });
     await expect(page.locator("html")).toHaveAttribute("data-headings-response", "headings-complete");
     expect(extract([payloads[0]])).toEqual([]);
-    if (afterResponse) { await afterResponse(page, payloads); }
+    if (afterResponse) {
+        await afterResponse(page, payloads);
+    } else if (sampled && !(config.lean && config.lite)) {
+        await expect.poll(() => extract(payloads).length).toBeGreaterThan(0);
+    }
     await page.evaluate(() => (window as CaptureWindow).clarity("stop"));
     await expect.poll(() => payloads.some(payload => JSON.parse(payload).e[9] === 1)).toBe(true);
     await page.unroute(upload, handler);
