@@ -144,11 +144,11 @@ test.describe("page headings requested by collect", () => {
         expect(await collect(page, true)).toEqual(["H2:Ninth\nH3:Tenth"]);
     });
 
-    test("reuses cached text in DOM order, honors per-node privacy, and requires authorization", async ({ page }) => {
+    test("reuses encoder text in DOM order, honors per-node privacy, and requires authorization", async ({ page }) => {
         await page.setContent("<h1 data-clarity-unmask> Welcome <span data-clarity-mask>PRIVATE_MARKER</span>" +
             " <em> to <strong>Clarity</strong></em> today </h1>" +
             "<h2 data-clarity-unmask>one<span>two</span>three</h2>" +
-            "<h3 data-clarity-unmask>A <span class='private'>SECRET</span> B</h3>");
+            "<h3 data-clarity-unmask>A <span class='private'> SECRET  SECRET </span> B</h3>");
         await page.evaluate(() => {
             Object.defineProperty(HTMLHeadingElement.prototype, "textContent", {
                 configurable: true,
@@ -156,7 +156,7 @@ test.describe("page headings requested by collect", () => {
             });
         });
         expect(await collect(page, true, { mask: [".private"] })).toEqual([
-            `H1:Welcome ${mask.repeat(14)} to Clarity today\nH2:onetwothree\nH3:A ${mask.repeat(6)} B`
+            `H1:Welcome ${mask.repeat(14)} to Clarity today\nH2:onetwothree\nH3:A ${mask.repeat(14)} B`
         ]);
 
         await page.setContent("<h1 data-clarity-mask>Hidden <span data-clarity-unmask>Public 123</span> tail</h1>" +
@@ -187,5 +187,8 @@ test.describe("page headings requested by collect", () => {
             });
             expect(values).toEqual(complete ? ["H1:First\nH2:Second"] : []);
         }
+        await page.goto(origin);
+        await page.setContent("<h1 data-clarity-unmask>Skipped in lean plus lite</h1>");
+        expect(await collect(page, true, { lean: true, lite: true })).toEqual([]);
     });
 });

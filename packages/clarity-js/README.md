@@ -46,3 +46,9 @@ permitted text and playback tokens are unchanged. Temporary text references and
 ordered node-ID arrays are released after completion, including unused candidates.
 Candidate/output limits do not bound every subtree
 visit, encoder cost or temporary reference count.
+
+The four focused browser cases cover compact payload bounds, candidate backfill,
+privacy overrides and cache reuse, authorization, completion/cancellation, and
+the intentional lean-plus-lite skip. The unrelated SNAPSHOT cases are unchanged.
+This prototype changes collection timing and masked-placeholder formatting, not
+the backend sampling rate, HEADINGS command, dimension ID or replay wire format.
