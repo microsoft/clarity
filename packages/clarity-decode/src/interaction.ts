@@ -1,4 +1,4 @@
-import { Data, Interaction, Layout } from "clarity-js";
+import { Data, Interaction } from "clarity-js";
 import { InteractionEvent, ClickData, TimelineData } from "../types/interaction";
 
 export function decode(tokens: Data.Token[]): InteractionEvent {
@@ -40,7 +40,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             return { time, event, data: pointerData };
         case Data.Event.Click:
         case Data.Event.ContextMenu:
-            let clickHashes = (tokens[12] as string).split(Data.Constant.Dot);
+            let [legacyClickHash, betaClickHash] = (tokens[12] as string).split(Data.Constant.Dot);
+            let clickHash = legacyClickHash || betaClickHash || Data.Constant.Empty;
             let clickData: ClickData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
@@ -52,8 +53,8 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 context: tokens[9] as number,
                 text: tokens[10] as string,
                 link: tokens[11] as string,
-                hash: clickHashes[0],
-                hashBeta: clickHashes.length > 0 ? clickHashes[1] : null,
+                hash: clickHash,
+                hashBeta: betaClickHash || null,
                 trust: tokens.length > 13 ? tokens[13] as number : Data.BooleanFlag.True,
                 isFullText: tokens.length > 14 ? tokens[14] as number : null,
                 w: tokens.length > 15 ? tokens[15] as number : 0,
@@ -105,15 +106,16 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             };
             return { time, event, data: scrollData };
         case Data.Event.Timeline:
-            let timelineHashes = (tokens[3] as string).split(Data.Constant.Dot);
+            let [legacyTimelineHash, betaTimelineHash] = (tokens[3] as string).split(Data.Constant.Dot);
+            let timelineHash = legacyTimelineHash || betaTimelineHash || Data.Constant.Empty;
             let timelineData: TimelineData = {
                 type: tokens[2] as number,
-                hash: timelineHashes[Layout.Selector.Alpha],
+                hash: timelineHash,
                 x: tokens[4] as number,
                 y: tokens[5] as number,
                 reaction: tokens[6] as number,
                 context: tokens[7] as number,
-                hashBeta: timelineHashes.length > 0 ? timelineHashes[Layout.Selector.Beta] : null
+                hashBeta: betaTimelineHash || null
             };
             return { time, event, data: timelineData };
         case Data.Event.Visibility:
