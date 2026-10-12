@@ -4,6 +4,7 @@ import { Asset, Constant, type LinkHandler, NodeType, type PlaybackState, Settin
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
+import { transformHoverRules } from "./hover";
 import sharedStyle from "./styles/shared.css";
 
 /* BEGIN blobUnavailableSvgs */
@@ -503,14 +504,7 @@ export class LayoutHelper {
         // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain
         try {
             const sheet = node.sheet as CSSStyleSheet;
-            let cssRules = sheet ? sheet.cssRules : [];
-            for (let i = 0; i < cssRules.length; i++) {
-                if (cssRules[i].cssText.indexOf(Constant.Hover) >= 0) {
-                    let css = cssRules[i].cssText.replace(/:hover/g, `[${Constant.CustomHover}]`);
-                    sheet.removeRule(i);
-                    sheet.insertRule(css, i);
-                }
-            }
+            if (sheet) { transformHoverRules(sheet); }
         } catch (e) {
             if (this.state.options.logerror) {
                 this.state.options.logerror(e);
