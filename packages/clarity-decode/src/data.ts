@@ -1,4 +1,5 @@
 import { Data } from "clarity-js";
+import { Action } from "clarity-js/types/agent";
 import { Constant, DataEvent } from "../types/data";
 
 export function decode(tokens: Data.Token[]): DataEvent {
@@ -14,6 +15,9 @@ export function decode(tokens: Data.Token[]): DataEvent {
         case Data.Event.Custom:
             let custom: Data.CustomData = { key: tokens[2] as string, value: tokens[3] as string };
             return { time, event, data: custom };
+        case Data.Event.Chat:
+            let chat: Data.ChatData = { action: tokens[2] as Action };
+            return { time, event, data: chat };
         case Data.Event.Upgrade:
             let upgrade: Data.UpgradeData = { key: tokens[2] as string };
             return { time, event, data: upgrade };

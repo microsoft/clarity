@@ -1,4 +1,5 @@
 import { Time } from "@clarity-types/core";
+import { Action } from "./agent";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[] | (string | number)[]);
 export type DecodedToken = (any | any[]);
@@ -519,6 +520,10 @@ export interface DimensionData {
 
 export interface VariableData {
     [name: string]: string[];
+}
+
+export interface ChatData {
+    action: Action;
 }
 
 // Eventually custom event can be expanded to contain more properties
