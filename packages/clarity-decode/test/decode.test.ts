@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { decode } from 'clarity-decode';
-import { version } from 'clarity-js';
 
 test.describe('decode function', () => {
     test('should decode all chat actions without logging an unhandled event', () => {
@@ -9,7 +8,7 @@ test.describe('decode function', () => {
         console.error = (...args: unknown[]) => { errors.push(args); };
         try {
             const result = decode(JSON.stringify({
-                e: [version, 1, 0, 3000, "devtools", "user", "session", 1, 0, 0, 0, "https://test.com/"],
+                e: ["0.8.72", 1, 0, 3000, "devtools", "user", "session", 1, 0, 0, 0, "https://test.com/"],
                 a: [[2959, 52, 5], [10, 52, 0], [20, 52, 1], [30, 52, 2], [40, 52, 3], [50, 52, 4], [2960, 52, 6], [60, 28, 1]]
             }));
 
