@@ -35,10 +35,10 @@ test.describe("hover selector transformation", () => {
     });
 
     test("preserves hover text in attributes, strings, and comments", () => {
-        const input = "[data-state=':hover']/* :hover */.item:hover";
+        const input = "[data-state/* :hover */=':hover']:lang('en')/* :hover */.item:hover";
         const result = transformHoverSelector(input);
 
-        expect(result.selector).toBe("[data-state=':hover']/* :hover */.item[clarity-hover]");
+        expect(result.selector).toBe("[data-state/* :hover */=':hover']:lang('en')/* :hover */.item[clarity-hover]");
         expect(result).toMatchObject({ hover: 1, transformed: 1, unsupported: 0 });
     });
 
@@ -64,6 +64,9 @@ test.describe("hover selector transformation", () => {
         expect(() => transformHoverSelector(".invalid:hover[")).toThrow();
         expect(() => transformHoverSelector(".invalid:hover)")).toThrow();
         expect(() => transformHoverSelector(nested)).toThrow();
+
+        expect(() => transformHoverSelector(".item:hover[data-state='unclosed]")).toThrow();
+        expect(() => transformHoverSelector(".item:hover/* unclosed")).toThrow();
     });
 });
 
@@ -81,6 +84,36 @@ test.describe("hover stylesheet transformation", () => {
         expect(selectors(layer)).toEqual([".layer[clarity-hover]"]);
         expect(sheet.cssRules).toEqual([media, supports, layer]);
         expect(summary).toMatchObject({ scanned: 3, hover: 3, transformed: 3 });
+    });
+
+    test("visits style rules nested inside other style rules", () => {
+        const nested = grouping(1, [style("&:hover", "color: red;")], ".card");
+        const sheet = container([nested]);
+
+        const summary = transformHoverRules(sheet);
+
+        expect(selectors(nested)).toEqual(["&[clarity-hover]"]);
+        expect(summary).toMatchObject({ scanned: 2, hover: 1, transformed: 1 });
+    });
+
+    test("visits readable imported stylesheets and contains inaccessible imports", () => {
+        const imported = container([style(".imported:hover", "color: red;")]);
+        const opaque = container([]);
+        Object.defineProperty(opaque, "cssRules", {
+            get(): MockRule[] { throw new Error("SecurityError"); }
+        });
+        const sheet = container([
+            inaccessibleImport(),
+            importedRule(imported),
+            importedRule(opaque),
+            style(".local:hover", "color: blue;")
+        ]);
+
+        const summary = transformHoverRules(sheet);
+
+        expect(selectors(imported)).toEqual([".imported[clarity-hover]"]);
+        expect(selectors(sheet).slice(3)).toEqual([".local[clarity-hover]"]);
+        expect(summary).toMatchObject({ scanned: 2, hover: 2, transformed: 2, unsupported: 2 });
     });
 
     test("does not modify declarations, URLs, strings, comments, font faces, or keyframes", () => {
@@ -150,7 +183,8 @@ test.describe("hover stylesheet transformation", () => {
             style("::-webkit-scrollbar-thumb:hover", "color: green;"),
             style(".invalid:hover[", "color: purple;"),
             style(".rejected:hover", "color: orange;"),
-            style(".plain", "color: black;")
+            style(".plain", "color: black;"),
+            inaccessibleImport()
         ], ".rejected[clarity-hover]");
 
         const summary = transformHoverRules(sheet);
@@ -160,7 +194,7 @@ test.describe("hover stylesheet transformation", () => {
             hover: 4,
             transformed: 1,
             partial: 1,
-            unsupported: 1,
+            unsupported: 2,
             parseFailed: 1,
             insertionFailed: 1
         });
@@ -171,6 +205,7 @@ interface MockRule {
     readonly type: number;
     readonly cssText: string;
     selectorText?: string;
+    styleSheet?: MockContainer;
 }
 
 interface MockStyleRule extends MockRule {
@@ -221,15 +256,32 @@ function container(cssRules: MockRule[], rejectedSelector: string = null): MockC
     };
 }
 
-function grouping(type: number, rules: MockRule[]): MockGroupingRule {
+function grouping(type: number, rules: MockRule[], selectorText?: string): MockGroupingRule {
     const nested = container(rules);
     return {
         type,
+        selectorText,
         cssRules: nested.cssRules,
         insertRule: nested.insertRule,
         deleteRule: nested.deleteRule,
         get cssText(): string {
-            return `@group { ${rules.map(item => item.cssText).join(" ")} }`;
+            return selectorText ?
+                `${selectorText} { ${rules.map(item => item.cssText).join(" ")} }` :
+                `@group { ${rules.map(item => item.cssText).join(" ")} }`;
+        }
+    };
+}
+
+function importedRule(styleSheet: MockContainer): MockRule {
+    return { type: 3, cssText: "@import url(imported.css);", styleSheet };
+}
+
+function inaccessibleImport(): MockRule {
+    return {
+        type: 3,
+        cssText: "@import url(opaque.css);",
+        get styleSheet(): MockContainer {
+            throw new Error("SecurityError");
         }
     };
 }
