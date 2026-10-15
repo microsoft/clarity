@@ -320,10 +320,15 @@ export class LayoutHelper {
                 continue;
             }
             let unprefixedTag = tag && tag.indexOf(Layout.Constant.SvgPrefix) === 0 ? tag.slice(Layout.Constant.SvgPrefix.length) : tag;
-            if (unprefixedTag && unprefixedTag.toUpperCase() === "SCRIPT") {
-                let scriptElement = this.element(node.id);
-                scriptElement = scriptElement && scriptElement.nodeType === NodeType.COMMENT_NODE ? scriptElement : doc.createComment("script");
-                insert(node, parent, scriptElement, pivot);
+            let svgAnimation = tag && tag.indexOf(Layout.Constant.SvgPrefix) === 0 &&
+                ["animate", "animatecolor", "animatemotion", "animatetransform", "set", "discard"]
+                    .indexOf(unprefixedTag.slice(unprefixedTag.lastIndexOf(":") + 1).toLowerCase()) >= 0;
+            // Replay retains recorded SVG attributes rather than letting SVG animations independently rewrite them.
+            if (svgAnimation || (unprefixedTag && unprefixedTag.toUpperCase() === "SCRIPT")) {
+                let placeholder = this.element(node.id);
+                placeholder = placeholder && placeholder.nodeType === NodeType.COMMENT_NODE ?
+                    placeholder : doc.createComment(svgAnimation ? "svg animation" : "script");
+                insert(node, parent, placeholder, pivot);
                 if (node.id) { this.events[node.id] = node; }
                 continue;
             }
