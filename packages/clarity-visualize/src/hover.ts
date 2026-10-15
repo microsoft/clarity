@@ -3,6 +3,7 @@ const HoverAttribute = "clarity-hover";
 const MaxNestingDepth = 128;
 const MaxSelectorLength = 65536;
 const StyleRule = 1;
+const ImportRule = 3;
 
 export interface HoverSelectorResult {
     selector: string;
@@ -31,6 +32,7 @@ interface Rule {
     readonly cssText: string;
     selectorText?: string;
     cssRules?: RuleList;
+    styleSheet?: RuleContainer;
     insertRule?: (rule: string, index?: number) => number;
     deleteRule?: (index: number) => void;
 }
@@ -138,6 +140,7 @@ class SelectorParser {
         if (colonCount === 1 && name === Hover && !functional) {
             this.hover++;
             if (this.currentPseudoElement()) {
+                // Preserve pseudo-element hover: the replay attribute can only target DOM elements.
                 this.output.push(this.input.substring(start, identifier.end));
                 this.unsupported++;
             } else {
@@ -201,38 +204,15 @@ class SelectorParser {
     }
 
     private copyComment(): void {
-        const end = this.input.indexOf("*/", this.index + 2);
-        if (end < 0) {
-            throw new Error("Unclosed selector comment");
-        }
-        this.output.push(this.input.substring(this.index, end + 2));
-        this.index = end + 2;
+        const start = this.index;
+        this.skipComment("selector");
+        this.output.push(this.input.substring(start, this.index));
     }
 
     private copyString(quote: string): void {
-        const start = this.index++;
-        while (this.index < this.input.length) {
-            const current = this.input[this.index];
-            if (current === quote) {
-                this.index++;
-                this.output.push(this.input.substring(start, this.index));
-                return;
-            }
-            if (current === "\\") {
-                if (isNewline(this.input[this.index + 1])) {
-                    this.index += this.input[this.index + 1] === "\r" &&
-                        this.input[this.index + 2] === "\n" ? 3 : 2;
-                } else {
-                    this.index = this.readEscape(this.index).end;
-                }
-            } else {
-                if (isNewline(current)) {
-                    throw new Error("Unclosed selector string");
-                }
-                this.index++;
-            }
-        }
-        throw new Error("Unclosed selector string");
+        const start = this.index;
+        this.skipString(quote, "selector");
+        this.output.push(this.input.substring(start, this.index));
     }
 
     private copyAttribute(): void {
@@ -241,9 +221,9 @@ class SelectorParser {
         while (this.index < this.input.length) {
             const current = this.input[this.index];
             if (current === "\"" || current === "'") {
-                this.skipString(current);
+                this.skipString(current, "attribute");
             } else if (current === "/" && this.input[this.index + 1] === "*") {
-                this.skipComment();
+                this.skipComment("attribute");
             } else if (current === "\\") {
                 this.index = this.readEscape(this.index).end;
             } else {
@@ -259,7 +239,7 @@ class SelectorParser {
         throw new Error("Unclosed attribute selector");
     }
 
-    private skipString(quote: string): void {
+    private skipString(quote: string, context: string): void {
         this.index++;
         while (this.index < this.input.length) {
             const current = this.input[this.index];
@@ -276,18 +256,18 @@ class SelectorParser {
                 }
             } else {
                 if (isNewline(current)) {
-                    throw new Error("Unclosed attribute string");
+                    throw new Error(`Unclosed ${context} string`);
                 }
                 this.index++;
             }
         }
-        throw new Error("Unclosed attribute string");
+        throw new Error(`Unclosed ${context} string`);
     }
 
-    private skipComment(): void {
+    private skipComment(context: string): void {
         const end = this.input.indexOf("*/", this.index + 2);
         if (end < 0) {
-            throw new Error("Unclosed attribute comment");
+            throw new Error(`Unclosed ${context} comment`);
         }
         this.index = end + 2;
     }
@@ -330,11 +310,20 @@ class SelectorParser {
 
 function transformRules(container: RuleContainer, summary: HoverTransformationSummary): void {
     for (let i = container.cssRules.length - 1; i >= 0; i--) {
-        const rule = container.cssRules[i];
+        let rule = container.cssRules[i];
         if (rule.type === StyleRule && rule.selectorText !== undefined) {
-            transformStyleRule(container, rule, i, summary);
-        } else if (isRuleContainer(rule)) {
+            rule = transformStyleRule(container, rule, i, summary);
+        }
+        if (isRuleContainer(rule)) {
             transformRules(rule, summary);
+        } else if (rule.type === ImportRule) {
+            try {
+                const styleSheet = rule.styleSheet;
+                if (styleSheet) { transformRules(styleSheet, summary); }
+            } catch (error) {
+                // Count the inaccessible import once; its hidden rules cannot be inspected.
+                summary.unsupported++;
+            }
         }
     }
 }
@@ -344,11 +333,11 @@ function transformStyleRule(
     original: Rule,
     index: number,
     summary: HoverTransformationSummary
-): void {
+): Rule {
     summary.scanned++;
     if (original.selectorText.toLowerCase().indexOf(":hover") < 0 &&
         original.selectorText.indexOf("\\") < 0) {
-        return;
+        return original;
     }
 
     let result: HoverSelectorResult;
@@ -356,20 +345,21 @@ function transformStyleRule(
         result = transformHoverSelector(original.selectorText);
     } catch (error) {
         summary.parseFailed++;
-        return;
+        return original;
     }
 
-    if (result.hover === 0) { return; }
+    if (result.hover === 0) { return original; }
     summary.hover++;
 
     if (result.transformed === 0) {
         summary.unsupported++;
-        return;
+        return original;
     }
 
     let candidate: Rule = null;
     try {
         const css = result.selector + original.cssText.substring(original.selectorText.length);
+        // Insert before deleting so a rejected replacement leaves the original rule intact.
         container.insertRule(css, index + 1);
         candidate = container.cssRules[index + 1];
         container.deleteRule(index);
@@ -378,11 +368,13 @@ function transformStyleRule(
         } else {
             summary.transformed++;
         }
+        return candidate;
     } catch (error) {
         if (candidate && container.cssRules[index + 1] === candidate) {
             container.deleteRule(index + 1);
         }
         summary.insertionFailed++;
+        return original;
     }
 }
 
