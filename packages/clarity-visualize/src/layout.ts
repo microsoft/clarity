@@ -685,7 +685,7 @@ export class LayoutHelper {
 
     private isSuspiciousAttribute(name: string, value: string): boolean {
         // Block event handlers entirely
-        if (name.startsWith('on')) {
+        if (name.toLowerCase().startsWith('on')) {
             return true;
         }
         
