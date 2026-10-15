@@ -281,7 +281,7 @@ function getAttributes(element: HTMLElement): { [key: string]: string } {
     if (attributes && attributes.length > 0) {
         for (let i = 0; i < attributes.length; i++) {
             let name = attributes[i].name;
-            if (!IGNORE_ATTRIBUTES.includes(name)) {
+            if (!IGNORE_ATTRIBUTES.includes(name.toLowerCase())) {
                 output[name] = attributes[i].value;
             }
         }
