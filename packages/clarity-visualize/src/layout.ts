@@ -4,7 +4,8 @@ import { Asset, Constant, type LinkHandler, NodeType, type PlaybackState, Settin
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
-import { transformHoverRules } from "./hover";
+import { HoverTransformationSummary, transformHoverRules } from "./hover";
+import { loadCorsStylesheet } from "./stylesheet";
 import sharedStyle from "./styles/shared.css";
 
 /* BEGIN blobUnavailableSvgs */
@@ -429,25 +430,47 @@ export class LayoutHelper {
                     let linkElement = this.element(node.id) as HTMLLinkElement;
                     linkElement = linkElement ? linkElement : this.createElement(doc, node.tag) as HTMLLinkElement;
                     if (!node.attributes) { node.attributes = {}; }
-                    this.setAttributes(linkElement, node);
+                    const linkProxy = useproxy ?? this.state.options.useproxy;
+                    const stylesheet = node.attributes["rel"] === Constant.StyleSheet;
+                    const stylePreload = node.attributes["rel"]?.includes("preload") && node.attributes?.as === "style";
+                    const cors = !!linkProxy && this.state.options.corsProxyStylesheets && (stylesheet || stylePreload);
+                    const recordedHref = node.attributes["href"];
+                    const linkData = cors ? this.sanitizeLink(node) : node;
+                    this.setAttributes(linkElement, linkData);
                     // Strip SRI: recorded hashes won't match proxied/redeployed bytes during replay. See microsoft/clarity#418.
                     linkElement.removeAttribute("integrity");
                     if ("rel" in node.attributes) {
-                        if (node.attributes["rel"] === Constant.StyleSheet) {
-                            this.stylesheets.push(new Promise((resolve: () => void): void => {
-                                const proxy = useproxy ?? this.state.options.useproxy;
-                                if (proxy) {
-                                    linkElement.href = proxy(linkElement.href, linkElement.id, Constant.StyleSheet);
-                                }
-                                linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
-                                setTimeout(resolve, LayoutHelper.TIMEOUT);
-                            }));
+                        if (stylesheet) {
+                            if (cors) {
+                                const proxyUrl = linkProxy(this.resolveUrl(doc, recordedHref), linkElement.id, Constant.StyleSheet);
+                                this.stylesheets.push(loadCorsStylesheet(
+                                    linkElement,
+                                    proxyUrl,
+                                    LayoutHelper.TIMEOUT,
+                                    (loaded: HTMLLinkElement) => this.transformStylesheet(loaded),
+                                    (failed: HTMLLinkElement, fallback: HTMLLinkElement): void => {
+                                        if (failed.parentNode) { failed.parentNode.replaceChild(fallback, failed); }
+                                        this.nodes[node.id] = fallback;
+                                    }
+                                ).then((outcome): void => {
+                                    if (this.state.options.onstylesheet) { this.state.options.onstylesheet(outcome); }
+                                }));
+                            } else {
+                                this.stylesheets.push(new Promise((resolve: () => void): void => {
+                                    if (linkProxy) {
+                                        linkElement.href = linkProxy(linkElement.href, linkElement.id, Constant.StyleSheet);
+                                    }
+                                    linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
+                                    setTimeout(resolve, LayoutHelper.TIMEOUT);
+                                }));
+                            }
                         } else if ((node.attributes["rel"].includes("preload") || node.attributes["rel"].includes("preconnect"))
                             && (node.attributes?.as === "style" || node.attributes?.as === "font")) {
                                 this.fonts.push(new Promise((resolve: () => void): void => {
-                                    const proxy = useproxy ?? this.state.options.useproxy;
-                                    linkElement.href = proxy ? proxy(linkElement.href, linkElement.id, node.attributes.as) : linkElement.href;
+                                    if (cors) { linkElement.crossOrigin = "anonymous"; }
+                                    const href = cors ? this.resolveUrl(doc, recordedHref) : linkElement.href;
                                     linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
+                                    linkElement.href = linkProxy ? linkProxy(href, linkElement.id, node.attributes.as) : href;
                                     setTimeout(resolve, LayoutHelper.TIMEOUT);
                                 }));
                             }
@@ -512,6 +535,28 @@ export class LayoutHelper {
         }
 
         if (resolve) { resolve(); }
+    }
+
+    private transformStylesheet = (node: HTMLLinkElement): HoverTransformationSummary => {
+        const sheet = node.sheet as CSSStyleSheet;
+        if (!sheet) { throw new Error("Stylesheet is unavailable"); }
+        return transformHoverRules(sheet);
+    }
+
+    private sanitizeLink = (node: DecodedLayout.DomData): DecodedLayout.DomData => {
+        const attributes = { ...node.attributes };
+        delete attributes["crossorigin"];
+        delete attributes["href"];
+        delete attributes["integrity"];
+        delete attributes["onerror"];
+        delete attributes["onload"];
+        return { ...node, attributes };
+    }
+
+    private resolveUrl = (doc: Document, href: string): string => {
+        const resolver = doc.createElement("a");
+        resolver.href = href;
+        return resolver.href;
     }
 
     private addStyles = (id: number): void => {
