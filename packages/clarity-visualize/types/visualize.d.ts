@@ -38,6 +38,24 @@ export type ClickLogger = (args: IClickLoggerArgs) => void;
 // Fired when a hash resolves via the Alpha (fallback) selector map after the Beta lookup missed.
 // Used to measure how often the Alpha selector is still required.
 export type AlphaFallbackLogger = (hash: string) => void;
+export type StylesheetOutcomeHandler = (outcome: StylesheetOutcome) => void;
+
+export type StylesheetOutcomeStatus = "readable" | "unreadable" | "opaque-fallback" | "failed";
+
+export interface StylesheetOutcome {
+    status: StylesheetOutcomeStatus;
+    transformation?: HoverTransformationSummary;
+}
+
+export interface HoverTransformationSummary {
+    scanned: number;
+    hover: number;
+    transformed: number;
+    partial: number;
+    unsupported: number;
+    parseFailed: number;
+    insertionFailed: number;
+}
 
 export interface IClickLoggerArgs {
     time: number;
@@ -64,6 +82,8 @@ export interface Options {
     onresize?: ResizeHandler;
     logerror?: ErrorLogger;
     useproxy?: LinkHandler;
+    corsProxyStylesheets?: boolean;
+    onstylesheet?: StylesheetOutcomeHandler;
     onclickMismatch?: ClickLogger;
     onalphaFallback?: AlphaFallbackLogger;
     metadata?: HTMLElement;

@@ -1,4 +1,14 @@
-import { MergedPayload, ResizeHandler, Visualize, Visualizer, ShortCircuitStrategy } from "./visualize";
+import {
+    HoverTransformationSummary,
+    MergedPayload,
+    ResizeHandler,
+    ShortCircuitStrategy,
+    StylesheetOutcome,
+    StylesheetOutcomeHandler,
+    StylesheetOutcomeStatus,
+    Visualize,
+    Visualizer
+} from "./visualize";
 import { Data, Diagnostic, Interaction, Layout } from "clarity-decode"
 
 /**
@@ -6,5 +16,18 @@ import { Data, Diagnostic, Interaction, Layout } from "clarity-decode"
  */
 declare const visualize: Visualize;
 
-export { visualize, Visualizer, Data, Diagnostic, Interaction, Layout, MergedPayload, ResizeHandler, ShortCircuitStrategy };
-
+export {
+    visualize,
+    Visualizer,
+    Data,
+    Diagnostic,
+    Interaction,
+    Layout,
+    HoverTransformationSummary,
+    MergedPayload,
+    ResizeHandler,
+    ShortCircuitStrategy,
+    StylesheetOutcome,
+    StylesheetOutcomeHandler,
+    StylesheetOutcomeStatus
+};
