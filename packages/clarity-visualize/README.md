@@ -7,6 +7,15 @@ This package takes the decoded data from [clarity-decode](https://github.com/mic
 
 We encourage the community to join us in building the best behavioral analytics library, that puts privacy first and prioritizes performance. 
 
+## Replay hover styling
+
+Replay transforms element `:hover` pseudo-classes into `[clarity-hover]` selectors,
+including rules inside nested groups and readable imported stylesheets. Escaped
+class names, attribute values, and declarations are preserved. Hover selectors
+targeting pseudo-elements are left unchanged. Failed transformations preserve the
+original rule and report parser or replacement errors through `logerror`, when configured.
+Stylesheets must expose a readable CSSOM for hover transformation.
+
 ## Examples
 Here are some example sessions on popular websites visualized to demonstrate the telemetry captured:
 1. CNN (Web)
