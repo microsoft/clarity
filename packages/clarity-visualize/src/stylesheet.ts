@@ -72,6 +72,7 @@ export function loadCorsStylesheet(
             const failed = link;
             failed.onload = null;
             failed.onerror = null;
+            // Retry the same URL on a fresh link without CORS, preserving styling without hover transformation.
             link = failed.cloneNode(true) as HTMLLinkElement;
             link.removeAttribute("crossorigin");
             link.removeAttribute("integrity");

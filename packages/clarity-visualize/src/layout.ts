@@ -527,7 +527,7 @@ export class LayoutHelper {
         // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain
         try {
             const sheet = node.sheet as CSSStyleSheet;
-            if (sheet) { transformHoverRules(sheet); }
+            if (sheet) { transformHoverRules(sheet, this.state.options.logerror); }
         } catch (e) {
             if (this.state.options.logerror) {
                 this.state.options.logerror(e);
@@ -540,7 +540,7 @@ export class LayoutHelper {
     private transformStylesheet = (node: HTMLLinkElement): HoverTransformationSummary => {
         const sheet = node.sheet as CSSStyleSheet;
         if (!sheet) { throw new Error("Stylesheet is unavailable"); }
-        return transformHoverRules(sheet);
+        return transformHoverRules(sheet, this.state.options.logerror);
     }
 
     private sanitizeLink = (node: DecodedLayout.DomData): DecodedLayout.DomData => {

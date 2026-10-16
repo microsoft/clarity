@@ -1,3 +1,5 @@
+import type { ErrorLogger } from "../types/visualize";
+
 const Hover = "hover";
 const HoverAttribute = "clarity-hover";
 const MaxNestingDepth = 128;
@@ -57,9 +59,9 @@ export function transformHoverSelector(input: string): HoverSelectorResult {
     return new SelectorParser(input).parse();
 }
 
-export function transformHoverRules(container: RuleContainer): HoverTransformationSummary {
+export function transformHoverRules(container: RuleContainer, logerror?: ErrorLogger): HoverTransformationSummary {
     const summary = emptySummary();
-    transformRules(container, summary);
+    transformRules(container, summary, logerror);
     return summary;
 }
 
@@ -308,21 +310,20 @@ class SelectorParser {
     }
 }
 
-function transformRules(container: RuleContainer, summary: HoverTransformationSummary): void {
+function transformRules(container: RuleContainer, summary: HoverTransformationSummary, logerror?: ErrorLogger): void {
     for (let i = container.cssRules.length - 1; i >= 0; i--) {
         let rule = container.cssRules[i];
         if (rule.type === StyleRule && rule.selectorText !== undefined) {
-            rule = transformStyleRule(container, rule, i, summary);
+            rule = transformStyleRule(container, rule, i, summary, logerror);
         }
         if (isRuleContainer(rule)) {
-            transformRules(rule, summary);
+            transformRules(rule, summary, logerror);
         } else if (rule.type === ImportRule) {
             try {
                 const styleSheet = rule.styleSheet;
-                if (styleSheet) { transformRules(styleSheet, summary); }
+                if (styleSheet) { transformRules(styleSheet, summary, logerror); }
             } catch (error) {
-                // Count the inaccessible import once; its hidden rules cannot be inspected.
-                summary.unsupported++;
+                // Ignore imported stylesheets whose CSSOM is not readable.
             }
         }
     }
@@ -332,7 +333,8 @@ function transformStyleRule(
     container: RuleContainer,
     original: Rule,
     index: number,
-    summary: HoverTransformationSummary
+    summary: HoverTransformationSummary,
+    logerror?: ErrorLogger
 ): Rule {
     summary.scanned++;
     if (original.selectorText.toLowerCase().indexOf(":hover") < 0 &&
@@ -345,6 +347,7 @@ function transformStyleRule(
         result = transformHoverSelector(original.selectorText);
     } catch (error) {
         summary.parseFailed++;
+        if (logerror) { logerror(error); }
         return original;
     }
 
@@ -374,6 +377,7 @@ function transformStyleRule(
             container.deleteRule(index + 1);
         }
         summary.insertionFailed++;
+        if (logerror) { logerror(error); }
         return original;
     }
 }
