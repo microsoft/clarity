@@ -5,7 +5,7 @@ import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
 import { HoverTransformationSummary, transformHoverRules } from "./hover";
-import { loadCorsStylesheet } from "./stylesheet";
+import { loadStylesheet, StylesheetLoad } from "./stylesheet";
 import sharedStyle from "./styles/shared.css";
 
 /* BEGIN blobUnavailableSvgs */
@@ -113,6 +113,7 @@ export class LayoutHelper {
     primaryHtmlNodeId: number | null = null;
     isMobile: boolean;
     stylesheets: Promise<void>[] = [];
+    private stylesheetLoads: Map<number, StylesheetLoad> = new Map();
     fonts: Promise<void>[] = [];
     nodes = {};
     events = {};
@@ -135,6 +136,8 @@ export class LayoutHelper {
     }
 
     public reset = (): void => {
+        this.stylesheetLoads.forEach((load: StylesheetLoad): void => load.cancel());
+        this.stylesheetLoads.clear();
         this.nodes = {};
         this.stylesheets = [];
         this.fonts = [];
@@ -427,55 +430,7 @@ export class LayoutHelper {
                     insert(node, parent, headElement, pivot);
                     break;
                 case "LINK":
-                    let linkElement = this.element(node.id) as HTMLLinkElement;
-                    linkElement = linkElement ? linkElement : this.createElement(doc, node.tag) as HTMLLinkElement;
-                    if (!node.attributes) { node.attributes = {}; }
-                    const linkProxy = useproxy ?? this.state.options.useproxy;
-                    const stylesheet = node.attributes["rel"] === Constant.StyleSheet;
-                    const stylePreload = node.attributes["rel"]?.includes("preload") && node.attributes?.as === "style";
-                    const cors = !!linkProxy && this.state.options.corsProxyStylesheets && (stylesheet || stylePreload);
-                    const recordedHref = node.attributes["href"];
-                    const linkData = cors ? this.sanitizeLink(node) : node;
-                    this.setAttributes(linkElement, linkData);
-                    // Strip SRI: recorded hashes won't match proxied/redeployed bytes during replay. See microsoft/clarity#418.
-                    linkElement.removeAttribute("integrity");
-                    if ("rel" in node.attributes) {
-                        if (stylesheet) {
-                            if (cors) {
-                                const proxyUrl = linkProxy(this.resolveUrl(doc, recordedHref), linkElement.id, Constant.StyleSheet);
-                                this.stylesheets.push(loadCorsStylesheet(
-                                    linkElement,
-                                    proxyUrl,
-                                    LayoutHelper.TIMEOUT,
-                                    (loaded: HTMLLinkElement) => this.transformStylesheet(loaded),
-                                    (failed: HTMLLinkElement, fallback: HTMLLinkElement): void => {
-                                        if (failed.parentNode) { failed.parentNode.replaceChild(fallback, failed); }
-                                        this.nodes[node.id] = fallback;
-                                    }
-                                ).then((outcome): void => {
-                                    if (this.state.options.onstylesheet) { this.state.options.onstylesheet(outcome); }
-                                }));
-                            } else {
-                                this.stylesheets.push(new Promise((resolve: () => void): void => {
-                                    if (linkProxy) {
-                                        linkElement.href = linkProxy(linkElement.href, linkElement.id, Constant.StyleSheet);
-                                    }
-                                    linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
-                                    setTimeout(resolve, LayoutHelper.TIMEOUT);
-                                }));
-                            }
-                        } else if ((node.attributes["rel"].includes("preload") || node.attributes["rel"].includes("preconnect"))
-                            && (node.attributes?.as === "style" || node.attributes?.as === "font")) {
-                                this.fonts.push(new Promise((resolve: () => void): void => {
-                                    if (cors) { linkElement.crossOrigin = "anonymous"; }
-                                    const href = cors ? this.resolveUrl(doc, recordedHref) : linkElement.href;
-                                    linkElement.onload = linkElement.onerror = this.style.bind(this, linkElement, resolve);
-                                    linkElement.href = linkProxy ? linkProxy(href, linkElement.id, node.attributes.as) : href;
-                                    setTimeout(resolve, LayoutHelper.TIMEOUT);
-                                }));
-                            }
-                    }
-                    insert(node, parent, linkElement, pivot);
+                    this.insertLink(node, parent, pivot, doc, useproxy);
                     break;
                 case Layout.Constant.ImageTag:
                     let imgElement = this.element(node.id) as HTMLImageElement ?? this.createElement(doc, node.tag) as HTMLImageElement;
@@ -523,24 +478,77 @@ export class LayoutHelper {
         insert(node, parent, domElement, pivot);
     }
 
-    private style = (node: HTMLLinkElement | HTMLStyleElement, resolve: () => void = null): void => {
-        // Firefox throws a SecurityError when trying to access cssRules of a stylesheet from a different domain
-        try {
-            const sheet = node.sheet as CSSStyleSheet;
-            if (sheet) { transformHoverRules(sheet, this.state.options.logerror); }
-        } catch (e) {
-            if (this.state.options.logerror) {
-                this.state.options.logerror(e);
-            }
-        }
+    private insertLink = (node: DecodedLayout.DomData, parent: Node, pivot: Node, doc: Document, useproxy?: LinkHandler): void => {
+        this.stylesheetLoads.get(node.id)?.cancel();
+        this.stylesheetLoads.delete(node.id);
 
-        if (resolve) { resolve(); }
+        const link = this.element(node.id) as HTMLLinkElement ?? this.createElement(doc, node.tag) as HTMLLinkElement;
+        if (!node.attributes) { node.attributes = {}; }
+        const proxy = useproxy ?? this.state.options.useproxy;
+        const stylesheet = node.attributes["rel"] === Constant.StyleSheet;
+        const preload = node.attributes["rel"]?.includes("preload") && node.attributes.as === "style";
+        const cors = !!proxy && this.state.options.corsProxyStylesheets && (stylesheet || preload);
+        this.setAttributes(link, cors ? this.sanitizeLink(node) : node);
+        // Recorded SRI hashes won't match proxied/redeployed bytes. See microsoft/clarity#418.
+        link.removeAttribute("integrity");
+
+        const hint = (node.attributes.rel?.includes("preload") || node.attributes.rel?.includes("preconnect"))
+            && (node.attributes.as === "style" || node.attributes.as === "font");
+        if (parent !== null && (stylesheet || hint)) {
+            const href = cors ? this.resolveUrl(doc, node.attributes.href) : link.href;
+            const kind = stylesheet ? Constant.StyleSheet : node.attributes.as;
+            const url = proxy ? proxy(href, link.id, kind) : href;
+            // Preloads use CORS but do not retry as stylesheets.
+            if (cors) { link.crossOrigin = "anonymous"; }
+            const ready = this.trackStylesheet(node.id, link, url, stylesheet && cors, stylesheet);
+            (stylesheet ? this.stylesheets : this.fonts).push(ready);
+        }
+        this.insertAfter(node, parent, link, pivot);
     }
 
-    private transformStylesheet = (node: HTMLLinkElement): HoverTransformationSummary => {
-        const sheet = node.sheet as CSSStyleSheet;
-        if (!sheet) { throw new Error("Stylesheet is unavailable"); }
-        return transformHoverRules(sheet, this.state.options.logerror);
+    private trackStylesheet = (
+        id: number, link: HTMLLinkElement, url: string, cors: boolean, stylesheet: boolean
+    ): Promise<void> => {
+        const load = loadStylesheet(link, url, LayoutHelper.TIMEOUT,
+            (failed: HTMLLinkElement, fallback: HTMLLinkElement): void => {
+                if (this.nodes[id] !== failed) { return; }
+                if (failed.parentNode) { failed.parentNode.replaceChild(fallback, failed); }
+                this.nodes[id] = fallback;
+            }, cors);
+        this.stylesheetLoads.set(id, load);
+        return load.ready.then(({ status, fallback, link: loaded }): void => {
+            if (this.stylesheetLoads.get(id) !== load) { return; }
+            this.stylesheetLoads.delete(id);
+            const result = stylesheet && status === "loaded" && !fallback ? this.style(loaded) : undefined;
+            if (cors && this.state.options.onstylesheet) {
+                this.state.options.onstylesheet({
+                    status: result?.readable ? "loaded-readable" : status,
+                    fallback,
+                    transformation: result?.transformation
+                });
+            }
+        });
+    }
+
+    private style = (
+        node: HTMLLinkElement | HTMLStyleElement
+    ): { readable: boolean; transformation?: HoverTransformationSummary } => {
+        let sheet: CSSStyleSheet;
+        try {
+            sheet = node.sheet as CSSStyleSheet;
+            if (!sheet) { return { readable: false }; }
+            // Opaque cross-origin sheets can apply styles without allowing CSSOM access.
+            void sheet.cssRules;
+        } catch {
+            return { readable: false };
+        }
+        let transformation: HoverTransformationSummary;
+        try {
+            transformation = transformHoverRules(sheet, this.state.options.logerror);
+        } catch (error) {
+            if (this.state.options.logerror) { this.state.options.logerror(error); }
+        }
+        return { readable: true, transformation };
     }
 
     private sanitizeLink = (node: DecodedLayout.DomData): DecodedLayout.DomData => {

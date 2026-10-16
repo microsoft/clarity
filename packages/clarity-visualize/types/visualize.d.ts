@@ -40,10 +40,11 @@ export type ClickLogger = (args: IClickLoggerArgs) => void;
 export type AlphaFallbackLogger = (hash: string) => void;
 export type StylesheetOutcomeHandler = (outcome: StylesheetOutcome) => void;
 
-export type StylesheetOutcomeStatus = "readable" | "unreadable" | "opaque-fallback" | "failed";
+export type StylesheetOutcomeStatus = "loaded" | "loaded-readable" | "failed" | "cancelled";
 
 export interface StylesheetOutcome {
     status: StylesheetOutcomeStatus;
+    fallback: boolean;
     transformation?: HoverTransformationSummary;
 }
 
