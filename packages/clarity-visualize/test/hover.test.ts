@@ -113,7 +113,7 @@ test.describe("hover stylesheet transformation", () => {
 
         expect(selectors(imported)).toEqual([".imported[clarity-hover]"]);
         expect(selectors(sheet).slice(3)).toEqual([".local[clarity-hover]"]);
-        expect(summary).toMatchObject({ scanned: 2, hover: 2, transformed: 2, unsupported: 2 });
+        expect(summary).toMatchObject({ scanned: 2, hover: 2, transformed: 2, unsupported: 0 });
     });
 
     test("does not modify declarations, URLs, strings, comments, font faces, or keyframes", () => {
@@ -141,22 +141,28 @@ test.describe("hover stylesheet transformation", () => {
         const rejected = style(".rejected:hover", "color: red;");
         const accepted = style(".accepted:hover", "color: blue;");
         const sheet = container([rejected, accepted], ".rejected[clarity-hover]");
+        const errors: Error[] = [];
 
-        const summary = transformHoverRules(sheet);
+        const summary = transformHoverRules(sheet, (error: Error): void => { errors.push(error); });
 
         expect(selectors(sheet)).toEqual([".rejected:hover", ".accepted[clarity-hover]"]);
         expect(summary).toMatchObject({ scanned: 2, hover: 2, transformed: 1, insertionFailed: 1 });
+        expect(errors).toHaveLength(1);
+        expect(errors[0].message).toBe("Rejected test selector");
     });
 
     test("retains parser failures and transforms valid candidates", () => {
         const invalid = style(".invalid:hover[", "color: red;");
         const valid = style(".valid:hover", "color: blue;");
         const sheet = container([invalid, valid]);
+        const errors: Error[] = [];
 
-        const summary = transformHoverRules(sheet);
+        const summary = transformHoverRules(sheet, (error: Error): void => { errors.push(error); });
 
         expect(selectors(sheet)).toEqual([".invalid:hover[", ".valid[clarity-hover]"]);
         expect(summary).toMatchObject({ scanned: 2, hover: 1, transformed: 1, parseFailed: 1 });
+        expect(errors).toHaveLength(1);
+        expect(errors[0]).toBeInstanceOf(Error);
     });
 
     test("does not skip the rule following a successful replacement", () => {
@@ -187,17 +193,19 @@ test.describe("hover stylesheet transformation", () => {
             inaccessibleImport()
         ], ".rejected[clarity-hover]");
 
-        const summary = transformHoverRules(sheet);
+        const errors: Error[] = [];
+        const summary = transformHoverRules(sheet, (error: Error): void => { errors.push(error); });
 
         expect(summary).toEqual<HoverTransformationSummary>({
             scanned: 6,
             hover: 4,
             transformed: 1,
             partial: 1,
-            unsupported: 2,
+            unsupported: 1,
             parseFailed: 1,
             insertionFailed: 1
         });
+        expect(errors).toHaveLength(2);
     });
 });
 
