@@ -98,6 +98,230 @@ test.describe("replay stylesheet lifecycle", () => {
         await page.addScriptTag({ path: resolve(__dirname, "..", "build", "clarity.visualize.min.js") });
     });
 
+    for (const changeHref of [false, true]) {
+        test(`disables and re-enables a stylesheet ${changeHref ? "with a new resource" : "in place"}`, async ({ page }) => {
+            const result = await page.evaluate(async (replace: boolean) => {
+                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const proxyCalls: string[] = [];
+                const visualizer = await api.setup(window, {
+                    version: "0.8.72",
+                    corsProxyStylesheets: true,
+                    useproxy: (url: string): string => {
+                        proxyCalls.push(url);
+                        return url;
+                    }
+                });
+                const layout = visualizer.layout;
+                layout.nodes[1] = document.head;
+                const node = {
+                    id: 2, parent: 1, previous: null, tag: "LINK",
+                    attributes: { rel: "stylesheet", href: "data:text/css,.target%7Bcolor:blue%7D" }
+                };
+                await layout.dom({ event: 6, time: 0, data: [node] });
+                const link = layout.element(2) as HTMLLinkElement;
+                const sheet = link.sheet;
+                const target = document.createElement("div");
+                target.className = "target";
+                document.body.appendChild(target);
+                layout.markup({ event: 6, time: 1, data: [{
+                    ...node, attributes: { ...node.attributes, class: "updated" }
+                }] });
+                const attributeUpdate = {
+                    sameLink: layout.element(2) === link,
+                    sameSheet: link.sheet === sheet,
+                    promises: layout.stylesheets.length,
+                    proxyCalls: proxyCalls.length,
+                    className: link.className
+                };
+                const href = replace ? "data:text/css,.target%7Bcolor:red%7D" : node.attributes.href;
+                layout.markup({ event: 6, time: 2, data: [{
+                    ...node, attributes: { rel: "stylesheet", href, disabled: "" }
+                }] });
+                const disabled = {
+                    sameLink: layout.element(2) === link,
+                    disabled: link.disabled,
+                    color: getComputedStyle(target).color,
+                    promises: layout.stylesheets.length,
+                    links: document.querySelectorAll('link[rel="stylesheet"]').length
+                };
+                await layout.dom({ event: 6, time: 3, data: [{
+                    ...node, attributes: { rel: "stylesheet", href }
+                }] });
+                return {
+                    attributeUpdate, disabled,
+                    enabled: {
+                        sameLink: layout.element(2) === link,
+                        disabled: link.disabled,
+                        color: getComputedStyle(target).color,
+                        visibility: document.documentElement.style.visibility
+                    }
+                };
+            }, changeHref);
+
+            expect(result.attributeUpdate).toEqual({
+                sameLink: true, sameSheet: true, promises: 1, proxyCalls: 1, className: "updated"
+            });
+            expect(result.disabled).toEqual({
+                sameLink: true, disabled: true, color: "rgb(0, 0, 0)", promises: 1, links: 1
+            });
+            expect(result.enabled).toEqual({
+                sameLink: true, disabled: false,
+                color: changeHref ? "rgb(255, 0, 0)" : "rgb(0, 0, 255)", visibility: "visible"
+            });
+        });
+    }
+
+    test("preserves transformed hover styling when media attributes rebuild CSSOM", async ({ page }) => {
+        const result = await page.evaluate(async () => {
+            const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+            const visualizer = await api.setup(window, {
+                version: "0.8.72", corsProxyStylesheets: true, useproxy: (url: string): string => url
+            });
+            const layout = visualizer.layout;
+            layout.nodes[1] = document.head;
+            const node = {
+                id: 2, parent: 1, previous: null, tag: "LINK",
+                attributes: { rel: "stylesheet", href: "data:text/css,.target:hover%7Bcolor:red%7D" }
+            };
+            await layout.dom({ event: 6, time: 0, data: [node] });
+            const link = layout.element(2);
+            layout.markup({ event: 6, time: 1, data: [{ ...node, attributes: { ...node.attributes, media: "all" } }] });
+            const target = document.createElement("div");
+            target.className = "target";
+            target.setAttribute("clarity-hover", "");
+            document.body.appendChild(target);
+            return { sameLink: layout.element(2) === link, color: getComputedStyle(target).color, promises: layout.stylesheets.length };
+        });
+
+        expect(result).toEqual({ sameLink: true, color: "rgb(255, 0, 0)", promises: 1 });
+    });
+
+    for (const scenario of ["cors", "fallback", "reset", "preload"]) {
+        test(`waits for replacement resources before revealing replay (${scenario})`, async ({ page }) => {
+            let requests = 0;
+            let release: () => void;
+            const response = new Promise<void>((done): void => { release = done; });
+            await page.route("https://styles.invalid/initial.css", async (route) => { await route.abort("failed"); });
+            await page.route("https://styles.invalid/replacement.css", async (route) => {
+                requests++;
+                if (scenario === "fallback" && requests === 1) {
+                    await route.abort("failed");
+                    return;
+                }
+                await response;
+                await route.fulfill({
+                    contentType: "text/css",
+                    headers: { "Access-Control-Allow-Origin": "*" },
+                    body: ".target { color: rgb(255, 0, 0); }"
+                });
+            });
+            try {
+                await page.evaluate(async (mode: string) => {
+                    const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                    const visualizer = await api.setup(window, {
+                        version: "0.8.72", corsProxyStylesheets: true, useproxy: (url: string): string => url
+                    });
+                    const layout = visualizer.layout;
+                    layout.nodes[1] = document.head;
+                    const node = {
+                        id: 2, parent: 1, previous: null, tag: "LINK",
+                        attributes: { rel: "stylesheet", href: "https://styles.invalid/initial.css" }
+                    };
+                    const initial = layout.dom({ event: 6, time: 0, data: [node] });
+                    const replacement = {
+                        ...node,
+                        id: mode === "preload" ? 3 : 2,
+                        attributes: {
+                            rel: mode === "preload" ? "preload" : "stylesheet",
+                            as: mode === "preload" ? "style" : undefined,
+                            href: "https://styles.invalid/replacement.css"
+                        }
+                    };
+                    let ready = initial;
+                    if (mode === "reset") {
+                        layout.reset();
+                        layout.nodes[1] = document.head;
+                        ready = layout.dom({ event: 6, time: 1, data: [replacement] });
+                    } else {
+                        if (mode === "preload") {
+                            layout.markup({ event: 6, time: 1, data: [{ ...node, parent: null }] });
+                        }
+                        layout.markup({ event: 6, time: 1, data: [replacement] });
+                    }
+                    void ready.then((): void => { document.documentElement.dataset.ready = "true"; });
+                    const target = document.createElement("div");
+                    target.className = "target";
+                    document.body.appendChild(target);
+                    await new Promise<void>((done): void => { setTimeout(done, 0); });
+                }, scenario);
+                await expect.poll(() => requests).toBe(scenario === "fallback" ? 2 : 1);
+                expect(await page.evaluate(() => ({
+                    visibility: document.documentElement.style.visibility,
+                    ready: document.documentElement.dataset.ready
+                }))).toEqual({ visibility: "hidden", ready: undefined });
+                release();
+                await expect(page.locator("html")).toHaveAttribute("data-ready", "true");
+                await expect(page.locator("html")).toHaveCSS("visibility", "visible");
+                if (scenario !== "preload") {
+                    await expect(page.locator(".target")).toHaveCSS("color", "rgb(255, 0, 0)");
+                }
+            } finally {
+                release();
+            }
+        });
+    }
+
+    for (const succeeds of [true, false]) {
+        test(`keeps applied styling through a ${succeeds ? "successful" : "failed"} CORS fallback`, async ({ page }) => {
+            let requests = 0;
+            let release: () => void;
+            const retry = new Promise<void>((resolveRetry): void => { release = resolveRetry; });
+            await page.route("https://styles.invalid/replacement.css", async (route) => {
+                requests++;
+                if (requests === 1) {
+                    await route.abort("failed");
+                    return;
+                }
+                await retry;
+                if (succeeds) {
+                    await route.fulfill({ contentType: "text/css", body: ".target { color: rgb(255, 0, 0); }" });
+                } else {
+                    await route.abort("failed");
+                }
+            });
+            await page.evaluate(async () => {
+                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const visualizer = await api.setup(window, {
+                    version: "0.8.72", corsProxyStylesheets: true, useproxy: (url: string): string => url
+                });
+                const layout = visualizer.layout;
+                layout.nodes[1] = document.head;
+                const node = {
+                    id: 2, parent: 1, previous: null, tag: "LINK",
+                    attributes: { rel: "stylesheet", href: "data:text/css,.target%7Bcolor:rgb(0,0,255)%7D" }
+                };
+                layout.markup({ event: 6, time: 0, data: [node] });
+                await Promise.all(layout.stylesheets);
+                const target = document.createElement("div");
+                target.className = "target";
+                document.body.appendChild(target);
+                layout.markup({ event: 6, time: 1, data: [{
+                    ...node, attributes: { rel: "stylesheet", href: "https://styles.invalid/replacement.css" }
+                }] });
+            });
+            try {
+                await expect.poll(() => requests).toBe(2);
+                await expect(page.locator(".target")).toHaveCSS("color", "rgb(0, 0, 255)");
+                await expect(page.locator('link[rel="stylesheet"]')).toHaveCount(2);
+                release();
+                await expect(page.locator('link[rel="stylesheet"]')).toHaveCount(1);
+                await expect(page.locator(".target")).toHaveCSS("color", succeeds ? "rgb(255, 0, 0)" : "rgb(0, 0, 255)");
+            } finally {
+                release();
+            }
+        });
+    }
+
     test("transforms a loaded stylesheet and applies replay hover styling", async ({ page }) => {
         const result = await page.evaluate(async () => {
             const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;

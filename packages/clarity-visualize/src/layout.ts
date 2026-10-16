@@ -219,8 +219,17 @@ export class LayoutHelper {
                 doc.documentElement.style.visibility = Constant.Hidden;
                 // Render all DOM events to reconstruct the page
                 this.markup(event, useproxy);
-                // Wait on all stylesheets and fonts to finish loading
-                await Promise.all(this.stylesheets.concat(this.fonts));
+                const stylesheets = this.stylesheets;
+                const fonts = this.fonts;
+                let stylesheetCount = 0;
+                let fontCount = 0;
+                do {
+                    const pending = stylesheets.slice(stylesheetCount).concat(fonts.slice(fontCount));
+                    stylesheetCount = stylesheets.length;
+                    fontCount = fonts.length;
+                    await Promise.all(pending);
+                    if (this.stylesheets !== stylesheets || this.fonts !== fonts) { return; }
+                } while (stylesheetCount !== stylesheets.length || fontCount !== fonts.length);
                 // Toggle back the visibility of target window
                 doc.documentElement.style.visibility = Constant.Visible;
             }
@@ -474,46 +483,109 @@ export class LayoutHelper {
     }
 
     private insertLink = (node: DecodedLayout.DomData, parent: Node, pivot: Node, doc: Document, useproxy?: LinkHandler): void => {
-        this.stylesheetLoads.get(node.id)?.cancel();
-        this.stylesheetLoads.delete(node.id);
-
-        const link = this.element(node.id) as HTMLLinkElement ?? this.createElement(doc, node.tag) as HTMLLinkElement;
         if (!node.attributes) { node.attributes = {}; }
         const proxy = useproxy ?? this.state.options.useproxy;
         const stylesheet = node.attributes["rel"] === Constant.StyleSheet;
+        const recorded = this.events[node.id]?.attributes;
+        const unchanged = stylesheet && recorded?.rel === Constant.StyleSheet && recorded.href === node.attributes.href;
+        const disabled = node.attributes.disabled !== undefined;
+        const current = this.element(node.id) as HTMLLinkElement;
+        const wasDisabled = current?.disabled;
+        if (parent !== null && unchanged && current?.isConnected && !disabled && !wasDisabled) {
+            const sheet = current.sheet;
+            this.updateLinkAttributes(current, node, doc);
+            if (current.sheet && current.sheet !== sheet) { this.style(current); }
+            this.insertAfter(node, parent, current, pivot);
+            return;
+        }
+        this.stylesheetLoads.get(node.id)?.cancel();
+        this.stylesheetLoads.delete(node.id);
+
+        const existing = this.element(node.id) as HTMLLinkElement;
+        const reuse = unchanged && existing === current && existing?.isConnected;
+        const previous = parent !== null && stylesheet && !disabled && !reuse && existing?.sheet ? existing : null;
+        const link = previous ? this.createElement(doc, node.tag) as HTMLLinkElement :
+            existing ?? this.createElement(doc, node.tag) as HTMLLinkElement;
         const preload = node.attributes["rel"]?.includes("preload") && node.attributes.as === "style";
         const cors = !!proxy && this.state.options.corsProxyStylesheets && (stylesheet || preload);
-        this.setAttributes(link, cors ? this.sanitizeLink(node) : node);
+        if (reuse) {
+            this.updateLinkAttributes(link, node, doc);
+        } else {
+            this.setAttributes(link, cors ? this.sanitizeLink(node) : node);
+        }
         // Recorded SRI hashes won't match proxied/redeployed bytes. See microsoft/clarity#418.
         link.removeAttribute("integrity");
 
         const hint = (node.attributes.rel?.includes("preload") || node.attributes.rel?.includes("preconnect"))
             && (node.attributes.as === "style" || node.attributes.as === "font");
-        if (parent !== null && (stylesheet || hint)) {
+        if (parent !== null && !disabled && (stylesheet || hint)) {
             const href = cors ? this.resolveUrl(doc, node.attributes.href) : link.href;
             const kind = stylesheet ? Constant.StyleSheet : node.attributes.as;
-            const url = proxy ? proxy(href, link.id, kind) : href;
+            const url = reuse ? link.href : proxy ? proxy(href, link.id, kind) : href;
             // Preloads use CORS but do not retry as stylesheets.
             if (cors) { link.crossOrigin = "anonymous"; }
-            const ready = this.trackStylesheet(node.id, link, url, stylesheet && cors, stylesheet);
+            const ready = this.trackStylesheet(node.id, link, url, stylesheet && cors, stylesheet, previous);
             (stylesheet ? this.stylesheets : this.fonts).push(ready);
+        } else if (disabled && stylesheet && !reuse) {
+            const href = this.resolveUrl(doc, node.attributes.href);
+            if (cors) { link.crossOrigin = "anonymous"; }
+            link.href = proxy ? proxy(href, link.id, Constant.StyleSheet) : href;
         }
-        this.insertAfter(node, parent, link, pivot);
+        if (previous && previous.parentNode === parent && this.events[node.id]?.previous === node.previous) {
+            this.insertBefore(node, parent, link, previous);
+        } else {
+            this.insertAfter(node, parent, link, pivot);
+        }
+    }
+
+    private updateLinkAttributes = (link: HTMLLinkElement, node: DecodedLayout.DomData, doc: Document): void => {
+        const attributes = doc.createElement("link");
+        this.setAttributes(attributes, this.sanitizeLink(node));
+        for (const attribute of Array.from(link.attributes)) {
+            if (attribute.name !== "href" && attribute.name !== "crossorigin" &&
+                attribute.name !== Constant.HoverAttribute && !attributes.hasAttribute(attribute.name)) {
+                link.removeAttribute(attribute.name);
+            }
+        }
+        for (const attribute of Array.from(attributes.attributes)) {
+            if (link.getAttribute(attribute.name) !== attribute.value) {
+                link.setAttribute(attribute.name, attribute.value);
+            }
+        }
     }
 
     private trackStylesheet = (
-        id: number, link: HTMLLinkElement, url: string, cors: boolean, stylesheet: boolean
+        id: number, link: HTMLLinkElement, url: string, cors: boolean, stylesheet: boolean, previous: HTMLLinkElement
     ): Promise<void> => {
+        let pending = link;
+        const restore = (): void => {
+            if (!previous) { return; }
+            pending.parentNode?.removeChild(pending);
+            if (this.nodes[id] === pending) { this.nodes[id] = previous; }
+        };
         const load = loadStylesheet(link, url, LayoutHelper.TIMEOUT,
             (failed: HTMLLinkElement, fallback: HTMLLinkElement): void => {
                 if (this.nodes[id] !== failed) { return; }
                 if (failed.parentNode) { failed.parentNode.replaceChild(fallback, failed); }
                 this.nodes[id] = fallback;
+                pending = fallback;
             }, cors);
-        this.stylesheetLoads.set(id, load);
+        const tracked: StylesheetLoad = {
+            ready: load.ready,
+            cancel: (): void => {
+                load.cancel();
+                restore();
+            }
+        };
+        this.stylesheetLoads.set(id, tracked);
         return load.ready.then(({ status, fallback, link: loaded }): void => {
-            if (this.stylesheetLoads.get(id) !== load) { return; }
+            if (this.stylesheetLoads.get(id) !== tracked) { return; }
             this.stylesheetLoads.delete(id);
+            if (status === "loaded") {
+                previous?.parentNode?.removeChild(previous);
+            } else {
+                restore();
+            }
             const result = stylesheet && status === "loaded" && !fallback ? this.style(loaded) : undefined;
             if (cors && this.state.options.onstylesheet) {
                 this.state.options.onstylesheet({
