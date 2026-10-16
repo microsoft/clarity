@@ -1,21 +1,20 @@
 import { expect, test } from "@playwright/test";
-import { HoverTransformationSummary } from "../src/hover";
-import { loadCorsStylesheet } from "../src/stylesheet";
+import { resolve } from "path";
+import { loadStylesheet } from "../src/stylesheet";
+import type { StylesheetOutcome } from "../types/visualize";
 
-test.describe("CORS proxy stylesheet loading", () => {
-    test("transforms a readable CORS stylesheet and resolves once", async () => {
+test.describe("stylesheet loading", () => {
+    test("reports loading independently of CSSOM access or transformation", async () => {
         const link = createLink();
-        let transformed = 0;
+        Object.defineProperty(link, "sheet", { get: (): never => { throw new Error("SecurityError"); } });
+        const load = loadStylesheet(link, "https://provider.invalid/cached.css", 1000, noReplace, true);
+        const onload = link.onload;
 
-        const ready = loadCorsStylesheet(link, "data:text/css,.target%7Bcolor:red%7D", 1000, () => {
-            transformed++;
-            return summary();
-        }, (): void => undefined);
-
-        fire(link.onload);
-        const outcome = await ready;
-        expect(transformed).toBe(1);
-        expect(outcome).toEqual({ status: "readable", transformation: summary() });
+        fire(onload);
+        fire(onload);
+        expect(await load.ready).toEqual({ status: "loaded", fallback: false, link });
+        expect(link.onload).toBeNull();
+        expect(link.onerror).toBeNull();
     });
 
     test("retries the exact provider URL once without CORS or integrity", async () => {
@@ -23,72 +22,328 @@ test.describe("CORS proxy stylesheet loading", () => {
         const providerUrl = "https://provider.invalid/cached.css";
         let fallback: HTMLLinkElement = null;
         let replacements = 0;
-
-        const ready = loadCorsStylesheet(link, providerUrl, 1000, summary,
-            (failed: HTMLLinkElement, replacement: HTMLLinkElement): void => {
+        const load = loadStylesheet(link, providerUrl, 1000,
+            (_failed: HTMLLinkElement, replacement: HTMLLinkElement): void => {
                 replacements++;
                 fallback = replacement;
-            });
+            }, true);
         fire(link.onerror);
 
-        expect(fallback).not.toBeNull();
         expect(fallback.href).toBe(providerUrl);
         expect(fallback.hasAttribute("crossorigin")).toBe(false);
         expect(fallback.hasAttribute("integrity")).toBe(false);
         fire(fallback.onload);
-        expect(await ready).toEqual({ status: "opaque-fallback" });
+        expect(await load.ready).toEqual({ status: "loaded", fallback: true, link: fallback });
         expect(replacements).toBe(1);
     });
 
-    test("preserves a loaded stylesheet when CSSOM is unexpectedly unreadable", async () => {
-        const link = createLink();
-        let replacements = 0;
-
-        const ready = loadCorsStylesheet(link, "https://provider.invalid/cached.css", 1000, () => {
-            throw new Error("SecurityError");
-        }, (): void => {
-            replacements++;
-        });
-        fire(link.onload);
-        expect(await ready).toEqual({ status: "unreadable" });
-
-        expect(replacements).toBe(0);
-        expect(link.href).toBe("https://provider.invalid/cached.css");
-    });
-
-    test("ignores stale callbacks and resolves after terminal fallback failure", async () => {
+    test("ignores stale callbacks after retry and terminal failure", async () => {
         const link = createLink();
         let fallback: HTMLLinkElement = null;
-        let transformed = 0;
-
-        const ready = loadCorsStylesheet(link, "https://provider.invalid/cached.css", 1000, () => {
-            transformed++;
-            return summary();
-        }, (failed: HTMLLinkElement, replacement: HTMLLinkElement): void => {
-            fallback = replacement;
-        });
+        const load = loadStylesheet(link, "https://provider.invalid/cached.css", 1000,
+            (_failed: HTMLLinkElement, replacement: HTMLLinkElement): void => { fallback = replacement; }, true);
         const firstLoad = link.onload;
         fire(link.onerror);
         fire(firstLoad);
         fire(fallback.onerror);
-        expect(await ready).toEqual({ status: "failed" });
-
-        expect(transformed).toBe(0);
+        expect(await load.ready).toEqual({ status: "failed", fallback: true, link: fallback });
     });
 
     test("gives both attempts independent timeouts", async () => {
         const link = createLink();
         let fallback: HTMLLinkElement = null;
+        const load = loadStylesheet(link, "https://provider.invalid/cached.css", 10,
+            (_failed: HTMLLinkElement, replacement: HTMLLinkElement): void => { fallback = replacement; }, true);
 
-        const ready = loadCorsStylesheet(link, "https://provider.invalid/cached.css", 5, summary,
-            (failed: HTMLLinkElement, replacement: HTMLLinkElement): void => {
-                fallback = replacement;
-            });
-
-        await new Promise((resolve: () => void): number => setTimeout(resolve, 7));
+        expect(await load.ready).toEqual({ status: "failed", fallback: true, link: fallback });
         expect(fallback).not.toBeNull();
-        expect(await ready).toEqual({ status: "failed" });
     });
+
+    for (const retry of [false, true]) {
+        test(`cancels ${retry ? "fallback" : "initial"} attempts without replacing newer mutations`, async () => {
+            let link = createLink();
+            let replacements = 0;
+            const load = loadStylesheet(link, "https://provider.invalid/old.css", 10,
+                (_failed: HTMLLinkElement, replacement: HTMLLinkElement): void => {
+                    replacements++;
+                    link = replacement;
+                }, true);
+            if (retry) { fire(link.onerror); }
+            const staleLoad = link.onload;
+            const staleError = link.onerror;
+            load.cancel();
+            load.cancel();
+            link.href = "https://provider.invalid/new.css";
+            fire(staleLoad);
+            fire(staleError);
+            await new Promise((done: () => void): ReturnType<typeof setTimeout> => setTimeout(done, 30));
+
+            expect(await load.ready).toEqual({ status: "cancelled", fallback: retry, link });
+            expect(link.href).toBe("https://provider.invalid/new.css");
+            expect(replacements).toBe(retry ? 1 : 0);
+        });
+    }
+
+    test("does not retry ordinary links", async () => {
+        const link = createLink();
+        const load = loadStylesheet(link, "https://provider.invalid/cached.css", 1000, noReplace);
+        fire(link.onerror);
+        expect(await load.ready).toEqual({ status: "failed", fallback: false, link });
+        expect(link.crossOrigin).toBeNull();
+    });
+});
+
+test.describe("replay stylesheet lifecycle", () => {
+    test.beforeEach(async ({ page }) => {
+        await page.addScriptTag({ path: resolve(__dirname, "..", "build", "clarity.visualize.min.js") });
+    });
+
+    test("transforms a loaded stylesheet and applies replay hover styling", async ({ page }) => {
+        const result = await page.evaluate(async () => {
+            const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+            const outcomes: StylesheetOutcome[] = [];
+            const visualizer = await api.setup(window, {
+                version: "0.8.72",
+                corsProxyStylesheets: true,
+                useproxy: (url: string): string => url,
+                onstylesheet: (outcome: StylesheetOutcome): void => { outcomes.push(outcome); }
+            });
+            const layout = visualizer.layout;
+            layout.nodes[1] = document.head;
+            layout.markup({ event: 6, time: 0, data: [{
+                id: 2, parent: 1, previous: null, tag: "LINK",
+                attributes: { rel: "stylesheet", href: "data:text/css,.target:hover%7Bcolor:red%7D" }
+            }] });
+            const target = document.createElement("div");
+            target.className = "target";
+            target.setAttribute("clarity-hover", "");
+            document.body.appendChild(target);
+            await Promise.all(layout.stylesheets);
+            return { outcomes, color: getComputedStyle(target).color };
+        });
+
+        expect(result.outcomes).toEqual([{
+            status: "loaded-readable",
+            fallback: false,
+            transformation: { scanned: 1, hover: 1, transformed: 1, partial: 0, unsupported: 0, parseFailed: 0, insertionFailed: 0 }
+        }]);
+        expect(result.color).toBe("rgb(255, 0, 0)");
+    });
+
+    for (const scenario of ["empty", "insertion-failure", "unexpected", "unavailable", "fallback"]) {
+        test(`preserves successful loading for a ${scenario} stylesheet`, async ({ page }) => {
+            const result = await page.evaluate(async (mode: string) => {
+                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const outcomes: StylesheetOutcome[] = [];
+                const errors: string[] = [];
+                const visualizer = await api.setup(window, {
+                    version: "0.8.72",
+                    corsProxyStylesheets: true,
+                    useproxy: (url: string): string => url,
+                    onstylesheet: (outcome: StylesheetOutcome): void => { outcomes.push(outcome); },
+                    logerror: (error: Error): void => { errors.push(error.message); }
+                });
+                const layout = visualizer.layout;
+                layout.nodes[1] = document.head;
+                const rendering = layout.dom({ event: 6, time: 0, data: [{
+                    id: 2, parent: 1, previous: null, tag: "LINK",
+                    attributes: { rel: "stylesheet", href: "data:text/css,.target:hover%7Bcolor:red%7D" }
+                }] });
+                let link = layout.element(2) as HTMLLinkElement;
+                if (mode === "fallback") {
+                    link.dispatchEvent(new Event("error"));
+                    link = layout.element(2) as HTMLLinkElement;
+                    Object.defineProperty(link, "sheet", {
+                        get(): never { throw new Error("Fallback CSSOM must not be inspected"); }
+                    });
+                } else if (mode === "unavailable") {
+                    Object.defineProperty(link, "sheet", { value: null });
+                } else {
+                    const sheet = new CSSStyleSheet();
+                    if (mode === "insertion-failure") {
+                        sheet.replaceSync(".target:hover { color: red; }");
+                        sheet.insertRule = (): never => { throw new Error("Rule insertion failed"); };
+                    } else if (mode === "unexpected") {
+                        let reads = 0;
+                        const rules = sheet.cssRules;
+                        Object.defineProperty(sheet, "cssRules", {
+                            get(): CSSRuleList {
+                                if (++reads > 1) { throw new Error("Unexpected transformation error"); }
+                                return rules;
+                            }
+                        });
+                    }
+                    Object.defineProperty(link, "sheet", { value: sheet });
+                }
+                link.dispatchEvent(new Event("load"));
+                await rendering;
+                return { outcomes, errors, visibility: document.documentElement.style.visibility };
+            }, scenario);
+
+            const readable = !["unavailable", "fallback"].includes(scenario);
+            expect(result.visibility).toBe("visible");
+            expect(result.outcomes).toHaveLength(1);
+            expect(result.outcomes[0]).toMatchObject({
+                status: readable ? "loaded-readable" : "loaded",
+                fallback: scenario === "fallback"
+            });
+            if (scenario === "empty") {
+                expect(result.outcomes[0].transformation).toEqual({
+                    scanned: 0, hover: 0, transformed: 0, partial: 0, unsupported: 0, parseFailed: 0, insertionFailed: 0
+                });
+            } else if (scenario === "insertion-failure") {
+                expect(result.outcomes[0].transformation).toMatchObject({ insertionFailed: 1, transformed: 0 });
+            } else {
+                expect(result.outcomes[0].transformation).toBeUndefined();
+            }
+            expect(result.errors).toEqual(scenario === "unexpected" ? ["Unexpected transformation error"]
+                : scenario === "insertion-failure" ? ["Rule insertion failed"] : []);
+        });
+    }
+
+    for (const fallback of [false, true]) {
+        test(`removing a stylesheet cancels its ${fallback ? "fallback" : "initial"} load without restarting it`, async ({ page }) => {
+            await page.clock.install();
+            const state = await page.evaluateHandle(async (retry: boolean) => {
+                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const outcomes: StylesheetOutcome[] = [];
+                const visualizer = await api.setup(window, {
+                    version: "0.8.72",
+                    corsProxyStylesheets: true,
+                    useproxy: (url: string): string => url,
+                    onstylesheet: (outcome: StylesheetOutcome): void => { outcomes.push(outcome); }
+                });
+                const layout = visualizer.layout;
+                layout.nodes[1] = document.head;
+                const node = {
+                    id: 2, parent: 1, previous: null, tag: "LINK",
+                    attributes: { rel: "stylesheet", href: "data:text/css,.old:hover%7Bcolor:red%7D" }
+                };
+                layout.markup({ event: 6, time: 0, data: [node] });
+                if (retry) { layout.element(2).dispatchEvent(new Event("error")); }
+                const link = layout.element(2) as HTMLLinkElement;
+                const pending = layout.stylesheets[0];
+                layout.markup({ event: 6, time: 1, data: [{ ...node, parent: null }] });
+                await pending;
+                return { layout, link, outcomes };
+            }, fallback);
+
+            await page.clock.runFor(14001);
+            const result = await state.evaluate(({ layout, link, outcomes }) => ({
+                promises: layout.stylesheets.length,
+                sameLink: layout.element(2) === link,
+                connected: link.isConnected,
+                onload: link.onload,
+                onerror: link.onerror,
+                outcomes
+            }));
+
+            expect(result).toEqual({
+                promises: 1,
+                sameLink: true,
+                connected: false,
+                onload: null,
+                onerror: null,
+                outcomes: []
+            });
+            await state.dispose();
+        });
+    }
+
+    for (const change of ["href", "rel", "reset", "fallback", "completed"]) {
+        test(`a stale load cannot overwrite a ${change} mutation`, async ({ page }) => {
+            const result = await page.evaluate(async (mutation: string) => {
+                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const outcomes: StylesheetOutcome[] = [];
+                const visualizer = await api.setup(window, {
+                    version: "0.8.72",
+                    corsProxyStylesheets: true,
+                    useproxy: (url: string): string => url,
+                    onstylesheet: (outcome: StylesheetOutcome): void => { outcomes.push(outcome); }
+                });
+                const layout = visualizer.layout;
+                layout.nodes[1] = document.head;
+                const node = {
+                    id: 2, parent: 1, previous: null, tag: "LINK",
+                    attributes: { rel: "stylesheet", href: "data:text/css,.old:hover%7Bcolor:red%7D" }
+                };
+                layout.markup({ event: 6, time: 0, data: [node] });
+                let old = layout.element(2) as HTMLLinkElement;
+                if (mutation === "fallback") {
+                    old.dispatchEvent(new Event("error"));
+                    old = layout.element(2) as HTMLLinkElement;
+                }
+                const staleLoad = old.onload;
+                const staleError = old.onerror;
+                const pending = layout.stylesheets[0];
+                if (mutation === "completed") { old.dispatchEvent(new Event("load")); }
+                if (mutation === "reset") {
+                    layout.reset();
+                } else {
+                    layout.markup({ event: 6, time: 1, data: [{
+                        ...node,
+                        parent: 1,
+                        attributes: {
+                            rel: mutation === "rel" ? "alternate" : "stylesheet",
+                            href: "data:text/css,.new:hover%7Bcolor:blue%7D"
+                        }
+                    }] });
+                }
+                const current = layout.element(2);
+                staleError.call(old, new Event("error"));
+                staleLoad.call(old, new Event("load"));
+                await pending;
+                const unchanged = layout.element(2) === current;
+                const href = (current as HTMLLinkElement)?.href;
+                const reports = outcomes.length;
+                layout.reset();
+                return { unchanged, href, reports };
+            }, change);
+
+            expect(result.unchanged).toBe(true);
+            expect(result.reports).toBe(0);
+            if (change !== "reset") { expect(result.href).toContain(".new:hover"); }
+        });
+    }
+
+    for (const access of ["sheet", "cssRules"]) {
+        test(`reports a loaded stylesheet without logging ${access} access errors`, async ({ page }) => {
+            const result = await page.evaluate(async (property: string) => {
+                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const outcomes: StylesheetOutcome[] = [];
+                const errors: string[] = [];
+                const visualizer = await api.setup(window, {
+                    version: "0.8.72",
+                    corsProxyStylesheets: true,
+                    useproxy: (url: string): string => url,
+                    onstylesheet: (outcome: StylesheetOutcome): void => { outcomes.push(outcome); },
+                    logerror: (error: Error): void => { errors.push(error.message); }
+                });
+                const layout = visualizer.layout;
+                layout.nodes[1] = document.head;
+                layout.markup({ event: 6, time: 0, data: [{
+                    id: 2, parent: 1, previous: null, tag: "LINK",
+                    attributes: { rel: "stylesheet", href: "data:text/css,.target:hover%7Bcolor:red%7D" }
+                }] });
+                const link = layout.element(2) as HTMLLinkElement;
+                const unreadable = { get: (): never => { throw new DOMException("CSSOM unavailable", "SecurityError"); } };
+                if (property === "sheet") {
+                    Object.defineProperty(link, "sheet", unreadable);
+                } else {
+                    const sheet = {};
+                    Object.defineProperty(sheet, "cssRules", unreadable);
+                    Object.defineProperty(link, "sheet", { value: sheet });
+                }
+                link.dispatchEvent(new Event("load"));
+                await Promise.all(layout.stylesheets);
+                return { outcomes, errors, sameLink: layout.element(2) === link };
+            }, access);
+
+            expect(result.outcomes).toEqual([{ status: "loaded", fallback: false, transformation: undefined }]);
+            expect(result.errors).toEqual([]);
+            expect(result.sameLink).toBe(true);
+        });
+    }
 });
 
 interface MockLink {
@@ -114,19 +369,13 @@ function createLink(initial: { [name: string]: string } = {}): HTMLLinkElement {
         crossOrigin: null,
         onload: null,
         onerror: null,
-        ownerDocument: {
-            defaultView: {
-                setTimeout,
-                clearTimeout
-            }
-        },
+        ownerDocument: { defaultView: { setTimeout, clearTimeout } },
         cloneNode(): MockLink {
-            const clone = createLink(attributes) as never as MockLink;
-            clone.href = link.href;
-            clone.crossOrigin = link.crossOrigin;
-            if (clone.href) { attributes["href"] = clone.href; }
-            if (clone.crossOrigin) { attributes["crossorigin"] = clone.crossOrigin; }
-            return clone;
+            return createLink({
+                ...attributes,
+                ...(link.href ? { href: link.href } : {}),
+                ...(link.crossOrigin ? { crossorigin: link.crossOrigin } : {})
+            }) as never as MockLink;
         },
         hasAttribute(name: string): boolean {
             return name in attributes;
@@ -144,14 +393,6 @@ function fire(handler: (event?: Event) => void): void {
     handler();
 }
 
-function summary(): HoverTransformationSummary {
-    return {
-        scanned: 1,
-        hover: 1,
-        transformed: 1,
-        partial: 0,
-        unsupported: 0,
-        parseFailed: 0,
-        insertionFailed: 0
-    };
+function noReplace(): never {
+    throw new Error("Unexpected stylesheet replacement");
 }

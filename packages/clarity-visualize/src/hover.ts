@@ -1,4 +1,6 @@
 import type { ErrorLogger } from "../types/visualize";
+import type { HoverTransformationSummary } from "../types/visualize";
+export type { HoverTransformationSummary } from "../types/visualize";
 
 const Hover = "hover";
 const HoverAttribute = "clarity-hover";
@@ -12,16 +14,6 @@ export interface HoverSelectorResult {
     hover: number;
     transformed: number;
     unsupported: number;
-}
-
-export interface HoverTransformationSummary {
-    scanned: number;
-    hover: number;
-    transformed: number;
-    partial: number;
-    unsupported: number;
-    parseFailed: number;
-    insertionFailed: number;
 }
 
 interface RuleList {

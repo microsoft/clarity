@@ -1,36 +1,43 @@
-import type { HoverTransformationSummary } from "./hover";
+import type { StylesheetOutcomeStatus } from "../types/visualize";
 
-export type StylesheetTransform = (link: HTMLLinkElement) => HoverTransformationSummary;
 export type StylesheetReplace = (current: HTMLLinkElement, replacement: HTMLLinkElement) => void;
 
-export type StylesheetOutcomeStatus = "readable" | "unreadable" | "opaque-fallback" | "failed";
-
-export interface StylesheetOutcome {
+export interface StylesheetLoadResult {
     status: StylesheetOutcomeStatus;
-    transformation?: HoverTransformationSummary;
+    fallback: boolean;
+    link: HTMLLinkElement;
 }
 
-export function loadCorsStylesheet(
+export interface StylesheetLoad {
+    ready: Promise<StylesheetLoadResult>;
+    cancel(): void;
+}
+
+export function loadStylesheet(
     initial: HTMLLinkElement,
     url: string,
     timeout: number,
-    transform: StylesheetTransform,
-    replace: StylesheetReplace
-): Promise<StylesheetOutcome> {
-    return new Promise((resolve: (outcome: StylesheetOutcome) => void): void => {
+    replace: StylesheetReplace,
+    cors: boolean = false
+): StylesheetLoad {
+    let cancel: () => void;
+    const ready = new Promise((resolve: (outcome: StylesheetLoadResult) => void): void => {
         let link = initial;
         let attempt = 0;
         let timer: number = null;
         let complete = false;
+        let fallback = false;
 
-        const finish = (outcome: StylesheetOutcome): void => {
+        const finish = (status: StylesheetOutcomeStatus): void => {
             if (complete) { return; }
             complete = true;
             clear();
             link.onload = null;
             link.onerror = null;
-            resolve(outcome);
+            resolve({ status, fallback, link });
         };
+
+        cancel = (): void => finish("cancelled");
 
         const clear = (): void => {
             if (timer !== null) {
@@ -39,28 +46,18 @@ export function loadCorsStylesheet(
             }
         };
 
-        const start = (fallback: boolean): void => {
+        const start = (): void => {
             const current = ++attempt;
             link.onload = (): void => {
                 if (complete || current !== attempt) { return; }
-                clear();
-                if (!fallback) {
-                    try {
-                        finish({ status: "readable", transformation: transform(link) });
-                    } catch (error) {
-                        // An unexpectedly opaque sheet is already applied; preserve it without retrying.
-                        finish({ status: "unreadable" });
-                    }
-                } else {
-                    finish({ status: "opaque-fallback" });
-                }
+                finish("loaded");
             };
             link.onerror = (): void => {
                 if (complete || current !== attempt) { return; }
-                fallback ? finish({ status: "failed" }) : retry(current);
+                cors && !fallback ? retry(current) : finish("failed");
             };
             timer = link.ownerDocument.defaultView.setTimeout(
-                (): void => fallback ? finish({ status: "failed" }) : retry(current),
+                (): void => cors && !fallback ? retry(current) : finish("failed"),
                 timeout
             );
             link.href = url;
@@ -79,11 +76,13 @@ export function loadCorsStylesheet(
             link.removeAttribute("href");
             link.onload = null;
             link.onerror = null;
-            start(true);
+            fallback = true;
+            start();
             replace(failed, link);
         };
 
-        link.crossOrigin = "anonymous";
-        start(false);
+        if (cors) { link.crossOrigin = "anonymous"; }
+        start();
     });
+    return { ready, cancel };
 }
