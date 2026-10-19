@@ -138,6 +138,10 @@ function key(timer: Timer): string {
     return timer.id + "." + timer.cost;
 }
 
+export function idle(callback: () => void): void {
+    requestIdleCallback(callback, { timeout: idleTimeout });
+}
+
 async function wait(): Promise<RequestIdleCallbackDeadline> {
     if (pauseTask) { await pauseTask; }
     return new Promise<RequestIdleCallbackDeadline>((resolve: (deadline: RequestIdleCallbackDeadline) => void): void => {
