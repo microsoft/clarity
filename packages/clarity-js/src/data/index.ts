@@ -4,6 +4,7 @@ import { start as conStart, stop as conStop, compute as conCompute } from "@src/
 import { start as envStart, stop as envStop } from "@src/data/envelope";
 import { start as dimStart, stop as dimStop, compute as dimCompute } from "@src/data/dimension";
 import { start as metaStart, stop as metaStop } from "@src/data/metadata";
+import { start as agentStart, stop as agentStop } from "@src/data/agent";
 import { Module } from "@clarity-types/core";
 import * as metric from "@src/data/metric";
 import { start as pingStart, stop as pingStop } from "@src/data/ping";
@@ -31,6 +32,7 @@ const modules: Module[] = [
     { start: cookStart, stop: cookStop },
     { start: conStart, stop: conStop },
     { start: metaStart, stop: metaStop },
+    { start: agentStart, stop: agentStop },
     { start: envStart, stop: envStop },
     { start: uplStart, stop: uplStop },
     { start: pingStart, stop: pingStop },
