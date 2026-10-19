@@ -11,55 +11,33 @@ const MaxHeadingLength = 60;
 const HeadingContentPattern = /[^\u2022\s]/;
 const IncompleteUnicodeEndingPattern = /[\uD800-\uDBFF]$/;
 
-let headings: { id: number; tag: string; text: string }[] = null;
+let active = false;
 let authorized = false;
 let serializedHeadings: string = null;
 
 export function start(): void {
-    headings = [];
+    active = true;
     authorized = false;
     serializedHeadings = null;
 }
 
 export function stop(): void {
-    headings = null;
+    active = false;
     serializedHeadings = null;
 }
 
-export function observe(element: HTMLElement, tag: string): void {
-    // Masked and empty headings consume candidate slots, not output slots.
-    if (headings === null || headings.length === MaxHeadingCandidates) {
-        return;
-    }
-
-    // Only H1-H6 elements qualify.
-    if (tag.length !== 2 || tag[0] !== "H" || tag[1] < "1" || tag[1] > "6") {
-        return;
-    }
-
-    // Exclude iframe documents and shadow roots.
-    if (element.ownerDocument !== document ||
-        (element.getRootNode && element.getRootNode() !== document)) {
-        return;
-    }
-
-    const target = dom.get(element);
-    if (target && !headings.some(heading => heading.id === target.id)) {
-        headings.push({ id: target.id, tag, text: null });
-    }
-}
-
 export function complete(): void {
-    if (headings === null) { return; }
+    if (!active || serializedHeadings !== null) { return; }
 
     const selected: string[] = [];
-    for (const heading of headings) {
-        if (heading.text === null) {
-            heading.text = collectText(heading.id);
-        }
-        if (HeadingContentPattern.test(heading.text)) {
-            selected.push(`${heading.tag}:${heading.text}`);
-            if (selected.length === MaxHeadings) { break; }
+    let count = 0;
+    const candidates = document.querySelectorAll("h1,h2,h3,h4,h5,h6");
+    for (let i = 0; i < candidates.length && count < MaxHeadingCandidates && selected.length < MaxHeadings; i++) {
+        const target = dom.get(candidates[i]);
+        if (target && target.metadata.active && target.data.tag === candidates[i].tagName) {
+            count++;
+            const text = collectText(target.id);
+            if (HeadingContentPattern.test(text)) { selected.push(`${target.data.tag}:${text}`); }
         }
     }
 
@@ -94,7 +72,7 @@ function collectText(headingId: number): string {
         }
     }
 
-    const prefix = text.trim().substring(0, MaxHeadingLength);
+    const prefix = text.trim();
     return prefix.replace(IncompleteUnicodeEndingPattern, Constant.Empty);
 }
 
