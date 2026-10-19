@@ -107,7 +107,7 @@ async function run(page: any, env: Environment): Promise<Result> {
     }, { dimension: AgenticDimension, event: DimensionEvent });
 }
 
-test.describe("environment - Meta Muse evidence", () => {
+test.describe("agent - Meta Muse evidence", () => {
     test("Muse profile (Linux x86_64 + arm + SwiftShader) reports both signals", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: SwiftShaderRenderer });
         expect(result.signals).toEqual([ArmSignal, SwiftShaderSignal]);

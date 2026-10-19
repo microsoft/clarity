@@ -3,7 +3,7 @@ import * as task from "@src/core/task";
 import * as dimension from "@src/data/dimension";
 
 // Meta Muse sends no identity: it claims Intel Linux but runs on ARM hardware without a GPU.
-// We only report evidence; the backend combines it into a verdict.
+// Report browser-API agent evidence; layout/agent.ts handles DOM evidence.
 // https://arcjet.com/learn/how-to-detect-metas-muse-ai-agent
 const LinuxX64Token = "linux x86_64)";
 const SwiftShaderPattern = /swiftshader/i;
