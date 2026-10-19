@@ -60,8 +60,7 @@ function collectText(headingId: number): string {
 
         if (record.data.tag === Constant.TextTag) {
             const scrubbedPiece = scrub.text(record.data.value, Constant.TextTag, record.metadata.privacy);
-            const normalizedText = (text + scrubbedPiece).replace(/\s+/g, " ").replace(/^ /, Constant.Empty);
-            text = normalizedText.substring(0, MaxHeadingLength);
+            text = (text + scrubbedPiece).substring(0, MaxHeadingLength);
             continue;
         }
 
@@ -71,7 +70,7 @@ function collectText(headingId: number): string {
         }
     }
 
-    return text.trim();
+    return text.replace(/\s+/g, " ").trim();
 }
 
 export function request(): void {

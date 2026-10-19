@@ -130,6 +130,13 @@ test.describe("page headings requested by collect", () => {
         expect(await collect(page, true)).toEqual([maximum]);
     });
 
+    test("normalizes once after the scrubbed-text budget and scrubs complete source tokens", async ({ page }) => {
+        await page.setContent(`<h1 data-clarity-unmask>${" ".repeat(60)}<span>Outside budget</span></h1>` +
+            "<h2 data-clarity-unmask> A<span> \t\n </span><em>B</em> </h2>" +
+            `<h3>${"a".repeat(80)}1</h3>`);
+        expect(await collect(page, true)).toEqual([`H2:A B\nH3:${"\u25aa".repeat(60)}`]);
+    });
+
     test("keeps ten candidates and sends only the first three readable headings", async ({ page }) => {
         await page.setContent("<h1> </h1><h2 data-clarity-mask>Private</h2>" +
             "<h3>Third</h3><h4>Fourth</h4><h5>Fifth</h5><h6>Sixth</h6>");
