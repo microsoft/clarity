@@ -9,7 +9,6 @@ const MaxHeadings = 3;
 const MaxHeadingLength = 60;
 // Keep text with at least one non-bullet, non-whitespace character.
 const HeadingContentPattern = /[^\u2022\s]/;
-const IncompleteUnicodeEndingPattern = /[\uD800-\uDBFF]$/;
 
 let active = false;
 let authorized = false;
@@ -72,8 +71,7 @@ function collectText(headingId: number): string {
         }
     }
 
-    const prefix = text.trim();
-    return prefix.replace(IncompleteUnicodeEndingPattern, Constant.Empty);
+    return text.trim();
 }
 
 export function request(): void {

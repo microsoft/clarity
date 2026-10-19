@@ -116,13 +116,13 @@ test.describe("page headings requested by collect", () => {
         await page.goto(origin);
     });
 
-    test("collects three normalized document-order headings with a surrogate-safe compact text cap", async ({ page }) => {
+    test("collects three normalized document-order headings with a 60-UTF-16-unit text cap", async ({ page }) => {
         await page.setContent("<h0>Invalid</h0><h7>Invalid</h7><h10>Invalid</h10><a1>Invalid</a1>" +
             `<div><h4 data-clarity-unmask>${"a".repeat(59)}\ud83d\udca1</h4></div><h1 data-clarity-unmask>${"a".repeat(59)}` +
             "<span> \t </span><b>Later</b></h1><h1> Same\r\n\t123 </h1>" +
             `<h6 data-clarity-unmask>${"a".repeat(59)}\ud83d\udca1</h6>`);
         expect(await collect(page, true)).toEqual([
-            `H4:${"a".repeat(59)}\nH1:${"a".repeat(59)}\nH1:Same ${digit.repeat(3)}`
+            `H4:${"a".repeat(59)}\ud83d\nH1:${"a".repeat(59)}\nH1:Same ${digit.repeat(3)}`
         ]);
         await page.setContent([1, 2, 3].map(level => `<h${level} data-clarity-unmask>${"a".repeat(61)}</h${level}>`).join(""));
         const maximum = [1, 2, 3].map(level => `H${level}:${"a".repeat(60)}`).join("\n");
