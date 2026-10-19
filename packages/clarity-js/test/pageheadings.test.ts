@@ -116,13 +116,13 @@ test.describe("page headings requested by collect", () => {
         await page.goto(origin);
     });
 
-    test("collects three normalized BFS headings with a surrogate-safe compact text cap", async ({ page }) => {
+    test("collects three normalized document-order headings with a surrogate-safe compact text cap", async ({ page }) => {
         await page.setContent("<h0>Invalid</h0><h7>Invalid</h7><h10>Invalid</h10><a1>Invalid</a1>" +
-            `<div><h4>Nested first</h4></div><h1 data-clarity-unmask>${"a".repeat(59)}` +
+            `<div><h4 data-clarity-unmask>${"a".repeat(59)}\ud83d\udca1</h4></div><h1 data-clarity-unmask>${"a".repeat(59)}` +
             "<span> \t </span><b>Later</b></h1><h1> Same\r\n\t123 </h1>" +
             `<h6 data-clarity-unmask>${"a".repeat(59)}\ud83d\udca1</h6>`);
         expect(await collect(page, true)).toEqual([
-            `H1:${"a".repeat(59)}\nH1:Same ${digit.repeat(3)}\nH6:${"a".repeat(59)}`
+            `H4:${"a".repeat(59)}\nH1:${"a".repeat(59)}\nH1:Same ${digit.repeat(3)}`
         ]);
         await page.setContent([1, 2, 3].map(level => `<h${level} data-clarity-unmask>${"a".repeat(61)}</h${level}>`).join(""));
         const maximum = [1, 2, 3].map(level => `H${level}:${"a".repeat(60)}`).join("\n");
@@ -138,6 +138,19 @@ test.describe("page headings requested by collect", () => {
         await page.setContent("<h1> </h1>".repeat(8) +
             "<h2>Ninth</h2><h3>Tenth</h3><h4>Outside budget</h4>");
         expect(await collect(page, true)).toEqual(["H2:Ninth\nH3:Tenth"]);
+
+        await page.setContent("<div>" + "<h2> </h2>".repeat(10) + "</div><h1>Outside document-order budget</h1>");
+        expect(await collect(page, true)).toEqual([]);
+    });
+
+    test("excludes iframe and shadow headings from the main-document candidates", async ({ page }) => {
+        await page.setContent('<iframe></iframe><div id="shadow"></div><h1 data-clarity-unmask>Main</h1>');
+        await page.evaluate((): void => {
+            document.querySelector("iframe").contentDocument.body.innerHTML = "<h1 data-clarity-unmask>Frame</h1>";
+            document.querySelector("#shadow").attachShadow({ mode: "open" }).innerHTML =
+                "<h1 data-clarity-unmask>Shadow</h1>";
+        });
+        expect(await collect(page, true)).toEqual(["H1:Main"]);
     });
 
     test("reuses cached text in DOM order, honors per-node privacy, and requires authorization", async ({ page }) => {

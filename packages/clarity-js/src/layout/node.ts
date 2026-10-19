@@ -11,7 +11,6 @@ import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
 import * as custom from "@src/layout/custom";
-import * as headings from "@src/layout/headings";
 import { checkDocumentStyles } from "@src/layout/style";
 import { electron } from "@src/data/metadata";
 
@@ -211,10 +210,6 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     break;
             }
 
-            // Collect during discovery, after the element's privacy is resolved.
-            if (source === Source.Discover) {
-                headings.observe(element, tag);
-            }
             break;
         default:
             break;
