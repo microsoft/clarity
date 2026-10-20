@@ -27,12 +27,10 @@ export function complete(): void {
     if (!active || serializedHeadings !== null) { return; }
 
     const selected: string[] = [];
-    let count = 0;
     const candidates = document.querySelectorAll("h1,h2,h3,h4,h5,h6");
-    for (let i = 0; i < candidates.length && count < MaxHeadings; i++) {
+    for (let i = 0; i < candidates.length && i < MaxHeadings; i++) {
         const target = dom.get(candidates[i]);
         if (target && target.metadata.active && target.data.tag === candidates[i].tagName) {
-            count++;
             const text = collectText(target.id);
             if (text !== null) { selected.push(`${target.data.tag}:${text}`); }
         }

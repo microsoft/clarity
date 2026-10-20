@@ -145,7 +145,7 @@ test.describe("page headings requested by collect", () => {
         ]);
     });
 
-    test("keeps the first three eligible headings even when empty or fully masked", async ({ page }) => {
+    test("keeps the first three heading candidates even when empty or fully masked", async ({ page }) => {
         await page.setContent("<h1> </h1><h2 data-clarity-mask>Private</h2>" +
             "<h3>Third</h3><h4>Fourth</h4><h5>Fifth</h5><h6>Sixth</h6>");
         expect(await collect(page, true)).toEqual([`H1:\nH2:${mask} ${mask.repeat(5)}\nH3:Third`]);
@@ -157,6 +157,22 @@ test.describe("page headings requested by collect", () => {
         expect(await collect(page, true, { content: false })).toEqual([
             `H1:${mask.repeat(5)}\nH2:${mask.repeat(6)}\nH3:${mask.repeat(5)}`
         ]);
+    });
+
+    test("does not replace an uncached candidate inserted during suspended discovery", async ({ page }) => {
+        await page.setContent("<h1>First</h1><h2>Second</h2><h3>Third</h3>");
+        await pauseDiscovery(page);
+        const expected = ["H1:First\nH2:Second"];
+        const values = await collect(page, true, { lean: true }, async (current, payloads) => {
+            await current.waitForFunction(() => (window as CaptureWindow).headingResume !== undefined);
+            await current.evaluate(() => {
+                document.body.insertAdjacentHTML("afterbegin", "<h4>Uncached</h4>");
+                (window as CaptureWindow).headingResume();
+            });
+            await current.evaluate(() => (window as CaptureWindow).clarity("event", "heading-next-upload"));
+            await expect.poll(() => extract(payloads)).toEqual(expected);
+        });
+        expect(values).toEqual(expected);
     });
 
     test("bounds full source text at 1000 work units and does not backfill oversized candidates", async ({ page }) => {
