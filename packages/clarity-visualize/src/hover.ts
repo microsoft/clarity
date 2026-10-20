@@ -25,6 +25,8 @@ interface Rule {
     readonly type: number;
     readonly cssText: string;
     selectorText?: string;
+    start?: string;
+    end?: string;
     cssRules?: RuleList;
     styleSheet?: RuleContainer;
     insertRule?: (rule: string, index?: number) => number;
@@ -306,7 +308,12 @@ function transformRules(container: RuleContainer, summary: HoverTransformationSu
     for (let i = container.cssRules.length - 1; i >= 0; i--) {
         let rule = container.cssRules[i];
         if (rule.type === StyleRule && rule.selectorText !== undefined) {
-            rule = transformStyleRule(container, rule, i, summary, logerror);
+            rule = transformRule(container, rule, i, rule.selectorText, summary, logerror);
+        } else if (rule.start !== undefined && rule.end !== undefined && isRuleContainer(rule)) {
+            // Scope boundaries are selectors, but are not exposed through selectorText.
+            const selector = "@scope" + (rule.start === null ? "" : ` (${rule.start})`) +
+                (rule.end === null ? "" : ` to (${rule.end})`);
+            rule = transformRule(container, rule, i, selector, summary, logerror);
         }
         if (isRuleContainer(rule)) {
             transformRules(rule, summary, logerror);
@@ -321,22 +328,22 @@ function transformRules(container: RuleContainer, summary: HoverTransformationSu
     }
 }
 
-function transformStyleRule(
+function transformRule(
     container: RuleContainer,
     original: Rule,
     index: number,
+    selector: string,
     summary: HoverTransformationSummary,
     logerror?: ErrorLogger
 ): Rule {
     summary.scanned++;
-    if (original.selectorText.toLowerCase().indexOf(":hover") < 0 &&
-        original.selectorText.indexOf("\\") < 0) {
+    if (selector.toLowerCase().indexOf(":hover") < 0 && selector.indexOf("\\") < 0) {
         return original;
     }
 
     let result: HoverSelectorResult;
     try {
-        result = transformHoverSelector(original.selectorText);
+        result = transformHoverSelector(selector);
     } catch (error) {
         summary.parseFailed++;
         if (logerror) { logerror(error); }
@@ -353,7 +360,16 @@ function transformStyleRule(
 
     let candidate: Rule = null;
     try {
-        const css = result.selector + original.cssText.substring(original.selectorText.length);
+        let css = result.selector;
+        if (original.type === StyleRule) {
+            css += original.cssText.substring(selector.length);
+        } else {
+            css += " {";
+            for (let i = 0; i < original.cssRules.length; i++) {
+                css += original.cssRules[i].cssText;
+            }
+            css += "}";
+        }
         // Insert before deleting so a rejected replacement leaves the original rule intact.
         container.insertRule(css, index + 1);
         candidate = container.cssRules[index + 1];

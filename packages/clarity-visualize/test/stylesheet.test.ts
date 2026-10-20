@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { Route } from "@playwright/test";
 import { resolve } from "path";
 import { loadStylesheet } from "../src/stylesheet";
 import type { StylesheetOutcome } from "../types/visualize";
@@ -12,7 +13,7 @@ test.describe("stylesheet loading", () => {
 
         fire(onload);
         fire(onload);
-        expect(await load.ready).toEqual({ status: "loaded", fallback: false, link });
+        expect(await load.completed).toEqual({ status: "loaded", fallback: false, link });
         expect(link.onload).toBeNull();
         expect(link.onerror).toBeNull();
     });
@@ -33,7 +34,7 @@ test.describe("stylesheet loading", () => {
         expect(fallback.hasAttribute("crossorigin")).toBe(false);
         expect(fallback.hasAttribute("integrity")).toBe(false);
         fire(fallback.onload);
-        expect(await load.ready).toEqual({ status: "loaded", fallback: true, link: fallback });
+        expect(await load.completed).toEqual({ status: "loaded", fallback: true, link: fallback });
         expect(replacements).toBe(1);
     });
 
@@ -46,17 +47,7 @@ test.describe("stylesheet loading", () => {
         fire(link.onerror);
         fire(firstLoad);
         fire(fallback.onerror);
-        expect(await load.ready).toEqual({ status: "failed", fallback: true, link: fallback });
-    });
-
-    test("gives both attempts independent timeouts", async () => {
-        const link = createLink();
-        let fallback: HTMLLinkElement = null;
-        const load = loadStylesheet(link, "https://provider.invalid/cached.css", 10,
-            (_failed: HTMLLinkElement, replacement: HTMLLinkElement): void => { fallback = replacement; }, true);
-
-        expect(await load.ready).toEqual({ status: "failed", fallback: true, link: fallback });
-        expect(fallback).not.toBeNull();
+        expect(await load.completed).toEqual({ status: "failed", fallback: true, link: fallback });
     });
 
     for (const retry of [false, true]) {
@@ -78,7 +69,7 @@ test.describe("stylesheet loading", () => {
             fire(staleError);
             await new Promise((done: () => void): ReturnType<typeof setTimeout> => setTimeout(done, 30));
 
-            expect(await load.ready).toEqual({ status: "cancelled", fallback: retry, link });
+            expect(await load.completed).toEqual({ status: "cancelled", fallback: retry, link });
             expect(link.href).toBe("https://provider.invalid/new.css");
             expect(replacements).toBe(retry ? 1 : 0);
         });
@@ -88,14 +79,239 @@ test.describe("stylesheet loading", () => {
         const link = createLink();
         const load = loadStylesheet(link, "https://provider.invalid/cached.css", 1000, noReplace);
         fire(link.onerror);
-        expect(await load.ready).toEqual({ status: "failed", fallback: false, link });
+        expect(await load.completed).toEqual({ status: "failed", fallback: false, link });
         expect(link.crossOrigin).toBeNull();
     });
+
+    for (const completion of ["load", "error", "cancel"]) {
+        test(`keeps ordinary loads pending after readiness until ${completion}`, async () => {
+            const link = createLink();
+            const load = loadStylesheet(link, "https://provider.invalid/slow.css", 10, noReplace);
+            let completed = false;
+            const pending = load.completed.then((result): typeof result => {
+                completed = true;
+                return result;
+            });
+            await load.ready;
+
+            expect(completed).toBe(false);
+            expect(link.onload).not.toBeNull();
+            expect(link.onerror).not.toBeNull();
+            const staleLoad = link.onload;
+            const staleError = link.onerror;
+            if (completion === "cancel") {
+                load.cancel();
+            } else {
+                fire(completion === "load" ? link.onload : link.onerror);
+            }
+            fire(staleLoad);
+            fire(staleError);
+
+            expect(await pending).toEqual({
+                status: completion === "load" ? "loaded" : completion === "error" ? "failed" : "cancelled",
+                fallback: false,
+                link
+            });
+            expect(link.onload).toBeNull();
+            expect(link.onerror).toBeNull();
+        });
+    }
+
+    for (const completion of ["load", "error"]) {
+        test(`settles a detached fallback load on ${completion}`, async () => {
+            let link = createLink();
+            const load = loadStylesheet(link, "https://provider.invalid/cached.css", 1000,
+                (_failed: HTMLLinkElement, replacement: HTMLLinkElement): void => { link = replacement; }, true);
+            fire(link.onerror);
+            Object.defineProperty(link.ownerDocument, "defaultView", { value: null });
+
+            const handler = completion === "load" ? link.onload : link.onerror;
+            expect(() => fire(handler)).not.toThrow();
+
+            expect(await load.completed).toEqual({
+                status: completion === "load" ? "loaded" : "failed",
+                fallback: true,
+                link
+            });
+            expect(link.onload).toBeNull();
+            expect(link.onerror).toBeNull();
+            expect(() => load.cancel()).not.toThrow();
+        });
+    }
 });
 
 test.describe("replay stylesheet lifecycle", () => {
     test.beforeEach(async ({ page }) => {
         await page.addScriptTag({ path: resolve(__dirname, "..", "build", "clarity.visualize.min.js") });
+    });
+
+    for (const mode of ["ordinary", "proxy", "cors"]) {
+        test(`resolves ${mode} iframe stylesheets against the iframe base`, async ({ page }) => {
+            await page.route("https://provider.invalid/**", (route: Route): Promise<void> =>
+                route.fulfill({
+                    contentType: "text/css",
+                    headers: { "Access-Control-Allow-Origin": "*" },
+                    body: ""
+                }));
+            const result = await page.evaluate(async (loading: string) => {
+                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const urls: string[] = [];
+                const visualizer = await api.setup(window, {
+                    version: "0.8.72",
+                    corsProxyStylesheets: loading === "cors",
+                    useproxy: loading === "ordinary" ? undefined : (url: string): string => {
+                        urls.push(url);
+                        return url;
+                    }
+                });
+                const layout = visualizer.layout;
+                const base = document.createElement("base");
+                base.href = "https://provider.invalid/top/";
+                document.head.appendChild(base);
+                const iframe = document.createElement("iframe");
+                document.body.appendChild(iframe);
+                const doc = iframe.contentDocument;
+                doc.head.innerHTML = '<base href="https://provider.invalid/frame/">';
+                layout.nodes[1] = doc.head;
+                const node = {
+                    id: 2, parent: 1, previous: null, tag: "LINK",
+                    attributes: { rel: "stylesheet", href: "site.css" }
+                };
+                layout.markup({ event: 6, time: 0, data: [node] });
+                await Promise.all(layout.stylesheets);
+                const link = layout.element(2) as HTMLLinkElement;
+                const href = link.href;
+                layout.reset();
+                return { href, urls };
+            }, mode);
+
+            expect(result.href).toBe("https://provider.invalid/frame/site.css");
+            expect(result.urls).toEqual(mode === "ordinary" ? [] : [
+                "https://provider.invalid/frame/site.css"
+            ]);
+        });
+    }
+
+    test("gives both attempts independent timeouts", async ({ page }) => {
+        await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+        await page.clock.pauseAt(new Date("2026-01-01T00:01:00Z"));
+        let requests = 0;
+        // Hold both requests so only the controlled clock can finish each attempt.
+        await page.route("https://provider.invalid/slow.css", (): void => { requests++; });
+        const state = await page.evaluateHandle(async () => {
+            const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+            const outcomes: StylesheetOutcome[] = [];
+            const visualizer = await api.setup(window, {
+                version: "0.8.72",
+                corsProxyStylesheets: true,
+                useproxy: (url: string): string => url,
+                onstylesheet: (outcome: StylesheetOutcome): void => { outcomes.push(outcome); }
+            });
+            const layout = visualizer.layout;
+            layout.nodes[1] = document.head;
+            layout.markup({ event: 6, time: 0, data: [{
+                id: 2, parent: 1, previous: null, tag: "LINK",
+                attributes: { rel: "stylesheet", href: "https://provider.invalid/slow.css" }
+            }] });
+            const pending = { settled: false };
+            void layout.stylesheets[0].then((): void => { pending.settled = true; });
+            return { layout, initial: layout.element(2), outcomes, pending };
+        });
+        await expect.poll(() => requests).toBe(1);
+
+        await page.clock.runFor(6999);
+        expect(await state.evaluate(({ layout, initial, outcomes, pending }) => ({
+            initial: layout.element(2) === initial, outcomes, settled: pending.settled
+        }))).toEqual({ initial: true, outcomes: [], settled: false });
+
+        await page.clock.runFor(1);
+        await expect.poll(() => requests).toBe(2);
+        expect(await state.evaluate(({ layout, initial, outcomes, pending }) => ({
+            initial: layout.element(2) === initial, outcomes, settled: pending.settled
+        }))).toEqual({ initial: false, outcomes: [], settled: false });
+
+        await page.clock.runFor(6999);
+        expect(await state.evaluate(({ outcomes, pending }) => ({ outcomes, settled: pending.settled })))
+            .toEqual({ outcomes: [], settled: false });
+
+        await page.clock.runFor(1);
+        expect(await state.evaluate(({ outcomes, pending }) => ({ outcomes, settled: pending.settled }))).toEqual({
+            outcomes: [{ status: "failed", fallback: true, transformation: undefined }],
+            settled: true
+        });
+        await page.clock.runFor(14000);
+        expect(requests).toBe(2);
+        expect(await state.evaluate(({ outcomes }) => outcomes)).toHaveLength(1);
+        await state.evaluate(({ layout }) => layout.reset());
+        await state.dispose();
+    });
+
+    test("applies an ordinary stylesheet that loads after replay becomes visible", async ({ page }) => {
+        await page.route("https://provider.invalid/", (documentRoute: Route): Promise<void> =>
+            documentRoute.fulfill({ contentType: "text/html", body: "<!doctype html><html><head></head><body></body></html>" }));
+        await page.goto("https://provider.invalid/");
+        await page.addScriptTag({ path: resolve(__dirname, "..", "build", "clarity.visualize.min.js") });
+        await page.clock.install();
+        let capture: (route: Route) => void;
+        const requested = new Promise<Route>((accept: (requestRoute: Route) => void): void => { capture = accept; });
+        await page.route("https://provider.invalid/slow.css", capture);
+        const state = await page.evaluateHandle(async () => {
+            const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+            const visualizer = await api.setup(window, { version: "0.8.72" });
+            const layout = visualizer.layout;
+            layout.nodes[1] = document.head;
+            const target = document.createElement("div");
+            target.className = "target";
+            target.setAttribute("clarity-hover", "");
+            document.body.appendChild(target);
+            const rendering = layout.dom({ event: 6, time: 0, data: [{
+                id: 2, parent: 1, previous: null, tag: "LINK",
+                attributes: { rel: "stylesheet", href: "https://provider.invalid/slow.css" }
+            }] });
+            return { layout, rendering, link: layout.element(2) as HTMLLinkElement };
+        });
+        const route = await requested;
+        await page.clock.runFor(7001);
+        expect(await state.evaluate(async ({ rendering }) => {
+            await rendering;
+            return document.documentElement.style.visibility;
+        })).toBe("visible");
+
+        await route.fulfill({ contentType: "text/css", body: ".target:hover { color: red; }" });
+        await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector(".target")).color))
+            .toBe("rgb(255, 0, 0)");
+        expect(await state.evaluate(({ link }) => ({ onload: link.onload, onerror: link.onerror })))
+            .toEqual({ onload: null, onerror: null });
+        await state.evaluate(({ layout }) => layout.reset());
+        await state.dispose();
+    });
+
+    test("reset settles pending stylesheet loading after the replay iframe is removed", async ({ page }) => {
+        const result = await page.evaluate(async () => {
+            const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+            const iframe = document.createElement("iframe");
+            document.body.appendChild(iframe);
+            const visualizer = await api.setup(iframe.contentWindow, { version: "0.8.72" });
+            const layout = visualizer.layout;
+            layout.nodes[1] = iframe.contentDocument.head;
+            layout.markup({ event: 6, time: 0, data: [{
+                id: 2, parent: 1, previous: null, tag: "LINK",
+                attributes: { rel: "stylesheet", href: "data:text/css,.target%7Bcolor:red%7D" }
+            }] });
+            const link = layout.element(2) as HTMLLinkElement;
+            const pending = layout.stylesheets[0];
+            iframe.remove();
+            layout.reset();
+            await pending;
+            return {
+                onload: link.onload,
+                onerror: link.onerror,
+                stylesheets: layout.stylesheets.length,
+                node: layout.element(2)
+            };
+        });
+
+        expect(result).toEqual({ onload: null, onerror: null, stylesheets: 0, node: null });
     });
 
     test("transforms a loaded stylesheet and applies replay hover styling", async ({ page }) => {
@@ -250,7 +466,7 @@ test.describe("replay stylesheet lifecycle", () => {
         });
     }
 
-    for (const change of ["href", "rel", "reset", "fallback", "completed"]) {
+    for (const change of ["href", "rel", "reset", "fallback"]) {
         test(`a stale load cannot overwrite a ${change} mutation`, async ({ page }) => {
             const result = await page.evaluate(async (mutation: string) => {
                 const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
@@ -276,7 +492,6 @@ test.describe("replay stylesheet lifecycle", () => {
                 const staleLoad = old.onload;
                 const staleError = old.onerror;
                 const pending = layout.stylesheets[0];
-                if (mutation === "completed") { old.dispatchEvent(new Event("load")); }
                 if (mutation === "reset") {
                     layout.reset();
                 } else {
@@ -295,13 +510,12 @@ test.describe("replay stylesheet lifecycle", () => {
                 await pending;
                 const unchanged = layout.element(2) === current;
                 const href = (current as HTMLLinkElement)?.href;
-                const reports = outcomes.length;
                 layout.reset();
-                return { unchanged, href, reports };
+                return { unchanged, href, outcomes };
             }, change);
 
             expect(result.unchanged).toBe(true);
-            expect(result.reports).toBe(0);
+            expect(result.outcomes).toEqual([]);
             if (change !== "reset") { expect(result.href).toContain(".new:hover"); }
         });
     }

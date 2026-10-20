@@ -9,7 +9,8 @@ export interface StylesheetLoadResult {
 }
 
 export interface StylesheetLoad {
-    ready: Promise<StylesheetLoadResult>;
+    ready: Promise<void>;
+    completed: Promise<StylesheetLoadResult>;
     cancel(): void;
 }
 
@@ -20,8 +21,11 @@ export function loadStylesheet(
     replace: StylesheetReplace,
     cors: boolean = false
 ): StylesheetLoad {
+    const timerWindow = initial.ownerDocument.defaultView;
     let cancel: () => void;
-    const ready = new Promise((resolve: (outcome: StylesheetLoadResult) => void): void => {
+    let release: () => void;
+    const ready = new Promise<void>((resolve: () => void): void => { release = resolve; });
+    const completed = new Promise((resolve: (outcome: StylesheetLoadResult) => void): void => {
         let link = initial;
         let attempt = 0;
         let timer: number = null;
@@ -35,13 +39,14 @@ export function loadStylesheet(
             link.onload = null;
             link.onerror = null;
             resolve({ status, fallback, link });
+            release();
         };
 
         cancel = (): void => finish("cancelled");
 
         const clear = (): void => {
             if (timer !== null) {
-                link.ownerDocument.defaultView.clearTimeout(timer);
+                timerWindow.clearTimeout(timer);
                 timer = null;
             }
         };
@@ -56,8 +61,17 @@ export function loadStylesheet(
                 if (complete || current !== attempt) { return; }
                 cors && !fallback ? retry(current) : finish("failed");
             };
-            timer = link.ownerDocument.defaultView.setTimeout(
-                (): void => cors && !fallback ? retry(current) : finish("failed"),
+            timer = timerWindow.setTimeout(
+                (): void => {
+                    if (complete || current !== attempt) { return; }
+                    if (cors) {
+                        fallback ? finish("failed") : retry(current);
+                    } else {
+                        // Reveal replay without discarding a stylesheet that is still downloading.
+                        clear();
+                        release();
+                    }
+                },
                 timeout
             );
             link.href = url;
@@ -84,5 +98,5 @@ export function loadStylesheet(
         if (cors) { link.crossOrigin = "anonymous"; }
         start();
     });
-    return { ready, cancel };
+    return { ready, completed, cancel };
 }

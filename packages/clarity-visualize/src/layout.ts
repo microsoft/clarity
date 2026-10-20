@@ -482,7 +482,8 @@ export class LayoutHelper {
         this.stylesheetLoads.get(node.id)?.cancel();
         this.stylesheetLoads.delete(node.id);
 
-        const link = this.element(node.id) as HTMLLinkElement ?? this.createElement(doc, node.tag) as HTMLLinkElement;
+        const targetDoc = parent?.ownerDocument ?? doc;
+        const link = this.element(node.id) as HTMLLinkElement ?? this.createElement(targetDoc, node.tag) as HTMLLinkElement;
         if (!node.attributes) { node.attributes = {}; }
         const proxy = useproxy ?? this.state.options.useproxy;
         const stylesheet = node.attributes["rel"] === Constant.StyleSheet;
@@ -495,7 +496,7 @@ export class LayoutHelper {
         const hint = (node.attributes.rel?.includes("preload") || node.attributes.rel?.includes("preconnect"))
             && (node.attributes.as === "style" || node.attributes.as === "font");
         if (parent !== null && (stylesheet || hint)) {
-            const href = cors ? this.resolveUrl(doc, node.attributes.href) : link.href;
+            const href = node.attributes.href === undefined ? "" : this.resolveUrl(targetDoc, node.attributes.href);
             const kind = stylesheet ? Constant.StyleSheet : node.attributes.as;
             const url = proxy ? proxy(href, link.id, kind) : href;
             // Preloads use CORS but do not retry as stylesheets.
@@ -516,7 +517,7 @@ export class LayoutHelper {
                 this.nodes[id] = fallback;
             }, cors);
         this.stylesheetLoads.set(id, load);
-        return load.ready.then(({ status, fallback, link: loaded }): void => {
+        const completed = load.completed.then(({ status, fallback, link: loaded }): void => {
             if (this.stylesheetLoads.get(id) !== load) { return; }
             this.stylesheetLoads.delete(id);
             const result = stylesheet && status === "loaded" && !fallback ? this.style(loaded) : undefined;
@@ -528,6 +529,7 @@ export class LayoutHelper {
                 });
             }
         });
+        return Promise.race([completed, load.ready]);
     }
 
     private style = (
