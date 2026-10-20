@@ -1,5 +1,6 @@
 import { expect, Page, Route, test } from "@playwright/test";
 import { join } from "path";
+import { decode } from "clarity-decode";
 import { Config } from "../types/core";
 
 const origin = "https://clarity.test/";
@@ -147,7 +148,7 @@ test.describe("page headings requested by collect", () => {
     test("keeps the first three eligible headings even when empty or fully masked", async ({ page }) => {
         await page.setContent("<h1> </h1><h2 data-clarity-mask>Private</h2>" +
             "<h3>Third</h3><h4>Fourth</h4><h5>Fifth</h5><h6>Sixth</h6>");
-        expect(await collect(page, true)).toEqual([`H1:\nH2:${mask.repeat(7)}\nH3:Third`]);
+        expect(await collect(page, true)).toEqual([`H1:\nH2:${mask} ${mask.repeat(5)}\nH3:Third`]);
 
         await page.setContent("<div>" + "<h2> </h2>".repeat(3) + "</div><h1>Outside document-order budget</h1>");
         expect(await collect(page, true)).toEqual(["H2:\nH2:\nH2:"]);
@@ -214,7 +215,8 @@ test.describe("page headings requested by collect", () => {
             });
         });
         expect(await collect(page, true, { mask: [".private"] })).toEqual([
-            `H1:Welcome ${mask.repeat(14)} to Clarity today\nH2:onetwothree\nH3:A ${mask.repeat(6)} B`
+            `H1:Welcome ${mask.repeat(2)} ${mask.repeat(5)} ${mask.repeat(5)} to Clarity today` +
+            `\nH2:onetwothree\nH3:A ${mask.repeat(6)} B`
         ]);
 
         await page.setContent("<h1 data-clarity-mask>Hidden <span data-clarity-unmask>Public 123</span> tail</h1>" +
@@ -223,9 +225,31 @@ test.describe("page headings requested by collect", () => {
         const privacy = { mask: [".private"], unmask: [".public"] };
         expect(await collect(page, false, privacy)).toEqual([]);
         expect(await collect(page, true, privacy)).toEqual([
-            `H1:${mask.repeat(6)} Public 123 ${mask.repeat(4)}\nH2:Order 123 reference ${digit.repeat(3)}` +
-            `\nH3:${mask.repeat(6)} Configured public 123`
+            `H1:${mask.repeat(6)}Public 123${mask.repeat(4)}\nH2:Order 123 reference ${digit.repeat(3)}` +
+            `\nH3:${mask.repeat(6)}Configured public 123`
         ]);
+    });
+
+    test("matches replay placeholders without exposing masked word boundaries", async ({ page }) => {
+        await page.setContent('<h1>Welcome <span id="first" data-clarity-mask> Ada\tLovelace </span>!</h1>' +
+            '<h2>Welcome <span id="second" data-clarity-mask>Abcdefghijkl</span>!</h2>' +
+            '<h3 data-clarity-unmask>Public 123</h3>');
+        const placeholder = `${mask.repeat(6)} ${mask.repeat(5)}`;
+        const values = await collect(page, true, {}, async (_page, payloads) => {
+            const nodes = payloads.flatMap(payload => (decode(payload).dom || []).flatMap(event => event.data));
+            for (const id of ["first", "second"]) {
+                const span = nodes.find(node => node.attributes?.id === id);
+                expect(span).toBeDefined();
+                const text = nodes.find(node => node.parent === span.id && node.tag === "*T");
+                expect(text?.value).toBe(placeholder);
+            }
+        });
+        expect(values).toEqual([`H1:Welcome ${placeholder}!\nH2:Welcome ${placeholder}!\nH3:Public 123`]);
+
+        await page.setContent(`<h1 data-clarity-mask>${"a".repeat(80)}</h1>`);
+        const prefix = `${mask.repeat(2)}${` ${mask.repeat(5)}`.repeat(9)} ${mask.repeat(3)}`;
+        expect(prefix.length).toBe(60);
+        expect(await collect(page, true)).toEqual([`H1:${prefix}`]);
     });
 
     test("publishes only completed discovery, never a canceled partial buffer", async ({ page }) => {

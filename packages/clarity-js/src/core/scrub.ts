@@ -5,10 +5,39 @@ import config from "@src/core/config";
 
 const catchallRegex = /\S/gi;
 const maxUrlLength = 2048;
+const averageWordLength = 6;
 let unicodeRegex = true;
 let digitRegex = null;
 let letterRegex = null;
 let currencyRegex = null;
+
+export function isTextMasked(tag: string, privacy: Privacy): boolean {
+    return tag === Layout.Constant.TextTag && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
+}
+
+export function textNode(value: string, privacy: Privacy): string {
+    const mangle = isTextMasked(Layout.Constant.TextTag, privacy);
+    const encoded = text(value, Layout.Constant.TextTag, privacy, mangle);
+    return mangle ? decodeMaskedText(encoded) : encoded;
+}
+
+export function decodeMaskedText(value: string): string {
+    const trimmed = value.trim();
+    if (trimmed.length > 0 && trimmed.indexOf(Data.Constant.Space) === -1) {
+        const length = parseInt(trimmed, 36);
+        if (length > 0) {
+            const quotient = Math.floor(length / averageWordLength);
+            const remainder = length % averageWordLength;
+            let output = Array(remainder + 1).join(Data.Constant.Mask);
+            for (let i = 0; i < quotient; i++) {
+                output += (i === 0 && remainder === 0 ? Data.Constant.Mask : Data.Constant.Space) +
+                    Array(averageWordLength).join(Data.Constant.Mask);
+            }
+            return output;
+        }
+    }
+    return value;
+}
 
 export function text(value: string, hint: string, privacy: Privacy, mangle: boolean = false, type?: string): string {
     if (value) {

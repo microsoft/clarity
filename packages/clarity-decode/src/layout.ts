@@ -1,9 +1,6 @@
 import { Constant } from "@clarity-types/data";
-import { Data, Layout } from "clarity-js";
+import { Data, Layout, decodeMaskedText } from "clarity-js";
 import { DomData, LayoutEvent, Interaction, RegionVisibility  } from "../types/layout";
-
-const AverageWordLength = 6;
-const Space = " ";
 
 export function decode(tokens: Data.Token[]): LayoutEvent {
     let time = tokens[0] as number;
@@ -154,7 +151,7 @@ function process(node: any[] | number[], tagIndex: number): DomData {
             let v = token.substr(keyIndex + 1);
             attributes[k] = v;
         } else if (output.tag === Layout.Constant.TextTag) {
-            value = masked ? unmask(token) : token;
+            value = masked ? decodeMaskedText(token) : token;
         }
     }
 
@@ -166,21 +163,4 @@ function process(node: any[] | number[], tagIndex: number): DomData {
 
 function num(input: string): number {
     return input ? parseInt(input, 36) : null;
-}
-
-function unmask(value: string): string {
-    let trimmed = value.trim();
-    if (trimmed.length > 0 && trimmed.indexOf(Space) === -1) {
-        let length = num(trimmed);
-        if (length > 0) {
-            let quotient = Math.floor(length / AverageWordLength);
-            let remainder = length % AverageWordLength;
-            let output = Array(remainder + 1).join(Data.Constant.Mask);
-            for (let i = 0; i < quotient; i++) {
-                output += (i === 0 && remainder === 0 ? Data.Constant.Mask : Space) + Array(AverageWordLength).join(Data.Constant.Mask);
-            }
-            return output;
-        }
-    }
-    return value;
 }

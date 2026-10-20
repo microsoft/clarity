@@ -63,7 +63,7 @@ function collectText(headingId: number): string | null {
         if (remaining < 0) { return null; }
 
         if (isText) {
-            const scrubbedPiece = scrub.text(record.data.value, Constant.TextTag, record.metadata.privacy);
+            const scrubbedPiece = scrub.textNode(record.data.value, record.metadata.privacy);
             text = (text + scrubbedPiece).substring(0, MaxHeadingLength);
             continue;
         }
