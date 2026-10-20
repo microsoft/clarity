@@ -4,11 +4,9 @@ import * as scrub from "@src/core/scrub";
 import * as dimension from "@src/data/dimension";
 import * as dom from "@src/layout/dom";
 
-const MaxHeadingCandidates = 10;
 const MaxHeadings = 3;
 const MaxHeadingLength = 60;
-// Keep text with at least one non-bullet, non-whitespace character.
-const HeadingContentPattern = /[^\u2022\s]/;
+const MaxHeadingWork = 1000;
 
 let active = false;
 let authorized = false;
@@ -31,12 +29,12 @@ export function complete(): void {
     const selected: string[] = [];
     let count = 0;
     const candidates = document.querySelectorAll("h1,h2,h3,h4,h5,h6");
-    for (let i = 0; i < candidates.length && count < MaxHeadingCandidates && selected.length < MaxHeadings; i++) {
+    for (let i = 0; i < candidates.length && count < MaxHeadings; i++) {
         const target = dom.get(candidates[i]);
         if (target && target.metadata.active && target.data.tag === candidates[i].tagName) {
             count++;
             const text = collectText(target.id);
-            if (HeadingContentPattern.test(text)) { selected.push(`${target.data.tag}:${text}`); }
+            if (text !== null) { selected.push(`${target.data.tag}:${text}`); }
         }
     }
 
@@ -45,9 +43,10 @@ export function complete(): void {
     publish();
 }
 
-function collectText(headingId: number): string {
+function collectText(headingId: number): string | null {
     const pendingIds = [headingId];
     let text: string = Constant.Empty;
+    let remaining = MaxHeadingWork - 1;
 
     while (pendingIds.length > 0 && text.length < MaxHeadingLength) {
         const record = dom.getValue(pendingIds.pop());
@@ -58,7 +57,12 @@ function collectText(headingId: number): string {
             continue;
         }
 
-        if (record.data.tag === Constant.TextTag) {
+        const isText = record.data.tag === Constant.TextTag;
+        // Charge queued nodes and full source text before processing either.
+        remaining -= isText ? record.data.value.length : record.children.length;
+        if (remaining < 0) { return null; }
+
+        if (isText) {
             const scrubbedPiece = scrub.text(record.data.value, Constant.TextTag, record.metadata.privacy);
             text = (text + scrubbedPiece).substring(0, MaxHeadingLength);
             continue;

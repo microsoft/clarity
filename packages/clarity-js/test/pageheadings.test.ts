@@ -134,20 +134,62 @@ test.describe("page headings requested by collect", () => {
         await page.setContent(`<h1 data-clarity-unmask>${" ".repeat(60)}<span>Outside budget</span></h1>` +
             "<h2 data-clarity-unmask> A<span> \t\n </span><em>B</em> </h2>" +
             `<h3>${"a".repeat(80)}1</h3>`);
-        expect(await collect(page, true)).toEqual([`H2:A B\nH3:${"\u25aa".repeat(60)}`]);
+        expect(await collect(page, true)).toEqual([`H1:\nH2:A B\nH3:${"\u25aa".repeat(60)}`]);
+
+        await page.setContent(`<h1>${"a".repeat(60)}@example.com</h1>` +
+            `<h2>${"a".repeat(60)} @example.com</h2>` +
+            `<h3 data-clarity-unmask>${"a".repeat(60)}@example.com</h3>`);
+        expect(await collect(page, true)).toEqual([
+            `H1:${"\u25aa".repeat(60)}\nH2:${"a".repeat(60)}\nH3:${"a".repeat(60)}`
+        ]);
     });
 
-    test("keeps ten candidates and sends only the first three readable headings", async ({ page }) => {
+    test("keeps the first three eligible headings even when empty or fully masked", async ({ page }) => {
         await page.setContent("<h1> </h1><h2 data-clarity-mask>Private</h2>" +
             "<h3>Third</h3><h4>Fourth</h4><h5>Fifth</h5><h6>Sixth</h6>");
-        expect(await collect(page, true)).toEqual(["H3:Third\nH4:Fourth\nH5:Fifth"]);
+        expect(await collect(page, true)).toEqual([`H1:\nH2:${mask.repeat(7)}\nH3:Third`]);
 
-        await page.setContent("<h1> </h1>".repeat(8) +
-            "<h2>Ninth</h2><h3>Tenth</h3><h4>Outside budget</h4>");
-        expect(await collect(page, true)).toEqual(["H2:Ninth\nH3:Tenth"]);
+        await page.setContent("<div>" + "<h2> </h2>".repeat(3) + "</div><h1>Outside document-order budget</h1>");
+        expect(await collect(page, true)).toEqual(["H2:\nH2:\nH2:"]);
 
-        await page.setContent("<div>" + "<h2> </h2>".repeat(10) + "</div><h1>Outside document-order budget</h1>");
+        await page.setContent("<h1>First</h1><h2>Second</h2><h3>Third</h3><h4>Fourth</h4>");
+        expect(await collect(page, true, { content: false })).toEqual([
+            `H1:${mask.repeat(5)}\nH2:${mask.repeat(6)}\nH3:${mask.repeat(5)}`
+        ]);
+    });
+
+    test("bounds full source text at 1000 work units and does not backfill oversized candidates", async ({ page }) => {
+        await page.setContent(`<h1>${"a".repeat(998)}</h1><h2>${"a".repeat(999)}</h2>` +
+            "<h3>Third</h3><h4>Outside candidate budget</h4>");
+        expect(await collect(page, true)).toEqual([`H1:${"a".repeat(60)}\nH3:Third`]);
+
+        await page.setContent(`<h1>A<span>${"b".repeat(995)}</span></h1>` +
+            `<h2>A<span>${"b".repeat(996)}</span></h2><h3>Third</h3>`);
+        expect(await collect(page, true)).toEqual([`H1:A${"b".repeat(59)}\nH3:Third`]);
+
+        await page.setContent("<h1>" + "a".repeat(10000) + "</h1>" +
+            "<h2>" + "b".repeat(10000) + "</h2><h3>" + "c".repeat(10000) + "</h3><h4>No replacement</h4>");
         expect(await collect(page, true)).toEqual([]);
+    });
+
+    test("bounds queued children even when descendants contribute no text", async ({ page }) => {
+        await page.setContent("<h1>" + "<span></span>".repeat(997) + "X</h1>" +
+            "<h2>" + "<span></span>".repeat(998) + "X</h2>" +
+            "<h3>Early" + "<span></span>".repeat(1000) + "</h3><h4>No replacement</h4>");
+        expect(await collect(page, true)).toEqual(["H1:X"]);
+    });
+
+    test("bounds deep empty descendants as well as wide child lists", async ({ page }) => {
+        await page.setContent("<h1></h1><h2></h2><h3>Third</h3><h4>No replacement</h4>");
+        await page.evaluate(() => {
+            for (let i = 0; i < 2; i++) {
+                let parent: Element = document.querySelector(i === 0 ? "h1" : "h2");
+                for (let depth = 0; depth < 999 + i; depth++) {
+                    parent = parent.appendChild(document.createElement("span"));
+                }
+            }
+        });
+        expect(await collect(page, true)).toEqual(["H1:\nH3:Third"]);
     });
 
     test("excludes iframe and shadow headings from the main-document candidates", async ({ page }) => {
