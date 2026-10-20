@@ -36,6 +36,5 @@ interface Helper {
 declare const clarity: Clarity;
 declare const helper: Helper;
 declare const version: string;
-declare function decodeMaskedText(value: string): string;
 
-export { clarity, version, helper, decodeMaskedText, Core, Data, Diagnostic, Layout, Interaction, Performance };
+export { clarity, version, helper, Core, Data, Diagnostic, Layout, Interaction, Performance };

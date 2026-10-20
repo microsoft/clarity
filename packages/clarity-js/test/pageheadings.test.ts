@@ -1,6 +1,5 @@
 import { expect, Page, Route, test } from "@playwright/test";
 import { join } from "path";
-import { decode } from "clarity-decode";
 import { Config } from "../types/core";
 
 const origin = "https://clarity.test/";
@@ -9,16 +8,13 @@ const mask = "\u2022";
 const digit = "\u25ab";
 
 type CaptureWindow = typeof window & {
-    clarity: {
-        (command: "start" | "stop", config?: Config): void;
-        (command: "event", key: string): void;
-    };
-    headingResume: () => void;
+    clarity: (command: "start" | "stop", config?: Config) => void;
+    headingQueries: number;
 };
 
 async function collect(
     page: Page, sampled: boolean, config: Partial<Config> = {},
-    afterResponse?: (page: Page, payloads: string[]) => Promise<void>
+    beforeResponse?: (page: Page) => Promise<void>
 ): Promise<string[]> {
     const payloads: string[] = [];
     const errors: string[] = [];
@@ -26,6 +22,7 @@ async function collect(
     const handler = async (route: Route): Promise<void> => {
         payloads.push(route.request().postData());
         const first = payloads.length === 1;
+        if (first && beforeResponse) { await beforeResponse(page); }
         await route.fulfill({
             status: first ? 200 : 204,
             contentType: "text/plain",
@@ -47,7 +44,6 @@ async function collect(
     }, { endpoint: upload, config });
     await expect(page.locator("html")).toHaveAttribute("data-headings-response", "headings-complete");
     expect(extract([payloads[0]])).toEqual([]);
-    if (afterResponse) { await afterResponse(page, payloads); }
     await page.evaluate(() => (window as CaptureWindow).clarity("stop"));
     await expect.poll(() => payloads.some(payload => JSON.parse(payload).e[9] === 1)).toBe(true);
     await page.unroute(upload, handler);
@@ -72,37 +68,6 @@ function extract(payloads: string[]): string[] {
         }
     }
     return values;
-}
-
-async function pauseDiscovery(page: Page): Promise<void> {
-    await page.evaluate((): void => {
-        const current = window as CaptureWindow;
-        const attributes = Object.getOwnPropertyDescriptor(Element.prototype, "attributes");
-        const now = performance.now.bind(performance);
-        let paused = false;
-        current.headingResume = undefined;
-        Object.defineProperty(window, "requestIdleCallback", {
-            configurable: true,
-            value: (callback: (deadline: { timeRemaining: () => number }) => void): number => {
-                current.headingResume = () => {
-                    Object.defineProperty(performance, "now", { configurable: true, value: now });
-                    callback({ timeRemaining: () => 1000 });
-                };
-                return 1;
-            }
-        });
-        Object.defineProperty(HTMLHeadingElement.prototype, "attributes", {
-            configurable: true,
-            get(): NamedNodeMap {
-                const value = attributes.get.call(this);
-                if (!paused) {
-                    paused = true;
-                    Object.defineProperty(performance, "now", { configurable: true, value: () => now() + 1000 });
-                }
-                return value;
-            }
-        });
-    });
 }
 
 test.describe("page headings requested by collect", () => {
@@ -148,31 +113,43 @@ test.describe("page headings requested by collect", () => {
     test("keeps the first three heading candidates even when empty or fully masked", async ({ page }) => {
         await page.setContent("<h1> </h1><h2 data-clarity-mask>Private</h2>" +
             "<h3>Third</h3><h4>Fourth</h4><h5>Fifth</h5><h6>Sixth</h6>");
-        expect(await collect(page, true)).toEqual([`H1:\nH2:${mask} ${mask.repeat(5)}\nH3:Third`]);
+        expect(await collect(page, true)).toEqual([`H1:\nH2:${mask}\nH3:Third`]);
 
         await page.setContent("<div>" + "<h2> </h2>".repeat(3) + "</div><h1>Outside document-order budget</h1>");
         expect(await collect(page, true)).toEqual(["H2:\nH2:\nH2:"]);
 
         await page.setContent("<h1>First</h1><h2>Second</h2><h3>Third</h3><h4>Fourth</h4>");
         expect(await collect(page, true, { content: false })).toEqual([
-            `H1:${mask.repeat(5)}\nH2:${mask.repeat(6)}\nH3:${mask.repeat(5)}`
+            `H1:${mask}\nH2:${mask}\nH3:${mask}`
         ]);
     });
 
-    test("does not replace an uncached candidate inserted during suspended discovery", async ({ page }) => {
-        await page.setContent("<h1>First</h1><h2>Second</h2><h3>Third</h3>");
-        await pauseDiscovery(page);
-        const expected = ["H1:First\nH2:Second"];
-        const values = await collect(page, true, { lean: true }, async (current, payloads) => {
-            await current.waitForFunction(() => (window as CaptureWindow).headingResume !== undefined);
-            await current.evaluate(() => {
-                document.body.insertAdjacentHTML("afterbegin", "<h4>Uncached</h4>");
-                (window as CaptureWindow).headingResume();
+    test("checks current candidates only on request and does not replace uncached ones", async ({ page }) => {
+        for (const sampled of [false, true]) {
+            await page.goto(origin);
+            await page.setContent("<h1>First</h1><h2>Second</h2><h3>Third</h3>");
+            await page.evaluate(() => {
+                const current = window as CaptureWindow;
+                const query = document.querySelectorAll.bind(document);
+                current.headingQueries = 0;
+                Object.defineProperty(document, "querySelectorAll", {
+                    configurable: true,
+                    value(selector: string): NodeListOf<Element> {
+                        if (selector === "h1,h2,h3,h4,h5,h6") {
+                            current.headingQueries++;
+                            // Insert synchronously so mutation tracking cannot cache this candidate before collection.
+                            document.body.insertAdjacentHTML("afterbegin", "<h4>Uncached</h4>");
+                        }
+                        return query(selector);
+                    }
+                });
             });
-            await current.evaluate(() => (window as CaptureWindow).clarity("event", "heading-next-upload"));
-            await expect.poll(() => extract(payloads)).toEqual(expected);
-        });
-        expect(values).toEqual(expected);
+            const values = await collect(page, sampled, { lean: true }, async current => {
+                expect(await current.evaluate(() => (window as CaptureWindow).headingQueries)).toBe(0);
+            });
+            expect(values).toEqual(sampled ? ["H1:First\nH2:Second"] : []);
+            expect(await page.evaluate(() => (window as CaptureWindow).headingQueries)).toBe(sampled ? 1 : 0);
+        }
     });
 
     test("bounds full source text at 1000 work units and does not backfill oversized candidates", async ({ page }) => {
@@ -231,8 +208,7 @@ test.describe("page headings requested by collect", () => {
             });
         });
         expect(await collect(page, true, { mask: [".private"] })).toEqual([
-            `H1:Welcome ${mask.repeat(2)} ${mask.repeat(5)} ${mask.repeat(5)} to Clarity today` +
-            `\nH2:onetwothree\nH3:A ${mask.repeat(6)} B`
+            `H1:Welcome ${mask} to Clarity today\nH2:onetwothree\nH3:A ${mask} B`
         ]);
 
         await page.setContent("<h1 data-clarity-mask>Hidden <span data-clarity-unmask>Public 123</span> tail</h1>" +
@@ -241,49 +217,19 @@ test.describe("page headings requested by collect", () => {
         const privacy = { mask: [".private"], unmask: [".public"] };
         expect(await collect(page, false, privacy)).toEqual([]);
         expect(await collect(page, true, privacy)).toEqual([
-            `H1:${mask.repeat(6)}Public 123${mask.repeat(4)}\nH2:Order 123 reference ${digit.repeat(3)}` +
-            `\nH3:${mask.repeat(6)}Configured public 123`
+            `H1:${mask}Public 123${mask}\nH2:Order 123 reference ${digit.repeat(3)}` +
+            `\nH3:${mask}Configured public 123`
         ]);
     });
 
-    test("matches replay placeholders without exposing masked word boundaries", async ({ page }) => {
-        await page.setContent('<h1>Welcome <span id="first" data-clarity-mask> Ada\tLovelace </span>!</h1>' +
-            '<h2>Welcome <span id="second" data-clarity-mask>Abcdefghijkl</span>!</h2>' +
+    test("uses a fixed marker without exposing masked text length or word boundaries", async ({ page }) => {
+        await page.setContent('<h1>Welcome <span data-clarity-mask> Ada\tLovelace </span>!</h1>' +
+            '<h2>Welcome <span data-clarity-mask>A much longer private phrase</span>!</h2>' +
             '<h3 data-clarity-unmask>Public 123</h3>');
-        const placeholder = `${mask.repeat(6)} ${mask.repeat(5)}`;
-        const values = await collect(page, true, {}, async (_page, payloads) => {
-            const nodes = payloads.flatMap(payload => (decode(payload).dom || []).flatMap(event => event.data));
-            for (const id of ["first", "second"]) {
-                const span = nodes.find(node => node.attributes?.id === id);
-                expect(span).toBeDefined();
-                const text = nodes.find(node => node.parent === span.id && node.tag === "*T");
-                expect(text?.value).toBe(placeholder);
-            }
-        });
-        expect(values).toEqual([`H1:Welcome ${placeholder}!\nH2:Welcome ${placeholder}!\nH3:Public 123`]);
+        expect(await collect(page, true)).toEqual([`H1:Welcome ${mask}!\nH2:Welcome ${mask}!\nH3:Public 123`]);
 
-        await page.setContent(`<h1 data-clarity-mask>${"a".repeat(80)}</h1>`);
-        const prefix = `${mask.repeat(2)}${` ${mask.repeat(5)}`.repeat(9)} ${mask.repeat(3)}`;
-        expect(prefix.length).toBe(60);
-        expect(await collect(page, true)).toEqual([`H1:${prefix}`]);
-    });
-
-    test("publishes only completed discovery, never a canceled partial buffer", async ({ page }) => {
-        for (const complete of [false, true]) {
-            await page.goto(origin);
-            await page.setContent("<h1 data-clarity-unmask>First</h1><h2 data-clarity-unmask>Second</h2>");
-            await pauseDiscovery(page);
-            const values = await collect(page, true, { lean: true }, async (current, payloads) => {
-                await current.waitForFunction(() => (window as CaptureWindow).headingResume !== undefined);
-                expect(extract(payloads)).toEqual([]);
-                if (complete) {
-                    await current.evaluate(() => (window as CaptureWindow).headingResume());
-                    await current.evaluate(() => (window as CaptureWindow).clarity("event", "heading-next-upload"));
-                    await expect.poll(() => extract(payloads)).toEqual(["H1:First\nH2:Second"]);
-                    expect(payloads.every(payload => JSON.parse(payload).e[9] === 0)).toBe(true);
-                }
-            });
-            expect(values).toEqual(complete ? ["H1:First\nH2:Second"] : []);
-        }
+        await page.setContent(`<h1 data-clarity-mask>${"a".repeat(80)}</h1>` +
+            `<h2 data-clarity-mask> \t\n </h2><h3 data-clarity-mask>${"a".repeat(999)}</h3>`);
+        expect(await collect(page, true)).toEqual([`H1:${mask}\nH2:`]);
     });
 });

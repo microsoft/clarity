@@ -8,24 +8,7 @@ const MaxHeadings = 3;
 const MaxHeadingLength = 60;
 const MaxHeadingWork = 1000;
 
-let active = false;
-let authorized = false;
-let serializedHeadings: string = null;
-
-export function start(): void {
-    active = true;
-    authorized = false;
-    serializedHeadings = null;
-}
-
-export function stop(): void {
-    active = false;
-    serializedHeadings = null;
-}
-
-export function complete(): void {
-    if (!active || serializedHeadings !== null) { return; }
-
+export function request(): void {
     const selected: string[] = [];
     const candidates = document.querySelectorAll("h1,h2,h3,h4,h5,h6");
     for (let i = 0; i < candidates.length && i < MaxHeadings; i++) {
@@ -37,8 +20,7 @@ export function complete(): void {
     }
 
     // Encode each heading as H1:Checkout; separate headings with newlines.
-    serializedHeadings = selected.join("\n");
-    publish();
+    dimension.log(Dimension.PageHeadings, selected.join("\n"));
 }
 
 function collectText(headingId: number): string | null {
@@ -73,15 +55,4 @@ function collectText(headingId: number): string | null {
     }
 
     return text.replace(/\s+/g, " ").trim();
-}
-
-export function request(): void {
-    authorized = true;
-    publish();
-}
-
-function publish(): void {
-    if (authorized && serializedHeadings !== null) {
-        dimension.log(Dimension.PageHeadings, serializedHeadings);
-    }
 }

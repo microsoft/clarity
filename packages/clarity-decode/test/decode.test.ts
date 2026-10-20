@@ -2,31 +2,6 @@ import { test, expect } from '@playwright/test';
 import { decode } from 'clarity-decode';
 
 test.describe('decode function', () => {
-    test("preserves masked text reconstruction and literal unmasked text", () => {
-        const mask = "\u2022";
-        const cases = [
-            ["1", mask],
-            ["5", mask.repeat(5)],
-            ["6", mask.repeat(6)],
-            ["7", `${mask} ${mask.repeat(5)}`],
-            ["c", `${mask.repeat(6)} ${mask.repeat(5)}`],
-            [" \tc\n", `${mask.repeat(6)} ${mask.repeat(5)}`],
-            ["0", "0"],
-            ["!", "!"],
-            ["legacy text", "legacy text"],
-            [" \t", " \t"]
-        ];
-        for (const [encoded, expected] of cases) {
-            const result = decode(JSON.stringify({
-                e: ["0.8.73-beta", 1, 0, 10, "test", "user", "session", 1, 0, 0, 0, "https://test.com/"],
-                a: [],
-                p: [[0, 5, -2, 1, "*T", encoded, 3, 1, 2, "*T", encoded]]
-            }));
-            expect(result.dom[0].data[0].value).toBe(expected);
-            expect(result.dom[0].data[1].value).toBe(encoded);
-        }
-    });
-
     test('should decode a simple payload', () => {
         // This is a very simple test that focuses on basic decoding functionality
         const testPayload = {
