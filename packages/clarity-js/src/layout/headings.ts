@@ -54,5 +54,7 @@ function collectText(headingId: number): string | null {
         }
     }
 
+    // Drop a split Unicode character.
+    if (text.charCodeAt(text.length - 1) >= 0xD800 && text.charCodeAt(text.length - 1) <= 0xDBFF) { text = text.slice(0, -1); }
     return text.replace(/\s+/g, " ").trim();
 }

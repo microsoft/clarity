@@ -88,12 +88,16 @@ test.describe("page headings requested by collect", () => {
             "<span> \t </span><b>Later</b></h1><h1> Same\r\n\t123 </h1>" +
             `<h6 data-clarity-unmask>${"a".repeat(59)}\ud83d\udca1</h6>`);
         expect(await collect(page, true)).toEqual([
-            `H4:${"a".repeat(59)}\ud83d\nH1:${"a".repeat(59)}\nH1:Same ${digit.repeat(3)}`
+            `H4:${"a".repeat(59)}\nH1:${"a".repeat(59)}\nH1:Same ${digit.repeat(3)}`
         ]);
         await page.setContent([1, 2, 3].map(level => `<h${level} data-clarity-unmask>${"a".repeat(61)}</h${level}>`).join(""));
         const maximum = [1, 2, 3].map(level => `H${level}:${"a".repeat(60)}`).join("\n");
         expect(maximum.length).toBe(191);
         expect(await collect(page, true)).toEqual([maximum]);
+
+        await page.setContent(`<h1 data-clarity-unmask>${"a".repeat(58)}\ud83d\udca1</h1>` +
+            `<h2 data-clarity-unmask>${"a".repeat(58)} \ud83d\udca1</h2>`);
+        expect(await collect(page, true)).toEqual([`H1:${"a".repeat(58)}\ud83d\udca1\nH2:${"a".repeat(58)}`]);
     });
 
     test("normalizes once after the scrubbed-text budget and scrubs complete source tokens", async ({ page }) => {
