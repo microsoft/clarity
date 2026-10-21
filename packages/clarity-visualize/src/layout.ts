@@ -4,8 +4,8 @@ import { Asset, Constant, type LinkHandler, NodeType, type PlaybackState, Settin
 import { StyleSheetOperation } from "clarity-js/types/layout";
 import { AnimationOperation } from "clarity-js/types/layout";
 import { Constant as LayoutConstants } from "clarity-js/types/layout";
-import { HoverTransformationSummary, transformHoverRules } from "./hover";
-import { loadStylesheet, StylesheetLoad } from "./stylesheet";
+import { HoverTransformationSummary, transformHoverRules } from "@src/hover";
+import { loadStylesheet, StylesheetLoad } from "@src/stylesheet";
 import sharedStyle from "./styles/shared.css";
 
 /* BEGIN blobUnavailableSvgs */
@@ -114,6 +114,7 @@ export class LayoutHelper {
     isMobile: boolean;
     stylesheets: Promise<void>[] = [];
     private stylesheetLoads: Map<number, StylesheetLoad> = new Map();
+    private renderGeneration: number = 0;
     fonts: Promise<void>[] = [];
     nodes = {};
     events = {};
@@ -136,6 +137,7 @@ export class LayoutHelper {
     }
 
     public reset = (): void => {
+        this.renderGeneration++;
         this.stylesheetLoads.forEach((load: StylesheetLoad): void => load.cancel());
         this.stylesheetLoads.clear();
         this.nodes = {};
@@ -219,10 +221,13 @@ export class LayoutHelper {
                 doc.documentElement.style.visibility = Constant.Hidden;
                 // Render all DOM events to reconstruct the page
                 this.markup(event, useproxy);
+                const generation = ++this.renderGeneration;
                 // Wait on all stylesheets and fonts to finish loading
                 await Promise.all(this.stylesheets.concat(this.fonts));
                 // Toggle back the visibility of target window
-                doc.documentElement.style.visibility = Constant.Visible;
+                if (generation === this.renderGeneration) {
+                    doc.documentElement.style.visibility = Constant.Visible;
+                }
             }
         }
     }

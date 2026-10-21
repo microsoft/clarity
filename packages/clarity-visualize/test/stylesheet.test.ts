@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 import type { Route } from "@playwright/test";
 import { resolve } from "path";
-import { loadStylesheet } from "../src/stylesheet";
-import type { StylesheetOutcome } from "../types/visualize";
+import { loadStylesheet } from "@src/stylesheet";
+import type { StylesheetOutcome } from "@clarity-types/visualize";
 
 test.describe("stylesheet loading", () => {
     test("reports loading independently of CSSOM access or transformation", async () => {
@@ -145,6 +145,46 @@ test.describe("replay stylesheet lifecycle", () => {
         await page.addScriptTag({ path: resolve(__dirname, "..", "build", "clarity.visualize.min.js") });
     });
 
+    test("keeps replacement replay hidden when setup cancels an earlier render", async ({ page }) => {
+        let acceptReplacement: (route: Route) => void;
+        const requested = new Promise<Route>((resolveRoute: (route: Route) => void): void => {
+            acceptReplacement = resolveRoute;
+        });
+        await page.route("https://provider.invalid/old.css", (): void => undefined);
+        await page.route("https://provider.invalid/replacement.css", acceptReplacement);
+        const state = await page.evaluateHandle(async () => {
+            const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
+            const visualizer = await api.setup(window, { version: "0.8.72" });
+            const oldLayout = visualizer.layout;
+            oldLayout.nodes[1] = document.head;
+            const earlier = oldLayout.dom({ event: 6, time: 0, data: [{
+                id: 2, parent: 1, previous: null, tag: "LINK",
+                attributes: { rel: "stylesheet", href: "https://provider.invalid/old.css" }
+            }] });
+            const replacement = api.setup(window, {
+                version: "0.8.72",
+                dom: { event: 5, time: 1, data: [
+                    { id: 3, parent: null, previous: null, tag: "*D",
+                        attributes: { name: "html", publicId: "", systemId: "" } },
+                    { id: 4, parent: null, previous: null, tag: "HTML" },
+                    { id: 5, parent: 4, previous: null, tag: "HEAD" },
+                    { id: 6, parent: 5, previous: null, tag: "LINK",
+                        attributes: { rel: "stylesheet", href: "https://provider.invalid/replacement.css" } }
+                ] }
+            });
+            await earlier;
+            return { replacement };
+        });
+        const route = await requested;
+
+        expect(await page.evaluate(() => document.documentElement.style.visibility)).toBe("hidden");
+        await route.fulfill({ contentType: "text/css", body: "html { color: rgb(255, 0, 0); }" });
+        await state.evaluate(async ({ replacement }) => { await replacement; });
+        expect(await page.evaluate(() => document.documentElement.style.visibility)).toBe("visible");
+        expect(await page.evaluate(() => getComputedStyle(document.documentElement).color)).toBe("rgb(255, 0, 0)");
+        await state.dispose();
+    });
+
     for (const mode of ["ordinary", "proxy", "cors"]) {
         test(`resolves ${mode} iframe stylesheets against the iframe base`, async ({ page }) => {
             await page.route("https://provider.invalid/**", (route: Route): Promise<void> =>
@@ -154,7 +194,7 @@ test.describe("replay stylesheet lifecycle", () => {
                     body: ""
                 }));
             const result = await page.evaluate(async (loading: string) => {
-                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
                 const urls: string[] = [];
                 const visualizer = await api.setup(window, {
                     version: "0.8.72",
@@ -199,7 +239,7 @@ test.describe("replay stylesheet lifecycle", () => {
         // Hold both requests so only the controlled clock can finish each attempt.
         await page.route("https://provider.invalid/slow.css", (): void => { requests++; });
         const state = await page.evaluateHandle(async () => {
-            const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+            const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
             const outcomes: StylesheetOutcome[] = [];
             const visualizer = await api.setup(window, {
                 version: "0.8.72",
@@ -256,7 +296,7 @@ test.describe("replay stylesheet lifecycle", () => {
         const requested = new Promise<Route>((accept: (requestRoute: Route) => void): void => { capture = accept; });
         await page.route("https://provider.invalid/slow.css", capture);
         const state = await page.evaluateHandle(async () => {
-            const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+            const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
             const visualizer = await api.setup(window, { version: "0.8.72" });
             const layout = visualizer.layout;
             layout.nodes[1] = document.head;
@@ -294,7 +334,7 @@ test.describe("replay stylesheet lifecycle", () => {
             // Keep the load pending so only its readiness timeout can reveal replay.
             await page.route("https://provider.invalid/pending.css", (): void => undefined);
             const state = await page.evaluateHandle(async ({ removed, loading }) => {
-                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
                 const outcomes: StylesheetOutcome[] = [];
                 const visualizer = await api.setup(window, {
                     version: "0.8.72",
@@ -303,7 +343,7 @@ test.describe("replay stylesheet lifecycle", () => {
                     onstylesheet: (outcome: StylesheetOutcome): void => { outcomes.push(outcome); }
                 });
                 const layout = visualizer.layout;
-                const helper = layout.constructor as typeof import("../src/layout").LayoutHelper;
+                const helper = layout.constructor as typeof import("@src/layout").LayoutHelper;
                 helper.TIMEOUT = 100;
                 const container = document.createElement("div");
                 const iframe = document.createElement("iframe");
@@ -339,7 +379,7 @@ test.describe("replay stylesheet lifecycle", () => {
 
     test("reset settles pending stylesheet loading after the replay iframe is removed", async ({ page }) => {
         const result = await page.evaluate(async () => {
-            const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+            const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
             const iframe = document.createElement("iframe");
             document.body.appendChild(iframe);
             const visualizer = await api.setup(iframe.contentWindow, { version: "0.8.72" });
@@ -367,7 +407,7 @@ test.describe("replay stylesheet lifecycle", () => {
 
     test("transforms a loaded stylesheet and applies replay hover styling", async ({ page }) => {
         const result = await page.evaluate(async () => {
-            const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+            const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
             const outcomes: StylesheetOutcome[] = [];
             const visualizer = await api.setup(window, {
                 version: "0.8.72",
@@ -400,7 +440,7 @@ test.describe("replay stylesheet lifecycle", () => {
     for (const scenario of ["empty", "insertion-failure", "unexpected", "unavailable", "fallback"]) {
         test(`preserves successful loading for a ${scenario} stylesheet`, async ({ page }) => {
             const result = await page.evaluate(async (mode: string) => {
-                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
                 const outcomes: StylesheetOutcome[] = [];
                 const errors: string[] = [];
                 const visualizer = await api.setup(window, {
@@ -472,7 +512,7 @@ test.describe("replay stylesheet lifecycle", () => {
         test(`removing a stylesheet cancels its ${fallback ? "fallback" : "initial"} load without restarting it`, async ({ page }) => {
             await page.clock.install();
             const state = await page.evaluateHandle(async (retry: boolean) => {
-                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
                 const outcomes: StylesheetOutcome[] = [];
                 const visualizer = await api.setup(window, {
                     version: "0.8.72",
@@ -520,7 +560,7 @@ test.describe("replay stylesheet lifecycle", () => {
     for (const change of ["href", "rel", "reset", "fallback"]) {
         test(`a stale load cannot overwrite a ${change} mutation`, async ({ page }) => {
             const result = await page.evaluate(async (mutation: string) => {
-                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
                 const outcomes: StylesheetOutcome[] = [];
                 const visualizer = await api.setup(window, {
                     version: "0.8.72",
@@ -574,7 +614,7 @@ test.describe("replay stylesheet lifecycle", () => {
     for (const access of ["sheet", "cssRules"]) {
         test(`reports a loaded stylesheet without logging ${access} access errors`, async ({ page }) => {
             const result = await page.evaluate(async (property: string) => {
-                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
                 const outcomes: StylesheetOutcome[] = [];
                 const errors: string[] = [];
                 const visualizer = await api.setup(window, {

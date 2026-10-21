@@ -1,4 +1,4 @@
-import type { StylesheetOutcomeStatus } from "../types/visualize";
+import type { StylesheetOutcomeStatus } from "@clarity-types/visualize";
 
 export type StylesheetReplace = (current: HTMLLinkElement, replacement: HTMLLinkElement) => void;
 

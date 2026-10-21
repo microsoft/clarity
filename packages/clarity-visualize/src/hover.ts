@@ -1,6 +1,6 @@
-import type { ErrorLogger } from "../types/visualize";
-import type { HoverTransformationSummary } from "../types/visualize";
-export type { HoverTransformationSummary } from "../types/visualize";
+import type { ErrorLogger } from "@clarity-types/visualize";
+import type { HoverTransformationSummary } from "@clarity-types/visualize";
+export type { HoverTransformationSummary } from "@clarity-types/visualize";
 
 const Hover = "hover";
 const HoverAttribute = "clarity-hover";

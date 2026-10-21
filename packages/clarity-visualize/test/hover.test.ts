@@ -4,7 +4,7 @@ import {
     HoverTransformationSummary,
     transformHoverRules,
     transformHoverSelector
-} from "../src/hover";
+} from "@src/hover";
 
 test.describe("hover selector transformation", () => {
     test("transforms a standard hover selector", () => {
@@ -304,7 +304,7 @@ test("preserves real pseudo-element hover styling while transforming slotted ele
     await expect(button).toHaveCSS("background-color", "rgb(0, 0, 255)");
 
     const selectorsAfter = await page.evaluate(async (css: string) => {
-        const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+        const api = (window as Window & { clarity: { visualize: typeof import("@src/clarity") } }).clarity.visualize;
         const visualizer = await api.setup(window, { version: "0.8.72" });
         const layout = visualizer.layout;
         layout.nodes[1] = document.head;
