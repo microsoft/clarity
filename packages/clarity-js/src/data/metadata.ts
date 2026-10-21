@@ -57,6 +57,7 @@ export function start(): void {
   metric.max(Metric.ClientTimestamp, s.ts);
   metric.max(Metric.Playback, BooleanFlag.False);
   metric.max(Metric.Electron, electron);
+  metric.max(Metric.WebMcpDetected, webMcp() ? BooleanFlag.True : null);
 
   const zone = (window as any)?.[CoreConstant.Zone];
   const isZone = zone && CoreConstant.Symbol in zone;
@@ -96,6 +97,15 @@ export function start(): void {
   trackConsent.config(consent);
   // Track ids using a cookie if configuration allows it
   track(u);
+}
+
+function webMcp(): boolean {
+  try {
+    const context: unknown = document["modelContext"];
+    return !!context && typeof context === "object";
+  } catch {
+    return false;
+  }
 }
 
 function userAgentData(): void {
@@ -340,4 +350,3 @@ function user(): User {
   }
   return output;
 }
-

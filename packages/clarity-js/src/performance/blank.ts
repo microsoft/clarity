@@ -8,3 +8,4 @@ export function trigger(): void {}
 export function track(): void {}
 export function event(): void {}
 export function register(): void {}
+export function snapshot(): void {}
