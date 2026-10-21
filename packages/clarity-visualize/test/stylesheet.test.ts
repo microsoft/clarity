@@ -286,6 +286,57 @@ test.describe("replay stylesheet lifecycle", () => {
         await state.dispose();
     });
 
+    for (const scenario of [
+        { removal: "iframe", mode: "ordinary" },
+        { removal: "ancestor", mode: "cors" }
+    ]) {
+        test(`reveals replay after removing ${scenario.removal} during ${scenario.mode} loading without reset`, async ({ page }) => {
+            // Keep the load pending so only its readiness timeout can reveal replay.
+            await page.route("https://provider.invalid/pending.css", (): void => undefined);
+            const state = await page.evaluateHandle(async ({ removed, loading }) => {
+                const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+                const outcomes: StylesheetOutcome[] = [];
+                const visualizer = await api.setup(window, {
+                    version: "0.8.72",
+                    corsProxyStylesheets: loading !== "ordinary",
+                    useproxy: loading === "ordinary" ? undefined : (url: string): string => url,
+                    onstylesheet: (outcome: StylesheetOutcome): void => { outcomes.push(outcome); }
+                });
+                const layout = visualizer.layout;
+                const helper = layout.constructor as typeof import("../src/layout").LayoutHelper;
+                helper.TIMEOUT = 100;
+                const container = document.createElement("div");
+                const iframe = document.createElement("iframe");
+                document.body.appendChild(container);
+                container.appendChild(iframe);
+                layout.nodes[1] = iframe.contentDocument.head;
+                layout.nodes[3] = container;
+                layout.nodes[4] = iframe;
+                const pending = { settled: false };
+                const rendering = layout.dom({ event: 6, time: 0, data: [{
+                    id: 2, parent: 1, previous: null, tag: "LINK",
+                    attributes: { rel: "stylesheet", href: "https://provider.invalid/pending.css" }
+                }] });
+                void rendering.then((): void => { pending.settled = true; });
+                layout.markup({ event: 6, time: 1, data: [{
+                    id: removed === "iframe" ? 4 : 3, parent: null, previous: null,
+                    tag: removed === "iframe" ? "IFRAME" : "DIV"
+                }] });
+                return { iframe, pending, outcomes };
+            }, { removed: scenario.removal, loading: scenario.mode });
+
+            await expect.poll(() => state.evaluate(({ pending }) => pending.settled), { timeout: 2000 }).toBe(true);
+            expect(await state.evaluate(({ iframe }) => ({
+                connected: iframe.isConnected,
+                visibility: document.documentElement.style.visibility
+            }))).toEqual({ connected: false, visibility: "visible" });
+            expect(await state.evaluate(({ outcomes }) => outcomes)).toEqual(scenario.mode === "ordinary" ? [] : [{
+                status: "failed", fallback: true, transformation: undefined
+            }]);
+            await state.dispose();
+        });
+    }
+
     test("reset settles pending stylesheet loading after the replay iframe is removed", async ({ page }) => {
         const result = await page.evaluate(async () => {
             const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;

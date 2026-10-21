@@ -43,6 +43,11 @@ interface Escape {
     value: string;
 }
 
+interface SelectorContext {
+    pseudoElement: boolean;
+    inheritedPseudoElement: boolean;
+}
+
 export interface RuleContainer {
     readonly cssRules: RuleList;
     insertRule(rule: string, index?: number): number;
@@ -62,7 +67,7 @@ export function transformHoverRules(container: RuleContainer, logerror?: ErrorLo
 class SelectorParser {
     private index: number = 0;
     private output: string[] = [];
-    private pseudoElement: boolean[] = [false];
+    private contexts: SelectorContext[] = [{ pseudoElement: false, inheritedPseudoElement: false }];
     private hover: number = 0;
     private transformed: number = 0;
     private unsupported: number = 0;
@@ -105,7 +110,7 @@ class SelectorParser {
             }
         }
 
-        if (this.pseudoElement.length !== 1) {
+        if (this.contexts.length !== 1) {
             throw new Error("Unclosed function");
         }
 
@@ -148,7 +153,12 @@ class SelectorParser {
         }
 
         if (colonCount === 2 || isLegacyPseudoElement(name)) {
-            this.pseudoElement[this.pseudoElement.length - 1] = true;
+            this.contexts[this.contexts.length - 1].pseudoElement = true;
+        }
+
+        if (functional) {
+            const logical = colonCount === 1 && (name === "not" || name === "is" || name === "where");
+            this.openFunction(logical && this.currentPseudoElement());
         }
     }
 
@@ -268,20 +278,20 @@ class SelectorParser {
         this.index = end + 2;
     }
 
-    private openFunction(): void {
-        if (this.pseudoElement.length >= MaxNestingDepth) {
+    private openFunction(pseudoElement: boolean = false): void {
+        if (this.contexts.length >= MaxNestingDepth) {
             throw new Error("Selector exceeds maximum nesting depth");
         }
         this.copy("(");
-        this.pseudoElement.push(false);
+        this.contexts.push({ pseudoElement, inheritedPseudoElement: pseudoElement });
     }
 
     private closeFunction(): void {
-        if (this.pseudoElement.length === 1) {
+        if (this.contexts.length === 1) {
             throw new Error("Unexpected closing parenthesis");
         }
         this.copy(")");
-        this.pseudoElement.pop();
+        this.contexts.pop();
     }
 
     private isCombinator(): boolean {
@@ -291,11 +301,12 @@ class SelectorParser {
     }
 
     private currentPseudoElement(): boolean {
-        return this.pseudoElement[this.pseudoElement.length - 1];
+        return this.contexts[this.contexts.length - 1].pseudoElement;
     }
 
     private resetCompound(): void {
-        this.pseudoElement[this.pseudoElement.length - 1] = false;
+        const context = this.contexts[this.contexts.length - 1];
+        context.pseudoElement = context.inheritedPseudoElement;
     }
 
     private copy(value: string): void {

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { resolve } from "path";
 import {
     HoverTransformationSummary,
     transformHoverRules,
@@ -58,6 +59,33 @@ test.describe("hover selector transformation", () => {
         expect(result).toMatchObject({ hover: 3, transformed: 3, unsupported: 0 });
     });
 
+    for (const name of ["not", "is", "where"]) {
+        test(`preserves pseudo-element hover in ${name} functions and their branches`, () => {
+            const input = `::part(tab):${name}(:hover, :not(:hover), :where(:hover, :hover))`;
+            const result = transformHoverSelector(input);
+
+            expect(result).toEqual({ selector: input, hover: 4, transformed: 0, unsupported: 4 });
+        });
+    }
+
+    test("restores element context after pseudo-element logical functions", () => {
+        const result = transformHoverSelector("::part(tab):not(:hover) .child:hover, .card:is(:hover, :hover)");
+
+        expect(result).toEqual({
+            selector: "::part(tab):not(:hover) .child[clarity-hover], .card:is([clarity-hover], [clarity-hover])",
+            hover: 4, transformed: 3, unsupported: 1
+        });
+    });
+
+    test("keeps slotted selector arguments in element context and restores the outer pseudo-element", () => {
+        const result = transformHoverSelector("::slotted(.item:is(:hover, :not(:hover))):where(:hover)");
+
+        expect(result).toEqual({
+            selector: "::slotted(.item:is([clarity-hover], :not([clarity-hover]))):where(:hover)",
+            hover: 3, transformed: 2, unsupported: 1
+        });
+    });
+
     test("rejects malformed and deeply nested selectors", () => {
         const nested = `${":not(".repeat(128)}:hover${")".repeat(128)}`;
 
@@ -71,6 +99,23 @@ test.describe("hover selector transformation", () => {
 });
 
 test.describe("hover stylesheet transformation", () => {
+    test("preserves pseudo-element logical rules and counts mixed rules as partially transformed", () => {
+        const original = style("::part(tab):not(:hover)", "color: red;");
+        const sheet = container([
+            original,
+            style(".card:hover, ::part(tab):is(:hover)", "color: blue;")
+        ]);
+
+        const summary = transformHoverRules(sheet);
+
+        expect(sheet.cssRules[0]).toBe(original);
+        expect(selectors(sheet)).toEqual([
+            "::part(tab):not(:hover)",
+            ".card[clarity-hover], ::part(tab):is(:hover)"
+        ]);
+        expect(summary).toMatchObject({ scanned: 2, hover: 2, transformed: 0, partial: 1, unsupported: 1 });
+    });
+
     test("visits nested media, supports, and layer rules without changing their order", () => {
         const media = grouping(4, [style(".media:hover", "color: red;")]);
         const supports = grouping(12, [style(".supports:hover", "display: grid;")]);
@@ -233,6 +278,56 @@ test.describe("hover stylesheet transformation", () => {
         });
         expect(errors).toHaveLength(2);
     });
+});
+
+test("preserves real pseudo-element hover styling while transforming slotted element hover", async ({ page }) => {
+    await page.addScriptTag({ path: resolve(__dirname, "..", "build", "clarity.visualize.min.js") });
+    const original = await page.evaluate(() => {
+        const host = document.createElement("div");
+        host.innerHTML = "<span class='item'>Slotted</span>";
+        document.body.appendChild(host);
+        const shadow = host.attachShadow({ mode: "open" });
+        shadow.innerHTML = "<button part='tab'>Hover me</button><slot></slot>";
+        const styleElement = document.createElement("style");
+        styleElement.textContent = [
+            "::part(tab) { color: rgb(255, 0, 0); }",
+            "::part(tab):is(:hover) { color: rgb(0, 0, 255); }",
+            "::part(tab):not(:hover) { background-color: rgb(0, 255, 0); }",
+            "::part(tab):where(:hover) { background-color: rgb(0, 0, 255); }"
+        ].join("\n");
+        document.head.appendChild(styleElement);
+        return styleElement.textContent;
+    });
+    const button = page.locator("button");
+    await button.hover();
+    await expect(button).toHaveCSS("color", "rgb(0, 0, 255)");
+    await expect(button).toHaveCSS("background-color", "rgb(0, 0, 255)");
+
+    const selectorsAfter = await page.evaluate(async (css: string) => {
+        const api = (window as Window & { clarity: { visualize: typeof import("../src/clarity") } }).clarity.visualize;
+        const visualizer = await api.setup(window, { version: "0.8.72" });
+        const layout = visualizer.layout;
+        layout.nodes[1] = document.head;
+        layout.nodes[2] = document.querySelector("style");
+        layout.nodes[3] = document.querySelector("body > div").shadowRoot;
+        layout.markup({ event: 6, time: 0, data: [
+            { id: 2, parent: 1, previous: null, tag: "STYLE", value: css },
+            { id: 4, parent: 3, previous: null, tag: "STYLE",
+                value: "::slotted(.item:is(:hover)) { color: rgb(0, 128, 0); }" }
+        ] });
+        document.querySelector(".item").setAttribute("clarity-hover", "");
+        const sheet = (layout.nodes[2] as HTMLStyleElement).sheet as CSSStyleSheet;
+        return Array.from(sheet.cssRules, (entry: CSSStyleRule): string => entry.selectorText);
+    }, original);
+
+    expect(selectorsAfter).toEqual([
+        "::part(tab)", "::part(tab):is(:hover)", "::part(tab):not(:hover)", "::part(tab):where(:hover)"
+    ]);
+    await expect(button).toHaveCSS("color", "rgb(0, 0, 255)");
+    await expect(button).toHaveCSS("background-color", "rgb(0, 0, 255)");
+    await expect(page.locator(".item")).toHaveCSS("color", "rgb(0, 128, 0)");
+    await page.mouse.move(1000, 1000);
+    await expect(button).toHaveCSS("background-color", "rgb(0, 255, 0)");
 });
 
 interface MockRule {

@@ -21,14 +21,13 @@ export function loadStylesheet(
     replace: StylesheetReplace,
     cors: boolean = false
 ): StylesheetLoad {
-    const timerWindow = initial.ownerDocument.defaultView;
     let cancel: () => void;
     let release: () => void;
     const ready = new Promise<void>((resolve: () => void): void => { release = resolve; });
     const completed = new Promise((resolve: (outcome: StylesheetLoadResult) => void): void => {
         let link = initial;
         let attempt = 0;
-        let timer: number = null;
+        let timer: ReturnType<typeof setTimeout> = null;
         let complete = false;
         let fallback = false;
 
@@ -46,7 +45,7 @@ export function loadStylesheet(
 
         const clear = (): void => {
             if (timer !== null) {
-                timerWindow.clearTimeout(timer);
+                clearTimeout(timer);
                 timer = null;
             }
         };
@@ -61,7 +60,8 @@ export function loadStylesheet(
                 if (complete || current !== attempt) { return; }
                 cors && !fallback ? retry(current) : finish("failed");
             };
-            timer = timerWindow.setTimeout(
+            // Recorded iframe windows can be destroyed while their stylesheets are still loading.
+            timer = setTimeout(
                 (): void => {
                     if (complete || current !== attempt) { return; }
                     if (cors) {
