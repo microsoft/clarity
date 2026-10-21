@@ -75,7 +75,7 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                     let active = value.metadata.active;
                     let suspend = value.metadata.suspend;
                     let privacy = value.metadata.privacy;
-                    let mangle = shouldMangle(value);
+                    let mangle = scrub.isTextMasked(data.tag, privacy);
                     let keys = active ? ["tag", "attributes", "value"] : ["tag"];
                     for (let key of keys) {
                         // we check for data[key] === '' because we want to encode empty strings as well, especially for value - which if skipped can cause our decoder to assume the final
@@ -119,11 +119,6 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
             custom.reset();
             break;
     }
-}
-
-function shouldMangle(value: NodeValue): boolean {
-    let privacy = value.metadata.privacy;
-    return value.data.tag === Constant.TextTag && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
 }
 
 function size(value: NodeValue): number[] {

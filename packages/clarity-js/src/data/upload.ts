@@ -21,6 +21,7 @@ import * as style from "@src/layout/style";
 import { report } from "@src/core/report";
 import { signalsEvent } from "@src/data/signal";
 import { snapshot } from "@src/layout/snapshot";
+import { request as headings } from "@src/layout/headings";
 import * as dynamic from "@src/core/dynamic";
 
 let discoverBytes: number = 0;
@@ -336,6 +337,9 @@ function response(payload: string): void {
             case Constant.Snapshot:
                 config.lean = false; // Disable lean mode to ensure we can send playback information to server.
                 snapshot();
+                break;
+            case Constant.Headings:
+                headings();
                 break;
         }
     }
