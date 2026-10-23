@@ -7,6 +7,7 @@ import type { Event as ClarityEvent, Payload } from "../types/data";
 const snapshotEvent: ClarityEvent.Snapshot = 43;
 const discoverEvent: ClarityEvent.Discover = 5;
 const clickEvent: ClarityEvent.Click = 9;
+const customEvent: ClarityEvent.Custom = 24;
 const origin = "https://clarity.test/";
 const collect = `${origin}collect`;
 const html = "<!doctype html><html><head></head><body><button id='snapshot-button'>Example</button></body></html>";
@@ -20,7 +21,7 @@ const builds = [
 
 test.describe("build-specific snapshot responses", () => {
     for (const build of builds) {
-        test(`${build.name} preserves capture after a SNAPSHOT response`, async ({ page }) => {
+        test(`${build.name} preserves capture after repeated SNAPSHOT responses`, async ({ page }) => {
             const payloads: Payload[] = [];
             const errors: string[] = [];
             const unexpectedRequests: string[] = [];
@@ -32,9 +33,9 @@ test.describe("build-specific snapshot responses", () => {
                 } else if (request.url() === collect) {
                     payloads.push(JSON.parse(request.postData()));
                     await route.fulfill({
-                        status: payloads.length === 1 ? 200 : 204,
+                        status: payloads.length <= 2 ? 200 : 204,
                         contentType: "text/plain",
-                        body: payloads.length === 1 ? "SNAPSHOT\nACTION snapshot-complete" : ""
+                        body: payloads.length <= 2 ? `SNAPSHOT\nACTION snapshot-complete-${payloads.length}` : ""
                     });
                 } else {
                     unexpectedRequests.push(request.url());
@@ -62,7 +63,18 @@ test.describe("build-specific snapshot responses", () => {
                 clarity("start", config);
             }, { upload: collect, conversions: build.conversions });
 
-            await expect(page.locator("html")).toHaveAttribute("data-snapshot-response", "snapshot-complete");
+            for (let response = 1; response <= 2; response++) {
+                await expect(page.locator("html")).toHaveAttribute("data-snapshot-response", `snapshot-complete-${response}`);
+                const marker = `after-snapshot-${response}`;
+                await page.evaluate((value: string) => {
+                    const clarity: unknown = Reflect.get(window, "clarity");
+                    if (typeof clarity !== "function") { throw new Error("Clarity browser API was not loaded."); }
+                    clarity("event", value);
+                }, marker);
+                await expect.poll(() => payloads.some(payload =>
+                    payload.a.some(event => event[1] === customEvent && event.includes(marker))
+                )).toBe(true);
+            }
             expect(payloads[0].p || []).toHaveLength(0);
             if (build.clicks) {
                 await page.click("#snapshot-button");
@@ -77,7 +89,7 @@ test.describe("build-specific snapshot responses", () => {
 
             const events = payloads.reduce<Payload["a"]>((all, payload) => all.concat(payload.a || [], payload.p || []), []);
             const snapshots = events.filter(event => event[1] === snapshotEvent);
-            expect(snapshots.length).toBe(build.snapshot ? 1 : 0);
+            expect(snapshots.length).toBe(build.snapshot ? 2 : 0);
             if (build.snapshot) {
                 expect(JSON.stringify(snapshots[0])).toContain("id=snapshot-button");
             }
