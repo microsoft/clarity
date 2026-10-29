@@ -113,12 +113,13 @@ function userAgentData(): void {
   if (uaData && uaData.getHighEntropyValues) {
     // brands, mobile, and platform are low-entropy and always included in the response per
     // UA-CH spec §3.1 (https://wicg.github.io/ua-client-hints/#getHighEntropyValues); only high-entropy hints need to be listed.
-    uaData.getHighEntropyValues(["model", "platformVersion"]).then(ua => {
+    uaData.getHighEntropyValues(["model", "platformVersion", "architecture"]).then(ua => {
       dimension.log(Dimension.Platform, ua.platform);
       dimension.log(Dimension.PlatformVersion, ua.platformVersion);
       ua.brands?.forEach(brand => { dimension.log(Dimension.Brand, brand.brand + Constant.Tilde + brand.version); });
       dimension.log(Dimension.Model, ua.model);
       metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False);
+      metric.max(Metric.ArmArchitecture, ["arm", "arm64"].includes(ua.architecture?.toLowerCase()) ? 1 : null);
     });
   } else { dimension.log(Dimension.Platform, navigator.platform); }
 }
