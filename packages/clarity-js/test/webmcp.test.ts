@@ -22,7 +22,7 @@ declare global {
   }
 }
 
-test.use({ launchOptions: { chromiumSandbox: true } });
+test.use({ channel: "chrome", launchOptions: { chromiumSandbox: true } });
 
 async function setup(
   page: Page,
