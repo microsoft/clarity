@@ -119,7 +119,9 @@ function userAgentData(): void {
       ua.brands?.forEach(brand => { dimension.log(Dimension.Brand, brand.brand + Constant.Tilde + brand.version); });
       dimension.log(Dimension.Model, ua.model);
       metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False);
-      metric.max(Metric.ArmArchitecture, ["arm", "arm64"].includes(ua.architecture?.toLowerCase()) ? 1 : null);
+      if (["arm", "arm64"].includes(ua.architecture?.toLowerCase())) {
+        metric.max(Metric.ArmArchitecture, BooleanFlag.True);
+      }
     });
   } else { dimension.log(Dimension.Platform, navigator.platform); }
 }
