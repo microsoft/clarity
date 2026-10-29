@@ -5,7 +5,7 @@ import { gzipSync } from "node:zlib";
 import type { Host, Token } from "../src/dynamic/webmcp/common";
 
 const source = readFileSync(resolve(__dirname, "../build/dynamic/clarity.webmcp.js"), "utf8");
-type Failure = "" | "queue" | "time" | "attach" | "controller-missing" | "controller-throws" | "register";
+type Failure = "" | "queue" | "queued" | "time" | "attach" | "controller-missing" | "controller-throws" | "register";
 interface Fixture {
   records: Token[][];
   stops: (() => void)[];
@@ -62,6 +62,7 @@ async function setup(
         command: string,
         argument: Token[] | ((...args: unknown[]) => void)
       ): number | ((...args: unknown[]) => void) | undefined {
+        if (fixture.failure === "queued") return undefined;
         if (command === "time") return fixture.failure === "time" ? undefined : 250;
         if (command === "register" && typeof argument === "function") {
           if (fixture.failure === "register") throw new Error("Fixture registration failure");
@@ -133,6 +134,24 @@ test("contract, compatibility targets and lifecycle", async ({ page }) => {
       });
     });
   }
+});
+
+test("queued Clarity leaves startup retryable", async ({ page }) => {
+  await setup(page, "current", "queued");
+  expect(await page.evaluate(() => ({
+    marked: !!(window as Host).__clarityWebMcp,
+    records: window.fixture.records,
+    stops: window.fixture.stops.length,
+  }))).toEqual({ marked: false, records: [], stops: 0 });
+
+  await page.evaluate(() => { window.fixture.failure = ""; });
+  await page.addScriptTag({ content: source });
+  const result = await page.evaluate(() => {
+    window.ClarityWebMcp.start();
+    window.fixture.emit("toolactivated", "after_restart");
+    return { records: window.fixture.records, stops: window.fixture.stops.length };
+  });
+  expect(result).toEqual({ records: [[250, 205, 1, 2], [250, 205, 2, "after_restart"]], stops: 1 });
 });
 
 test("known names use stable IDs and unknown names remain exact", async ({ page }) => {

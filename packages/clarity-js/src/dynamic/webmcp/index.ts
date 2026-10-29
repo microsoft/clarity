@@ -25,6 +25,9 @@ export function start(): void {
   let usageCount = 0;
 
   try {
+    const measuredObserveUsage = clarity("measure", observeUsage);
+    if (typeof measuredObserveUsage !== "function") { return; }
+
     clarity("register", stop);
 
     // Retain the marker after failure/cap; only registered shutdown permits a fresh lifecycle.
@@ -33,8 +36,6 @@ export function start(): void {
     const modelContext = (document as Document & { modelContext?: EventTarget }).modelContext;
 
     if (typeof modelContext?.addEventListener === "function") {
-      const measuredObserveUsage = clarity("measure", observeUsage);
-
       const options = {
         signal: controller.signal
       };
