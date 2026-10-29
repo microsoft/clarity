@@ -144,6 +144,7 @@ export const enum Metric {
     HistoryClear = 38,
     AngularZone = 39,
     WebMcpDetected = 40,
+    ArmArchitecture = 41,
     // 200-300 reserved for internal use
 }
 
