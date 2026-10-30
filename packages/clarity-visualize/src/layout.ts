@@ -107,6 +107,9 @@ const imageMaskedSvg = {
 }
 /* END imageMaskedSvgs */
 
+const doctypeDelimiters = /["<>]/g;
+const replacementCharacter = "\uFFFD";
+
 export class LayoutHelper {
     static TIMEOUT = 7000;
 
@@ -347,14 +350,13 @@ export class LayoutHelper {
                     let tagDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
                     if (tagDoc && tagDoc === doc && type === Data.Event.Discover) { this.reset(); }
                     if (typeof XMLSerializer !== "undefined" && tagDoc) {
+                        let documentType = tagDoc.implementation.createDocumentType(
+                            node.attributes["name"],
+                            (node.attributes["publicId"] || "").replace(doctypeDelimiters, replacementCharacter),
+                            (node.attributes["systemId"] || "").replace(doctypeDelimiters, replacementCharacter)
+                        );
                         tagDoc.open();
-                        tagDoc.write(new XMLSerializer().serializeToString(
-                            tagDoc.implementation.createDocumentType(
-                                node.attributes["name"],
-                                node.attributes["publicId"],
-                                node.attributes["systemId"]
-                            )
-                        ));
+                        tagDoc.write(new XMLSerializer().serializeToString(documentType));
                         tagDoc.close();
                     }
                     break;
