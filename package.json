@@ -28,6 +28,13 @@
     "ts-node": "^10.9.2"
   },
   "resolutions": {
-    "parse-url": "^8.1.0"
+    "parse-url": "^8.1.0",
+    "**/follow-redirects": "1.16.2",
+    "**/axios": "1.20.0",
+    "**/smol-toml": "1.7.1",
+    "**/lerna/js-yaml": "4.3.2",
+    "**/cosmiconfig/js-yaml": "4.3.2",
+    "**/tslint/js-yaml": "3.15.2",
+    "**/serialize-javascript": "7.0.3"
   }
 }
