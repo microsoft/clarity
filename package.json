@@ -26,8 +26,5 @@
     "lerna": "^10.1.1",
     "parse-url": "^8.1.0",
     "ts-node": "^10.9.2"
-  },
-  "resolutions": {
-    "parse-url": "^8.1.0"
   }
 }
