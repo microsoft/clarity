@@ -28,7 +28,6 @@
     "ts-node": "^10.9.2"
   },
   "resolutions": {
-    "parse-url": "^8.1.0",
-    "**/serialize-javascript": "7.0.3"
+    "parse-url": "^8.1.0"
   }
 }
