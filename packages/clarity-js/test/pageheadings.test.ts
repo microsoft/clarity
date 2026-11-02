@@ -182,8 +182,13 @@ test.describe("page headings requested by collect", () => {
         await page.evaluate(() => {
             for (let i = 0; i < 2; i++) {
                 let parent: Element = document.querySelector(i === 0 ? "h1" : "h2");
-                for (let depth = 0; depth < 999 + i; depth++) {
-                    parent = parent.appendChild(document.createElement("span"));
+                for (let depth = 0; depth < 500; depth++) {
+                    const child = document.createElement("span");
+                    parent.appendChild(child);
+                    if (i === 1) {
+                        parent.appendChild(document.createElement("span"));
+                    }
+                    parent = child;
                 }
             }
         });
