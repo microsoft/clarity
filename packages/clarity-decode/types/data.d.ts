@@ -23,6 +23,7 @@ export interface BaselineEvent extends PartialEvent { data: Data.BaselineData; }
 export interface DimensionEvent extends PartialEvent { data: Data.DimensionData; }
 export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
 export interface CustomEvent extends PartialEvent { data: Data.CustomData; }
+export interface ChatEvent extends PartialEvent { data: Data.ChatData; }
 export interface VariableEvent extends PartialEvent { data: Data.VariableData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
 export interface LimitEvent extends PartialEvent { data: Data.LimitData; }
@@ -43,7 +44,8 @@ export interface DataEvent extends PartialEvent {
     Data.UpgradeData |
     Data.UploadData | 
     Data.ExtractData |
-    Data.ConsentData;
+    Data.ConsentData |
+    Data.ChatData;
 }
 
 export type DecodedEvent = DataEvent | DiagnosticEvent | InteractionEvent | LayoutEvent | PerformanceEvent;
@@ -83,6 +85,7 @@ export interface DecodedPayload {
     baseline?: BaselineEvent[];
     variable?: VariableEvent[];
     custom?: CustomEvent[];
+    chat?: ChatEvent[];
     extract?: ExtractEvent[];
     consent?: ConsentEvent[];
     customElement?: CustomElementEvent[];

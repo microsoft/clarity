@@ -2,6 +2,53 @@ import { test, expect } from '@playwright/test';
 import { decode } from 'clarity-decode';
 
 test.describe('decode function', () => {
+    test('should decode all chat actions without logging an unhandled event', () => {
+        const errors: unknown[][] = [];
+        const originalError = console.error;
+        console.error = (...args: unknown[]) => { errors.push(args); };
+        try {
+            const result = decode(JSON.stringify({
+                e: ["0.8.72", 1, 0, 3000, "devtools", "user", "session", 1, 0, 0, 0, "https://test.com/"],
+                a: [[2959, 52, 5], [10, 52, 0], [20, 52, 1], [30, 52, 2], [40, 52, 3], [50, 52, 4], [2960, 52, 6], [60, 28, 1]]
+            }));
+
+            expect(result.chat).toEqual([
+                { time: 10, event: 52, data: { action: 0 } },
+                { time: 20, event: 52, data: { action: 1 } },
+                { time: 30, event: 52, data: { action: 2 } },
+                { time: 40, event: 52, data: { action: 3 } },
+                { time: 50, event: 52, data: { action: 4 } },
+                { time: 2959, event: 52, data: { action: 5 } },
+                { time: 2960, event: 52, data: { action: 6 } }
+            ]);
+            expect(result.visibility[0].data.visible).toBe(1);
+            expect(errors).toEqual([]);
+        } finally {
+            console.error = originalError;
+        }
+    });
+
+    test('normalizes Beta-only hashes while preserving historical hashes', () => {
+        const payload = decode(JSON.stringify({
+            e: ["0.8.20", 1, 0, 4, "test", "project", "user", 1, 0, 0, 0, "https://test.com/"],
+            a: [
+                [1, 9, 2, 3, 4, 5, 6, 0, 1, 0, '', '', '.beta'],
+                [2, 9, 2, 3, 4, 5, 6, 0, 1, 0, '', '', 'alpha.beta'],
+                [3, 9, 2, 3, 4, 5, 6, 0, 1, 0, '', '', ''],
+                [4, 22, 9, '.beta', 3, 4, 1, 0],
+                [5, 22, 9, 'alpha.beta', 3, 4, 1, 0],
+                [6, 22, 9, '', 3, 4, 1, 0]
+            ]
+        }));
+
+        expect(payload.click[0].data).toMatchObject({ hash: 'beta', hashBeta: 'beta' });
+        expect(payload.click[1].data).toMatchObject({ hash: 'alpha', hashBeta: 'beta' });
+        expect(payload.click[2].data).toMatchObject({ hash: '', hashBeta: null });
+        expect(payload.timeline[0].data).toMatchObject({ hash: 'beta', hashBeta: 'beta' });
+        expect(payload.timeline[1].data).toMatchObject({ hash: 'alpha', hashBeta: 'beta' });
+        expect(payload.timeline[2].data).toMatchObject({ hash: '', hashBeta: null });
+    });
+
     test('should decode a simple payload', () => {
         // This is a very simple test that focuses on basic decoding functionality
         const testPayload = {

@@ -42,7 +42,7 @@ export class Visualizer implements VisualizerType {
                 return (this.hashFoundTime > -1) && (domEvent.time > this.hashFoundTime + Setting.VisualizationSettleBuffer);
             case ShortCircuitStrategy.HashBeforeDeleted:
                 for (let node of domEvent.data) {
-                    if ((node.hashAlpha === hash || node.hashBeta === hash) && node.parent === null) {
+                    if (node.hashBeta === hash && node.parent === null) {
                         return true;
                     }
                 }
