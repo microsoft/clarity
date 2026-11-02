@@ -17,15 +17,6 @@ const terserOpts = {
 };
 export default [
   {
-    input: "src/dynamic/webmcp/index.ts",
-    output: [ { file: pkg.webmcp, format: "iife", name: "ClarityWebMcp", exports: "named", freeze: false } ],
-    plugins: [
-      resolve(),
-      typescript(),
-      terser(terserOpts)
-    ]
-  },
-  {
     input: "src/index.ts",
     output: [
       { file: pkg.main, format: "cjs", exports: "named" },
@@ -120,6 +111,15 @@ export default [
       typescript(),
       terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/dynamic/webmcp/index.ts",
+    output: [ { file: pkg.webmcp, format: "iife", name: "ClarityWebMcp", exports: "named", freeze: false } ],
+    plugins: [
+      resolve(),
+      typescript(),
+      terser(terserOpts)
     ]
   },
   {
