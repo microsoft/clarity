@@ -126,7 +126,7 @@ test.describe("page headings requested by collect", () => {
     });
 
     test("checks current candidates only on request and does not replace uncached ones", async ({ page }) => {
-        for (const sampled of [false, true]) {
+        for (const [sampled, lean] of [[false, true], [true, false], [true, true]] as const) {
             await page.goto(origin);
             await page.setContent("<h1>First</h1><h2>Second</h2><h3>Third</h3>");
             await page.evaluate(() => {
@@ -145,11 +145,11 @@ test.describe("page headings requested by collect", () => {
                     }
                 });
             });
-            const values = await collect(page, sampled, { lean: true }, async current => {
+            const values = await collect(page, sampled, { lean }, async current => {
                 expect(await current.evaluate(() => (window as CaptureWindow).headingQueries)).toBe(0);
             });
-            expect(values).toEqual(sampled ? ["H1:First~~H2:Second"] : []);
-            expect(await page.evaluate(() => (window as CaptureWindow).headingQueries)).toBe(sampled ? 1 : 0);
+            expect(values).toEqual(sampled && !lean ? ["H1:First~~H2:Second"] : []);
+            expect(await page.evaluate(() => (window as CaptureWindow).headingQueries)).toBe(sampled && !lean ? 1 : 0);
         }
     });
 

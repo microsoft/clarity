@@ -339,7 +339,7 @@ function response(payload: string): void {
                 snapshot();
                 break;
             case Constant.Headings:
-                headings();
+                if (!config.lean) { headings(); }
                 break;
         }
     }
