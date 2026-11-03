@@ -30,7 +30,7 @@ function collectText(headingId: number): string {
         if (!record || !record.metadata.active) { continue; }
 
         if (record.data.tag === Constant.TextTag) {
-            const scrubbedPiece = scrub.textNode(record.data.value, record.metadata.privacy);
+            const scrubbedPiece = scrub.nodeText(record.data.value, record.metadata.privacy);
             text = (text + scrubbedPiece).substring(0, MaxHeadingLength);
             continue;
         }

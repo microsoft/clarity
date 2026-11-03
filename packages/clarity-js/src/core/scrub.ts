@@ -14,7 +14,7 @@ export function shouldMangle(tag: string, privacy: Privacy): boolean {
     return tag === Layout.Constant.TextTag && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
 }
 
-export function textNode(value: string, privacy: Privacy): string {
+export function nodeText(value: string, privacy: Privacy): string {
     return shouldMangle(Layout.Constant.TextTag, privacy)
         ? (value.trim() ? Data.Constant.Mask : Data.Constant.Empty)
         : text(value, Layout.Constant.TextTag, privacy);
