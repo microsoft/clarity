@@ -100,7 +100,7 @@ test.describe("page headings requested by collect", () => {
         expect(await collect(page, true)).toEqual([`H1:${"a".repeat(58)}\ud83d\udca1~~H2:${"a".repeat(58)} \ud83d`]);
     });
 
-    test("preserves whitespace within the text cap and scrubs complete source tokens", async ({ page }) => {
+    test("preserves whitespace and scrubs source text beyond the output cap", async ({ page }) => {
         await page.setContent(`<h1 data-clarity-unmask>${" ".repeat(60)}<span>Outside budget</span></h1>` +
             "<h2 data-clarity-unmask> A<span> \t\n </span><em>B</em> </h2>" +
             `<h3>${"a".repeat(80)}1</h3>`);
@@ -170,14 +170,29 @@ test.describe("page headings requested by collect", () => {
         expect(await collect(page, true)).toEqual([`H1:${"a".repeat(60)}~~H2:${"b".repeat(60)}~~H3:${"c".repeat(60)}`]);
     });
 
-    test("retains candidates with wide empty child lists", async ({ page }) => {
+    test("limits each source text node to 1000 units before scrubbing", async ({ page }) => {
+        await page.setContent(`<h1>${"a".repeat(999)}1</h1>` +
+            `<h2>${"a".repeat(1000)}1</h2><h3>${"a".repeat(1000)}@example.com</h3>`);
+        expect(await collect(page, true)).toEqual([
+            `H1:${"\u25aa".repeat(60)}~~H2:${"a".repeat(60)}~~H3:${"a".repeat(60)}`
+        ]);
+    });
+
+    test("caps visits through wide empty child lists without dropping candidates", async ({ page }) => {
         await page.setContent("<h1>" + "<span></span>".repeat(997) + "X</h1>" +
             "<h2>" + "<span></span>".repeat(998) + "X</h2>" +
             "<h3>Early" + "<span></span>".repeat(1000) + "</h3><h4>No replacement</h4>");
-        expect(await collect(page, true)).toEqual(["H1:X~~H2:X~~H3:Early"]);
+        expect(await collect(page, true)).toEqual(["H1:~~H2:~~H3:Early"]);
     });
 
-    test("retains candidates with deep empty descendants", async ({ page }) => {
+    test("retains partial text at the tenth node in document order", async ({ page }) => {
+        await page.setContent("<h1>A" + "<span></span>".repeat(7) + "B</h1>" +
+            "<h2>A" + "<span></span>".repeat(8) + "B</h2>" +
+            "<h3>A" + "<span>".repeat(8) + "B" + "</span>".repeat(8) + "</h3>");
+        expect(await collect(page, true)).toEqual(["H1:AB~~H2:A~~H3:A"]);
+    });
+
+    test("caps visits through deep empty descendants without dropping candidates", async ({ page }) => {
         await page.setContent("<h1></h1><h2></h2><h3>Third</h3><h4>No replacement</h4>");
         await page.evaluate(() => {
             for (let i = 0; i < 2; i++) {

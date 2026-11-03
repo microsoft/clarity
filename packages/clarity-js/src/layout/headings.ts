@@ -6,6 +6,8 @@ import * as dom from "@src/layout/dom";
 
 const MaxHeadings = 3;
 const MaxHeadingLength = 60;
+const MaxHeadingNodes = 10;
+const MaxSourceLength = 1000;
 
 export function request(): void {
     const selected: string[] = [];
@@ -24,19 +26,22 @@ export function request(): void {
 function collectText(headingId: number): string {
     const pendingIds = [headingId];
     let text: string = Constant.Empty;
+    let visited = 0;
 
-    while (pendingIds.length > 0 && text.length < MaxHeadingLength) {
+    while (pendingIds.length > 0 && text.length < MaxHeadingLength && visited < MaxHeadingNodes) {
         const record = dom.getValue(pendingIds.pop());
+        visited++;
         if (!record || !record.metadata.active) { continue; }
 
         if (record.data.tag === Constant.TextTag) {
-            const scrubbedPiece = scrub.nodeText(record.data.value, record.metadata.privacy);
+            const source = record.data.value.substring(0, MaxSourceLength);
+            const scrubbedPiece = scrub.nodeText(source, record.metadata.privacy);
             text = (text + scrubbedPiece).substring(0, MaxHeadingLength);
             continue;
         }
 
         // Reverse insertion makes the stack visit children in document order.
-        for (let i = record.children.length - 1; i >= 0; i--) {
+        for (let i = Math.min(record.children.length, MaxHeadingNodes - visited) - 1; i >= 0; i--) {
             pendingIds.push(record.children[i]);
         }
     }
