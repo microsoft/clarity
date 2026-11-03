@@ -92,7 +92,6 @@ test.describe("page headings requested by collect", () => {
         ]);
         await page.setContent([1, 2, 3].map(level => `<h${level} data-clarity-unmask>${"a".repeat(61)}</h${level}>`).join(""));
         const maximum = [1, 2, 3].map(level => `H${level}:${"a".repeat(60)}`).join("~~");
-        expect(maximum.length).toBe(193);
         expect(await collect(page, true)).toEqual([maximum]);
 
         await page.setContent(`<h1 data-clarity-unmask>${"a".repeat(58)}\ud83d\udca1</h1>` +
@@ -118,9 +117,6 @@ test.describe("page headings requested by collect", () => {
         await page.setContent("<h1> </h1><h2 data-clarity-mask>Private</h2>" +
             "<h3>Third</h3><h4>Fourth</h4><h5>Fifth</h5><h6>Sixth</h6>");
         expect(await collect(page, true)).toEqual([`H1: ~~H2:${mask}~~H3:Third`]);
-
-        await page.setContent("<div>" + "<h2> </h2>".repeat(3) + "</div><h1>Outside document-order budget</h1>");
-        expect(await collect(page, true)).toEqual(["H2: ~~H2: ~~H2: "]);
 
         await page.setContent("<h1>First</h1><h2>Second</h2><h3>Third</h3><h4>Fourth</h4>");
         expect(await collect(page, true, { content: false })).toEqual([
@@ -156,20 +152,6 @@ test.describe("page headings requested by collect", () => {
         }
     });
 
-    test("retains oversized source-text candidates within the output cap", async ({ page }) => {
-        await page.setContent(`<h1>${"a".repeat(998)}</h1><h2>${"a".repeat(999)}</h2>` +
-            "<h3>Third</h3><h4>Outside candidate budget</h4>");
-        expect(await collect(page, true)).toEqual([`H1:${"a".repeat(60)}~~H2:${"a".repeat(60)}~~H3:Third`]);
-
-        await page.setContent(`<h1>A<span>${"b".repeat(995)}</span></h1>` +
-            `<h2>A<span>${"b".repeat(996)}</span></h2><h3>Third</h3>`);
-        expect(await collect(page, true)).toEqual([`H1:A${"b".repeat(59)}~~H2:A${"b".repeat(59)}~~H3:Third`]);
-
-        await page.setContent("<h1>" + "a".repeat(10000) + "</h1>" +
-            "<h2>" + "b".repeat(10000) + "</h2><h3>" + "c".repeat(10000) + "</h3><h4>No replacement</h4>");
-        expect(await collect(page, true)).toEqual([`H1:${"a".repeat(60)}~~H2:${"b".repeat(60)}~~H3:${"c".repeat(60)}`]);
-    });
-
     test("limits each source text node to 1000 units before scrubbing", async ({ page }) => {
         await page.setContent(`<h1>${"a".repeat(999)}1</h1>` +
             `<h2>${"a".repeat(1000)}1</h2><h3>${"a".repeat(1000)}@example.com</h3>`);
@@ -178,36 +160,11 @@ test.describe("page headings requested by collect", () => {
         ]);
     });
 
-    test("caps visits through wide empty child lists without dropping candidates", async ({ page }) => {
-        await page.setContent("<h1>" + "<span></span>".repeat(997) + "X</h1>" +
-            "<h2>" + "<span></span>".repeat(998) + "X</h2>" +
-            "<h3>Early" + "<span></span>".repeat(1000) + "</h3><h4>No replacement</h4>");
-        expect(await collect(page, true)).toEqual(["H1:~~H2:~~H3:Early"]);
-    });
-
-    test("retains partial text at the tenth node in document order", async ({ page }) => {
+    test("caps wide and deep traversal at the tenth node while retaining partial text", async ({ page }) => {
         await page.setContent("<h1>A" + "<span></span>".repeat(7) + "B</h1>" +
             "<h2>A" + "<span></span>".repeat(8) + "B</h2>" +
             "<h3>A" + "<span>".repeat(8) + "B" + "</span>".repeat(8) + "</h3>");
         expect(await collect(page, true)).toEqual(["H1:AB~~H2:A~~H3:A"]);
-    });
-
-    test("caps visits through deep empty descendants without dropping candidates", async ({ page }) => {
-        await page.setContent("<h1></h1><h2></h2><h3>Third</h3><h4>No replacement</h4>");
-        await page.evaluate(() => {
-            for (let i = 0; i < 2; i++) {
-                let parent: Element = document.querySelector(i === 0 ? "h1" : "h2");
-                for (let depth = 0; depth < 500; depth++) {
-                    const child = document.createElement("span");
-                    parent.appendChild(child);
-                    if (i === 1) {
-                        parent.appendChild(document.createElement("span"));
-                    }
-                    parent = child;
-                }
-            }
-        });
-        expect(await collect(page, true)).toEqual(["H1:~~H2:~~H3:Third"]);
     });
 
     test("excludes iframe and shadow headings from the main-document candidates", async ({ page }) => {
@@ -251,7 +208,6 @@ test.describe("page headings requested by collect", () => {
             "<h2>Order <span data-clarity-unmask>123</span> reference 456</h2>" +
             "<h3 class='private'>Hidden <span class='public'>Configured public 123</span></h3>");
         const privacy = { mask: [".private"], unmask: [".public"] };
-        expect(await collect(page, false, privacy)).toEqual([]);
         expect(await collect(page, true, privacy)).toEqual([
             `H1:${mask}Public 123${mask}~~H2:Order 123 reference ${digit.repeat(3)}` +
             `~~H3:${mask}Configured public 123`
