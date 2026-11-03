@@ -1,4 +1,4 @@
-import { ApiStatus, ClarityApi, RecordKind, ToolEvent, ToolEventName } from "@clarity-types/webmcp";
+import { Action, ToolEvent, ToolEventName } from "@clarity-types/webmcp";
 import { encode, MAX_USAGE_EVENTS, usage } from "./encode";
 
 export function start(): void {
@@ -6,9 +6,9 @@ export function start(): void {
     return;
   }
 
-  const clarity = (window as Window & { clarity?: ClarityApi }).clarity;
+  const clarity = (window as any).clarity;
 
-  if (window.__clarityWebMcp || typeof clarity !== "function") {
+  if ((window as any).__clarityWebMcp || typeof clarity !== "function") {
     return;
   }
 
@@ -23,7 +23,7 @@ export function start(): void {
     clarity("register", stop);
 
     // Retain the marker after failure/cap; only registered shutdown permits a fresh lifecycle.
-    window.__clarityWebMcp = stop;
+    (window as any).__clarityWebMcp = stop;
 
     const modelContext = document.modelContext;
 
@@ -41,34 +41,24 @@ export function start(): void {
         listeners.push([eventTarget, eventType]);
       }
     }
-
-    encode(
-      clarity,
-      RecordKind.Ready,
-      modelContext ? ApiStatus.Available : ApiStatus.Unavailable
-    );
   } catch {
     cleanup();
   }
 
   function observeUsage(event: ToolEvent): void {
-    if (!event.isTrusted) {
-      return;
-    }
-
     try {
-      const kind = event.type === ToolEventName.Activated
-        ? RecordKind.ToolActivated
-        : RecordKind.ToolCancel;
+      const action = event.type === ToolEventName.Activated
+        ? Action.ToolActivated
+        : Action.ToolCancel;
 
-      if (!usage(clarity, kind, event.toolName)) {
+      if (!usage(action, event.toolName)) {
         return;
       }
 
       if (++usageCount === MAX_USAGE_EVENTS) {
         cleanup();
 
-        encode(clarity, RecordKind.UsageCapped);
+        encode(Action.UsageCapped);
       }
     } catch {
       cleanup();
@@ -87,8 +77,8 @@ export function start(): void {
   function stop(): void {
     cleanup();
 
-    if (window.__clarityWebMcp === stop) {
-      delete window.__clarityWebMcp;
+    if ((window as any).__clarityWebMcp === stop) {
+      delete (window as any).__clarityWebMcp;
     }
   }
 }

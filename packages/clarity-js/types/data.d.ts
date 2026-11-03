@@ -80,6 +80,7 @@ export const enum Event {
     CustomElement = 51,
     Chat = 52,
     PointerDown = 53,
+    WebMcp = 54,
 
     // Apps specific events
     WebViewDiscover = 100,

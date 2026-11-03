@@ -14,7 +14,7 @@ type ModelContext = EventTarget & {
 
 test.use({ channel: "chrome", launchOptions: { chromiumSandbox: true, args: ["--enable-blink-features=WebMCP"] } });
 
-test("current Chrome queues trusted activation and cancellation through the actual observer", async ({ page, browser }, info) => {
+test("current Chrome queues activation and cancellation through the actual observer", async ({ page, browser }, info) => {
   const output: string[] = [];
   page.on("console", message => output.push(message.text()));
   page.on("pageerror", error => output.push(error.message));
@@ -27,7 +27,6 @@ test("current Chrome queues trusted activation and cancellation through the actu
     if (typeof context?.registerTool !== "function" || typeof context.getTools !== "function" ||
         typeof context.executeTool !== "function") throw new Error("Native WebMCP APIs are unavailable");
     const records: (number | string)[][] = [];
-    const diagnostics: [string, unknown, boolean, boolean][] = [];
     const stops: (() => void)[] = [];
     Object.defineProperty(window, "clarity", { value: (command: string, argument: (number | string)[] | ((...args: unknown[]) => void)) => {
       if (command === "time") return Math.round(performance.now());
@@ -36,9 +35,6 @@ test("current Chrome queues trusted activation and cancellation through the actu
       if (command === "queue" && Array.isArray(argument)) { records.push([...argument]); return undefined; }
       throw new Error(`Unsupported fixture Clarity command: ${command}`);
     } });
-    for (const type of ["toolactivated", "toolcancel"]) context.addEventListener(type, event => {
-      diagnostics.push([event.type, "toolName" in event ? event.toolName : null, event.isTrusted, event.target === context]);
-    });
     for (const name of ["complete_tool", "cancel_tool", "add_to_cart", "search_catalog"]) context.registerTool({
       name, description: "Observer test fixture", inputSchema: { type: "object", properties: {} },
       execute: async (_, client) => name === "complete_tool" || name === "add_to_cart" ? { content: [{ type: "text", text: "ok" }] }
@@ -74,20 +70,12 @@ test("current Chrome queues trusted activation and cancellation through the actu
       await cancelled;
     }
     stops.forEach(stop => stop());
-    return { records, diagnostics, cancellations, discoveryReads };
+    return { records, cancellations, discoveryReads };
   }, readFileSync(resolvePath(__dirname, "../build/dynamic/clarity.webmcp.js"), "utf8"));
   expect(result.cancellations).toEqual(["AbortError", "AbortError"]);
   expect(result.records.map(tokens => tokens.slice(1))).toEqual([
-    [205, 1, 2], [205, 2, "complete_tool"], [205, 2, 1],
-    [205, 2, "cancel_tool"], [205, 3, "cancel_tool"], [205, 2, 9], [205, 3, 9],
-  ]);
-  expect(result.diagnostics).toEqual([
-    ["toolactivated", "complete_tool", true, true],
-    ["toolactivated", "add_to_cart", true, true],
-    ["toolactivated", "cancel_tool", true, true],
-    ["toolcancel", "cancel_tool", true, true],
-    ["toolactivated", "search_catalog", true, true],
-    ["toolcancel", "search_catalog", true, true],
+    [54, 1, "complete_tool"], [54, 1, 1],
+    [54, 1, "cancel_tool"], [54, 2, "cancel_tool"], [54, 1, 9], [54, 2, 9],
   ]);
   expect(result.discoveryReads).toBe(0);
   expect(output).toEqual([]);

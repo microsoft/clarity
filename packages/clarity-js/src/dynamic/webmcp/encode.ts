@@ -1,6 +1,6 @@
-import { ClarityApi, RecordKind, WebMcpRecord } from "@clarity-types/webmcp";
+import { Event } from "@clarity-types/data";
+import { Action, WebMcpRecord } from "@clarity-types/webmcp";
 
-export const WEBMCP_EVENT_ID = 205;
 export const MAX_USAGE_EVENTS = 100;
 
 // WebMCP draft requires tool names to be 1-128 ASCII characters.
@@ -26,8 +26,7 @@ const toolNameIds = {
 } as const;
 
 export function usage(
-  clarity: ClarityApi,
-  kind: RecordKind.ToolActivated | RecordKind.ToolCancel,
+  action: Action.ToolActivated | Action.ToolCancel,
   name: unknown
 ): boolean {
   if (
@@ -40,16 +39,11 @@ export function usage(
 
   const id = toolNameIds[name as keyof typeof toolNameIds];
 
-  encode(clarity, kind, typeof id === "number" ? id : name);
+  encode(action, typeof id === "number" ? id : name);
   return true;
 }
 
-export function encode(clarity: ClarityApi, ...record: WebMcpRecord): void {
-  const timestamp = clarity("time");
-
-  if (typeof timestamp !== "number" || !Number.isFinite(timestamp)) {
-    throw new Error("Clarity WebMCP clock is unavailable");
-  }
-
-  clarity("queue", [timestamp, WEBMCP_EVENT_ID, ...record]);
+export function encode(...record: WebMcpRecord): void {
+  const t = (window as any).clarity("time");
+  (window as any).clarity("queue", [t, Event.WebMcp, ...record]);
 }
