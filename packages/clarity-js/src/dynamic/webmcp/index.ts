@@ -13,33 +13,23 @@ export function start(): void {
   }
 
   const clarity = host.clarity;
-
-  let controller: AbortController;
-
-  try {
-    controller = new AbortController();
-  } catch {
-    return;
-  }
-
+  const listeners: [EventTarget, ToolEventName][] = [];
+  let measuredObserveUsage: ((event: ToolEvent) => void) | undefined;
+  let active = true;
   let usageCount = 0;
 
   try {
-    const measuredObserveUsage = clarity("measure", observeUsage);
+    measuredObserveUsage = clarity("measure", observeUsage);
     if (typeof measuredObserveUsage !== "function") { return; }
 
     clarity("register", stop);
 
     // Retain the marker after failure/cap; only registered shutdown permits a fresh lifecycle.
-    host.__clarityWebMcp = controller;
+    host.__clarityWebMcp = stop;
 
     const modelContext = (document as Document & { modelContext?: EventTarget }).modelContext;
 
     if (typeof modelContext?.addEventListener === "function") {
-      const options = {
-        signal: controller.signal
-      };
-
       for (const eventType of [ToolEventName.Activated, ToolEventName.Cancel]) {
         // The draft defines ontoolactivated/ontoolcancel on ModelContext, not window:
         // https://webmachinelearning.github.io/webmcp/#model-context-container
@@ -49,7 +39,8 @@ export function start(): void {
           ? modelContext
           : window;
 
-        eventTarget.addEventListener(eventType, measuredObserveUsage, options);
+        eventTarget.addEventListener(eventType, measuredObserveUsage);
+        listeners.push([eventTarget, eventType]);
       }
     }
 
@@ -59,11 +50,11 @@ export function start(): void {
       modelContext ? ApiStatus.Available : ApiStatus.Unavailable
     );
   } catch {
-    controller.abort();
+    cleanup();
   }
 
   function observeUsage(event: ToolEvent): void {
-    if (controller.signal.aborted || !event.isTrusted) {
+    if (!active || !event.isTrusted) {
       return;
     }
 
@@ -75,19 +66,29 @@ export function start(): void {
       usage(clarity, kind, event.toolName);
 
       if (++usageCount === MAX_USAGE_EVENTS) {
-        controller.abort();
+        cleanup();
 
         encode(clarity, RecordKind.UsageCapped);
       }
     } catch {
-      controller.abort();
+      cleanup();
     }
   }
 
-  function stop(): void {
-    controller.abort();
+  function cleanup(): void {
+    active = false;
+    if (measuredObserveUsage) {
+      for (const [target, eventType] of listeners) {
+        target.removeEventListener(eventType, measuredObserveUsage);
+      }
+    }
+    listeners.length = 0;
+  }
 
-    if (host.__clarityWebMcp === controller) {
+  function stop(): void {
+    cleanup();
+
+    if (host.__clarityWebMcp === stop) {
       delete host.__clarityWebMcp;
     }
   }

@@ -57,7 +57,7 @@ export interface ClarityApi {
 
 export type Host = Window & {
   clarity?: ClarityApi;
-  __clarityWebMcp?: AbortController;
+  __clarityWebMcp?: () => void;
 };
 
 export type ToolEvent = Event & {

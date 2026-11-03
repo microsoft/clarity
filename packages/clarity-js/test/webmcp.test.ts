@@ -5,7 +5,7 @@ import { gzipSync } from "node:zlib";
 import type { Host, Token } from "../src/dynamic/webmcp/common";
 
 const source = readFileSync(resolve(__dirname, "../build/dynamic/clarity.webmcp.js"), "utf8");
-type Failure = "" | "queue" | "queued" | "time" | "attach" | "controller-missing" | "controller-throws" | "register";
+type Failure = "" | "queue" | "queued" | "time" | "attach" | "register";
 interface Fixture {
   records: Token[][];
   stops: (() => void)[];
@@ -37,24 +37,29 @@ async function setup(
         if (!target || fixture.targets[type] === target) fixture.listeners[type]?.({ type, toolName: name, isTrusted: trusted });
       },
     };
-    if (failure === "controller-missing" || failure === "controller-throws") {
-      Object.defineProperty(window, "AbortController", {
-        value: failure === "controller-missing" ? undefined : class {
-          constructor() { throw new Error("Fixture controller failure"); }
-        },
-      });
-    }
-    const attach = (target: string) => (type: string, listener: Fixture["listeners"][string], options: AddEventListenerOptions) => {
+    const attach = (target: string) => (type: string, listener: Fixture["listeners"][string]) => {
       if (fixture.failure === "attach" && type === "toolcancel") throw new Error("Fixture attachment failure");
       fixture.listeners[type] = listener;
       fixture.targets[type] = target;
-      options.signal?.addEventListener("abort", () => { delete fixture.listeners[type]; delete fixture.targets[type]; }, { once: true });
+    };
+    const detach = (target: string) => (type: string, listener: Fixture["listeners"][string]) => {
+      if (fixture.listeners[type] === listener && fixture.targets[type] === target) {
+        delete fixture.listeners[type];
+        delete fixture.targets[type];
+      }
     };
     const addWindow = window.addEventListener;
+    const removeWindow = window.removeEventListener;
     Object.defineProperty(window, "addEventListener", {
-      value(type: string, listener: Fixture["listeners"][string], options: AddEventListenerOptions): void {
-        if (type === "toolactivated" || type === "toolcancel") attach("window")(type, listener, options);
+      value(type: string, listener: Fixture["listeners"][string], options?: AddEventListenerOptions): void {
+        if (type === "toolactivated" || type === "toolcancel") attach("window")(type, listener);
         else Reflect.apply(addWindow, window, [type, listener, options]);
+      },
+    });
+    Object.defineProperty(window, "removeEventListener", {
+      value(type: string, listener: Fixture["listeners"][string], options?: EventListenerOptions): void {
+        if (type === "toolactivated" || type === "toolcancel") detach("window")(type, listener);
+        else Reflect.apply(removeWindow, window, [type, listener, options]);
       },
     });
     Object.defineProperty(window, "clarity", {
@@ -80,6 +85,7 @@ async function setup(
     });
     const context = {
       addEventListener: attach("document.modelContext"),
+      removeEventListener: detach("document.modelContext"),
       ...(variant !== "legacy" ? { ontoolactivated: null } : {}),
       ...(variant === "current" ? { ontoolcancel: null } : {}),
       get getTools(): never { fixture.reads++; throw new Error("Unexpected discovery"); },
@@ -232,26 +238,22 @@ test("name boundaries and shared usage cap", async ({ page }) => {
 });
 
 test("startup and queue failures stop silently", async ({ page }) => {
-  for (const failure of ["controller-missing", "controller-throws", "register"] as const) {
-    await setup(page, "current", failure);
-    const result = await page.evaluate(() => ({
-      records: window.fixture.records,
-      listeners: Object.keys(window.fixture.listeners),
-      stops: window.fixture.stops.length,
-      marked: !!(window as Host).__clarityWebMcp,
-    }));
-    expect(result, failure).toEqual({ records: [], listeners: [], stops: 0, marked: false });
-    if (failure === "register") {
-      const retry = await page.evaluate(() => {
-        const f = window.fixture;
-        f.failure = "";
-        window.ClarityWebMcp.start();
-        f.emit("toolactivated", "after_retry");
-        return { records: f.records, stops: f.stops.length };
-      });
-      expect(retry).toEqual({ records: [[250, 205, 1, 2], [250, 205, 2, "after_retry"]], stops: 1 });
-    }
-  }
+  await setup(page, "current", "register");
+  expect(await page.evaluate(() => ({
+    records: window.fixture.records,
+    listeners: Object.keys(window.fixture.listeners),
+    stops: window.fixture.stops.length,
+    marked: !!(window as Host).__clarityWebMcp,
+  }))).toEqual({ records: [], listeners: [], stops: 0, marked: false });
+  const retry = await page.evaluate(() => {
+    const f = window.fixture;
+    f.failure = "";
+    window.ClarityWebMcp.start();
+    f.emit("toolactivated", "after_retry");
+    return { records: f.records, stops: f.stops.length };
+  });
+  expect(retry).toEqual({ records: [[250, 205, 1, 2], [250, 205, 2, "after_retry"]], stops: 1 });
+
   for (const failure of ["queue", "time", "attach"] as const) {
     await setup(page, "current", failure);
     const result = await page.evaluate(() => {
