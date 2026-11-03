@@ -11,7 +11,7 @@ const MaxSourceLength = 1000;
 
 export function request(): void {
     const selected: string[] = [];
-    const candidates = document.querySelectorAll("h1,h2,h3,h4,h5,h6");
+    const candidates = document.querySelectorAll("h1,h2,h3");
     for (let i = 0; i < candidates.length && i < MaxHeadings; i++) {
         const target = dom.get(candidates[i]);
         if (target && target.metadata.active) {

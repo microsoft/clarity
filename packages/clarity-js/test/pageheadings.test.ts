@@ -82,13 +82,14 @@ test.describe("page headings requested by collect", () => {
         await page.goto(origin);
     });
 
-    test("collects three document-order headings with a 60-UTF-16-unit text cap", async ({ page }) => {
+    test("collects three document-order H1-H3 headings with a 60-UTF-16-unit text cap", async ({ page }) => {
         await page.setContent("<h0>Invalid</h0><h7>Invalid</h7><h10>Invalid</h10><a1>Invalid</a1>" +
-            `<div><h4 data-clarity-unmask>${"a".repeat(59)}\ud83d\udca1</h4></div><h1 data-clarity-unmask>${"a".repeat(59)}` +
+            `<h4>Ignored</h4><div><h3 data-clarity-unmask>${"a".repeat(59)}\ud83d\udca1</h3></div>` +
+            `<h1 data-clarity-unmask>${"a".repeat(59)}` +
             "<span> \t </span><b>Later</b></h1><h1> Same\r\n\t123 </h1>" +
-            `<h6 data-clarity-unmask>${"a".repeat(59)}\ud83d\udca1</h6>`);
+            "<h6>Ignored</h6>");
         expect(await collect(page, true)).toEqual([
-            `H4:${"a".repeat(59)}\ud83d~~H1:${"a".repeat(59)} ~~H1: Same\n\t${digit.repeat(3)} `
+            `H3:${"a".repeat(59)}\ud83d~~H1:${"a".repeat(59)} ~~H1: Same\n\t${digit.repeat(3)} `
         ]);
         await page.setContent([1, 2, 3].map(level => `<h${level} data-clarity-unmask>${"a".repeat(61)}</h${level}>`).join(""));
         const maximum = [1, 2, 3].map(level => `H${level}:${"a".repeat(60)}`).join("~~");
@@ -135,10 +136,10 @@ test.describe("page headings requested by collect", () => {
                 Object.defineProperty(document, "querySelectorAll", {
                     configurable: true,
                     value(selector: string): NodeListOf<Element> {
-                        if (selector === "h1,h2,h3,h4,h5,h6") {
+                        if (selector === "h1,h2,h3") {
                             current.headingQueries++;
                             // Insert synchronously so mutation tracking cannot cache this candidate before collection.
-                            document.body.insertAdjacentHTML("afterbegin", "<h4>Uncached</h4>");
+                            document.body.insertAdjacentHTML("afterbegin", "<h3>Uncached</h3>");
                         }
                         return query(selector);
                     }
