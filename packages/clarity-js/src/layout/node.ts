@@ -209,7 +209,6 @@ export default function (node: Node, source: Source, timestamp: number): Node {
                     domFn(node, parent, data, source);
                     break;
             }
-
             break;
         default:
             break;

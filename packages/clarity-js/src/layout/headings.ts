@@ -20,31 +20,34 @@ export function request(): void {
     }
 
     // Encode each heading as H1:Checkout; separate headings with ~~.
-    dimension.log(Dimension.PageHeadings, selected.join("~~"));
+    dimension.log(Dimension.PageHeadings, selected.join(Constant.Tilde + Constant.Tilde));
 }
 
 function collectText(headingId: number): string {
-    const pendingIds = [headingId];
     let text: string = Constant.Empty;
     let visited = 0;
 
-    while (pendingIds.length > 0 && text.length < MaxHeadingLength && visited < MaxHeadingNodes) {
-        const record = dom.getValue(pendingIds.pop());
+    function visit(id: number): boolean {
         visited++;
-        if (!record || !record.metadata.active) { continue; }
+        const record = dom.getValue(id);
+        const active = record && record.metadata.active;
 
-        if (record.data.tag === Constant.TextTag) {
+        if (active && record.data.tag === Constant.TextTag) {
             const source = record.data.value.substring(0, MaxSourceLength);
             const scrubbedPiece = scrub.nodeText(source, record.metadata.privacy);
             text = (text + scrubbedPiece).substring(0, MaxHeadingLength);
-            continue;
         }
 
-        // Reverse insertion makes the stack visit children in document order.
-        for (let i = Math.min(record.children.length, MaxHeadingNodes - visited) - 1; i >= 0; i--) {
-            pendingIds.push(record.children[i]);
+        if (visited >= MaxHeadingNodes || text.length >= MaxHeadingLength) { return true; }
+
+        if (active) {
+            for (const childId of record.children) {
+                if (visit(childId)) { return true; }
+            }
         }
+        return false;
     }
 
+    visit(headingId);
     return text;
 }
