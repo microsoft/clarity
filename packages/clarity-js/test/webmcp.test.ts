@@ -2,7 +2,7 @@ import { test, expect, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { gzipSync } from "node:zlib";
-import type { Host, Token } from "../src/dynamic/webmcp/common";
+import type { Token } from "../types/webmcp";
 
 const source = readFileSync(resolve(__dirname, "../build/dynamic/clarity.webmcp.js"), "utf8");
 type Failure = "" | "queue" | "queued" | "time" | "attach" | "register";
@@ -145,7 +145,7 @@ test("contract, compatibility targets and lifecycle", async ({ page }) => {
 test("queued Clarity leaves startup retryable", async ({ page }) => {
   await setup(page, "current", "queued");
   expect(await page.evaluate(() => ({
-    marked: !!(window as Host).__clarityWebMcp,
+    marked: !!window.__clarityWebMcp,
     records: window.fixture.records,
     stops: window.fixture.stops.length,
   }))).toEqual({ marked: false, records: [], stops: 0 });
@@ -233,7 +233,10 @@ test("name boundaries and shared usage cap", async ({ page }) => {
       f.emit("toolactivated", "after_invalid");
       return { records: f.records, listeners: Object.keys(f.listeners) };
     }, { type, name });
-    expect(result, `${type}: ${String(name)}`).toEqual({ records: [[250, 205, 1, 2]], listeners: [] });
+    expect(result, `${type}: ${String(name)}`).toEqual({
+      records: [[250, 205, 1, 2], [250, 205, 2, "after_invalid"]],
+      listeners: ["toolactivated", "toolcancel"],
+    });
   }
 });
 
@@ -243,7 +246,7 @@ test("startup and queue failures stop silently", async ({ page }) => {
     records: window.fixture.records,
     listeners: Object.keys(window.fixture.listeners),
     stops: window.fixture.stops.length,
-    marked: !!(window as Host).__clarityWebMcp,
+    marked: !!window.__clarityWebMcp,
   }))).toEqual({ records: [], listeners: [], stops: 0, marked: false });
   const retry = await page.evaluate(() => {
     const f = window.fixture;
@@ -262,7 +265,7 @@ test("startup and queue failures stop silently", async ({ page }) => {
       window.ClarityWebMcp.start();
       f.emit("toolactivated", "after_failure");
       return { records: f.records, listeners: Object.keys(f.listeners), stops: f.stops.length,
-        marked: !!(window as Host).__clarityWebMcp };
+        marked: !!window.__clarityWebMcp };
     });
     expect(result, failure).toEqual({ records: [], listeners: [], stops: 1, marked: true });
     const restarted = await page.evaluate(() => {

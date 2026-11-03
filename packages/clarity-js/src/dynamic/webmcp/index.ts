@@ -1,4 +1,4 @@
-import { ApiStatus, Host, RecordKind, ToolEvent, ToolEventName } from "./common";
+import { ApiStatus, ClarityApi, RecordKind, ToolEvent, ToolEventName } from "@clarity-types/webmcp";
 import { encode, MAX_USAGE_EVENTS, usage } from "./encode";
 
 export function start(): void {
@@ -6,16 +6,14 @@ export function start(): void {
     return;
   }
 
-  const host = window as Host;
+  const clarity = (window as Window & { clarity?: ClarityApi }).clarity;
 
-  if (host.__clarityWebMcp || typeof host.clarity !== "function") {
+  if (window.__clarityWebMcp || typeof clarity !== "function") {
     return;
   }
 
-  const clarity = host.clarity;
   const listeners: [EventTarget, ToolEventName][] = [];
   let measuredObserveUsage: ((event: ToolEvent) => void) | undefined;
-  let active = true;
   let usageCount = 0;
 
   try {
@@ -25,9 +23,9 @@ export function start(): void {
     clarity("register", stop);
 
     // Retain the marker after failure/cap; only registered shutdown permits a fresh lifecycle.
-    host.__clarityWebMcp = stop;
+    window.__clarityWebMcp = stop;
 
-    const modelContext = (document as Document & { modelContext?: EventTarget }).modelContext;
+    const modelContext = document.modelContext;
 
     if (typeof modelContext?.addEventListener === "function") {
       for (const eventType of [ToolEventName.Activated, ToolEventName.Cancel]) {
@@ -54,7 +52,7 @@ export function start(): void {
   }
 
   function observeUsage(event: ToolEvent): void {
-    if (!active || !event.isTrusted) {
+    if (!event.isTrusted) {
       return;
     }
 
@@ -63,7 +61,9 @@ export function start(): void {
         ? RecordKind.ToolActivated
         : RecordKind.ToolCancel;
 
-      usage(clarity, kind, event.toolName);
+      if (!usage(clarity, kind, event.toolName)) {
+        return;
+      }
 
       if (++usageCount === MAX_USAGE_EVENTS) {
         cleanup();
@@ -76,7 +76,6 @@ export function start(): void {
   }
 
   function cleanup(): void {
-    active = false;
     if (measuredObserveUsage) {
       for (const [target, eventType] of listeners) {
         target.removeEventListener(eventType, measuredObserveUsage);
@@ -88,8 +87,8 @@ export function start(): void {
   function stop(): void {
     cleanup();
 
-    if (host.__clarityWebMcp === stop) {
-      delete host.__clarityWebMcp;
+    if (window.__clarityWebMcp === stop) {
+      delete window.__clarityWebMcp;
     }
   }
 }
