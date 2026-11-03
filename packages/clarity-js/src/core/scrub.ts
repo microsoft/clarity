@@ -10,12 +10,12 @@ let digitRegex = null;
 let letterRegex = null;
 let currencyRegex = null;
 
-export function isTextMasked(tag: string, privacy: Privacy): boolean {
+export function shouldMangle(tag: string, privacy: Privacy): boolean {
     return tag === Layout.Constant.TextTag && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
 }
 
 export function textNode(value: string, privacy: Privacy): string {
-    return isTextMasked(Layout.Constant.TextTag, privacy)
+    return shouldMangle(Layout.Constant.TextTag, privacy)
         ? (value.trim() ? Data.Constant.Mask : Data.Constant.Empty)
         : text(value, Layout.Constant.TextTag, privacy);
 }
