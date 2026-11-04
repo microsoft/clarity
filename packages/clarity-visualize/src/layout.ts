@@ -107,6 +107,9 @@ const imageMaskedSvg = {
 }
 /* END imageMaskedSvgs */
 
+const doctypeDelimiters = /["<>]/g;
+const replacementCharacter = "\uFFFD";
+
 export class LayoutHelper {
     static TIMEOUT = 7000;
 
@@ -118,7 +121,6 @@ export class LayoutHelper {
     fonts: Promise<void>[] = [];
     nodes = {};
     events = {};
-    hashMapAlpha = {};
     hashMapBeta = {};
     adoptedStyleSheets = {};
     animations = {};
@@ -144,27 +146,20 @@ export class LayoutHelper {
         this.stylesheets = [];
         this.fonts = [];
         this.events = {};
-        this.hashMapAlpha = {};
         this.hashMapBeta = {};
         this.primaryHtmlNodeId = null;
     }
 
-    public get = (hash: string, silent: boolean = false): HTMLElement => {
+    public get = (hash: string): HTMLElement => {
         if (hash in this.hashMapBeta && this.hashMapBeta[hash].isConnected) {
             return this.hashMapBeta[hash];
-        } else if (hash in this.hashMapAlpha && this.hashMapAlpha[hash].isConnected) {
-            // Beta lookup missed but the Alpha (fallback) selector resolved the element.
-            // Surface this so we can measure how often Alpha is still required before retiring it.
-            if (!silent && this.state.options.onalphaFallback) { this.state.options.onalphaFallback(hash); }
-            return this.hashMapAlpha[hash];
         }
         return null;
     }
 
     private addToHashMap = (data: DecodedLayout.DomData, parent: Node) => {
         // In case of selector collision, prefer the first inserted node
-        this.hashMapAlpha[data.hashAlpha] = this.get(data.hashAlpha, true) || parent;
-        this.hashMapBeta[data.hashBeta] = this.get(data.hashBeta, true) || parent;
+        this.hashMapBeta[data.hashBeta] = this.get(data.hashBeta) || parent;
     }
 
     private resize = (el: HTMLElement, width: number, height: number): void => {
@@ -347,14 +342,13 @@ export class LayoutHelper {
                     let tagDoc = tag !== node.tag ? (parent ? (parent as HTMLIFrameElement).contentDocument : null): doc;
                     if (tagDoc && tagDoc === doc && type === Data.Event.Discover) { this.reset(); }
                     if (typeof XMLSerializer !== "undefined" && tagDoc) {
+                        let documentType = tagDoc.implementation.createDocumentType(
+                            node.attributes["name"],
+                            (node.attributes["publicId"] || "").replace(doctypeDelimiters, replacementCharacter),
+                            (node.attributes["systemId"] || "").replace(doctypeDelimiters, replacementCharacter)
+                        );
                         tagDoc.open();
-                        tagDoc.write(new XMLSerializer().serializeToString(
-                            tagDoc.implementation.createDocumentType(
-                                node.attributes["name"],
-                                node.attributes["publicId"],
-                                node.attributes["systemId"]
-                            )
-                        ));
+                        tagDoc.write(new XMLSerializer().serializeToString(documentType));
                         tagDoc.close();
                     }
                     break;
@@ -659,7 +653,6 @@ export class LayoutHelper {
 
         // Clarity attributes
         attributes[Constant.Id] = `${data.id}`;
-        attributes[Constant.HashAlpha] = `${data.hashAlpha}`;
         attributes[Constant.HashBeta] = `${data.hashBeta}`;
 
         let tag = node.nodeType === NodeType.ELEMENT_NODE ? node.tagName.toLowerCase() : null;
