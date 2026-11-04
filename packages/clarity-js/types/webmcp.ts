@@ -11,7 +11,7 @@ export const enum Action {
 
 // Shopify WebMCP reference: https://shopify.dev/docs/api/web-mcp
 // Wire IDs are permanent; reserve 0 for unknown and append without renumbering.
-export const toolNameIds = {
+export const WebMCPToolIds = {
   __proto__: null, // Never resolve inherited names as IDs.
   add_to_cart: 1,
   browse_store: 2,

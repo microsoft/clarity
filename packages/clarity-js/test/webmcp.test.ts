@@ -77,7 +77,7 @@ test.afterEach(async ({ page }) => {
   expect(await page.evaluate(() => window.fixture.reads)).toBe(0);
 });
 
-test("encodes usage, caps collection and restarts", async ({ page }) => {
+test("encodes usage, caps collection, restarts and retries queued startup", async ({ page }) => {
   expect(gzipSync(source).length).toBeLessThanOrEqual(1024);
   await setup(page);
   const result = await page.evaluate(() => {
@@ -99,17 +99,15 @@ test("encodes usage, caps collection and restarts", async ({ page }) => {
   expect(result.records.at(-1)).toEqual([250, 54, 1, "after_restart"]);
   expect(result.listenersAfterCap).toEqual([]);
   expect(result.stops).toBe(1);
-});
 
-test("queued startup remains retryable", async ({ page }) => {
   await setup(page, true);
   expect(await page.evaluate(() => window.fixture.stops.length)).toBe(0);
 
-  const result = await page.evaluate(() => {
+  const retry = await page.evaluate(() => {
     window.fixture.queued = false;
     window.ClarityWebMcp.start();
     window.fixture.emit("toolactivated", "after_retry");
     return { records: window.fixture.records, stops: window.fixture.stops.length };
   });
-  expect(result).toEqual({ records: [[250, 54, 1, "after_retry"]], stops: 1 });
+  expect(retry).toEqual({ records: [[250, 54, 1, "after_retry"]], stops: 1 });
 });

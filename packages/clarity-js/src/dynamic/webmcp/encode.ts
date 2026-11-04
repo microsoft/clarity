@@ -1,5 +1,5 @@
 import { Event } from "@clarity-types/data";
-import { Action, toolNameIds, WebMcpRecord } from "@clarity-types/webmcp";
+import { Action, WebMCPToolIds, WebMcpRecord } from "@clarity-types/webmcp";
 
 export const MAX_USAGE_EVENTS = 100;
 
@@ -19,7 +19,7 @@ export function usage(
     return false;
   }
 
-  const id = toolNameIds[name as keyof typeof toolNameIds];
+  const id = WebMCPToolIds[name as keyof typeof WebMCPToolIds];
 
   encode(action, typeof id === "number" ? id : name);
   return true;
