@@ -1,5 +1,4 @@
 import { Data } from "clarity-js";
-import { WebMcpData } from "clarity-js/types/webmcp";
 import { DiagnosticEvent, FraudEvent, LogEvent, ScriptErrorEvent } from "./diagnostic";
 import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, InteractionEvent } from "./interaction";
 import { PointerEvent, PointerDownEvent, ResizeEvent, SubmitEvent } from "./interaction";
@@ -25,7 +24,7 @@ export interface DimensionEvent extends PartialEvent { data: Data.DimensionData;
 export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
 export interface CustomEvent extends PartialEvent { data: Data.CustomData; }
 export interface ChatEvent extends PartialEvent { data: Data.ChatData; }
-export interface WebMcpEvent extends PartialEvent { data: WebMcpData; }
+export interface WebMcpEvent extends PartialEvent { data: Data.WebMcpData; }
 export interface VariableEvent extends PartialEvent { data: Data.VariableData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
 export interface LimitEvent extends PartialEvent { data: Data.LimitData; }
@@ -48,7 +47,7 @@ export interface DataEvent extends PartialEvent {
     Data.ExtractData |
     Data.ConsentData |
     Data.ChatData |
-    WebMcpData;
+    Data.WebMcpData;
 }
 
 export type DecodedEvent = DataEvent | DiagnosticEvent | InteractionEvent | LayoutEvent | PerformanceEvent;

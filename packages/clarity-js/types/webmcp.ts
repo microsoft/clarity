@@ -27,11 +27,6 @@ export const WebMCPToolIds = {
   update_cart_lines: 12,
 } as const;
 
-export interface WebMcpData {
-  action: Action;
-  name: string | number | null;
-}
-
 export type WebMcpRecord =
   | [action: Action.ToolActivated | Action.ToolCancel, name: string | number]
   | [action: Action.UsageCapped];

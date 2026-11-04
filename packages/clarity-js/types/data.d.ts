@@ -1,5 +1,6 @@
 import { Time } from "@clarity-types/core";
 import { Action } from "./agent";
+import { Action as WebMcpAction } from "./webmcp";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[] | (string | number)[]);
 export type DecodedToken = (any | any[]);
@@ -528,6 +529,11 @@ export interface VariableData {
 
 export interface ChatData {
     action: Action;
+}
+
+export interface WebMcpData {
+    action: WebMcpAction;
+    name: string | number | null;
 }
 
 // Eventually custom event can be expanded to contain more properties
