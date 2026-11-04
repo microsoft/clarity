@@ -2,7 +2,7 @@ import { expect, Page, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { gzipSync } from "node:zlib";
-import type { Token } from "../types/webmcp";
+import type { Token } from "../types/data";
 
 const source = readFileSync(resolve(__dirname, "../build/dynamic/clarity.webmcp.js"), "utf8");
 

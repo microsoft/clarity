@@ -9,7 +9,10 @@ export const enum Action {
   UsageCapped = 3,
 }
 
-export type Token = string | number;
+export interface WebMcpData {
+  action: Action;
+  name: string | number | null;
+}
 
 export type WebMcpRecord =
   | [action: Action.ToolActivated | Action.ToolCancel, name: string | number]
