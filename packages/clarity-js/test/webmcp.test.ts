@@ -103,10 +103,7 @@ test("encodes usage, caps collection and restarts", async ({ page }) => {
 
 test("queued startup remains retryable", async ({ page }) => {
   await setup(page, true);
-  expect(await page.evaluate(() => ({
-    marked: !!(window as any).__clarityWebMcp,
-    stops: window.fixture.stops.length,
-  }))).toEqual({ marked: false, stops: 0 });
+  expect(await page.evaluate(() => window.fixture.stops.length)).toBe(0);
 
   const result = await page.evaluate(() => {
     window.fixture.queued = false;

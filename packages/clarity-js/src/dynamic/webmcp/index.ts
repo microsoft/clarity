@@ -8,7 +8,7 @@ export function start(): void {
 
   const clarity = (window as any).clarity;
 
-  if ((window as any).__clarityWebMcp || typeof clarity !== "function") {
+  if (typeof clarity !== "function") {
     return;
   }
 
@@ -21,9 +21,6 @@ export function start(): void {
     if (typeof measuredObserveUsage !== "function") { return; }
 
     clarity("register", stop);
-
-    // Retain the marker after failure/cap; only registered shutdown permits a fresh lifecycle.
-    (window as any).__clarityWebMcp = stop;
 
     const modelContext = document.modelContext;
 
@@ -76,10 +73,6 @@ export function start(): void {
 
   function stop(): void {
     cleanup();
-
-    if ((window as any).__clarityWebMcp === stop) {
-      delete (window as any).__clarityWebMcp;
-    }
   }
 }
 
