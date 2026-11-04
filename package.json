@@ -1,7 +1,7 @@
 {
   "name": "clarity",
   "private": true,
-  "version": "0.8.73",
+  "version": "0.8.77",
   "repository": "git+https://github.com/microsoft/clarity.git",
   "author": "Sarvesh Nagpal <sarveshn@microsoft.com>",
   "license": "MIT",
@@ -23,11 +23,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "lerna": "^9.0.7",
+    "lerna": "^10.1.1",
     "parse-url": "^8.1.0",
     "ts-node": "^10.9.2"
-  },
-  "resolutions": {
-    "parse-url": "^8.1.0"
   }
 }
