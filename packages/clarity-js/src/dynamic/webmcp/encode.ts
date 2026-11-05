@@ -1,7 +1,7 @@
 import { Event } from "@clarity-types/data";
 import { Action, WebMCPToolIds, WebMcpRecord } from "@clarity-types/webmcp";
 
-// WebMCP draft requires tool names to be 1-128 ASCII characters.
+// WebMCP limits tool names to 1-128 characters.
 // https://webmachinelearning.github.io/webmcp/#tool-definition-name
 const MAX_TOOL_NAME_LENGTH = 128;
 
