@@ -1,6 +1,8 @@
 import { Action, ToolEvent, ToolEventName } from "@clarity-types/webmcp";
 import { encode, MAX_USAGE_EVENTS, usage } from "./encode";
 
+let initialized = false;
+
 export function start(): void {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return;
@@ -8,7 +10,7 @@ export function start(): void {
 
   const clarity = (window as any).clarity;
 
-  if (typeof clarity !== "function") {
+  if (initialized || typeof clarity !== "function") {
     return;
   }
 
@@ -21,6 +23,7 @@ export function start(): void {
     if (typeof measuredObserveUsage !== "function") { return; }
 
     clarity("register", stop);
+    initialized = true;
 
     const modelContext = document.modelContext;
 
@@ -73,6 +76,7 @@ export function start(): void {
 
   function stop(): void {
     cleanup();
+    initialized = false;
   }
 }
 

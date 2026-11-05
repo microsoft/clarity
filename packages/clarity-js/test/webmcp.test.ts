@@ -9,7 +9,7 @@ const source = readFileSync(resolve(__dirname, "../build/dynamic/clarity.webmcp.
 interface Fixture {
   records: Token[][];
   stops: (() => void)[];
-  listeners: Record<string, (event: { type: string; toolName: unknown }) => void>;
+  listeners: Record<string, ((event: { type: string; toolName: unknown }) => void)[]>;
   queued: boolean;
   reads: number;
   emit(type: string, name: unknown): void;
@@ -30,7 +30,7 @@ async function setup(page: Page, queued: boolean = false): Promise<void> {
     const fixture: Fixture = window.fixture = {
       records: [], stops: [], listeners: {}, queued: initiallyQueued, reads: 0,
       emit(type: string, name: unknown): void {
-        fixture.listeners[type]?.({ type, toolName: name });
+        fixture.listeners[type]?.forEach(listener => listener({ type, toolName: name }));
       },
     };
     Object.defineProperty(window, "clarity", {
@@ -53,11 +53,12 @@ async function setup(page: Page, queued: boolean = false): Promise<void> {
     const context = {
       ontoolactivated: null,
       ontoolcancel: null,
-      addEventListener(type: string, listener: Fixture["listeners"][string]): void {
-        fixture.listeners[type] = listener;
+      addEventListener(type: string, listener: Fixture["listeners"][string][number]): void {
+        (fixture.listeners[type] ||= []).push(listener);
       },
-      removeEventListener(type: string, listener: Fixture["listeners"][string]): void {
-        if (fixture.listeners[type] === listener) { delete fixture.listeners[type]; }
+      removeEventListener(type: string, listener: Fixture["listeners"][string][number]): void {
+        fixture.listeners[type] = fixture.listeners[type]?.filter(value => value !== listener);
+        if (fixture.listeners[type]?.length === 0) { delete fixture.listeners[type]; }
       },
       get getTools(): never { fixture.reads++; throw new Error("Unexpected discovery"); },
     };
@@ -82,6 +83,8 @@ test("encodes usage, caps collection, restarts and retries queued startup", asyn
   await setup(page);
   const result = await page.evaluate(() => {
     const f = window.fixture;
+    window.ClarityWebMcp.start();
+    const starts = f.stops.length;
     f.emit("toolactivated", "add_to_cart");
     f.emit("toolcancel", "custom_tool");
     f.emit("toolactivated", "");
@@ -90,7 +93,7 @@ test("encodes usage, caps collection, restarts and retries queued startup", asyn
     f.stops.splice(0).forEach(stop => stop());
     window.ClarityWebMcp.start();
     f.emit("toolactivated", "after_restart");
-    return { records: f.records, listenersAfterCap, stops: f.stops.length };
+    return { records: f.records, listenersAfterCap, starts, stops: f.stops.length };
   });
   expect(result.records).toHaveLength(102);
   expect(result.records[0]).toEqual([250, 54, 1, 1]);
@@ -98,6 +101,7 @@ test("encodes usage, caps collection, restarts and retries queued startup", asyn
   expect(result.records.at(-2)).toEqual([250, 54, 3]);
   expect(result.records.at(-1)).toEqual([250, 54, 1, "after_restart"]);
   expect(result.listenersAfterCap).toEqual([]);
+  expect(result.starts).toBe(1);
   expect(result.stops).toBe(1);
 
   await setup(page, true);
