@@ -84,23 +84,27 @@ test("encodes usage, caps collection, restarts and retries queued startup", asyn
     window.ClarityWebMcp.start();
     const starts = f.stops.length;
     f.emit("toolactivated", "add_to_cart");
+    f.stops.splice(0).forEach(stop => stop());
+    const listenersAfterStop = Object.keys(f.listeners);
+    f.emit("toolactivated", "after_stop");
+    const recordsAfterStop = f.records.length;
+    window.ClarityWebMcp.start();
+    const restarts = f.stops.length;
     f.emit("toolcancel", "custom_tool");
     f.emit("toolactivated", "");
-    for (let i = 0; i < 98; i++) { f.emit("toolactivated", "get_cart"); }
+    for (let i = 0; i < 99; i++) { f.emit("toolactivated", "get_cart"); }
     const listenersAfterCap = Object.keys(f.listeners);
-    f.stops.splice(0).forEach(stop => stop());
-    window.ClarityWebMcp.start();
-    f.emit("toolactivated", "after_restart");
-    return { records: f.records, listenersAfterCap, starts, stops: f.stops.length };
+    return { records: f.records, listenersAfterCap, listenersAfterStop, recordsAfterStop, restarts, starts };
   });
   expect(result.records).toHaveLength(102);
   expect(result.records[0]).toEqual([250, 54, 1, 1]);
   expect(result.records[1]).toEqual([250, 54, 2, "custom_tool"]);
-  expect(result.records.at(-2)).toEqual([250, 54, 3]);
-  expect(result.records.at(-1)).toEqual([250, 54, 1, "after_restart"]);
+  expect(result.records.at(-1)).toEqual([250, 54, 3]);
   expect(result.listenersAfterCap).toEqual([]);
+  expect(result.listenersAfterStop).toEqual([]);
+  expect(result.recordsAfterStop).toBe(1);
+  expect(result.restarts).toBe(1);
   expect(result.starts).toBe(1);
-  expect(result.stops).toBe(1);
 
   await setup(page, true);
   expect(await page.evaluate(() => window.fixture.stops.length)).toBe(0);
