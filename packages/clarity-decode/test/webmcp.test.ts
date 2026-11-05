@@ -3,7 +3,7 @@ import { decode } from "clarity-decode";
 
 test("decodes WebMCP actions", () => {
     const result = decode(JSON.stringify({
-        e: ["0.8.73", 1, 0, 100, "devtools", "user", "session", 1, 0, 0, 0, "https://test.com/"],
+        e: ["0.8.77", 1, 0, 100, "devtools", "user", "session", 1, 0, 0, 0, "https://test.com/"],
         a: [[70, 54, 1, 1], [80, 54, 2, "custom_tool"], [90, 54, 3]],
     }));
 
