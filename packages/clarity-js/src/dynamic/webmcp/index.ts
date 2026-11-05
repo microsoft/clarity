@@ -1,6 +1,7 @@
 import { Action, ToolEvent, ToolEventName } from "@clarity-types/webmcp";
-import { encode, MAX_USAGE_EVENTS, usage } from "./encode";
+import { encode, usage } from "./encode";
 
+const MAX_USAGE_EVENTS = 100;
 let initialized = false;
 
 export function start(): void {

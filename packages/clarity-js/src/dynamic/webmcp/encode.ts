@@ -1,11 +1,9 @@
 import { Event } from "@clarity-types/data";
 import { Action, WebMCPToolIds, WebMcpRecord } from "@clarity-types/webmcp";
 
-export const MAX_USAGE_EVENTS = 100;
-
 // WebMCP draft requires tool names to be 1-128 ASCII characters.
 // https://webmachinelearning.github.io/webmcp/#tool-definition-name
-export const MAX_TOOL_NAME_LENGTH = 128;
+const MAX_TOOL_NAME_LENGTH = 128;
 
 export function usage(
   action: Action.ToolActivated | Action.ToolCancel,
