@@ -1,5 +1,5 @@
 import { Data, version } from "clarity-js";
-import { BaselineEvent, ChatEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
+import { BaselineEvent, ChatEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent, WebMcpEvent } from "../types/data";
 import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent, ConsentEvent } from "../types/data";
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
 import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent } from "../types/interaction";
@@ -80,6 +80,10 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Chat:
                 if (payload.chat === undefined) { payload.chat = []; }
                 payload.chat.push(data.decode(entry) as ChatEvent);
+                break;
+            case Data.Event.WebMcp:
+                if (payload.webMcp === undefined) { payload.webMcp = []; }
+                payload.webMcp.push(data.decode(entry) as WebMcpEvent);
                 break;
             case Data.Event.Variable:
                 if (payload.variable === undefined) { payload.variable = []; }

@@ -1,6 +1,6 @@
 {
   "name": "clarity-js",
-  "version": "0.8.76",
+  "version": "0.8.77",
   "description": "An analytics library that uses web page interactions to generate aggregated insights",
   "author": "Microsoft Corp.",
   "license": "MIT",
@@ -13,6 +13,7 @@
   "livechat": "build/clarity.livechat.js",
   "tidio": "build/dynamic/clarity.tidio.js",
   "crisp": "build/dynamic/clarity.crisp.js",
+  "webmcp": "build/dynamic/clarity.webmcp.js",
   "types": "types/index.d.ts",
   "keywords": [
     "clarity",
