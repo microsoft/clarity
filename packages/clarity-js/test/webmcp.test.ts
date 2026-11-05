@@ -22,8 +22,6 @@ declare global {
   }
 }
 
-test.use({ channel: "chrome", launchOptions: { chromiumSandbox: true } });
-
 async function setup(page: Page, queued: boolean = false): Promise<void> {
   await page.goto("about:blank");
   await page.evaluate(initiallyQueued => {
