@@ -146,7 +146,7 @@ function replay(): void {
         let end = event.time + 16; // 60FPS => 16ms / frame
         let index = 0;
         while (event && event.time < end) {
-            event = event[++index];
+            event = events[++index];
         }
         visualize.render(events.splice(0, index));
     }
