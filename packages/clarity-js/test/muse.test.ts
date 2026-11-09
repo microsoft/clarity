@@ -6,7 +6,7 @@ import { join } from "path";
  * Browser environment evidence tests for Meta Muse detection.
  * Muse-like evidence combines a reduced Linux user agent, ARM client hint and SwiftShader renderer.
  * The tag reports the combined Muse match on dimension 39 (signal 8).
- * ARM remains an independent metric 41; the backend applies agent precedence.
+ * Architecture stays local; legacy ARM metric 41 must not be uploaded.
  */
 
 const clarityJsPath = join(__dirname, "../build/clarity.min.js");
@@ -129,22 +129,22 @@ async function run(page: Page, env: Environment, restart: "none" | "before-hints
 }
 
 test.describe("muse - environment match", () => {
-    test("Muse profile reports the combined match on dimension 39 and preserves the ARM metric", async ({ page }) => {
+    test("Muse profile reports the combined match without uploading the ARM metric", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: SwiftShaderRenderer });
         expect(result.signals).toEqual([MuseEnvironmentSignal]);
-        expect(result.armMetrics).toEqual([1]);
+        expect(result.armMetrics).toEqual([]);
     });
 
-    test("Muse profile with arm64 reuses ARM metric", async ({ page }) => {
+    test("Muse profile with arm64 reports the match without uploading the ARM metric", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm64", renderer: SwiftShaderRenderer });
         expect(result.signals).toEqual([MuseEnvironmentSignal]);
-        expect(result.armMetrics).toEqual([1]);
+        expect(result.armMetrics).toEqual([]);
     });
 
     test("user agent match is case-insensitive", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent.toUpperCase(), architecture: "arm", renderer: SwiftShaderRenderer });
         expect(result.signals).toEqual([MuseEnvironmentSignal]);
-        expect(result.armMetrics).toEqual([1]);
+        expect(result.armMetrics).toEqual([]);
     });
 
     test("headless Linux x86 skips WebGL", async ({ page }) => {
@@ -162,10 +162,10 @@ test.describe("muse - environment match", () => {
         expect(result.probe.webglCalls).toBe(0);
     });
 
-    test("ARM Linux with a real GPU reports ARM metric but no agentic dimension signal", async ({ page }) => {
+    test("ARM Linux with a real GPU reports neither ARM metric nor Muse signal", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: GpuRenderer });
         expect(result.signals).toEqual([]);
-        expect(result.armMetrics).toEqual([1]);
+        expect(result.armMetrics).toEqual([]);
     });
 
     const gated: [string, Environment][] = [
@@ -176,14 +176,14 @@ test.describe("muse - environment match", () => {
         ["Mac on Apple silicon", { userAgent: MacUserAgent, architecture: "arm", renderer: AppleRenderer }]
     ];
     for (const [name, env] of gated) {
-        test(`${name} preserves the existing ARM metric without probing WebGL`, async ({ page }) => {
+        test(`${name} uploads no ARM metric and skips WebGL`, async ({ page }) => {
             const result = await run(page, env);
             expect(result.signals).toEqual([]);
             expect(result.probe.architectureCalls).toBe(env.architecture === undefined ? 0 : 1);
             expect(result.probe.webglCalls).toBe(0);
             expect(result.probe.loseContextCalls).toBe(0);
             expect(result.probe.clientHintCalls).toBe(env.architecture === undefined ? 0 : 1);
-            expect(result.armMetrics).toEqual(env.architecture === "arm" ? [1] : []);
+            expect(result.armMetrics).toEqual([]);
         });
     }
 
@@ -205,7 +205,7 @@ test.describe("muse - environment match", () => {
         expect(result.probe.architectureCalls).toBe(2);
         expect(result.probe.webglCalls).toBe(1);
         expect(result.signals).toEqual([MuseEnvironmentSignal]);
-        expect(result.armMetrics).toEqual([1]);
+        expect(result.armMetrics).toEqual([]);
     });
 
     test("restart invalidates a WebGL callback already queued by metadata", async ({ page }) => {
@@ -213,13 +213,13 @@ test.describe("muse - environment match", () => {
         expect(result.probe.clientHintCalls).toBe(2);
         expect(result.probe.webglCalls).toBe(1);
         expect(result.signals).toEqual([MuseEnvironmentSignal]);
-        expect(result.armMetrics).toEqual([1, 1]);
+        expect(result.armMetrics).toEqual([]);
     });
 
     for (const architecture of ["aRm", "ArM64"]) {
-        test(`architecture "${architecture}" uses the upstream case-insensitive ARM check`, async ({ page }) => {
+        test(`architecture "${architecture}" is checked locally without uploading the ARM metric`, async ({ page }) => {
             const result = await run(page, { userAgent: MuseUserAgent, architecture, renderer: SwiftShaderRenderer });
-            expect(result.armMetrics).toEqual([1]);
+            expect(result.armMetrics).toEqual([]);
             expect(result.signals).toEqual([MuseEnvironmentSignal]);
             expect(result.probe.clientHintCalls).toBe(1);
         });
@@ -256,15 +256,15 @@ test.describe("muse - environment match", () => {
     test("survives a missing WebGL context", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: null });
         expect(result.signals).toEqual([]);
-        expect(result.armMetrics).toEqual([1]);
+        expect(result.armMetrics).toEqual([]);
     });
 
-    test("a failed WebGL probe preserves the existing ARM metric", async ({ page }) => {
+    test("a failed WebGL probe uploads neither ARM metric nor Muse signal", async ({ page }) => {
         const errors: string[] = [];
         page.on("pageerror", (error: Error) => errors.push(error.message));
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: "throw" });
         expect(result.signals).toEqual([]);
-        expect(result.armMetrics).toEqual([1]);
+        expect(result.armMetrics).toEqual([]);
         expect(errors).toEqual([]);
     });
 });

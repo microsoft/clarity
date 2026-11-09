@@ -124,7 +124,6 @@ function collectUserAgentData(): void {
         dimension.log(Dimension.Model, ua.model);
         metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False);
         if (["arm", "arm64"].includes(ua.architecture?.toLowerCase())) {
-          metric.max(Metric.ArmArchitecture, BooleanFlag.True);
           muse.collectMuseEnvironment();
         }
       }, (): void => {
