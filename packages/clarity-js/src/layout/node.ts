@@ -49,7 +49,6 @@ export default function (node: Node, source: Source, timestamp: number): Node {
             // We check for regions in the beginning when discovering document and
             // later whenever there are new additions or modifications to DOM (mutations)
             if (node === document) {
-                agent.detectUserAgent(navigator.userAgent);
                 domParse(document);
             }
             checkDocumentStyles(node as Document, timestamp);
