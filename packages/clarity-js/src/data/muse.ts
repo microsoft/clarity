@@ -2,9 +2,6 @@ import { AgenticBrowserSignal, Dimension } from "@clarity-types/data";
 import * as task from "@src/core/task";
 import * as dimension from "@src/data/dimension";
 
-// Muse-like evidence: reduced Linux user agent, ARM client hint and SwiftShader rendering.
-// Metadata checks ARM before calling collectMuseEnvironment; this module checks Linux and SwiftShader.
-// https://arcjet.com/learn/how-to-detect-metas-muse-ai-agent
 const LinuxX64Token = "linux x86_64)";
 const SwiftShaderPattern = /swiftshader/i;
 let active = false;

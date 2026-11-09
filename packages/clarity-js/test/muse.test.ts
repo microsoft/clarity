@@ -128,7 +128,7 @@ async function run(page: Page, env: Environment, restart: "none" | "before-hints
     }, { dimension: AgenticDimension, event: DimensionEvent, armMetric: ArmMetric, metricEvent: MetricEvent, restartClarity: restart });
 }
 
-test.describe("agent - Meta Muse evidence", () => {
+test.describe("muse - environment match", () => {
     test("Muse profile reports the combined match on dimension 39 and preserves the ARM metric", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: SwiftShaderRenderer });
         expect(result.signals).toEqual([MuseEnvironmentSignal]);

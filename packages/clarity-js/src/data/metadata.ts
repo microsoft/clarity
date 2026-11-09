@@ -5,7 +5,7 @@ import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
 import * as scrub from "@src/core/scrub";
-import * as agent from "@src/data/agent";
+import * as muse from "@src/data/muse";
 import * as trackConsent from "@src/data/consent";
 import { COOKIE_SEP, getCookie, setCookie } from "@src/data/cookie";
 import * as dimension from "@src/data/dimension";
@@ -125,7 +125,7 @@ function collectUserAgentData(): void {
         metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False);
         if (["arm", "arm64"].includes(ua.architecture?.toLowerCase())) {
           metric.max(Metric.ArmArchitecture, BooleanFlag.True);
-          agent.collectMuseEnvironment();
+          muse.collectMuseEnvironment();
         }
       }, (): void => {
         if (data === current) { dimension.log(Dimension.Platform, navigator.platform); }
