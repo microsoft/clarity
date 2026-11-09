@@ -73,7 +73,7 @@ export function start(): void {
     metric.max(Metric.HardwareConcurrency, navigator.hardwareConcurrency);
     metric.max(Metric.MaxTouchPoints, navigator.maxTouchPoints);
     metric.max(Metric.DeviceMemory, Math.round((<any>navigator).deviceMemory));
-    collectUserAgentData();
+    userAgentData();
   }
 
   if (screen) {
@@ -109,29 +109,23 @@ function webMcp(): boolean {
   }
 }
 
-function collectUserAgentData(): void {
+function userAgentData(): void {
   let uaData = navigator["userAgentData"];
   if (uaData && uaData.getHighEntropyValues) {
     // brands, mobile, and platform are low-entropy and always included in the response per
     // UA-CH spec §3.1 (https://wicg.github.io/ua-client-hints/#getHighEntropyValues); only high-entropy hints need to be listed.
     const current = data;
-    try {
-      uaData.getHighEntropyValues(["model", "platformVersion", "architecture"]).then(ua => {
-        if (data !== current) { return; }
-        dimension.log(Dimension.Platform, ua.platform);
-        dimension.log(Dimension.PlatformVersion, ua.platformVersion);
-        ua.brands?.forEach(brand => { dimension.log(Dimension.Brand, brand.brand + Constant.Tilde + brand.version); });
-        dimension.log(Dimension.Model, ua.model);
-        metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False);
-        if (["arm", "arm64"].includes(ua.architecture?.toLowerCase())) {
-          muse.collectMuseEnvironment();
-        }
-      }, (): void => {
-        if (data === current) { dimension.log(Dimension.Platform, navigator.platform); }
-      });
-    } catch {
-      dimension.log(Dimension.Platform, navigator.platform);
-    }
+    uaData.getHighEntropyValues(["model", "platformVersion", "architecture"]).then(ua => {
+      if (data !== current) { return; }
+      dimension.log(Dimension.Platform, ua.platform);
+      dimension.log(Dimension.PlatformVersion, ua.platformVersion);
+      ua.brands?.forEach(brand => { dimension.log(Dimension.Brand, brand.brand + Constant.Tilde + brand.version); });
+      dimension.log(Dimension.Model, ua.model);
+      metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False);
+      if (["arm", "arm64"].includes(ua.architecture?.toLowerCase())) {
+        muse.collectMuseEnvironment();
+      }
+    });
   } else { dimension.log(Dimension.Platform, navigator.platform); }
 }
 

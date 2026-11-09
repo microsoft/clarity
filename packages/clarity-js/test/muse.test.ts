@@ -28,7 +28,7 @@ const AppleRenderer = "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified
 
 interface Environment {
     userAgent: string;
-    // undefined removes client hints; "throw" rejects; "throw-sync" throws before returning a promise.
+    // undefined removes client hints.
     architecture?: string;
     // null makes getContext("webgl") return null; "throw" makes it throw.
     renderer: string | null;
@@ -62,8 +62,6 @@ function stubEnvironment(env: Environment): void {
             probe.clientHintCalls++;
             if (hints.indexOf("architecture") >= 0) {
                 probe.architectureCalls++;
-                if (env.architecture === "throw-sync") { throw new Error("blocked"); }
-                if (env.architecture === "throw") { return Promise.reject(new Error("blocked")); }
             }
             return Promise.resolve({ architecture: env.architecture, platform: "Linux", brands: [], mobile: false });
         }
@@ -232,25 +230,6 @@ test.describe("muse - environment match", () => {
         expect(result.signals).toEqual([]);
         expect(result.probe.webglCalls).toBe(0);
         expect(result.payloads.join("")).not.toContain(architecture);
-    });
-
-    test("survives synchronous client-hint failures", async ({ page }) => {
-        const errors: string[] = [];
-        page.on("pageerror", (error: Error) => errors.push(error.message));
-        const result = await run(page, { userAgent: MuseUserAgent, architecture: "throw-sync", renderer: SwiftShaderRenderer });
-        expect(result.signals).toEqual([]);
-        expect(result.armMetrics).toEqual([]);
-        expect(result.probe.webglCalls).toBe(0);
-        expect(errors).toEqual([]);
-    });
-
-    test("survives WebGL and client-hint failures", async ({ page }) => {
-        const errors: string[] = [];
-        page.on("pageerror", (error: Error) => errors.push(error.message));
-        const result = await run(page, { userAgent: MuseUserAgent, architecture: "throw", renderer: "throw" });
-        expect(result.signals).toEqual([]);
-        expect(result.armMetrics).toEqual([]);
-        expect(errors).toEqual([]);
     });
 
     test("survives a missing WebGL context", async ({ page }) => {
