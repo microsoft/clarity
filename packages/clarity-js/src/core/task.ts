@@ -1,6 +1,7 @@
 import { AsyncTask, Priority, RequestIdleCallbackDeadline, RequestIdleCallbackOptions, Task, Timer } from "@clarity-types/core";
 import { TaskFunction, TaskResolve, Tasks } from "@clarity-types/core";
 import { Code, Metric, Setting, Severity } from "@clarity-types/data";
+import measure from "@src/core/measure";
 import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as internal from "@src/diagnostic/internal";
@@ -139,7 +140,7 @@ function key(timer: Timer): string {
 }
 
 export function scheduleIdle(callback: () => void): void {
-    requestIdleCallback(callback, { timeout: idleTimeout });
+    requestIdleCallback(measure(callback), { timeout: idleTimeout });
 }
 
 async function wait(): Promise<RequestIdleCallbackDeadline> {
