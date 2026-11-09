@@ -143,6 +143,7 @@ export const enum Metric {
     HistoryClear = 38,
     AngularZone = 39,
     WebMcpDetected = 40,
+    ArmArchitecture = 41,
     // 200-300 reserved for internal use
 }
 
@@ -242,8 +243,7 @@ export const enum AgenticBrowserSignal {
     ClaudePhantomCursor = 5,
     CodexAgentOverlayRoot = 6,
     CodexBrowserSidebarCommentsRoot = 7,
-    ArmArchitecture = 8,
-    SwiftShaderRenderer = 9
+    SwiftShaderRenderer = 8
 }
 
 export const enum GCMConsent {

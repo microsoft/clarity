@@ -11,7 +11,7 @@ let active = false;
 let generation = 0;
 
 export function start(): void {
-    active = shouldCollectArchitecture(navigator.userAgent);
+    active = navigator.userAgent.toLowerCase().indexOf(LinuxX64Token) >= 0;
 }
 
 export function stop(): void {
@@ -19,14 +19,9 @@ export function stop(): void {
     generation++;
 }
 
-export function shouldCollectArchitecture(userAgent: string): boolean {
-    return userAgent.toLowerCase().indexOf(LinuxX64Token) >= 0;
-}
-
-export function collectArchitecture(architecture: string): void {
-    if (!active || (architecture !== "arm" && architecture !== "arm64")) { return; }
+export function collectRenderer(): void {
+    if (!active) { return; }
     const current = generation;
-    logSignal(AgenticBrowserSignal.ArmArchitecture);
     task.scheduleIdle((): void => {
         if (!active || current !== generation) { return; }
         if (SwiftShaderPattern.test(readRenderer())) { logSignal(AgenticBrowserSignal.SwiftShaderRenderer); }
