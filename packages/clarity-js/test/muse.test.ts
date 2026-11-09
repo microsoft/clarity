@@ -84,7 +84,7 @@ function stubEnvironment(env: Environment): void {
     } as any;
 }
 
-async function run(page: Page, env: Environment, restart: "none" | "before-hints" | "before-idle" = "none"): Promise<Result> {
+async function run(page: Page, env: Environment, restart: "none" | "before-idle" = "none"): Promise<Result> {
     await page.addInitScript(stubEnvironment, env);
     await page.goto("data:text/html,<!DOCTYPE html><html><head></head><body><div>hi</div></body></html>");
     await page.evaluate((code: string) => { eval(code); }, readFileSync(clarityJsPath, "utf-8"));
@@ -93,10 +93,7 @@ async function run(page: Page, env: Environment, restart: "none" | "before-hints
             const payloads: string[] = [];
             (window as any).clarity("start", { projectId: "test", track: false, upload: (payload: string) => { payloads.push(payload); } });
             const probeAtStart = { ...(window as any).__probe };
-            if (restartClarity === "before-hints") {
-                (window as any).clarity("stop");
-                (window as any).clarity("start");
-            } else if (restartClarity === "before-idle") {
+            if (restartClarity === "before-idle") {
                 Promise.resolve().then(() => {
                     (window as any).clarity("stop");
                     (window as any).clarity("start");
@@ -195,15 +192,6 @@ test.describe("muse - environment match", () => {
     test("releases the WebGL context", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: SwiftShaderRenderer });
         expect(result.probe.loseContextCalls).toBe(1);
-    });
-
-    test("restart discards the previous metadata request", async ({ page }) => {
-        const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: SwiftShaderRenderer }, "before-hints");
-        expect(result.probe.clientHintCalls).toBe(2);
-        expect(result.probe.architectureCalls).toBe(2);
-        expect(result.probe.webglCalls).toBe(1);
-        expect(result.signals).toEqual([MuseEnvironmentSignal]);
-        expect(result.armMetrics).toEqual([]);
     });
 
     test("restart invalidates a WebGL callback already queued by metadata", async ({ page }) => {

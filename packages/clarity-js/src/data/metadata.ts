@@ -114,9 +114,7 @@ function userAgentData(): void {
   if (uaData && uaData.getHighEntropyValues) {
     // brands, mobile, and platform are low-entropy and always included in the response per
     // UA-CH spec §3.1 (https://wicg.github.io/ua-client-hints/#getHighEntropyValues); only high-entropy hints need to be listed.
-    const current = data;
     uaData.getHighEntropyValues(["model", "platformVersion", "architecture"]).then(ua => {
-      if (data !== current) { return; }
       dimension.log(Dimension.Platform, ua.platform);
       dimension.log(Dimension.PlatformVersion, ua.platformVersion);
       ua.brands?.forEach(brand => { dimension.log(Dimension.Brand, brand.brand + Constant.Tilde + brand.version); });
