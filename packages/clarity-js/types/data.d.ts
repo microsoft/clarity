@@ -243,7 +243,7 @@ export const enum AgenticBrowserSignal {
     ClaudePhantomCursor = 5,
     CodexAgentOverlayRoot = 6,
     CodexBrowserSidebarCommentsRoot = 7,
-    SwiftShaderRenderer = 8
+    MuseEnvironmentMatched = 8
 }
 
 export const enum GCMConsent {

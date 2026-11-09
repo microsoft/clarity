@@ -3,7 +3,7 @@ import * as task from "@src/core/task";
 import * as dimension from "@src/data/dimension";
 
 // Muse-like evidence: reduced Linux user agent, ARM client hint and SwiftShader rendering.
-// Report browser-API agent evidence; layout/agent.ts handles DOM evidence.
+// Metadata checks ARM before calling collectMuseEnvironment; this module checks Linux and SwiftShader.
 // https://arcjet.com/learn/how-to-detect-metas-muse-ai-agent
 const LinuxX64Token = "linux x86_64)";
 const SwiftShaderPattern = /swiftshader/i;
@@ -19,12 +19,12 @@ export function stop(): void {
     generation++;
 }
 
-export function collectRenderer(): void {
+export function collectMuseEnvironment(): void {
     if (!active) { return; }
     const current = generation;
     task.scheduleIdle((): void => {
         if (!active || current !== generation) { return; }
-        if (SwiftShaderPattern.test(readRenderer())) { logSignal(AgenticBrowserSignal.SwiftShaderRenderer); }
+        if (SwiftShaderPattern.test(readRenderer())) { logSignal(AgenticBrowserSignal.MuseEnvironmentMatched); }
     });
 }
 

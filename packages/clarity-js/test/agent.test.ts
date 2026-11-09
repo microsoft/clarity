@@ -5,8 +5,8 @@ import { join } from "path";
 /**
  * Browser environment evidence tests for Meta Muse detection.
  * Muse-like evidence combines a reduced Linux user agent, ARM client hint and SwiftShader renderer.
- * ARM uses the existing metric 41; only SwiftShader is reported on dimension 39 (signal 8).
- * The backend decides the verdict. These tests stub the environment and verify the reported evidence.
+ * The tag reports the combined Muse match on dimension 39 (signal 8).
+ * ARM remains an independent metric 41; the backend applies agent precedence.
  */
 
 const clarityJsPath = join(__dirname, "../build/clarity.min.js");
@@ -14,7 +14,7 @@ const AgenticDimension = 39;
 const DimensionEvent = 1;
 const ArmMetric = 41;
 const MetricEvent = 0;
-const SwiftShaderSignal = "8";
+const MuseEnvironmentSignal = "8";
 
 const MuseUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";
 const WindowsUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
@@ -129,21 +129,21 @@ async function run(page: Page, env: Environment, restart: "none" | "before-hints
 }
 
 test.describe("agent - Meta Muse evidence", () => {
-    test("Muse profile reuses ARM metric and reports only SwiftShader on dimension 39", async ({ page }) => {
+    test("Muse profile reports the combined match on dimension 39 and preserves the ARM metric", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: SwiftShaderRenderer });
-        expect(result.signals).toEqual([SwiftShaderSignal]);
+        expect(result.signals).toEqual([MuseEnvironmentSignal]);
         expect(result.armMetrics).toEqual([1]);
     });
 
     test("Muse profile with arm64 reuses ARM metric", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm64", renderer: SwiftShaderRenderer });
-        expect(result.signals).toEqual([SwiftShaderSignal]);
+        expect(result.signals).toEqual([MuseEnvironmentSignal]);
         expect(result.armMetrics).toEqual([1]);
     });
 
     test("user agent match is case-insensitive", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent.toUpperCase(), architecture: "arm", renderer: SwiftShaderRenderer });
-        expect(result.signals).toEqual([SwiftShaderSignal]);
+        expect(result.signals).toEqual([MuseEnvironmentSignal]);
         expect(result.armMetrics).toEqual([1]);
     });
 
@@ -204,7 +204,7 @@ test.describe("agent - Meta Muse evidence", () => {
         expect(result.probe.clientHintCalls).toBe(2);
         expect(result.probe.architectureCalls).toBe(2);
         expect(result.probe.webglCalls).toBe(1);
-        expect(result.signals).toEqual([SwiftShaderSignal]);
+        expect(result.signals).toEqual([MuseEnvironmentSignal]);
         expect(result.armMetrics).toEqual([1]);
     });
 
@@ -212,7 +212,7 @@ test.describe("agent - Meta Muse evidence", () => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: SwiftShaderRenderer }, "before-idle");
         expect(result.probe.clientHintCalls).toBe(2);
         expect(result.probe.webglCalls).toBe(1);
-        expect(result.signals).toEqual([SwiftShaderSignal]);
+        expect(result.signals).toEqual([MuseEnvironmentSignal]);
         expect(result.armMetrics).toEqual([1, 1]);
     });
 
@@ -220,7 +220,7 @@ test.describe("agent - Meta Muse evidence", () => {
         test(`architecture "${architecture}" uses the upstream case-insensitive ARM check`, async ({ page }) => {
             const result = await run(page, { userAgent: MuseUserAgent, architecture, renderer: SwiftShaderRenderer });
             expect(result.armMetrics).toEqual([1]);
-            expect(result.signals).toEqual([SwiftShaderSignal]);
+            expect(result.signals).toEqual([MuseEnvironmentSignal]);
             expect(result.probe.clientHintCalls).toBe(1);
         });
     }
