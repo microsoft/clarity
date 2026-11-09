@@ -21,8 +21,7 @@ interface Clarity {
 }
 
 interface Selector {
-  get: (input: Layout.SelectorInput, type: Layout.Selector) => string;
-  reset: () => void;
+  get: (input: Layout.SelectorInput) => string;
 }
 
 interface Helper {

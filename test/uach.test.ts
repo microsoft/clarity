@@ -6,7 +6,7 @@ import { markup } from "./helper";
 // clarity-decode declares Data.Dimension / Data.Metric as const enums (types-only),
 // so they have no runtime representation we can import here.
 const Dimension = { Platform: 22, PlatformVersion: 23, Brand: 24, Model: 25 } as const;
-const Metric = { Mobile: 27 } as const;
+const Metric = { Mobile: 27, ArmArchitecture: 41 } as const;
 
 async function setupAndCollect(page: import("@playwright/test").Page) {
     // Capture navigator.userAgentData ground truth before clarity loads.
@@ -128,4 +128,36 @@ test.describe("UA-CH userAgentData", () => {
         const expected = uachData.mobile ? 1 : 0;
         expect(clarityMobile).toBe(expected);
     });
+});
+
+test.describe("UA-CH local ARM architecture", () => {
+    const cases = ["aRm", "ArM64", "PRIVATE_ARCHITECTURE_SENTINEL", undefined];
+
+    for (const architecture of cases) {
+        test(`architecture ${String(architecture)} uploads no ARM metric`, async ({ page }) => {
+            await page.addInitScript(value => {
+                (window as any).hintRequests = [];
+                Object.defineProperty(navigator, "userAgentData", {
+                    configurable: true,
+                    value: {
+                        getHighEntropyValues: (hints: string[]) => {
+                            (window as any).hintRequests.push(hints);
+                            return Promise.resolve({ architecture: value });
+                        },
+                    },
+                });
+            }, architecture);
+
+            const encoded = await markup(page, "core.html");
+            const decoded = encoded.map(payload => decode(payload));
+            const values = decoded.flatMap(payload => payload.metric || [])
+                .flatMap(event => event.data[Metric.ArmArchitecture] === undefined
+                    ? [] : [event.data[Metric.ArmArchitecture]]);
+
+            expect(values).toEqual([]);
+            expect(await page.evaluate(() => (window as any).hintRequests)).toEqual(
+                [["model", "platformVersion", "architecture"]]);
+            expect(encoded.join("").toLowerCase()).not.toContain("private_architecture_sentinel");
+        });
+    }
 });

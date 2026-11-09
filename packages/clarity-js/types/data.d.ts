@@ -1,4 +1,6 @@
 import { Time } from "@clarity-types/core";
+import { Action } from "./agent";
+import { Action as WebMcpAction } from "./webmcp";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[] | (string | number)[]);
 export type DecodedToken = (any | any[]);
@@ -79,6 +81,7 @@ export const enum Event {
     CustomElement = 51,
     Chat = 52,
     PointerDown = 53,
+    WebMcp = 54,
 
     // Apps specific events
     WebViewDiscover = 100,
@@ -187,7 +190,8 @@ export const enum Dimension {
     Consent = 36,
     InteractionNextPaint = 37,
     GlobalPrivacyControl = 38,
-    AgenticBrowserSignal = 39
+    AgenticBrowserSignal = 39,
+    PageHeadings = 40
     // 200-300 reserved for internal use
 }
 
@@ -239,10 +243,6 @@ export const enum BooleanFlag {
 
 export const enum AgenticBrowserSignal {
     None = 0,
-    ClaudeAgentGlowBorder = 1,
-    ClaudePhantomCursor = 5,
-    CodexAgentOverlayRoot = 6,
-    CodexBrowserSidebarCommentsRoot = 7,
     MuseEnvironmentMatched = 8
 }
 
@@ -353,6 +353,7 @@ export const enum Constant {
     Signal = "SIGNAL",
     Extract = "EXTRACT",
     Snapshot = "SNAPSHOT",
+    Headings = "HEADINGS",
     Module = "MODULE",
     UserHint = "userHint",
     UserType = "userType",
@@ -530,6 +531,15 @@ export interface DimensionData {
 
 export interface VariableData {
     [name: string]: string[];
+}
+
+export interface ChatData {
+    action: Action;
+}
+
+export interface WebMcpData {
+    action: WebMcpAction;
+    name: string | number | null;
 }
 
 // Eventually custom event can be expanded to contain more properties

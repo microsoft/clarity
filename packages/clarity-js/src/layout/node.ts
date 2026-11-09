@@ -11,7 +11,6 @@ import * as interaction from "@src/interaction";
 import * as mutation from "@src/layout/mutation";
 import * as schema from "@src/layout/schema";
 import * as custom from "@src/layout/custom";
-import * as agent from "@src/layout/agent";
 import { checkDocumentStyles } from "@src/layout/style";
 import { electron } from "@src/data/metadata";
 
@@ -95,11 +94,9 @@ export default function (node: Node, source: Source, timestamp: number): Node {
             let element = (node as HTMLElement);
             let tag = element.tagName;
             let attributes = getAttributes(element);
-            let elementId = attributes[Constant.Id];
             // In some cases, external libraries like vue-fragment, can modify parentNode property to not be in sync with the DOM
             // For correctness, we first look at parentElement and if it not present then fall back to using parentNode
             parent = node.parentElement ? node.parentElement : (node.parentNode ? node.parentNode as HTMLElement : null);
-            if (elementId) { agent.detect(elementId, parent); }
             // If we encounter a node that is part of SVG namespace, prefix the tag with SVG_PREFIX
             if (element.namespaceURI === Constant.SvgNamespace) { tag = Constant.SvgPrefix + tag; }
 
@@ -284,7 +281,7 @@ function getAttributes(element: HTMLElement): { [key: string]: string } {
     if (attributes && attributes.length > 0) {
         for (let i = 0; i < attributes.length; i++) {
             let name = attributes[i].name;
-            if (!IGNORE_ATTRIBUTES.includes(name)) {
+            if (!IGNORE_ATTRIBUTES.includes(name.toLowerCase())) {
                 output[name] = attributes[i].value;
             }
         }
