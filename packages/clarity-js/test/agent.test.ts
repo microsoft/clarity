@@ -1,10 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { expect, Page, test } from "@playwright/test";
 import { readFileSync } from "fs";
 import { join } from "path";
 
 /**
  * Browser environment evidence tests for Meta Muse detection.
- * Muse claims Intel Linux ("Linux x86_64") but reports an ARM architecture and a SwiftShader (software) WebGL renderer.
+ * Muse-like evidence combines a reduced Linux user agent, ARM client hint and SwiftShader renderer.
  * The tag only reports evidence on the agentic dimension (39): "8" for ARM and "9" for SwiftShader.
  * The backend decides the verdict. These tests stub the environment and verify the reported evidence.
  */
@@ -27,13 +27,14 @@ const AppleRenderer = "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified
 
 interface Environment {
     userAgent: string;
-    // undefined removes navigator.userAgentData (Firefox/Safari); "throw" makes getHighEntropyValues reject.
+    // undefined removes client hints; "throw" rejects; "throw-sync" throws before returning a promise.
     architecture?: string;
     // null makes getContext("webgl") return null; "throw" makes it throw.
     renderer: string | null;
 }
 
 interface Probe {
+    clientHintCalls: number;
     architectureCalls: number;
     webglCalls: number;
     loseContextCalls: number;
@@ -47,7 +48,7 @@ interface Result {
 }
 
 function stubEnvironment(env: Environment): void {
-    const probe = { architectureCalls: 0, webglCalls: 0, loseContextCalls: 0 };
+    const probe = { clientHintCalls: 0, architectureCalls: 0, webglCalls: 0, loseContextCalls: 0 };
     (window as any).__probe = probe;
     Object.defineProperty(Navigator.prototype, "userAgent", { get: () => env.userAgent, configurable: true });
     const uaData = env.architecture === undefined ? undefined : {
@@ -55,8 +56,10 @@ function stubEnvironment(env: Environment): void {
         mobile: false,
         platform: "Linux",
         getHighEntropyValues: (hints: string[]): Promise<any> => {
+            probe.clientHintCalls++;
             if (hints.indexOf("architecture") >= 0) {
                 probe.architectureCalls++;
+                if (env.architecture === "throw-sync") { throw new Error("blocked"); }
                 if (env.architecture === "throw") { return Promise.reject(new Error("blocked")); }
             }
             return Promise.resolve({ architecture: env.architecture, platform: "Linux", brands: [], mobile: false });
@@ -80,15 +83,19 @@ function stubEnvironment(env: Environment): void {
     } as any;
 }
 
-async function run(page: any, env: Environment): Promise<Result> {
+async function run(page: Page, env: Environment, restart: boolean = false): Promise<Result> {
     await page.addInitScript(stubEnvironment, env);
     await page.goto("data:text/html,<!DOCTYPE html><html><head></head><body><div>hi</div></body></html>");
     await page.evaluate((code: string) => { eval(code); }, readFileSync(clarityJsPath, "utf-8"));
-    return page.evaluate(({ dimension, event }: { dimension: number; event: number }) => {
+    return page.evaluate(({ dimension, event, restartClarity }: { dimension: number; event: number; restartClarity: boolean }) => {
         return new Promise<Result>((resolve) => {
             const payloads: string[] = [];
             (window as any).clarity("start", { projectId: "test", track: false, upload: (payload: string) => { payloads.push(payload); } });
             const probeAtStart = { ...(window as any).__probe };
+            if (restartClarity) {
+                (window as any).clarity("stop");
+                (window as any).clarity("start");
+            }
             setTimeout(() => {
                 (window as any).clarity("stop");
                 const signals: string[] = [];
@@ -104,7 +111,7 @@ async function run(page: any, env: Environment): Promise<Result> {
                 resolve({ signals: signals.sort(), probe: { ...(window as any).__probe }, probeAtStart });
             }, 2000);
         });
-    }, { dimension: AgenticDimension, event: DimensionEvent });
+    }, { dimension: AgenticDimension, event: DimensionEvent, restartClarity: restart });
 }
 
 test.describe("agent - Meta Muse evidence", () => {
@@ -123,15 +130,17 @@ test.describe("agent - Meta Muse evidence", () => {
         expect(result.signals).toEqual([ArmSignal, SwiftShaderSignal]);
     });
 
-    test("headless Linux x86 with SwiftShader reports only SwiftShader", async ({ page }) => {
+    test("headless Linux x86 skips WebGL", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "x86", renderer: SwiftShaderRenderer });
-        expect(result.signals).toEqual([SwiftShaderSignal]);
+        expect(result.signals).toEqual([]);
+        expect(result.probe.webglCalls).toBe(0);
     });
 
     test("Linux without client hints is unknown architecture, not evidence", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, renderer: SwiftShaderRenderer });
-        expect(result.signals).toEqual([SwiftShaderSignal]);
+        expect(result.signals).toEqual([]);
         expect(result.probe.architectureCalls).toBe(0);
+        expect(result.probe.webglCalls).toBe(0);
     });
 
     test("ARM Linux with a real GPU reports only ARM", async ({ page }) => {
@@ -147,22 +156,43 @@ test.describe("agent - Meta Muse evidence", () => {
         ["Mac on Apple silicon", { userAgent: MacUserAgent, architecture: "arm", renderer: AppleRenderer }]
     ];
     for (const [name, env] of gated) {
-        test(`${name} is gated before any client-hint or WebGL call`, async ({ page }) => {
+        test(`${name} adds no architecture or WebGL probe`, async ({ page }) => {
             const result = await run(page, env);
             expect(result.signals).toEqual([]);
-            expect(result.probe).toEqual({ architectureCalls: 0, webglCalls: 0, loseContextCalls: 0 });
+            expect(result.probe.architectureCalls).toBe(0);
+            expect(result.probe.webglCalls).toBe(0);
+            expect(result.probe.loseContextCalls).toBe(0);
+            expect(result.probe.clientHintCalls).toBe(env.architecture === undefined ? 0 : 1);
         });
     }
 
-    test("runs at idle, not during start", async ({ page }) => {
+    test("shares metadata client hints and defers WebGL until idle", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: SwiftShaderRenderer });
-        expect(result.probeAtStart).toEqual({ architectureCalls: 0, webglCalls: 0, loseContextCalls: 0 });
+        expect(result.probeAtStart).toEqual({ clientHintCalls: 1, architectureCalls: 1, webglCalls: 0, loseContextCalls: 0 });
+        expect(result.probe.clientHintCalls).toBe(1);
         expect(result.probe.webglCalls).toBe(1);
     });
 
     test("releases the WebGL context", async ({ page }) => {
         const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: SwiftShaderRenderer });
         expect(result.probe.loseContextCalls).toBe(1);
+    });
+
+    test("restart discards the previous metadata request", async ({ page }) => {
+        const result = await run(page, { userAgent: MuseUserAgent, architecture: "arm", renderer: SwiftShaderRenderer }, true);
+        expect(result.probe.clientHintCalls).toBe(2);
+        expect(result.probe.architectureCalls).toBe(2);
+        expect(result.probe.webglCalls).toBe(1);
+        expect(result.signals).toEqual([ArmSignal, SwiftShaderSignal]);
+    });
+
+    test("survives synchronous client-hint failures", async ({ page }) => {
+        const errors: string[] = [];
+        page.on("pageerror", (error: Error) => errors.push(error.message));
+        const result = await run(page, { userAgent: MuseUserAgent, architecture: "throw-sync", renderer: SwiftShaderRenderer });
+        expect(result.signals).toEqual([]);
+        expect(result.probe.webglCalls).toBe(0);
+        expect(errors).toEqual([]);
     });
 
     test("survives WebGL and client-hint failures", async ({ page }) => {

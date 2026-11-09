@@ -5,6 +5,7 @@ import * as core from "@src/core";
 import config from "@src/core/config";
 import hash from "@src/core/hash";
 import * as scrub from "@src/core/scrub";
+import * as agent from "@src/data/agent";
 import * as trackConsent from "@src/data/consent";
 import { COOKIE_SEP, getCookie, setCookie } from "@src/data/cookie";
 import * as dimension from "@src/data/dimension";
@@ -72,7 +73,7 @@ export function start(): void {
     metric.max(Metric.HardwareConcurrency, navigator.hardwareConcurrency);
     metric.max(Metric.MaxTouchPoints, navigator.maxTouchPoints);
     metric.max(Metric.DeviceMemory, Math.round((<any>navigator).deviceMemory));
-    userAgentData();
+    collectUserAgentData();
   }
 
   if (screen) {
@@ -108,18 +109,29 @@ function webMcp(): boolean {
   }
 }
 
-function userAgentData(): void {
+function collectUserAgentData(): void {
   let uaData = navigator["userAgentData"];
   if (uaData && uaData.getHighEntropyValues) {
     // brands, mobile, and platform are low-entropy and always included in the response per
     // UA-CH spec §3.1 (https://wicg.github.io/ua-client-hints/#getHighEntropyValues); only high-entropy hints need to be listed.
-    uaData.getHighEntropyValues(["model", "platformVersion"]).then(ua => {
-      dimension.log(Dimension.Platform, ua.platform);
-      dimension.log(Dimension.PlatformVersion, ua.platformVersion);
-      ua.brands?.forEach(brand => { dimension.log(Dimension.Brand, brand.brand + Constant.Tilde + brand.version); });
-      dimension.log(Dimension.Model, ua.model);
-      metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False);
-    });
+    const current = data;
+    const hints = ["model", "platformVersion"];
+    if (agent.shouldCollectArchitecture(navigator.userAgent)) { hints.push("architecture"); }
+    try {
+      uaData.getHighEntropyValues(hints).then(ua => {
+        if (data !== current) { return; }
+        dimension.log(Dimension.Platform, ua.platform);
+        dimension.log(Dimension.PlatformVersion, ua.platformVersion);
+        ua.brands?.forEach(brand => { dimension.log(Dimension.Brand, brand.brand + Constant.Tilde + brand.version); });
+        dimension.log(Dimension.Model, ua.model);
+        metric.max(Metric.Mobile, ua.mobile ? BooleanFlag.True : BooleanFlag.False);
+        agent.collectArchitecture(ua.architecture);
+      }, (): void => {
+        if (data === current) { dimension.log(Dimension.Platform, navigator.platform); }
+      });
+    } catch {
+      dimension.log(Dimension.Platform, navigator.platform);
+    }
   } else { dimension.log(Dimension.Platform, navigator.platform); }
 }
 

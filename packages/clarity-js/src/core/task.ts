@@ -138,7 +138,7 @@ function key(timer: Timer): string {
     return timer.id + "." + timer.cost;
 }
 
-export function idle(callback: () => void): void {
+export function scheduleIdle(callback: () => void): void {
     requestIdleCallback(callback, { timeout: idleTimeout });
 }
 
