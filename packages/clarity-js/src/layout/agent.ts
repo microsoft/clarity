@@ -6,6 +6,12 @@ const ClaudePhantomCursor = "claude-phantom-cursor";
 const CodexOverlayRoot = "codex-agent-overlay-root";
 const CodexSidebarRoot = "codex-browser-sidebar-comments-root";
 
+export function detectUserAgent(userAgent: string): void {
+    if (/claude-agent/i.test(userAgent)) {
+        dimension.log(Dimension.AgenticBrowserSignal, AgenticBrowserSignal.ClaudeAgentUserAgent.toString());
+    }
+}
+
 export function detect(id: string, parent: Node): void {
     let signal = identify(id, parent);
     if (signal !== AgenticBrowserSignal.None) {
