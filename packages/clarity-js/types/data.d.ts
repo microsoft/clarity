@@ -246,8 +246,7 @@ export const enum AgenticBrowserSignal {
     ClaudeAgentGlowBorder = 1,
     ClaudePhantomCursor = 5,
     CodexAgentOverlayRoot = 6,
-    CodexBrowserSidebarCommentsRoot = 7,
-    ClaudeAgentUserAgent = 8
+    CodexBrowserSidebarCommentsRoot = 7
 }
 
 export const enum GCMConsent {

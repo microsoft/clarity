@@ -19,7 +19,6 @@ const Signals = {
     ClaudePhantomCursor: "5",
     CodexAgentOverlayRoot: "6",
     CodexBrowserSidebarCommentsRoot: "7",
-    ClaudeAgentUserAgent: "8",
 } as const;
 
 async function start(page: Page, markup: string = "", config: string = "", afterStart: string = ""): Promise<void> {
@@ -61,17 +60,6 @@ async function collect(page: Page): Promise<string[]> {
 }
 
 test.describe("Agentic browser presence", (): void => {
-    test("captures Claude Agent from a versioned user agent", async ({ page }): Promise<void> => {
-        await page.addInitScript((): void => {
-            Object.defineProperty(navigator, "userAgent", {
-                value: "Mozilla/5.0 (X11; Linux x86_64) cLaUdE-aGeNt/99.4 Chrome/156.0.0.0",
-            });
-        });
-        await start(page);
-
-        expect(await collect(page)).toEqual([Signals.ClaudeAgentUserAgent]);
-    });
-
     test("captures Claude presence from an existing root", async ({ page }): Promise<void> => {
         await start(page, `
             <div id="claude-agent-glow-border"></div>
