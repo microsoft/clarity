@@ -190,6 +190,7 @@ export const enum Dimension {
     Consent = 36,
     InteractionNextPaint = 37,
     GlobalPrivacyControl = 38,
+    AgenticBrowserSignal = 39,
     PageHeadings = 40
     // 200-300 reserved for internal use
 }
@@ -238,6 +239,14 @@ export const enum Upload {
 export const enum BooleanFlag {
     False = 0,
     True = 1
+}
+
+export const enum AgenticBrowserSignal {
+    None = 0,
+    ClaudeAgentGlowBorder = 1,
+    ClaudePhantomCursor = 5,
+    CodexAgentOverlayRoot = 6,
+    CodexBrowserSidebarCommentsRoot = 7
 }
 
 export const enum GCMConsent {
