@@ -484,17 +484,20 @@ export class LayoutHelper {
         const targetDoc = parent?.ownerDocument ?? doc;
         const link = this.element(node.id) as HTMLLinkElement ?? this.createElement(targetDoc, node.tag) as HTMLLinkElement;
         if (!node.attributes) { node.attributes = {}; }
+        const relations = (node.attributes.rel || "").toLowerCase().split(/\s+/);
+        const script = relations.includes("modulepreload") ||
+            (relations.includes("preload") && node.attributes.as?.toLowerCase() === "script");
         const proxy = useproxy ?? this.state.options.useproxy;
         const stylesheet = node.attributes["rel"] === Constant.StyleSheet;
         const preload = node.attributes["rel"]?.includes("preload") && node.attributes.as === "style";
         const cors = !!proxy && this.state.options.corsProxyStylesheets && (stylesheet || preload);
-        this.setAttributes(link, cors ? this.sanitizeLink(node) : node);
+        this.setAttributes(link, cors || script ? this.sanitizeLink(node) : node);
         // Recorded SRI hashes won't match proxied/redeployed bytes. See microsoft/clarity#418.
         link.removeAttribute("integrity");
 
         const hint = (node.attributes.rel?.includes("preload") || node.attributes.rel?.includes("preconnect"))
             && (node.attributes.as === "style" || node.attributes.as === "font");
-        if (parent !== null && (stylesheet || hint)) {
+        if (!script && parent !== null && (stylesheet || hint)) {
             const href = node.attributes.href === undefined ? "" : this.resolveUrl(targetDoc, node.attributes.href);
             const kind = stylesheet ? Constant.StyleSheet : node.attributes.as;
             const url = proxy ? proxy(href, link.id, kind) : href;
