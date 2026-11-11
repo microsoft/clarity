@@ -2,8 +2,6 @@ import { expect, test } from "@playwright/test";
 import type { Layout } from "clarity-decode";
 import { resolve } from "path";
 
-test.use({ channel: "msedge" });
-
 test.beforeEach(async ({ page }) => {
     await page.addScriptTag({ path: resolve(__dirname, "../build/clarity.visualize.min.js") });
 });
