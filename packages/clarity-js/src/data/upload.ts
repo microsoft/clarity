@@ -30,6 +30,7 @@ let playback: string[];
 let analysis: string[];
 let timeout: number = null;
 let transit: Transit;
+let pending: { [sequence: number]: string };
 let active: boolean;
 let queuedTime: number = 0;
 let leanLimit = false;
@@ -44,6 +45,7 @@ export function start(): void {
     playback = [];
     analysis = [];
     transit = {};
+    pending = {};
     track = null;
 }
 
@@ -108,6 +110,15 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
 
 export function stop(): void {
     clearTimeout(timeout);
+    // Dispatch batches already removed from the buffers before building the final payload.
+    for (let key of Object.keys(pending)) {
+        let sequence = Number(key);
+        let payload = pending[sequence];
+        delete pending[sequence];
+        metric.sum(Metric.TotalBytes, payload.length);
+        send(payload, null, sequence, true);
+    }
+    clearTimeout(timeout);
     upload(true);
     discoverBytes = 0;
     playbackBytes = 0;
@@ -150,6 +161,7 @@ async function upload(final: boolean = false): Promise<void> {
     if(!envelope.data) return;
 
     let e = JSON.stringify(envelope.envelope(last));
+    let sequence = envelope.data.sequence;
 
     // Rotate buffers BEFORE serializing/awaiting compress.
     // `await compress(payload)` below yields the event loop, during which concurrent
@@ -183,9 +195,16 @@ async function upload(final: boolean = false): Promise<void> {
     // We also attempt to compress the payload if it is not the last payload and the browser supports it
     // In all other cases, we continue to send back string value
     let payload = stringify(encoded);
+    let batches = pending;
+    if (!last) { batches[sequence] = payload; }
     let zipped = last ? null : await compress(payload);
+    if (!last) {
+        // Shutdown has already dispatched this batch, or a new lifecycle owns the uploader.
+        if (batches !== pending || !(sequence in batches)) { return; }
+        delete batches[sequence];
+    }
     metric.sum(Metric.TotalBytes, zipped ? zipped.length : payload.length);
-    send(payload, zipped, envelope.data.sequence, last);
+    send(payload, zipped, sequence, last);
 }
 
 function stringify(encoded: EncodedPayload): string {
