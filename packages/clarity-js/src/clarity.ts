@@ -26,6 +26,7 @@ const modules: Module[] = [
   { start: perfStart, stop: perfStop },
   { start: dynStart, stop: dynStop },
 ];
+let stopping = false;
 
 export function start(config: Config = null): void {
   // Check that browser supports required APIs and we do not attempt to start Clarity multiple times
@@ -62,11 +63,16 @@ export function resume(): void {
 }
 
 export function stop(): void {
-  if (core.active()) {
-    // Stop modules in the reverse order of their initialization and start queuing up items again
-    modules.slice().reverse().forEach(x => measure(x.stop)());
-    data.stop();
-    core.stop();
-    queue.setup();
+  if (core.active() && !stopping) {
+    stopping = true;
+    try {
+      // Stop modules in the reverse order of their initialization and start queuing up items again
+      modules.slice().reverse().forEach(x => measure(x.stop)());
+      data.stop();
+      core.stop();
+      queue.setup();
+    } finally {
+      stopping = false;
+    }
   }
 }

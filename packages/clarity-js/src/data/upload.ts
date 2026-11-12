@@ -30,6 +30,7 @@ let playback: string[];
 let analysis: string[];
 let timeout: number = null;
 let transit: Transit;
+let pending: { [sequence: number]: string };
 let active: boolean;
 let queuedTime: number = 0;
 let leanLimit = false;
@@ -44,6 +45,7 @@ export function start(): void {
     playback = [];
     analysis = [];
     transit = {};
+    pending = {};
     track = null;
 }
 
@@ -108,7 +110,18 @@ export function queue(tokens: Token[], transmit: boolean = true): void {
 
 export function stop(): void {
     clearTimeout(timeout);
+    // Dispatch batches already removed from the buffers before building the final payload.
+    for (let key of Object.keys(pending)) {
+        let sequence = Number(key);
+        let payload = pending[sequence];
+        delete pending[sequence];
+        metric.sum(Metric.TotalBytes, payload.length);
+        send(payload, null, sequence, true);
+    }
+    clearTimeout(timeout);
     upload(true);
+    clearTimeout(timeout);
+    timeout = null;
     discoverBytes = 0;
     playbackBytes = 0;
     leanLimit = false;
@@ -150,6 +163,7 @@ async function upload(final: boolean = false): Promise<void> {
     if(!envelope.data) return;
 
     let e = JSON.stringify(envelope.envelope(last));
+    let sequence = envelope.data.sequence;
 
     // Rotate buffers BEFORE serializing/awaiting compress.
     // `await compress(payload)` below yields the event loop, during which concurrent
@@ -183,9 +197,16 @@ async function upload(final: boolean = false): Promise<void> {
     // We also attempt to compress the payload if it is not the last payload and the browser supports it
     // In all other cases, we continue to send back string value
     let payload = stringify(encoded);
+    let batches = pending;
+    if (!last) { batches[sequence] = payload; }
     let zipped = last ? null : await compress(payload);
+    if (!last) {
+        // Shutdown has already dispatched this batch, or a new lifecycle owns the uploader.
+        if (batches !== pending || !(sequence in batches)) { return; }
+        delete batches[sequence];
+    }
     metric.sum(Metric.TotalBytes, zipped ? zipped.length : payload.length);
-    send(payload, zipped, envelope.data.sequence, last);
+    send(payload, zipped, sequence, last);
 }
 
 function stringify(encoded: EncodedPayload): string {
@@ -224,10 +245,17 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
             // Not all browsers support compression API and the support for it in supported browsers is still experimental
             if (sequence in transit) { transit[sequence].attempts++; } else { transit[sequence] = { data: payload, attempts: 1 }; }
             let xhr = new XMLHttpRequest();
+            let requests = transit;
             xhr.open("POST", url, true);
             xhr.timeout = Setting.UploadTimeout;
-            xhr.ontimeout = () => { report(new Error(Constant.Timeout + " : " + url)) };
-            if (sequence !== null) { xhr.onreadystatechange = (): void => { measure(check)(xhr, sequence); }; }
+            xhr.ontimeout = () => {
+                if (requests === transit) { report(new Error(Constant.Timeout + " : " + url)); }
+            };
+            if (sequence !== null) {
+                xhr.onreadystatechange = (): void => {
+                    if (requests === transit) { measure(check)(xhr, sequence); }
+                };
+            }
             xhr.withCredentials = true;
             if (zipped) {
                 // If we do have valid compressed array, send it with appropriate HTTP headers so server can decode it appropriately
@@ -246,6 +274,7 @@ function send(payload: string, zipped: Uint8Array, sequence: number, beacon: boo
 }
 
 function check(xhr: XMLHttpRequest, sequence: number): void {
+    let requests = transit;
     var transitData = transit[sequence];
     if (xhr && xhr.readyState === XMLReadyState.Done && transitData) {
         // Attempt send payload again (as configured in settings) if we do not receive a success (2XX) response code back from the server
@@ -275,6 +304,7 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
             if (transitData.attempts > 1) { encode(Event.Upload); }
             // Handle response if it was a 200 response with a valid body
             if (xhr.status === 200 && xhr.responseText) { response(xhr.responseText); }
+            if (requests !== transit) { return; }
             // If we exhausted our retries then trigger Clarity's shutdown for this page since the data will be incomplete
             if (xhr.status === 0) {
                 // And, right before we terminate the session, we will attempt one last time to see if we can use
@@ -285,7 +315,7 @@ function check(xhr: XMLHttpRequest, sequence: number): void {
             // Signal that this request completed successfully
             if (xhr.status >= 200 && xhr.status <= 208) { done(sequence); }
             // Stop tracking this payload now that it's all done
-            delete transit[sequence];
+            delete requests[sequence];
         }
     }
 }
@@ -306,9 +336,11 @@ function delay(): number {
 }
 
 function response(payload: string): void {
+    let requests = transit;
     let lines = payload && payload.length > 0 ? payload.split("\n") : [];
     for (var line of lines)
     {
+        if (requests !== transit) { break; }
         let parts = line && line.length > 0 ? line.split(/ (.*)/) : [Constant.Empty];
         switch (parts[0]) {
             case Constant.End:
