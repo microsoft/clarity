@@ -103,7 +103,7 @@ function text(element: Node): TextInfo {
     let output = null;
     let isFullText = false;
     if (element) {
-        let customText = (element as HTMLElement).getAttribute(LayoutConstant.EventData);
+        let customText = element.nodeType === Node.ELEMENT_NODE ? (element as Element).getAttribute(LayoutConstant.EventData) : null;
         // Grab text using "EventData" attribute, or "textContent" for most HTMLElements, however, use "value" for HTMLInputElements and "alt" for HTMLImageElement.
         let t = customText || element.textContent || String((element as HTMLInputElement).value || '') || (element as HTMLImageElement).alt;
         if (t) {
