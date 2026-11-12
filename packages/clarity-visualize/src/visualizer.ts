@@ -1,4 +1,4 @@
-import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Visualizer as VisualizerType } from "@clarity-types/visualize";
+import { Activity, Constant, ErrorLogger, LinkHandler, MergedPayload, Options, PlaybackState, ScrollMapInfo, Setting, ShortCircuitStrategy, Visualizer as VisualizerType } from "@clarity-types/visualize";
 import { Data } from "clarity-js";
 import type { Data as DecodedData, Interaction, Layout } from "clarity-decode";
 import { DataHelper } from "./data";
@@ -6,10 +6,12 @@ import { EnrichHelper } from "./enrich";
 import { HeatmapHelper } from "./heatmap";
 import { InteractionHelper } from "./interaction";
 import { LayoutHelper } from "./layout";
+import { Dimension } from "clarity-js/types/data";
 
 export class Visualizer implements VisualizerType {
     _state: PlaybackState = null;
     renderTime = 0;
+    hashFoundTime = -1;
 
     enrich: EnrichHelper;
     layout: LayoutHelper;
@@ -29,22 +31,49 @@ export class Visualizer implements VisualizerType {
         return this.layout?.get(hash);
     }
 
-    public html = async (decoded: DecodedData.DecodedPayload[], target: Window, hash: string = null, time : number, useproxy?: LinkHandler, logerror?: ErrorLogger): Promise<Visualizer> => {
+    private shortCircuitRendering = (strategy: ShortCircuitStrategy, domEvent: Layout.DomEvent, hash: string) => {
+        switch (strategy) {
+            case ShortCircuitStrategy.HashFirstTimestamp:
+                return this.layout.exists(hash);
+            case ShortCircuitStrategy.HashFirstTimestampPlusBuffer:
+                if (this.hashFoundTime === -1 && this.layout.exists(hash)) {
+                    this.hashFoundTime = domEvent.time;
+                }
+                return (this.hashFoundTime > -1) && (domEvent.time > this.hashFoundTime + Setting.VisualizationSettleBuffer);
+            case ShortCircuitStrategy.HashBeforeDeleted:
+                for (let node of domEvent.data) {
+                    if (node.hashBeta === hash && node.parent === null) {
+                        return true;
+                    }
+                }
+                return false;
+            case ShortCircuitStrategy.None:
+            default:
+                return false;
+        }
+    }
+
+    public html = async (decoded: DecodedData.DecodedPayload[], target: Window, hash: string = null, useproxy?: LinkHandler, logerror?: ErrorLogger, shortCircuitStrategy: ShortCircuitStrategy = ShortCircuitStrategy.None): Promise<Visualizer> => {
         if (decoded && decoded.length > 0 && target) {
             try {
                 // Flatten the payload and parse all events out of them, sorted by time
                 let merged = this.merge(decoded);
-
-                this.setup(target, { version: decoded[0].envelope.version, dom: merged.dom, useproxy });
-
+                await this.setup(target, { version: decoded[0].envelope.version, dom: merged.dom, useproxy });
                 // Render all mutations on top of the initial markup
-                while (merged.events.length > 0 && this.layout.exists(hash) === false) {
+                while (merged.events.length > 0) {
                     let entry = merged.events.shift();
                     switch (entry.event) {
+                        case Data.Event.StyleSheetAdoption:
+                        case Data.Event.StyleSheetUpdate:
+                            this.layout.styleChange(entry as Layout.StyleSheetEvent);
+                            break;
+                        case Data.Event.CustomElement:
+                            this.layout.customElement(entry as Layout.CustomElementEvent);
+                            break;
                         case Data.Event.Mutation:
                             let domEvent = entry as Layout.DomEvent;
                             this.renderTime = domEvent.time;
-                            if (time && this.renderTime > time) {
+                            if (this.shortCircuitRendering(shortCircuitStrategy, domEvent, hash)) {
                                 break;
                             }
                             await this.layout.markup(domEvent, useproxy);
@@ -117,9 +146,10 @@ export class Visualizer implements VisualizerType {
         return merged;
     }
 
-    public setup = (target: Window, options: Options): Visualizer => {
+    public setup = async (target: Window, options: Options): Promise<Visualizer> => {
         this.reset();
         // Infer options
+        options.pointer = "pointer" in options ? options.pointer : true;
         options.canvas = "canvas" in options ? options.canvas : true;
         options.keyframes = "keyframes" in options ? options.keyframes : false;
 
@@ -129,65 +159,84 @@ export class Visualizer implements VisualizerType {
         // Initialize helpers
         this.enrich = new EnrichHelper();
         this.data = new DataHelper(this.state);
-        this.layout = new LayoutHelper(this.state);
+        this.layout = new LayoutHelper(this.state, options.mobile, options.vNext, options.locale);
         this.heatmap = new HeatmapHelper(this.state, this.layout);
-        this.interaction = new InteractionHelper(this.state, this.layout);
+        this.interaction = new InteractionHelper(this.state, this.layout, options.vNext);
 
         // If discover event was passed, render it now
-        if (options.dom) { this.layout.dom(options.dom, options.useproxy); }
+        if (options.dom) { 
+            await this.layout.dom(options.dom, options.useproxy);
+        }
 
         return this;
     }
 
-    public render = async (events: DecodedData.DecodedEvent[]): Promise<void> => {
+    public render = (events: DecodedData.DecodedEvent[]): void => {
         if (this.state === null) { throw new Error(`Initialize visualization by calling "setup" prior to making this call.`); }
         let time = 0;
-        for (let entry of events) {
-            time = entry.time;
-            switch (entry.event) {
-                case Data.Event.Metric:
-                    this.data.metric(entry as DecodedData.MetricEvent);
-                    break;
-                case Data.Event.Region:
-                    this.data.region(entry as Layout.RegionEvent);
-                    break;
-                case Data.Event.Mutation:
-                case Data.Event.Snapshot:
-                    await this.layout.markup(entry as Layout.DomEvent);
-                    break;
-                case Data.Event.MouseDown:
-                case Data.Event.MouseUp:
-                case Data.Event.MouseMove:
-                case Data.Event.MouseWheel:
-                case Data.Event.Click:
-                case Data.Event.DoubleClick:
-                case Data.Event.TouchStart:
-                case Data.Event.TouchCancel:
-                case Data.Event.TouchEnd:
-                case Data.Event.TouchMove:
-                    this.interaction.pointer(entry as Interaction.PointerEvent);
-                    break;
-                case Data.Event.Visibility:
-                    this.interaction.visibility(entry as Interaction.VisibilityEvent);
-                    break;
-                case Data.Event.Input:
-                    this.interaction.input(entry as Interaction.InputEvent);
-                    break;
-                case Data.Event.Selection:
-                    this.interaction.selection(entry as Interaction.SelectionEvent);
-                    break;
-                case Data.Event.Resize:
-                    this.interaction.resize(entry as Interaction.ResizeEvent);
-                    break;
-                case Data.Event.Scroll:
-                    this.interaction.scroll(entry as Interaction.ScrollEvent);
-                    break;
-                case Data.Event.Animation:
-                    this.layout.animateChange(entry as Layout.AnimationEvent);
-                    break;
+        for (const entry of events) {
+            try {
+                time = entry.time;
+                this.interaction.clearOldClickVisualizations(time);
+                switch (entry.event) {
+                    case Data.Event.Metric:
+                        this.data.metric(entry as DecodedData.MetricEvent);
+                        break;
+                    case Data.Event.Dimension:
+                        if(entry.data[Dimension.InteractionNextPaint]){
+                            this.data.metric(entry as DecodedData.MetricEvent);
+                        }
+                        break;
+                    case Data.Event.Region:
+                        this.data.region(entry as Layout.RegionEvent);
+                        break;
+                    case Data.Event.Mutation:
+                    case Data.Event.Snapshot:
+                        this.layout.markup(entry as Layout.DomEvent);
+                        break;
+                    case Data.Event.MouseDown:
+                    case Data.Event.MouseUp:
+                    case Data.Event.MouseMove:
+                    case Data.Event.MouseWheel:
+                    case Data.Event.Click:
+                    case Data.Event.DoubleClick:
+                    case Data.Event.TouchStart:
+                    case Data.Event.TouchCancel:
+                    case Data.Event.TouchEnd:
+                    case Data.Event.TouchMove:
+                        this.interaction.pointer(entry as Interaction.PointerEvent);
+                        break;
+                    case Data.Event.Visibility:
+                        this.interaction.visibility(entry as Interaction.VisibilityEvent);
+                        break;
+                    case Data.Event.Input:
+                        this.interaction.input(entry as Interaction.InputEvent);
+                        break;
+                    case Data.Event.Selection:
+                        this.interaction.selection(entry as Interaction.SelectionEvent);
+                        break;
+                    case Data.Event.Resize:
+                        this.interaction.resize(entry as Interaction.ResizeEvent);
+                        break;
+                    case Data.Event.Scroll:
+                        this.interaction.scroll(entry as Interaction.ScrollEvent);
+                        break;
+                    case Data.Event.StyleSheetAdoption:
+                    case Data.Event.StyleSheetUpdate:
+                        this.layout.styleChange(entry as Layout.StyleSheetEvent);
+                        break;                
+                    case Data.Event.Animation:
+                        this.layout.animateChange(entry as Layout.AnimationEvent);
+                        break;
+                    case Data.Event.CustomElement:
+                        this.layout.customElement(entry as Layout.CustomElementEvent);
+                        break;
+                }
+            }
+            catch (e) {
+                this._state.options.logerror?.(e);
             }
         }
-
         if (events.length > 0) {
             // Update pointer trail at the end of every frame
             this.interaction.trail(time);

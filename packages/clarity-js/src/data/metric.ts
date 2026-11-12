@@ -15,17 +15,20 @@ export function stop(): void {
     updates = {};
 }
 
-export function count(metric: Metric): void {
+function init(metric: Metric): void {
     if (!(metric in data)) { data[metric] = 0; }
     if (!(metric in updates)) { updates[metric] = 0; }
+}
+
+export function count(metric: Metric): void {
+    init(metric);
     data[metric]++;
     updates[metric]++;
 }
 
 export function sum(metric: Metric, value: number): void {
     if (value !== null) { 
-        if (!(metric in data)) { data[metric] = 0; }
-        if (!(metric in updates)) { updates[metric] = 0; }
+        init(metric);
         data[metric] += value;
         updates[metric] += value;
     }

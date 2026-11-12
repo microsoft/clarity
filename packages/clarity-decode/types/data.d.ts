@@ -1,8 +1,9 @@
 import { Data } from "clarity-js";
 import { DiagnosticEvent, FraudEvent, LogEvent, ScriptErrorEvent } from "./diagnostic";
-import { ChangeEvent, ClickEvent, ClipboardEvent, InputEvent, InteractionEvent, PointerEvent, ResizeEvent, SubmitEvent } from "./interaction";
-import { ScrollEvent, SelectionEvent, TimelineEvent, UnloadEvent, VisibilityEvent } from "./interaction";
-import { DocumentEvent, DomEvent, LayoutEvent, RegionEvent } from "./layout";
+import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent, InteractionEvent } from "./interaction";
+import { PointerEvent, PointerDownEvent, ResizeEvent, SubmitEvent } from "./interaction";
+import { ScrollEvent, SelectionEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent } from "./interaction";
+import { DocumentEvent, DomEvent, LayoutEvent, RegionEvent, CustomElementEvent } from "./layout";
 import { NavigationEvent, PerformanceEvent } from "./performance";
 import { PartialEvent } from "./core";
 
@@ -22,6 +23,8 @@ export interface BaselineEvent extends PartialEvent { data: Data.BaselineData; }
 export interface DimensionEvent extends PartialEvent { data: Data.DimensionData; }
 export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
 export interface CustomEvent extends PartialEvent { data: Data.CustomData; }
+export interface ChatEvent extends PartialEvent { data: Data.ChatData; }
+export interface WebMcpEvent extends PartialEvent { data: Data.WebMcpData; }
 export interface VariableEvent extends PartialEvent { data: Data.VariableData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
 export interface LimitEvent extends PartialEvent { data: Data.LimitData; }
@@ -29,6 +32,7 @@ export interface SummaryEvent extends PartialEvent { data: Data.SummaryData; }
 export interface UpgradeEvent extends PartialEvent { data: Data.UpgradeData; }
 export interface UploadEvent extends PartialEvent { data: Data.UploadData; }
 export interface ExtractEvent extends PartialEvent { data: Data.ExtractData; }
+export interface ConsentEvent extends PartialEvent { data: Data.ConsentData; }
 export interface DataEvent extends PartialEvent {
     data: Data.BaselineData |
     Data.DimensionData | 
@@ -40,7 +44,10 @@ export interface DataEvent extends PartialEvent {
     Data.SummaryData |
     Data.UpgradeData |
     Data.UploadData | 
-    Data.ExtractData;
+    Data.ExtractData |
+    Data.ConsentData |
+    Data.ChatData |
+    Data.WebMcpData;
 }
 
 export type DecodedEvent = DataEvent | DiagnosticEvent | InteractionEvent | LayoutEvent | PerformanceEvent;
@@ -55,7 +62,9 @@ export interface DecodedPayload {
     script?: ScriptErrorEvent[];
     input?: InputEvent[];
     pointer?: PointerEvent[];
+    pointerDown?: PointerDownEvent[];
     click?: ClickEvent[];
+    contextMenu?: ContextMenuEvent[];
     clipboard?: ClipboardEvent[];
     resize?: ResizeEvent[];
     scroll?: ScrollEvent[];
@@ -68,6 +77,7 @@ export interface DecodedPayload {
     upgrade?: UpgradeEvent[];
     upload?: UploadEvent[];
     visibility?: VisibilityEvent[];
+    focus?: FocusEvent[];
     region?: RegionEvent[];
     dom?: DomEvent[];
     doc?: DocumentEvent[];
@@ -77,7 +87,11 @@ export interface DecodedPayload {
     baseline?: BaselineEvent[];
     variable?: VariableEvent[];
     custom?: CustomEvent[];
+    chat?: ChatEvent[];
+    webMcp?: WebMcpEvent[];
     extract?: ExtractEvent[];
+    consent?: ConsentEvent[];
+    customElement?: CustomElementEvent[];
 }
 
 export interface DecodedVersion {

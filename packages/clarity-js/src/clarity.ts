@@ -6,19 +6,30 @@ import measure from "@src/core/measure";
 import * as task from "@src/core/task";
 import version from "@src/core/version";
 import * as data from "@src/data";
-import * as diagnostic from "@src/diagnostic";
-import * as interaction from "@src/interaction";
-import * as layout from "@src/layout";
-import * as performance from "@src/performance";
+import { start as diagStart, stop as diagStop } from "@src/diagnostic";
+import { start as interStart, stop as interStop } from "@src/interaction";
+import { start as layoutStart, stop as layoutStop } from "@src/layout";
+import { start as perfStart, stop as perfStop } from "@src/performance";
+import { start as dynStart, stop as dynStop } from "@src/core/dynamic";
 export { version };
-export { consent, event, identify, set, upgrade, metadata } from "@src/data";
+export { consent, consentv2, event, identify, set, upgrade, metadata, signal, maxMetric, dlog } from "@src/data";
+export { queue } from "@src/data/upload";
+export { register } from "@src/core/dynamic";
+export { schedule } from "@src/core/task";
+export { time } from "@src/core/time";
 export { hashText } from "@src/layout";
-
-const modules: Module[] = [diagnostic, layout, interaction, performance];
+export { measure };
+const modules: Module[] = [
+  { start: diagStart, stop: diagStop },
+  { start: layoutStart, stop: layoutStop },
+  { start: interStart, stop: interStop },
+  { start: perfStart, stop: perfStop },
+  { start: dynStart, stop: dynStop },
+];
 
 export function start(config: Config = null): void {
   // Check that browser supports required APIs and we do not attempt to start Clarity multiple times
-  if (core.check()) {
+  if (core.check(config)) {
     core.config(config);
     core.start();
     data.start();

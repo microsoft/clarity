@@ -18,5 +18,6 @@ export default function(): Core.Config {
         ],
         fraud: true,
         checksum: [],
+        modules: [],
     };
 }

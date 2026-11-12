@@ -26,10 +26,6 @@ export const enum Task {
     Stop = 2
 }
 
-export const enum Setting {
-    LongTask = 30, // 30ms
-}
-
 export const enum ExtractSource {
     Javascript = 0,
     Cookie = 1,
@@ -103,9 +99,11 @@ export interface OffsetDistance {
 
 export interface BrowserEvent {
     event: string;
-    target: EventTarget;
     listener: EventListener;
-    capture: boolean;
+    options: {
+        capture: boolean;
+        passive: boolean;
+    };
 }
 
 export interface Report {
@@ -122,6 +120,7 @@ export interface Config {
     projectId?: string;
     delay?: number;
     lean?: boolean;
+    lite?: boolean;
     track?: boolean;
     content?: boolean;
     drop?: string[];
@@ -137,6 +136,13 @@ export interface Config {
     upgrade?: (key: string) => void;
     action?: (key: string) => void;
     dob?: number;
+    delayDom?: boolean;
+    throttleDom?: boolean;
+    conversions?: boolean;
+    includeSubdomains?: boolean;
+    modules?: string[];
+    diagnostics?: boolean;
+    restart?: number;
 }
 
 export const enum Constant {

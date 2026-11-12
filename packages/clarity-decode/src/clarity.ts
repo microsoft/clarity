@@ -1,10 +1,11 @@
 import { Data, version } from "clarity-js";
-import { BaselineEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent } from "../types/data";
-import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent } from "../types/data";
+import { BaselineEvent, ChatEvent, CustomEvent, DecodedPayload, DecodedVersion, DimensionEvent, WebMcpEvent } from "../types/data";
+import { LimitEvent, MetricEvent, PingEvent, SummaryEvent, UpgradeEvent, UploadEvent, VariableEvent, ExtractEvent, ConsentEvent } from "../types/data";
 import { FraudEvent, LogEvent, ScriptErrorEvent } from "../types/diagnostic";
-import { ChangeEvent, ClickEvent, ClipboardEvent, InputEvent, PointerEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
-import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent } from "../types/interaction";
-import { DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
+import { ChangeEvent, ClickEvent, ContextMenuEvent, ClipboardEvent, InputEvent } from "../types/interaction";
+import { PointerEvent, PointerDownEvent, ResizeEvent, ScrollEvent } from "../types/interaction";
+import { SelectionEvent, SubmitEvent, TimelineEvent, UnloadEvent, VisibilityEvent, FocusEvent } from "../types/interaction";
+import { CustomElementEvent, DocumentEvent, DomEvent, RegionEvent } from "../types/layout";
 import { NavigationEvent } from "../types/performance";
 
 import * as data from "./data";
@@ -34,7 +35,7 @@ export function decode(input: string): DecodedPayload {
 
     if (jsonVersion.major !== codeVersion.major ||
         Math.abs(jsonVersion.minor - codeVersion.minor) > 1) {
-        throw new Error(`Invalid version. Actual: ${payload.envelope.version} | Expected: ${version} (+/- 1) | ${input.substr(0, 250)}`);
+        console.warn(`Invalid version. Actual: ${payload.envelope.version} | Expected: ${version} (+/- 1) | ${input.substr(0, 250)}`);
     }
 
     for (let entry of encoded) {
@@ -76,6 +77,14 @@ export function decode(input: string): DecodedPayload {
                 if (payload.custom === undefined) { payload.custom = []; }
                 payload.custom.push(data.decode(entry) as CustomEvent);
                 break;
+            case Data.Event.Chat:
+                if (payload.chat === undefined) { payload.chat = []; }
+                payload.chat.push(data.decode(entry) as ChatEvent);
+                break;
+            case Data.Event.WebMcp:
+                if (payload.webMcp === undefined) { payload.webMcp = []; }
+                payload.webMcp.push(data.decode(entry) as WebMcpEvent);
+                break;
             case Data.Event.Variable:
                 if (payload.variable === undefined) { payload.variable = []; }
                 payload.variable.push(data.decode(entry) as VariableEvent);
@@ -83,6 +92,10 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Upload:
                 if (payload.upload === undefined) { payload.upload = []; }
                 payload.upload.push(data.decode(entry) as UploadEvent);
+                break;
+            case Data.Event.PointerDown:
+                if (payload.pointerDown === undefined) { payload.pointerDown = []; }
+                payload.pointerDown.push(interaction.decode(entry) as PointerDownEvent);
                 break;
             case Data.Event.MouseDown:
             case Data.Event.MouseUp:
@@ -100,6 +113,11 @@ export function decode(input: string): DecodedPayload {
                 if (payload.click === undefined) { payload.click = []; }
                 let clickEntry = interaction.decode(entry) as ClickEvent;
                 payload.click.push(clickEntry);
+                break;
+            case Data.Event.ContextMenu:
+                if (payload.contextMenu === undefined) { payload.contextMenu = []; }
+                let contextMenuEntry = interaction.decode(entry) as ContextMenuEvent;
+                payload.contextMenu.push(contextMenuEntry);
                 break;
             case Data.Event.Clipboard:
                 if (payload.clipboard === undefined) { payload.clipboard = []; }
@@ -144,6 +162,10 @@ export function decode(input: string): DecodedPayload {
                 if (payload.visibility === undefined) { payload.visibility = []; }
                 payload.visibility.push(interaction.decode(entry) as VisibilityEvent);
                 break;
+            case Data.Event.Focus:
+                if (payload.focus === undefined) { payload.focus = []; }
+                payload.focus.push(interaction.decode(entry) as FocusEvent);
+                break;
             case Data.Event.Box:
                 /* Deprecated - Intentionally, no-op. For backward compatibility. */
                 break;
@@ -154,6 +176,8 @@ export function decode(input: string): DecodedPayload {
             case Data.Event.Discover:
             case Data.Event.Mutation:
             case Data.Event.Snapshot:
+            case Data.Event.StyleSheetAdoption:
+            case Data.Event.StyleSheetUpdate:
             case Data.Event.Animation:
                 if (payload.dom === undefined) { payload.dom = []; }
                 payload.dom.push(layout.decode(entry) as DomEvent);
@@ -186,8 +210,18 @@ export function decode(input: string): DecodedPayload {
                 if (payload.extract === undefined) { payload.extract = []; }
                     payload.extract.push(data.decode(entry) as ExtractEvent);
                     break;
+            case Data.Event.Consent:
+                if (payload.consent === undefined) { payload.consent = []; }
+                payload.consent.push(data.decode(entry) as ConsentEvent);
+                break;
+            case Data.Event.CustomElement:
+                if (payload.customElement === undefined) { payload.customElement = []; }
+                payload.customElement.push(layout.decode(entry) as CustomElementEvent);
+                break;
             default:
-                console.error(`No handler for Event: ${JSON.stringify(entry)}`);
+                if (typeof entry[1] === "number" && entry[1] < 200) {
+                    console.error(`No handler for Event: ${JSON.stringify(entry)}`);
+                }
                 break;
         }
     }

@@ -1,4 +1,6 @@
 import { Data } from "clarity-js";
+import { Action } from "clarity-js/types/agent";
+import { Action as WebMcpAction } from "clarity-js/types/webmcp";
 import { Constant, DataEvent } from "../types/data";
 
 export function decode(tokens: Data.Token[]): DataEvent {
@@ -14,6 +16,15 @@ export function decode(tokens: Data.Token[]): DataEvent {
         case Data.Event.Custom:
             let custom: Data.CustomData = { key: tokens[2] as string, value: tokens[3] as string };
             return { time, event, data: custom };
+        case Data.Event.Chat:
+            let chat: Data.ChatData = { action: tokens[2] as Action };
+            return { time, event, data: chat };
+        case Data.Event.WebMcp:
+            let webMcp: Data.WebMcpData = {
+                action: tokens[2] as WebMcpAction,
+                name: tokens.length > 3 ? tokens[3] as string | number : null,
+            };
+            return { time, event, data: webMcp };
         case Data.Event.Upgrade:
             let upgrade: Data.UpgradeData = { key: tokens[2] as string };
             return { time, event, data: upgrade };
@@ -47,6 +58,7 @@ export function decode(tokens: Data.Token[]): DataEvent {
             }
             return { time, event, data: summary };
         case Data.Event.Baseline:
+            const tokenLength = tokens.length;
             let baselineData: Data.BaselineData = {
                 visible: tokens[2] as number,
                 docWidth: tokens[3] as number,
@@ -57,7 +69,22 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 scrollY: tokens[8] as number,
                 pointerX: tokens[9] as number,
                 pointerY: tokens[10] as number,
-                activityTime: tokens[11] as number
+                activityTime: tokens[11] as number,
+                scrollTime: tokenLength > 12 ? tokens[12] as number: null,
+                pointerTime: tokenLength > 13 ? tokens[13] as number: null,
+                moveX: tokenLength > 14 ? tokens[14] as number: null,
+                moveY: tokenLength > 15 ? tokens[15] as number: null,
+                moveTime: tokenLength > 16 ? tokens[16] as number: null,
+                downX: tokenLength > 17 ? tokens[17] as number: null, 
+                downY: tokenLength > 18 ? tokens[18] as number: null,
+                downTime: tokenLength > 19 ? tokens[19] as number: null,
+                upX: tokenLength > 20 ? tokens[20] as number: null,
+                upY: tokenLength > 21 ? tokens[21] as number: null,
+                upTime: tokenLength > 22 ? tokens[22] as number: null,
+                pointerPrevX: tokenLength > 23 ? tokens[23] as number: null,
+                pointerPrevY: tokenLength > 24 ? tokens[24] as number: null,
+                pointerPrevTime: tokenLength > 25 ? tokens[25] as number: null,
+                modules: tokenLength > 26 ? tokens[26] as number[]: null,
             }
             return { time, event, data: baselineData };
         case Data.Event.Variable:
@@ -84,8 +111,10 @@ export function decode(tokens: Data.Token[]): DataEvent {
                     }
                 }
             }
-
             return { time, event, data: extract };
+        case Data.Event.Consent:
+            let consent: Data.ConsentData = { source: tokens[2] as number, ad_Storage: tokens[3] as number, analytics_Storage: tokens[4] as number};
+            return { time, event, data: consent };
     }
     return null;
 }
@@ -101,6 +130,8 @@ export function envelope(tokens: Data.Token[]): Data.Envelope {
         sessionId: tokens[6] as string,
         pageNum: tokens[7] as number,
         upload: tokens[8] as Data.Upload,
-        end: tokens[9] as Data.BooleanFlag
+        end: tokens[9] as Data.BooleanFlag,
+        applicationPlatform: tokens[10] as number,
+        url: tokens[11] as string
     };
 }

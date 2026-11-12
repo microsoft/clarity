@@ -1,8 +1,8 @@
 {
   "name": "clarity",
   "private": true,
-  "version": "0.7.16",
-  "repository": "https://github.com/microsoft/clarity.git",
+  "version": "0.8.77",
+  "repository": "git+https://github.com/microsoft/clarity.git",
   "author": "Sarvesh Nagpal <sarveshn@microsoft.com>",
   "license": "MIT",
   "workspaces": {
@@ -17,13 +17,14 @@
     "build:decode": "yarn workspace clarity-decode build",
     "build:visualize": "yarn workspace clarity-visualize build",
     "build:devtools": "yarn workspace clarity-devtools build",
-    "test": "yarn workspace clarity-js test"
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "bump-version": "ts-node scripts/bump-version.ts"
   },
   "devDependencies": {
-    "lerna": "^6.4.1",
-    "parse-url": "^8.1.0"
-  },
-  "resolutions": {
-    "parse-url": "^8.1.0"
+    "@playwright/test": "^1.58.2",
+    "lerna": "^10.1.1",
+    "parse-url": "^8.1.0",
+    "ts-node": "^10.9.2"
   }
 }

@@ -4,6 +4,7 @@ import { Constant, NodeInfo, NodeValue, TargetMetadata } from "@clarity-types/la
 import * as doc from "@src/layout/document";
 import encode from "@src/insight/encode";
 import * as interaction from "@src/interaction";
+import config from "@src/core/config";
 export let values: NodeValue[] = [];
 let index: number = 1;
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
@@ -21,6 +22,7 @@ export function stop(): void {
 }
 
 export function compute(): void { /* Intentionally Blank */ }
+export function request(): void { /* Intentionally Blank */ }
 export function iframe(): boolean { return false; }
 export function offset(): OffsetDistance { return { x: 0, y: 0 }; }
 export function hashText(): void { /* Intentionally Blank */ }
@@ -32,7 +34,7 @@ export function target(evt: UIEvent): Node {
 }
 
 export function metadata(node: Node): TargetMetadata {
-    let output: TargetMetadata = { id: 0, hash: null, privacy: Privacy.Snapshot, node };
+    let output: TargetMetadata = { id: 0, hash: null, privacy: config.conversions ? Privacy.Sensitive : Privacy.Snapshot, region: Constant.Empty };
     if (node) { output.id = idMap.has(node) ? idMap.get(node) : getId(node); }
     return output;
 }
@@ -75,7 +77,7 @@ function traverse(root: Node): void {
             case Node.ELEMENT_NODE:
                 let element = node as HTMLElement;
                 attributes = getAttributes(element);
-                tag = ["NOSCRIPT", "SCRIPT", "STYLE"].indexOf(element.tagName) < 0 ? element.tagName : tag;
+                tag = !["NOSCRIPT", "SCRIPT", "STYLE"].includes(element.tagName) ? element.tagName : tag;
                 break;
         }
         add(node, parent, { tag, attributes, value });     
@@ -110,3 +112,5 @@ function add(node: Node, parent: Node, data: NodeInfo): void {
         values.push({ id, parent: parentId, previous, children: [], data, selector: null, hash: null, region: null, metadata });
     }
 }
+
+export function get(_node: Node): NodeValue {return null;}

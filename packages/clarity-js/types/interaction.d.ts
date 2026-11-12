@@ -1,3 +1,4 @@
+import { BooleanFlag } from "@clarity-types/data";
 import { Time } from "./core";
 import { Event, Target } from "./data";
 
@@ -10,11 +11,28 @@ export const enum BrowsingContext {
     Top = 3
 }
 
+export const enum ClickSource {
+    Undefined = 0,
+    FirstParty = 1,
+    ThirdParty = 2,
+    Eval = 3,
+    Unknown = 4
+}
+
+export const enum PointerType {
+    Unknown = 0,
+    Mouse = 1,
+    Touch = 2,
+    Pen = 3
+}
+
 export const enum Setting {
     LookAhead = 500, // 500ms
-    InputLookAhead = 1000, // 1s
+    InputLookAhead = 750, // 750ms
     Distance = 20, // 20 pixels
-    Interval = 25, // 25 milliseconds
+    ScrollInterval = 50, // 25 milliseconds
+    PointerInterval = 25, // 25 milliseconds
+    Throttle = 25, // 25 milliseconds
     TimelineSpan = 2 * Time.Second, // 2 seconds
 }
 
@@ -25,11 +43,30 @@ export const enum Clipboard {
 }
 
 /* Helper Interfaces */
-export interface PointerState {
+export type PointerEventType =
+    Event.MouseMove |
+    Event.MouseDown |
+    Event.MouseUp |
+    Event.MouseWheel |
+    Event.DoubleClick |
+    Event.TouchStart |
+    Event.TouchEnd |
+    Event.TouchMove |
+    Event.TouchCancel;
+
+export interface PointerEventState {
     time: number;
-    event: number;
+    event: PointerEventType;
     data: PointerData;
 }
+
+export interface PointerDownState {
+    time: number;
+    event: Event.PointerDown;
+    data: PointerDownData;
+}
+
+export type PointerState = PointerEventState | PointerDownState;
 
 export interface ClickState {
     time: number;
@@ -93,6 +130,8 @@ export interface ChangeData {
 export interface InputData {
     target: Target;
     value: string;
+    type?: string;
+    trust: BooleanFlag;
 }
 
 export interface SubmitData {
@@ -103,6 +142,24 @@ export interface PointerData {
     target: Target;
     x: number;
     y: number;
+    id?: number;
+    isPrimary?: boolean;
+    type?: PointerType;
+    pressure?: number;
+    width?: number;
+    height?: number;
+}
+
+export interface PointerDownData {
+    target: Target;
+    x: number;
+    y: number;
+    id: number;
+    isPrimary: boolean;
+    type: PointerType;
+    pressure: number;
+    width: number;
+    height: number;
 }
 
 export interface ClickData {
@@ -118,6 +175,18 @@ export interface ClickData {
     link: string;
     hash: string;
     trust: number;
+    isFullText: BooleanFlag;
+    w: number;
+    h: number;
+    tag: string;
+    class: string;
+    id: string;
+    source: ClickSource;
+}
+
+export interface TextInfo {
+    text: string;
+    isFullText: BooleanFlag;
 }
 
 export interface ClipboardData {
@@ -134,6 +203,9 @@ export interface ScrollData {
     target: Target;
     x: number;
     y: number;
+    top: Node | string;
+    bottom: Node | string;
+    trust: BooleanFlag;
 }
 
 export interface SelectionData {
@@ -145,8 +217,13 @@ export interface SelectionData {
 
 export interface UnloadData {
     name: string;
+    persisted: BooleanFlag;
 }
 
 export interface VisibilityData {
-    visible: string;
+    visible: BooleanFlag;
+}
+
+export interface FocusData {
+    focused: BooleanFlag;
 }

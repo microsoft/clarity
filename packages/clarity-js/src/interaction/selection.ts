@@ -3,7 +3,7 @@ import { SelectionData, Setting } from "@clarity-types/interaction";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { clearTimeout, setTimeout } from "@src/core/timeout";
-import encode from "./encode";
+import encode from "@src/interaction/encode";
 
 export let data: SelectionData = null;
 let previous: Selection = null;

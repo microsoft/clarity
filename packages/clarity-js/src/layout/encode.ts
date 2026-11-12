@@ -9,10 +9,12 @@ import tokenize from "@src/data/token";
 import * as baseline from "@src/data/baseline";
 import { queue } from "@src/data/upload";
 import * as fraud from "@src/diagnostic/fraud";
-import * as doc from "./document";
-import * as dom from "./dom";
-import * as region from "./region";
+import * as doc from "@src/layout/document";
+import * as dom from "@src/layout/dom";
+import * as region from "@src/layout/region";
+import * as style from "@src/layout/style";
 import * as animation from "@src/layout/animation";
+import * as custom from "@src/layout/custom";
 
 export default async function (type: Event, timer: Timer = null, ts: number = null): Promise<void> {
     let eventTime = ts || time()
@@ -20,31 +22,40 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
     switch (type) {
         case Event.Document:
             let d = doc.data;
-            tokens.push(d.width);
-            tokens.push(d.height);
+            tokens.push(d.width, d.height);
             baseline.track(type, d.width, d.height);
             queue(tokens);
             break;
         case Event.Region:
             for (let r of region.state) {
                 tokens = [r.time, Event.Region];
-                tokens.push(r.data.id);
-                tokens.push(r.data.interaction);
-                tokens.push(r.data.visibility);
-                tokens.push(r.data.name);
-                queue(tokens);
+                tokens.push(r.data.id, r.data.interaction, r.data.visibility, r.data.name);
+                queue(tokens, false);
             }
             region.reset();
+            break;
+        case Event.StyleSheetAdoption:
+        case Event.StyleSheetUpdate:
+            for (let entry of style.sheetAdoptionState) {
+                tokens = [entry.time, entry.event];
+                tokens.push(entry.data.id, entry.data.operation, entry.data.newIds);
+                queue(tokens);
+            }
+            for (let entry of style.sheetUpdateState) {
+                tokens = [entry.time, entry.event];
+                tokens.push(entry.data.id, entry.data.operation, entry.data.cssRules);
+                queue(tokens, false);
+            }
+            style.reset();
             break;
         case Event.Animation:
             for (let entry of animation.state) {
                 tokens = [entry.time, entry.event];
-                tokens.push(entry.data.id);
-                tokens.push(entry.data.operation);
-                tokens.push(entry.data.keyFrames);
-                tokens.push(entry.data.timing);
-                tokens.push(entry.data.timeline);
-                tokens.push(entry.data.targetId);
+                tokens.push(
+                    entry.data.id, entry.data.operation,
+                    entry.data.keyFrames, entry.data.timing,
+                    entry.data.timeline, entry.data.targetId
+                );
                 queue(tokens);
             }
             animation.reset();
@@ -64,24 +75,28 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                     let active = value.metadata.active;
                     let suspend = value.metadata.suspend;
                     let privacy = value.metadata.privacy;
-                    let mangle = shouldMangle(value);
+                    let mangle = scrub.shouldMangle(data.tag, privacy);
                     let keys = active ? ["tag", "attributes", "value"] : ["tag"];
                     for (let key of keys) {
-                        if (data[key]) {
+                        // we check for data[key] === '' because we want to encode empty strings as well, especially for value - which if skipped can cause our decoder to assume the final
+                        // attribute was the value for the node
+                        if (data[key] || data[key] === '') {
                             switch (key) {
                                 case "tag":
                                     let box = size(value);
                                     let factor = mangle ? -1 : 1;
                                     tokens.push(value.id * factor);
-                                    if (value.parent && active) { tokens.push(value.parent); }
-                                    if (value.previous && active) { tokens.push(value.previous); }
+                                    if (value.parent && active) { 
+                                        tokens.push(value.parent); 
+                                        if (value.previous) { tokens.push(value.previous); }
+                                    }
                                     tokens.push(suspend ? Constant.SuspendMutationTag : data[key]);
-                                    if (box && box.length === 2) { tokens.push(`${Constant.Hash}${str(box[0])}.${str(box[1])}`); }
+                                    if (box && box.length === 2) { tokens.push(Constant.Hash + box[0].toString(36) + "." + box[1].toString(36)); }
                                     break;
                                 case "attributes":
                                     for (let attr in data[key]) {
                                         if (data[key][attr] !== undefined) {
-                                            tokens.push(attribute(attr, data[key][attr], privacy));
+                                            tokens.push(attribute(attr, data[key][attr], privacy, data.tag));
                                         }
                                     }
                                     break;
@@ -97,12 +112,13 @@ export default async function (type: Event, timer: Timer = null, ts: number = nu
                 queue(tokenize(tokens), !config.lean);
             }
             break;
+        case Event.CustomElement:
+            for (let element of custom.elements) {
+                queue([eventTime, Event.CustomElement, element]);
+            }
+            custom.reset();
+            break;
     }
-}
-
-function shouldMangle(value: NodeValue): boolean {
-    let privacy = value.metadata.privacy;
-    return value.data.tag === Constant.TextTag && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
 }
 
 function size(value: NodeValue): number[] {
@@ -115,10 +131,9 @@ function size(value: NodeValue): number[] {
     return value.metadata.size;
 }
 
-function str(input: number): string {
-    return input.toString(36);
-}
-
-function attribute(key: string, value: string, privacy: Privacy): string {
-    return `${key}=${scrub.text(value, key.indexOf(Constant.DataAttribute) === 0 ? Constant.DataAttribute : key, privacy)}`;
+function attribute(key: string, value: string, privacy: Privacy, tag: string): string {
+    if (key === Constant.Href && tag === Constant.LinkTag) {
+        return key + "=" + value;
+    }
+    return key + "=" + scrub.text(value, key.indexOf(Constant.DataAttribute) === 0 ? Constant.DataAttribute : key, privacy);
 }

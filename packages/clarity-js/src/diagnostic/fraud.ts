@@ -12,7 +12,8 @@ export function start(): void {
     history = [];
     metric.max(Metric.Automation, navigator.webdriver ? BooleanFlag.True : BooleanFlag.False);
     try {
-        metric.max(Metric.Iframed, window.top == window.self ? IframeStatus.TopFrame : IframeStatus.Iframe);
+        // some sites (unintentionally) overwrite the window.self property, so we also check for the main window object
+        metric.max(Metric.Iframed, window.top == window.self || window.top == window ? IframeStatus.TopFrame : IframeStatus.Iframe);
     } catch (ex) {
         metric.max(Metric.Iframed, IframeStatus.Unknown);
     }
@@ -24,7 +25,7 @@ export function check(id: number, target: number, input: string): void {
     if (config.fraud && id !== null && input && input.length >= Setting.WordLength) {
         data = { id, target, checksum: hash(input, Setting.ChecksumPrecision) };
         // Only encode this event if we haven't already reported this hash
-        if (history.indexOf(data.checksum) < 0) {
+        if (!history.includes(data.checksum)) {
             history.push(data.checksum);
             encode(Event.Fraud);
         }

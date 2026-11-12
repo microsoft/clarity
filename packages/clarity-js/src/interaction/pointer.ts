@@ -1,5 +1,6 @@
 import { Event } from "@clarity-types/data";
-import { PointerState, Setting } from "@clarity-types/interaction";
+import { PointerData, PointerEventType, PointerState, PointerType, Setting } from "@clarity-types/interaction";
+import config from "@src/core/config";
 import { bind } from "@src/core/event";
 import { schedule } from "@src/core/task";
 import { time } from "@src/core/time";
@@ -7,10 +8,13 @@ import { clearTimeout, setTimeout } from "@src/core/timeout";
 import { iframe } from "@src/layout/dom";
 import { offset } from "@src/layout/offset";
 import { target } from "@src/layout/target";
-import encode from "./encode";
+import encode from "@src/interaction/encode";
 
 export let state: PointerState[] = [];
 let timeout: number = null;
+let hasPrimaryTouch = false;
+let primaryTouchId = 0;
+const activeTouchPointIds = new Set<number>();
 
 export function start(): void {
     reset();
@@ -22,31 +26,77 @@ export function observe(root: Node): void {
     bind(root, "mousemove", mouse.bind(this, Event.MouseMove, root), true);
     bind(root, "wheel", mouse.bind(this, Event.MouseWheel, root), true);
     bind(root, "dblclick", mouse.bind(this, Event.DoubleClick, root), true);
+    if (config.diagnostics) {
+        bind(root, "pointerdown", pointer.bind(this, root), true);
+    }
     bind(root, "touchstart", touch.bind(this, Event.TouchStart, root), true);
     bind(root, "touchend", touch.bind(this, Event.TouchEnd, root), true);
     bind(root, "touchmove", touch.bind(this, Event.TouchMove, root), true);
     bind(root, "touchcancel", touch.bind(this, Event.TouchCancel, root), true);
 }
 
-function mouse(event: Event, root: Node, evt: MouseEvent): void {
+function pointer(root: Node, evt: PointerEvent): void {
+    let pointerType = getPointerType(evt.pointerType);
+    let [x, y]: [number, number] = coordinates(root, evt);
+    if (x !== null && y !== null) {
+        handler({
+            time: time(evt),
+            event: Event.PointerDown,
+            data: {
+                target: target(evt),
+                x,
+                y,
+                id: evt.pointerId,
+                isPrimary: evt.isPrimary,
+                type: pointerType,
+                pressure: evt.pressure,
+                width: evt.width,
+                height: evt.height
+            }
+        });
+    }
+}
+
+function getPointerType(pointerType: string): PointerType {
+    switch (pointerType) {
+        case "mouse":
+            return PointerType.Mouse;
+        case "touch":
+            return PointerType.Touch;
+        case "pen":
+            return PointerType.Pen;
+        default:
+            return PointerType.Unknown;
+    }
+}
+
+function mouse(event: PointerEventType, root: Node, evt: MouseEvent): void {
+    let [x, y]: [number, number] = coordinates(root, evt);
+
+    // Check for null values before processing this event
+    if (x !== null && y !== null) {
+        let data: PointerData = { target: target(evt), x, y };
+        handler({ time: time(evt), event, data });
+    }
+}
+
+function coordinates(root: Node, evt: MouseEvent | PointerEvent): [number, number] {
     let frame = iframe(root);
-    let d = frame ? frame.contentDocument.documentElement : document.documentElement;
+    let d = frame && frame.contentDocument ? frame.contentDocument.documentElement : document.documentElement;
     let x = "pageX" in evt ? Math.round(evt.pageX) : ("clientX" in evt ? Math.round(evt["clientX"] + d.scrollLeft) : null);
     let y = "pageY" in evt ? Math.round(evt.pageY) : ("clientY" in evt ? Math.round(evt["clientY"] + d.scrollTop) : null);
     // In case of iframe, we adjust (x,y) to be relative to top parent's origin
     if (frame) {
         let distance = offset(frame);
-        x = x ? x + Math.round(distance.x) : x;
-        y = y ? y + Math.round(distance.y) : y;
+        x = x !== null ? x + Math.round(distance.x) : x;
+        y = y !== null ? y + Math.round(distance.y) : y;
     }
-
-    // Check for null values before processing this event
-    if (x !== null && y !== null) { handler({ time: time(evt), event, data: { target: target(evt), x, y } }); }
+    return [x, y];
 }
 
-function touch(event: Event, root: Node, evt: TouchEvent): void {
+function touch(event: PointerEventType, root: Node, evt: TouchEvent): void {
     let frame = iframe(root);
-    let d = frame ? frame.contentDocument.documentElement : document.documentElement;
+    let d = frame && frame.contentDocument ? frame.contentDocument.documentElement : document.documentElement;
     let touches = evt.changedTouches;
 
     let t = time(evt);
@@ -58,8 +108,33 @@ function touch(event: Event, root: Node, evt: TouchEvent): void {
             x = x && frame ? x + Math.round(frame.offsetLeft) : x;
             y = y && frame ? y + Math.round(frame.offsetTop) : y;
 
+            // We cannot rely on identifier to determine primary touch as its value doesn't always start with 0.
+            // Safari/Webkit uses the address of the UITouch object as the identifier value for each touch point.
+            const id = "identifier" in entry ? entry["identifier"] : undefined;
+
+            switch(event) {
+                case Event.TouchStart:
+                    if (activeTouchPointIds.size === 0) {
+                        // Track presence of primary touch separately to handle scenarios when same id is repeated
+                        hasPrimaryTouch = true;
+                        primaryTouchId = id;
+                    }
+                    activeTouchPointIds.add(id);
+                    break;
+                case Event.TouchEnd:
+                case Event.TouchCancel:
+                    activeTouchPointIds.delete(id);
+                    break;
+            }
+            const isPrimary = hasPrimaryTouch && primaryTouchId === id;
+
             // Check for null values before processing this event
-            if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y } }); }
+            if (x !== null && y !== null) { handler({ time: t, event, data: { target: target(evt), x, y, id, isPrimary } }); }
+
+            // Reset primary touch point id once touch event ends
+            if (event === Event.TouchCancel || event === Event.TouchEnd) {
+                if (primaryTouchId === id) { hasPrimaryTouch = false; }
+            }
         }
     }
 }
@@ -98,7 +173,8 @@ function similar(last: PointerState, current: PointerState): boolean {
     let distance = Math.sqrt(dx * dx + dy * dy);
     let gap = current.time - last.time;
     let match = current.data.target === last.data.target;
-    return current.event === last.event && match && distance < Setting.Distance && gap < Setting.Interval;
+    let sameId = current.data.id !== undefined ? current.data.id === last.data.id : true;
+    return current.event === last.event && match && distance < Setting.Distance && gap < Setting.PointerInterval && sameId;
 }
 
 export function stop(): void {

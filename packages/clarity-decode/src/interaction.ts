@@ -1,10 +1,26 @@
-import { Data, Interaction, Layout } from "clarity-js";
+import { Data, Interaction } from "clarity-js";
 import { InteractionEvent, ClickData, TimelineData } from "../types/interaction";
 
 export function decode(tokens: Data.Token[]): InteractionEvent {
     let time = tokens[0] as number;
     let event = tokens[1] as Data.Event;
     switch (event) {
+        case Data.Event.PointerDown:
+            return {
+                time,
+                event,
+                data: {
+                    target: tokens[2] as number,
+                    x: tokens[3] as number,
+                    y: tokens[4] as number,
+                    id: tokens[5] as number,
+                    isPrimary: tokens[6] === "true",
+                    type: tokens[7] as Interaction.PointerType,
+                    pressure: tokens[8] as number,
+                    width: tokens[9] as number,
+                    height: tokens[10] as number,
+                }
+            };
         case Data.Event.MouseDown:
         case Data.Event.MouseUp:
         case Data.Event.MouseMove:
@@ -17,11 +33,15 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let pointerData: Interaction.PointerData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
-                y: tokens[4] as number
+                y: tokens[4] as number,
+                id: typeof tokens[5] === "number" ? tokens[5] as number : undefined,
+                isPrimary: tokens[6] === undefined ? undefined : tokens[6] === "true",
             };
             return { time, event, data: pointerData };
         case Data.Event.Click:
-            let clickHashes = (tokens[12] as string).split(Data.Constant.Dot);
+        case Data.Event.ContextMenu:
+            let [legacyClickHash, betaClickHash] = (tokens[12] as string).split(Data.Constant.Dot);
+            let clickHash = legacyClickHash || betaClickHash || Data.Constant.Empty;
             let clickData: ClickData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
@@ -33,9 +53,16 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 context: tokens[9] as number,
                 text: tokens[10] as string,
                 link: tokens[11] as string,
-                hash: clickHashes[0],
-                hashBeta: clickHashes.length > 0 ? clickHashes[1] : null,
-                trust: tokens.length > 13 ? tokens[13] as number : Data.BooleanFlag.True
+                hash: clickHash,
+                hashBeta: betaClickHash || null,
+                trust: tokens.length > 13 ? tokens[13] as number : Data.BooleanFlag.True,
+                isFullText: tokens.length > 14 ? tokens[14] as number : null,
+                w: tokens.length > 15 ? tokens[15] as number : 0,
+                h: tokens.length > 16 ? tokens[16] as number : 0,
+                tag: tokens.length > 17 ? tokens[17] as string : null,
+                class: tokens.length > 18 ? tokens[18] as string : null,
+                id: tokens.length > 19 ? tokens[19] as string : null,
+                source: tokens.length > 20 ? tokens[20] as number : null,
             };
             return { time, event, data: clickData };
         case Data.Event.Clipboard:
@@ -45,7 +72,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let resizeData: Interaction.ResizeData = { width: tokens[2] as number, height: tokens[3] as number };
             return { time, event, data: resizeData };
         case Data.Event.Input:
-            let inputData: Interaction.InputData = { target: tokens[2] as number, value: tokens[3] as string };
+            let inputData: Interaction.InputData = { target: tokens[2] as number, value: tokens[3] as string, trust: tokens.length > 4 ? tokens[4] as number : Data.BooleanFlag.True };
             return { time, event, data: inputData };
         case Data.Event.Selection:
             let selectionData: Interaction.SelectionData = {
@@ -72,26 +99,38 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
             let scrollData: Interaction.ScrollData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
-                y: tokens[4] as number
+                y: tokens[4] as number,
+                top: tokens.length > 5 ? tokens[5] as string : null,
+                bottom: tokens.length > 6 ? tokens[6] as string : null,
+                trust: tokens.length > 7 ? tokens[7] as number : Data.BooleanFlag.True
             };
             return { time, event, data: scrollData };
         case Data.Event.Timeline:
-            let timelineHashes = (tokens[3] as string).split(Data.Constant.Dot);
+            let [legacyTimelineHash, betaTimelineHash] = (tokens[3] as string).split(Data.Constant.Dot);
+            let timelineHash = legacyTimelineHash || betaTimelineHash || Data.Constant.Empty;
             let timelineData: TimelineData = {
                 type: tokens[2] as number,
-                hash: timelineHashes[Layout.Selector.Alpha],
+                hash: timelineHash,
                 x: tokens[4] as number,
                 y: tokens[5] as number,
                 reaction: tokens[6] as number,
                 context: tokens[7] as number,
-                hashBeta: timelineHashes.length > 0 ? timelineHashes[Layout.Selector.Beta] : null
+                hashBeta: betaTimelineHash || null
             };
             return { time, event, data: timelineData };
         case Data.Event.Visibility:
-            let visibleData: Interaction.VisibilityData = { visible: tokens[2] as string };
+            let visibleData: Interaction.VisibilityData;
+            if (typeof tokens[2] === "number") {
+                visibleData = { visible: tokens[2] as number };
+            } else {
+                visibleData = { visible: (tokens[2] as string) === "visible" ? Data.BooleanFlag.True : Data.BooleanFlag.False };
+            }
             return { time, event, data: visibleData };
+        case Data.Event.Focus:
+            let focusData: Interaction.FocusData = { focused: tokens[2] as number };
+            return { time, event, data: focusData };
         case Data.Event.Unload:
-            let unloadData: Interaction.UnloadData = { name: tokens[2] as string };
+            let unloadData: Interaction.UnloadData = { name: tokens[2] as string, persisted: tokens[3] as number };
             return { time, event, data: unloadData };
     }
     return null;

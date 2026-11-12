@@ -1,6 +1,6 @@
 import { AsyncTask, Priority, RequestIdleCallbackDeadline, RequestIdleCallbackOptions, Task, Timer } from "@clarity-types/core";
-import { Setting, TaskFunction, TaskResolve, Tasks } from "@clarity-types/core";
-import { Code, Metric, Severity } from "@clarity-types/data";
+import { TaskFunction, TaskResolve, Tasks } from "@clarity-types/core";
+import { Code, Metric, Setting, Severity } from "@clarity-types/data";
 import * as metadata from "@src/data/metadata";
 import * as metric from "@src/data/metric";
 import * as internal from "@src/diagnostic/internal";
@@ -64,17 +64,16 @@ function run(): void {
     if (entry) {
         activeTask = entry;
         entry.task().then((): void => {
-            // Bail out if the context in which this task was operating is different from the current page
-            // An example scenario where task could span across pages is Single Page Applications (SPA)
-            // A task that started on page #1, but completes on page #2
-            if (entry.id !== metadata.id()) { return; }
-            entry.resolve();
-            activeTask = null; // Reset active task back to null now that the promise is resolved
+            // Skip resolve() if the page context changed, but always free activeTask and drain
+            // the queue — otherwise a stale entry pins activeTask and wedges the scheduler.
+            let stale = entry.id !== metadata.id();
+            if (!stale) { entry.resolve(); }
+            activeTask = null;
             run();
         }).catch((error: Error): void => {
-            // If one of the scheduled tasks failed, log, recover and continue processing rest of the tasks
-            if (entry.id !== metadata.id()) { return; }
-            if (error) { internal.log(Code.RunTask, Severity.Warning, error.name, error.message, error.stack); }
+            // Same invariant: always free activeTask and drain, regardless of page context.
+            let stale = entry.id !== metadata.id();
+            if (!stale && error) { internal.log(Code.RunTask, Severity.Warning, error.name, error.message, error.stack); }
             activeTask = null;
             run();
         });
@@ -126,7 +125,8 @@ export async function suspend(timer: Timer): Promise<Task> {
     let id = key(timer);
     if (id in tracker) {
         stop(timer);
-        tracker[id].yield = (await wait()).timeRemaining();
+        // some customer polyfills for requestIdleCallback return null 
+        tracker[id].yield = (await wait())?.timeRemaining() || Setting.LongTask;
         restart(timer);
     }
     // After we are done with suspending task, ensure that we are still operating in the right context
@@ -135,7 +135,7 @@ export async function suspend(timer: Timer): Promise<Task> {
 }
 
 function key(timer: Timer): string {
-    return `${timer.id}.${timer.cost}`;
+    return timer.id + "." + timer.cost;
 }
 
 async function wait(): Promise<RequestIdleCallbackDeadline> {

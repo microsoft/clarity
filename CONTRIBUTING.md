@@ -8,6 +8,36 @@ When you submit a pull request, a CLA-bot will automatically determine whether y
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
+## Reporting Issues
+
+Before opening a GitHub issue, please determine which type of issue you're experiencing:
+
+### Issues with the Clarity Dashboard or Service (clarity.microsoft.com)
+
+If your issue is related to the **Clarity dashboard, service, or your project at [clarity.microsoft.com](https://clarity.microsoft.com)**, this GitHub repository is **not** the right place. Instead, please email **[clarityms@microsoft.com](mailto:clarityms@microsoft.com)** with:
+
+- Your **Clarity project ID** or a link to your project page
+- A description of the issue you're experiencing
+- Screenshots or screen recordings, if applicable
+
+Examples of dashboard/service issues:
+- Missing or incorrect data in recordings, heatmaps, or analytics
+- Problems logging in to your Clarity account
+- Issues with GA4 integration, Smart Events, or Custom Tags in the dashboard
+- Session recordings not appearing or rendering incorrectly
+- Export API questions
+- Project setup or team management
+
+### Issues with the Open-Source Packages (clarity-js, clarity-decode, clarity-visualize)
+
+If your issue is a **bug, feature request, or question about the open-source code** in this repository, please [open a GitHub issue](https://github.com/microsoft/clarity/issues/new/choose). Include:
+
+- The **package name** and **version** you're using (e.g., `clarity-js@0.8.1`)
+- Steps to reproduce the issue
+- Expected vs. actual behavior
+- Browser and OS information
+- A minimal code sample, if possible
+
 ## Workflow
 
 ### Submitting Code Changes
@@ -20,7 +50,9 @@ On Windows, grab an installer from here: https://git-scm.com/download/win and go
 
 On Mac and Linux, it's pre-installed.
 
-### Node.js (18+)
+### Node.js (22+)
+
+**Required:** Node.js 22 or higher
 
 On Windows, grab an installer from nodejs.org and go with the default options:
 ```
@@ -80,6 +112,20 @@ On Ubuntu, if you run into errors, it may be because you are missing the libfont
 sudo apt-get install libfontconfig
 ```
 
+### Testing Clarity
+
+Clarity uses `@playwright/test` for testing. You can find end-to-end tests under `test/` and per-package tests under `packages/<package-name>/test/`.
+
+To run tests, make sure `yarn install` and `yarn build` have been executed successfully, and that Playwright's chromium browser is installed by running:
+```
+npx playwright install chromium
+```
+
+To run Playwright's UI for better reporting, watch mode, etc:
+```
+yarn test:ui
+```
+
 ### Debugging Clarity
 Use [clarity-devtools](https://github.com/microsoft/clarity/tree/master/packages/clarity-devtools) to debug Clarity against any live website.
 
@@ -97,30 +143,7 @@ Edit Clarity:
 Go to 'File -> Open Folder' and select the 'clarity' folder that you just cloned.
 ```
 
-Debug Tests
-
-To debug tests from Visual Studio Code, create "launch.json" in your root project folder:
-```
-{
-  "version": "0.2.0",
-  "configurations": [
-      {
-          "name": "Clarity Tests",
-          "type": "node",
-          "request": "launch",
-          "cwd": "${workspaceFolder}/packages/clarity-js",
-          "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/ts-mocha",
-          "runtimeArgs": [
-              "-p",
-              "test/tsconfig.test.json",
-              "${file}"
-          ],
-          "protocol": "inspector"
-      }
-
-  ]
-}
-```
+To debug tests from Visual Studio Code, install the [Playwright Test for VSCode](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) extension.
 
 ### Text Editor TSLint Plugin
 

@@ -11,28 +11,18 @@ export default async function (type: Event): Promise<void> {
 
     switch (type) {
         case Event.ScriptError:
-            tokens.push(script.data.message);
-            tokens.push(script.data.line);
-            tokens.push(script.data.column);
-            tokens.push(script.data.stack);
-            tokens.push(scrub.url(script.data.source));
+            tokens.push(script.data.message, script.data.line, script.data.column, script.data.stack, scrub.url(script.data.source));
             queue(tokens);
             break;
         case Event.Log:
             if (internal.data) {
-                tokens.push(internal.data.code);
-                tokens.push(internal.data.name);
-                tokens.push(internal.data.message);
-                tokens.push(internal.data.stack);
-                tokens.push(internal.data.severity);
+                tokens.push(internal.data.code, internal.data.name, internal.data.message, internal.data.stack, internal.data.severity);
                 queue(tokens, false);
             }
             break;
         case Event.Fraud:
             if (fraud.data) {
-                tokens.push(fraud.data.id);
-                tokens.push(fraud.data.target);
-                tokens.push(fraud.data.checksum);
+                tokens.push(fraud.data.id, fraud.data.target, fraud.data.checksum);
                 queue(tokens, false);
             }
             break;

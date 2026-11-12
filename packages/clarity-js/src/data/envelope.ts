@@ -1,7 +1,8 @@
-import { BooleanFlag, Token, Upload, Envelope } from "@clarity-types/data";
+import { BooleanFlag, Token, Upload, Envelope, ApplicationPlatform } from "@clarity-types/data";
 import { time } from "@src/core/time";
 import version from "@src/core/version";
 import * as metadata from "@src/data/metadata";
+import * as scrub from "@src/core/scrub";
 
 export let data: Envelope = null;
 
@@ -17,7 +18,9 @@ export function start(): void {
     sessionId: m.sessionId,
     pageNum: m.pageNum,
     upload: Upload.Async,
-    end: BooleanFlag.False
+    end: BooleanFlag.False,
+    applicationPlatform: ApplicationPlatform.WebApp,
+    url: ''
   };
 }
 
@@ -31,6 +34,8 @@ export function envelope(last: boolean): Token[] {
   data.sequence++;
   data.upload = last && "sendBeacon" in navigator ? Upload.Beacon : Upload.Async;
   data.end = last ? BooleanFlag.True : BooleanFlag.False;
+  data.applicationPlatform = ApplicationPlatform.WebApp;
+  data.url = scrub.url(location.href, false, true);
   return [
     data.version,
     data.sequence,
@@ -41,6 +46,8 @@ export function envelope(last: boolean): Token[] {
     data.sessionId,
     data.pageNum,
     data.upload,
-    data.end
+    data.end,
+    data.applicationPlatform,
+    data.url
   ];
 }

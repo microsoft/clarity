@@ -16,6 +16,17 @@ We encourage the community to join us in building the best behavioral analytics 
 
 4. **[clarity-devtools](https://github.com/microsoft/clarity/tree/master/packages/clarity-devtools)**: Devtools extension for chromium based browsers to generate live captures against any website.
 
+## Releasing new version
+1. **Bump Version**
+   ```bash
+   yarn bump-version
+   ```
+
+2. **Submit Changes**
+    * Commit updated files
+    * Push changes
+    * Create PR
+
 ## Examples
 Here are some example sessions on popular websites visualized to demonstrate the telemetry captured:
 1. CNN (Web)
@@ -26,6 +37,41 @@ Here are some example sessions on popular websites visualized to demonstrate the
 
 ## Privacy Notice
 Clarity handles sensitive data with care. By default sensitive content on the page is masked before uploading to the server. Additionally, Clarity offers several masking configuration options to ensure you are in full control of your data.
+
+## Claude Code Setup (Optional)
+If you're using [Claude Code](https://claude.ai/claude-code) for development, this repository includes:
+
+1. **`CLAUDE.md`** - Project context and development guidelines automatically loaded by Claude
+2. **`.mcp.json`** - MCP (Model Context Protocol) server configuration for enhanced Git operations
+
+### Prerequisites for MCP Server
+1. Install Python 3:
+   ```bash
+   python3 --version  # Verify installation
+   ```
+
+2. Install the Git MCP Server:
+   ```bash
+   pip3 install mcp-server-git
+   ```
+
+### Enable MCP Server
+The repository includes a `.mcp.json` file that configures the Git MCP server. To enable it:
+
+**Option 1: Auto-enable (Recommended)**
+Add to your `.claude/settings.local.json`:
+```json
+{
+  "enableAllProjectMcpServers": true
+}
+```
+
+**Option 2: Explicit approval**
+Claude Code will prompt you to approve the MCP server on first use.
+
+### What It Provides
+- **CLAUDE.md**: Persistent instructions for Claude including build commands, testing, architecture, and coding standards
+- **Git MCP Server**: Enhanced Git operations through natural language (commit history, diffs, branch management, etc.)
 
 ## Improving Clarity
 If you haven't already done so, start contributing by following instructions **[here](https://github.com/microsoft/clarity/blob/master/CONTRIBUTING.md)**.

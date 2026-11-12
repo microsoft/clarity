@@ -7,7 +7,8 @@ export const enum AnimationOperation {
     Play = 1,
     Pause = 2,
     Cancel = 3,
-    Finish = 4
+    Finish = 4,
+    CommitStyles = 5
 }
 
 export const enum Source {
@@ -19,7 +20,6 @@ export const enum Source {
 }
 
 export const enum Selector {
-    Alpha = 0,
     Beta = 1,
     Default = 1
 }
@@ -45,17 +45,16 @@ export interface AnimationData {
     targetId?: number;
 }
 
+export interface CustomElementData {
+    name: string;
+}
+
 export const enum RegionVisibility {
     Rendered = 0,
     Visible = 10,
-    ScrolledToEnd = 13
-}
-
-export const enum Mask {
-    Text = "address,password,contact",
-    Disable = "radio,checkbox,range,button,reset,submit",
-    Exclude = "password,secret,pass,social,ssn,code,hidden",
-    Tags = "INPUT,SELECT,TEXTAREA"
+    ScrolledToEnd = 13,
+    ViewportEnter = 14,
+    ViewportExit = 15
 }
 
 export const enum Constant {
@@ -66,6 +65,7 @@ export const enum Constant {
     SvgNamespace = "http://www.w3.org/2000/svg",
     Id = "id",
     Class = "class",
+    Style = "style",
     Href = "href",
     Src = "src",
     Srcset = "srcset",
@@ -89,6 +89,7 @@ export const enum Constant {
     Object = "object",
     Function = "function",
     StyleTag = "STYLE",
+    LinkTag = "LINK",
     InputTag = "INPUT",
     IFrameTag = "IFRAME",
     ImageTag = "IMG",
@@ -105,7 +106,7 @@ export const enum Constant {
     ChildList = "childList",
     Attributes = "attributes",
     CharacterData = "characterData",
-    Suspend = "suspend",
+    Throttle = "throttle",
     LoadEvent = "load",
     Pixel = "px",
     BorderBox = "border-box",
@@ -122,7 +123,6 @@ export const enum Constant {
     ogType = "og:type",
     ogTitle = "og:title",
     SvgStyle = "svg:style",
-    ExcludeClassNames = "load,active,fixed,visible,focus,show,collaps,animat",
     StyleSheet = "stylesheet"
 }
 
@@ -155,7 +155,16 @@ export const enum JsonLD {
 export const enum Setting {
     LookAhead = 33, // 33ms
     MutationSuspendThreshold = 10, // Stop listening for mutations after hitting a threshold count
-    MutationActivePeriod = 3000 // Unit: milliseconds. Let mutations continue as normal during active periods of user interactions
+    MutationActivePeriod = 3000, // Unit: milliseconds. Let mutations continue as normal during active periods of user interactions
+    MaxMutationHistoryCount = 10000,
+    MaxMutationHistoryTime = 30000, // Unit: milliseconds. Maximum time to keep mutation history in memory
+}
+
+export const enum StyleSheetOperation {
+    Create = 0,
+    Replace = 1,
+    ReplaceSync = 2,
+    SetAdoptedStyles = 3
 }
 
 /* Helper Interfaces */
@@ -210,18 +219,29 @@ export interface MutationQueue {
     mutations: MutationRecord[];
 }
 
+export interface MutationRecordWithTime {
+    timestamp: number;
+    mutation: MutationRecord;
+  }
+
 export interface MutationHistory {
     [key: string]: [/* Count */ number, /* Instance */ number, /* Remove Nodes Buffer */ NodeList?];
 }
 
 export interface RegionQueue {
     node: Node;
-    data: RegionData;
+    state: RegionState;
 }
 
 export interface RegionState {
     time: number;
     data: RegionData;
+}
+
+export interface StyleSheetState {
+    time: number;
+    event: number,
+    data: StyleSheetData
 }
 
 /* Event Data */
@@ -242,5 +262,12 @@ export interface TargetMetadata {
     id: number;
     hash: [string, string];
     privacy: Privacy;
-    node: Node;
+    region: string;
+}
+
+export interface StyleSheetData {
+    id: number | string;
+    operation: StyleSheetOperation;
+    cssRules?: string;
+    newIds?: string[]
 }

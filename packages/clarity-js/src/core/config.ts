@@ -1,9 +1,11 @@
 import { Config, Time } from "@clarity-types/core";
+import { Setting } from "@clarity-types/data";
 
 let config: Config = {
     projectId: null,
     delay: 1 * Time.Second,
     lean: false,
+    lite: false,
     track: true,
     content: true,
     drop: [],
@@ -18,7 +20,14 @@ let config: Config = {
     fallback: null,
     upgrade: null,
     action: null,
-    dob: null
+    dob: null,
+    delayDom: false,
+    throttleDom: true,
+    conversions: false,
+    includeSubdomains: true,
+    modules: [],
+    diagnostics: false,
+    restart: Setting.RestartDelay,
 };
 
 export default config;

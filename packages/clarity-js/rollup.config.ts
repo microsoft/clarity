@@ -3,8 +3,18 @@ import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
 import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
-import pkg from "./package.json" assert { type: 'json' };
+import { readFileSync } from "fs";
 
+const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
+const terserOpts = {
+  compress: {
+    passes: 3,
+    hoist_vars: true,
+  },
+  mangle: {
+  },
+  output: { comments: false }
+};
 export default [
   {
     input: "src/index.ts",
@@ -24,7 +34,7 @@ export default [
   },
   {
     input: "src/global.ts",
-    output: [ { file: pkg.unpkg, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.unpkg, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -32,13 +42,13 @@ export default [
     plugins: [
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
   {
     input: "src/global.ts",
-    output: [ { file: pkg.insight, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.extended, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -46,6 +56,27 @@ export default [
     plugins: [
       alias({
         entries: [
+          { find: '@src/layout/region', replacement: '@src/layout/regionV2' },
+          { find: '@src/interaction/encode', replacement: '@src/interaction/encodeV2' }
+        ]
+      }),
+      resolve(),
+      typescript(),
+      terser(terserOpts),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/global.ts",
+    output: [ { file: pkg.insight, format: "iife", exports: "named", freeze: false } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: '@src/layout/style', replacement: '@src/insight/blank' },
           { find: '@src/layout/document', replacement: '@src/layout/document' },
           { find: '@src/layout/encode', replacement: '@src/insight/encode' },
           { find: /@src\/interaction\/(change|clipboard|input|pointer|selection)/, replacement: '@src/insight/blank' },
@@ -55,13 +86,13 @@ export default [
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
   },
   {
     input: "src/global.ts",
-    output: [ { file: pkg.performance, format: "iife", exports: "named" } ],
+    output: [ { file: pkg.performance, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {
       if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
       warn(message);
@@ -72,12 +103,82 @@ export default [
           { find: /@src\/interaction.*/, replacement: '@src/performance/blank' },
           { find: /@src\/layout.*/, replacement: '@src/performance/blank' },
           { find: /@src\/diagnostic.*/, replacement: '@src/performance/blank' },
-          { find: /@src\/data\/(extract|baseline|summary)/, replacement: '@src/performance/blank' }
+          { find: /@src\/data\/(extract|baseline|summary)/, replacement: '@src/performance/blank' },
+          { find: /@src\/core\/dynamic/, replacement: '@src/performance/blank' }
         ]
       }),
       resolve(),
       typescript(),
-      terser({output: {comments: false}}),
+      terser(terserOpts),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/dynamic/webmcp/index.ts",
+    output: [ { file: pkg.webmcp, format: "iife", name: "ClarityWebMcp", exports: "named", freeze: false } ],
+    plugins: [
+      resolve(),
+      typescript(),
+      terser(terserOpts)
+    ]
+  },
+  {
+    input: "src/dynamic/agent/index.ts",
+    output: [ { file: pkg.livechat, format: "iife", exports: "named", freeze: false } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: /@src\/dynamic\/agent\/tidio.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/crisp.*/, replacement: '@src/dynamic/agent/blank' }
+        ]
+      }),
+      resolve(),
+      typescript(),
+      terser(terserOpts),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/dynamic/agent/index.ts",
+    output: [ { file: pkg.tidio, format: "iife", exports: "named", freeze: false } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: /@src\/dynamic\/agent\/livechat.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/crisp.*/, replacement: '@src/dynamic/agent/blank' }
+        ]
+      }),
+      resolve(),
+      typescript(),
+      terser(terserOpts),
+      commonjs({ include: ["node_modules/**"] })
+    ]
+  },
+  {
+    input: "src/dynamic/agent/index.ts",
+    output: [ { file: pkg.crisp, format: "iife", exports: "named", freeze: false } ],
+    onwarn(message, warn) {
+      if (message.code === 'CIRCULAR_DEPENDENCY') { return; }
+      warn(message);
+    },
+    plugins: [
+      alias({
+        entries: [
+          { find: /@src\/dynamic\/agent\/livechat.*/, replacement: '@src/dynamic/agent/blank' },
+          { find: /@src\/dynamic\/agent\/tidio.*/, replacement: '@src/dynamic/agent/blank' }
+        ]
+      }),
+      resolve(),
+      typescript(),
+      terser(terserOpts),
       commonjs({ include: ["node_modules/**"] })
     ]
   }

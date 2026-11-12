@@ -4,13 +4,28 @@ import * as Layout from "@clarity-types/layout";
 import config from "@src/core/config";
 
 const catchallRegex = /\S/gi;
+const maxUrlLength = 2048;
 let unicodeRegex = true;
 let digitRegex = null;
 let letterRegex = null;
 let currencyRegex = null;
 
-export function text(value: string, hint: string, privacy: Privacy, mangle: boolean = false): string {
+export function shouldMangle(tag: string, privacy: Privacy): boolean {
+    return tag === Layout.Constant.TextTag && !(privacy === Privacy.None || privacy === Privacy.Sensitive);
+}
+
+export function nodeText(value: string, privacy: Privacy): string {
+    return shouldMangle(Layout.Constant.TextTag, privacy)
+        ? (value.trim() ? Data.Constant.Mask : Data.Constant.Empty)
+        : text(value, Layout.Constant.TextTag, privacy);
+}
+
+export function text(value: string, hint: string, privacy: Privacy, mangle: boolean = false, type?: string): string {
     if (value) {
+        if (hint == "input" && (type === "checkbox" || type === "radio")) {
+            return value;
+        }
+
         switch (privacy) {
             case Privacy.None:
                 return value;
@@ -36,7 +51,12 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
                     case "srcset":
                     case "title":
                     case "alt":
-                        return privacy === Privacy.TextImage ? Data.Constant.Empty : value;
+                    case "href":
+                    case "xlink:href":
+                        if (privacy === Privacy.TextImage) {
+                            return value?.startsWith('blob:') ? 'blob:' : Data.Constant.Empty;
+                        }
+                        return value;
                     case "value":
                     case "click":
                     case "input":
@@ -83,17 +103,24 @@ export function text(value: string, hint: string, privacy: Privacy, mangle: bool
     return value;
 }
 
-export function url(input: string, electron: boolean = false): string {
+export function url(input: string, electron: boolean = false, truncate: boolean = false): string {
+    let result = input;
     // Replace the URL for Electron apps so we don't send back file:/// URL
-    if (electron) { return `${Data.Constant.HTTPS}${Data.Constant.Electron}`; }
-
-    let drop = config.drop;
-    if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
-      let [path, query] = input.split("?");
-      let swap = Data.Constant.Dropped;
-      return path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(`${x}=`) === 0) ? `${p.split("=")[0]}=${swap}` : p).join("&");
+    if (electron) {
+        result = Data.Constant.HTTPS + Data.Constant.Electron;
+    } else {
+        let drop = config.drop;
+        if (drop && drop.length > 0 && input && input.indexOf("?") > 0) {
+            let [path, query] = input.split("?");
+            let swap = Data.Constant.Dropped;
+            result = path + "?" + query.split("&").map(p => drop.some(x => p.indexOf(x + "=") === 0) ? (p.split("=")[0] + "=" + swap) : p).join("&");
+        }
     }
-    return input;
+
+    if (truncate) {
+        result = result.substring(0, maxUrlLength);
+    }
+    return result;
 }
 
 function mangleText(value: string): string {
@@ -103,11 +130,11 @@ function mangleText(value: string): string {
         let index = value.indexOf(first);
         let prefix = value.substr(0, index);
         let suffix = value.substr(index + trimmed.length);
-        return `${prefix}${trimmed.length.toString(36)}${suffix}`;
+        return prefix + trimmed.length.toString(36) + suffix;
     }
     return value;
 }
- 
+
 function mask(value: string): string {
     return value.replace(catchallRegex, Data.Constant.Mask);
 }
@@ -145,7 +172,7 @@ function redact(value: string): string {
     let hasEmail = false;
     let hasWhitespace = false;
     let array = null;
-    
+
     regex(); // Initialize regular expressions
 
     for (let i = 0; i < value.length; i++) {

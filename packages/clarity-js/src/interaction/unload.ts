@@ -1,9 +1,9 @@
-import { Event } from "@clarity-types/data";
+import { BooleanFlag, Event } from "@clarity-types/data";
 import { UnloadData } from "@clarity-types/interaction";
 import * as clarity from "@src/clarity";
 import { bind } from "@src/core/event";
 import { time } from "@src/core/time";
-import encode from "./encode";
+import encode from "@src/interaction/encode";
 
 export let data: UnloadData;
 
@@ -11,8 +11,8 @@ export function start(): void {
     bind(window, "pagehide", recompute);
 }
 
-function recompute(evt: UIEvent): void {
-    data = { name: evt.type };
+function recompute(evt: PageTransitionEvent): void {
+    data = { name: evt.type, persisted: evt.persisted ? BooleanFlag.True : BooleanFlag.False };
     encode(Event.Unload, time(evt));
     clarity.stop();
 }

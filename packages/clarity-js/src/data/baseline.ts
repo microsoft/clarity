@@ -16,19 +16,7 @@ export function reset(): void {
     // Baseline state holds the previous values - if it is updated in the current payload,
     // reset the state to current value after sending the previous state
     if (update) {
-        state = { time: time(), event: Event.Baseline, data: {
-            visible: buffer.visible,
-            docWidth: buffer.docWidth,
-            docHeight: buffer.docHeight,
-            screenWidth: buffer.screenWidth,
-            screenHeight: buffer.screenHeight,
-            scrollX: buffer.scrollX,
-            scrollY: buffer.scrollY,
-            pointerX: buffer.pointerX,
-            pointerY: buffer.pointerY,
-            activityTime: buffer.activityTime
-          }
-        };
+        state = { time: time(), event: Event.Baseline, data: Object.assign({}, buffer) };
     }
     buffer = buffer ? buffer : {
         visible: BooleanFlag.True,
@@ -40,11 +28,26 @@ export function reset(): void {
         scrollY: 0,
         pointerX: 0,
         pointerY: 0,
-        activityTime: 0
+        activityTime: 0,
+        scrollTime: 0,
+        pointerTime: undefined,
+        moveX: undefined,
+        moveY: undefined,
+        moveTime: undefined,
+        downX: undefined,
+        downY: undefined,
+        downTime: undefined,
+        upX: undefined,
+        upY: undefined,
+        upTime: undefined,
+        pointerPrevX: undefined,
+        pointerPrevY: undefined,
+        pointerPrevTime: undefined,
+        modules: null,
     };
 }
 
-export function track(event: Event, x: number, y: number): void {
+export function track(event: Event, x: number, y: number, time?: number): void {
     switch (event) {
         case Event.Document:
             buffer.docWidth = x;
@@ -57,24 +60,56 @@ export function track(event: Event, x: number, y: number): void {
         case Event.Scroll:
             buffer.scrollX = x;
             buffer.scrollY = y;
+            buffer.scrollTime = time;
+            break;
+        case Event.MouseMove:
+            buffer.moveX = x;
+            buffer.moveY = y;
+            buffer.moveTime = time;
+            updatePointer(x, y, time);
+            break;
+        case Event.MouseDown:
+            buffer.downX = x;
+            buffer.downY = y;
+            buffer.downTime = time;
+            updatePointer(x, y, time);
+            break;
+        case Event.MouseUp:
+            buffer.upX = x;
+            buffer.upY = y;
+            buffer.upTime = time;
+            updatePointer(x, y, time);
             break;
         default:
-            buffer.pointerX = x;
-            buffer.pointerY = y;
+            updatePointer(x, y, time);
             break;
     }
     update = true;
+}
+
+function updatePointer(x: number, y: number, time: number): void {
+    buffer.pointerPrevX = buffer.pointerX;
+    buffer.pointerPrevY = buffer.pointerY;
+    buffer.pointerPrevTime = buffer.pointerTime;
+    buffer.pointerX = x;
+    buffer.pointerY = y;
+    buffer.pointerTime = time;
 }
 
 export function activity(t: number): void {
     buffer.activityTime = t;
 }
 
-export function visibility(t: number, visible: string): void {
-    buffer.visible = visible === "visible" ? BooleanFlag.True : BooleanFlag.False;
+export function visibility(t: number, visible: BooleanFlag): void {
+    buffer.visible = visible;
     if (!buffer.visible) {
         activity(t);
     }
+    update = true;
+}
+
+export function dynamic(modules: Set<number>): void {
+    buffer.modules = Array.from(modules);
     update = true;
 }
 

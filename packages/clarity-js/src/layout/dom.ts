@@ -1,11 +1,15 @@
 import { Privacy } from "@clarity-types/core";
 import { Code, Setting, Severity } from "@clarity-types/data";
-import { Constant, Mask, NodeInfo, NodeMeta, NodeValue, Selector, SelectorInput, Source } from "@clarity-types/layout";
+import { Constant, NodeInfo, NodeMeta, NodeValue, Selector, SelectorInput, Source } from "@clarity-types/layout";
 import config from "@src/core/config";
+import { bind } from "@src/core/event";
 import hash from "@src/core/hash";
+import { shortid } from "@src/data/metadata";
 import * as internal from "@src/diagnostic/internal";
+import { removeObserver } from "@src/layout/node";
 import * as region from "@src/layout/region";
 import * as selector from "@src/layout/selector";
+import { MaskTextList, MaskDisableList, MaskExcludeList, MaskTagsList } from "./constants";
 let index: number = 1;
 let nodesMap: Map<Number, Node> = null; // Maps id => node to retrieve further node details using id.
 let values: NodeValue[] = [];
@@ -13,14 +17,15 @@ let updateMap: number[] = [];
 let hashMap: { [hash: string]: number } = {};
 let override = [];
 let unmask = [];
-let maskText = [];
-let maskExclude = [];
-let maskDisable = [];
-let maskTags = [];
+let maskText: string[] = [];
+let maskExclude: string[] = [];
+let maskDisable: string[] = [];
+let maskTags: string[] = [];
 
 // The WeakMap object is a collection of key/value pairs in which the keys are weakly referenced
 let idMap: WeakMap<Node, number> = null; // Maps node => id.
 let iframeMap: WeakMap<Document, HTMLIFrameElement> = null; // Maps iframe's contentDocument => parent iframe element
+let iframeContentMap: WeakMap<HTMLIFrameElement, { doc: Document, win: Window }> = null; // Maps parent iframe element => iframe's contentDocument & contentWindow
 let privacyMap: WeakMap<Node, Privacy> = null; // Maps node => Privacy (enum)
 let fraudMap: WeakMap<Node, number> = null; // Maps node => FraudId (number)
 
@@ -40,16 +45,16 @@ function reset(): void {
     hashMap = {};
     override = [];
     unmask = [];
-    maskText = Mask.Text.split(Constant.Comma);
-    maskExclude = Mask.Exclude.split(Constant.Comma);
-    maskDisable = Mask.Disable.split(Constant.Comma);
-    maskTags = Mask.Tags.split(Constant.Comma);
+    maskText = MaskTextList;
+    maskExclude = MaskExcludeList;
+    maskDisable = MaskDisableList;
+    maskTags = MaskTagsList;
     nodesMap = new Map();
     idMap = new WeakMap();
     iframeMap = new WeakMap();
+    iframeContentMap = new WeakMap();
     privacyMap = new WeakMap();
     fraudMap = new WeakMap();
-    selector.reset();
 }
 
 // We parse new root nodes for any regions or masked nodes in the beginning (document) and
@@ -59,12 +64,12 @@ export function parse(root: ParentNode, init: boolean = false): void {
     // It's possible for script to receive invalid selectors, e.g. "'#id'" with extra quotes, and cause the code below to fail
     try {
         // Parse unmask configuration into separate query selectors and override tokens as part of initialization
-        if (init) { config.unmask.forEach(x => x.indexOf(Constant.Bang) < 0 ? unmask.push(x) : override.push(x.substr(1))); }
+        if (init) { config.unmask.forEach(x => !x.includes(Constant.Bang) ? unmask.push(x) : override.push(x.substr(1))); }
 
         // Since mutations may happen on leaf nodes too, e.g. text nodes, which may not support all selector APIs.
         // We ensure that the root note supports querySelectorAll API before executing the code below to identify new regions.
         if ("querySelectorAll" in root) {
-            config.regions.forEach(x => root.querySelectorAll(x[1]).forEach(e => region.observe(e, `${x[0]}`))); // Regions
+            config.regions.forEach(x => root.querySelectorAll(x[1]).forEach(e => region.observe(e, "" + x[0]))); // Regions
             config.mask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.TextImage))); // Masked Elements
             config.checksum.forEach(x => root.querySelectorAll(x[1]).forEach(e => fraudMap.set(e, x[0]))); // Fraud Checksum Check
             unmask.forEach(x => root.querySelectorAll(x).forEach(e => privacyMap.set(e, Privacy.None))); // Unmasked Elements
@@ -84,8 +89,14 @@ export function getId(node: Node, autogen: boolean = false): number {
 }
 
 export function add(node: Node, parent: Node, data: NodeInfo, source: Source): void {
-    let id = getId(node, true);
     let parentId = parent ? getId(parent) : null;
+
+    // Do not add detached nodes
+    if ((!parent || !parentId) && (node as ShadowRoot).host == null && node.nodeType !== Node.DOCUMENT_TYPE_NODE) {
+        return;
+    }
+
+    let id = getId(node, true);
     let previousId = getPreviousId(node);
     let parentValue: NodeValue = null;
     let regionId = region.exists(node) ? id : null;
@@ -120,7 +131,7 @@ export function add(node: Node, parent: Node, data: NodeInfo, source: Source): v
 
     privacy(node, values[id], parentValue);
     updateSelector(values[id]);
-    size(values[id]);
+    updateImageSize(values[id]);
     track(id, source);
 }
 
@@ -192,6 +203,7 @@ export function sameorigin(node: Node): boolean {
             let doc = frame.contentDocument;
             if (doc) {
                 iframeMap.set(frame.contentDocument, frame);
+                iframeContentMap.set(frame, { doc: frame.contentDocument, win: frame.contentWindow });
                 output = true;
             }
         } catch { /* do nothing */ }
@@ -204,6 +216,18 @@ export function iframe(node: Node): HTMLIFrameElement {
     return doc && iframeMap.has(doc) ? iframeMap.get(doc) : null;
 }
 
+export function iframeContent(frame: HTMLIFrameElement): {doc: Document, win: Window } {
+    if (iframeContentMap.has(frame)) {
+        return iframeContentMap.get(frame);
+    }
+    return null;
+}
+
+export function removeIFrame(frame: HTMLIFrameElement, doc: Document): void {
+    iframeContentMap.delete(frame);
+    iframeMap.delete(doc);
+}
+
 function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
     let data = value.data;
     let metadata = value.metadata;
@@ -212,15 +236,18 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
     let tag = data.tag.toUpperCase();
 
     switch (true) {
-        case maskTags.indexOf(tag) >= 0:
+        case maskTags.includes(tag):
             let type = attributes[Constant.Type];
             let meta: string = Constant.Empty;
-            Object.keys(attributes).forEach(x => meta += attributes[x].toLowerCase());
-            let exclude = maskExclude.some(x => meta.indexOf(x) >= 0);
+            const excludedPrivacyAttributes = [Constant.Class, Constant.Style]
+            Object.keys(attributes)
+              .filter((x) => !excludedPrivacyAttributes.includes(x as Constant))
+              .forEach((x) => (meta += attributes[x].toLowerCase()));
+            let exclude = maskExclude.some((x) => meta.includes(x));
             // Regardless of privacy mode, always mask off user input from input boxes or drop downs with two exceptions:
             // (1) The node is detected to be one of the excluded fields, in which case we drop everything
             // (2) The node's type is one of the allowed types (like checkboxes)
-            metadata.privacy = tag === Constant.InputTag && maskDisable.indexOf(type) >= 0 ? current : (exclude ? Privacy.Exclude : Privacy.Text);
+            metadata.privacy = tag === Constant.InputTag && maskDisable.includes(type) ? current : (exclude ? Privacy.Exclude : Privacy.Text);
             break;
         case Constant.MaskData in attributes:
             metadata.privacy = Privacy.TextImage;
@@ -241,17 +268,23 @@ function privacy(node: Node, value: NodeValue, parent: NodeValue): void {
             let pTag = parent && parent.data ? parent.data.tag : Constant.Empty;
             let pSelector = parent && parent.selector ? parent.selector[Selector.Default] : Constant.Empty;
             let tags: string[] = [Constant.StyleTag, Constant.TitleTag, Constant.SvgStyle];
-            metadata.privacy = tags.includes(pTag) || override.some(x => pSelector.indexOf(x) >= 0) ? Privacy.None : current;
+            metadata.privacy = tags.includes(pTag) || override.some(x => pSelector.includes(x)) ? Privacy.None : current;
             break;
         case current === Privacy.Sensitive:
             // In a mode where we mask sensitive information by default, look through class names to aggressively mask content
             metadata.privacy = inspect(attributes[Constant.Class], maskText, metadata);
             break;
+        case tag === Constant.ImageTag:
+            // Mask images with blob src as it is not publicly available anyway.
+            if(attributes.src?.startsWith('blob:')){
+                metadata.privacy = Privacy.TextImage;
+            }
+        break;
     }
 }
 
 function inspect(input: string, lookup: string[], metadata: NodeMeta): Privacy {
-    if (input && lookup.some(x => input.indexOf(x) >= 0)) {
+    if (input && lookup.some(x => input.includes(x))) {
         return Privacy.Text;
     }
     return metadata.privacy;
@@ -285,9 +318,11 @@ function updateSelector(value: NodeValue): void {
     let d = value.data;
     let p = position(parent, value);
     let s: SelectorInput = { id: value.id, tag: d.tag, prefix, position: p, attributes: d.attributes };
-    value.selector = [selector.get(s, Selector.Alpha), selector.get(s, Selector.Beta)];
-    value.hash = value.selector.map(x => x ? hash(x) : null) as [string, string];
-    value.hash.forEach(h => hashMap[h] = value.id);
+    let beta = selector.get(s);
+    let betaHash = beta ? hash(beta) : null;
+    value.selector = [null, beta];
+    value.hash = [null, betaHash];
+    if (betaHash) { hashMap[betaHash] = value.id; }
 }
 
 export function hashText(hash: string): string {
@@ -343,6 +378,18 @@ function remove(id: number, source: Source): void {
 }
 
 function removeNodeFromNodesMap(id: number) {
+    const nodeToBeRemoved = nodesMap.get(id);
+    // Shadow dom roots shouldn't be deleted, 
+    // we should keep listening to the mutations there even they're not rendered in the DOM.
+    if(nodeToBeRemoved?.nodeType === Node.DOCUMENT_FRAGMENT_NODE){
+        return;
+    }
+
+    if (nodeToBeRemoved && nodeToBeRemoved?.nodeType === Node.ELEMENT_NODE && nodeToBeRemoved["tagName"] === "IFRAME") {
+        const iframe = nodeToBeRemoved as HTMLIFrameElement;
+        removeObserver(iframe);
+    }
+
     nodesMap.delete(id);
 
     let value = id in values ? values[id] : null;
@@ -353,10 +400,21 @@ function removeNodeFromNodesMap(id: number) {
     }
 }
 
-function size(value: NodeValue): void {
+function updateImageSize(value: NodeValue): void {
     // If this element is a image node, and is masked, then track box model for the current element
-    if (value.data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { value.metadata.size = []; }
+    if (value.data.tag === Constant.ImageTag && value.metadata.privacy === Privacy.TextImage) { 
+        let img = getNode(value.id) as HTMLImageElement;
+        // We will not capture the natural image dimensions until it loads. 
+        if(img && (!img.complete || img.naturalWidth === 0)){
+            // This will trigger mutation to update the original width and height after image loads.
+            bind(img, 'load', () => {
+                img.setAttribute('data-clarity-loaded', "" + shortid());
+            })
+        }
+        value.metadata.size = [];
+     }
 }
+
 function getPreviousId(node: Node): number {
     let id = null;
 
@@ -370,6 +428,8 @@ function getPreviousId(node: Node): number {
 }
 
 function track(id: number, source: Source, changed: boolean = true, parentChanged: boolean = false): void {
+  if (config.lean && config.lite) { return; }
+
     // Keep track of the order in which mutations happened, they may not be sequential
     // Edge case: If an element is added later on, and pre-discovered element is moved as a child.
     // In that case, we need to reorder the pre-discovered element in the update list to keep visualization consistent.

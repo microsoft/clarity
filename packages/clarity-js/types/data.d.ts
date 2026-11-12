@@ -1,13 +1,19 @@
 import { Time } from "@clarity-types/core";
+import { Action } from "./agent";
+import { Action as WebMcpAction } from "./webmcp";
 export type Target = (number | Node);
 export type Token = (string | number | number[] | string[] | (string | number)[]);
 export type DecodedToken = (any | any[]);
 
-export type MetadataCallback = (data: Metadata, playback: boolean) => void;
+export type MetadataCallback = (data: Metadata, playback: boolean, consentStatus?: ConsentState) => void;
 export interface MetadataCallbackOptions {
     callback: MetadataCallback,
-    wait: boolean
+    wait: boolean,
+    recall: boolean,
+    called: boolean,
+    consentInfo: boolean
 }
+export type SignalCallback = (data: ClaritySignal) => void
 
 /* Enum */
 export const enum Event {
@@ -42,22 +48,22 @@ export const enum Event {
     Input = 27,
     Visibility = 28,
     Navigation = 29,
-/**
- * @deprecated No longer support Network Connection
- */
+    /**
+     * @deprecated No longer support Network Connection
+     */
     Connection = 30,
     ScriptError = 31,
-/**
- * @deprecated No longer support Image Error
- */
+    /**
+     * @deprecated No longer support Image Error
+     */
     ImageError = 32,
     Log = 33,
     Variable = 34,
     Limit = 35,
     Summary = 36,
-/**
- * @deprecated No longer support Box event
- */
+    /**
+     * @deprecated No longer support Box event
+     */
     Box = 37,
     Clipboard = 38,
     Submit = 39,
@@ -65,7 +71,28 @@ export const enum Event {
     Fraud = 41,
     Change = 42,
     Snapshot = 43,
-    Animation = 44
+    Animation = 44,
+    StyleSheetAdoption = 45,
+    StyleSheetUpdate = 46,
+    Consent = 47,
+    ContextMenu = 48,
+    // 49 is reserved for internal use
+    Focus = 50,
+    CustomElement = 51,
+    Chat = 52,
+    PointerDown = 53,
+    WebMcp = 54,
+
+    // Apps specific events
+    WebViewDiscover = 100,
+    WebViewMutation = 101,
+    MutationError = 102,
+    FragmentVisibility = 103,
+    Keystrokes = 104,
+    BackGesture = 105,
+    WebViewStatus = 106,
+    AppInstallReferrer = 107
+    // 200-300 reserved for internal use
 }
 
 export const enum Metric {
@@ -99,15 +126,28 @@ export const enum Metric {
     Mobile = 27,
     UploadTime = 28,
     SinglePage = 29,
-/**
- * @deprecated Browser API is deprecated. Reference: https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory
- */
+    /**
+     * @deprecated Browser API is deprecated. Reference: https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory
+     */
     UsedMemory = 30,
     Iframed = 31,
     MaxTouchPoints = 32,
     HardwareConcurrency = 33,
     DeviceMemory = 34,
-    Electron = 35
+    Electron = 35,
+    /**
+     * @deprecated No longer tracking
+     */
+    ConstructedStyles = 36,
+    /**
+     * @deprecated Move it to dimension as it'll report only last value
+     */
+    InteractionNextPaint = 37,
+    HistoryClear = 38,
+    AngularZone = 39,
+    WebMcpDetected = 40,
+    ArmArchitecture = 41,
+    // 200-300 reserved for internal use
 }
 
 export const enum Dimension {
@@ -140,7 +180,18 @@ export const enum Dimension {
     DevicePixelRatio = 26,
     ConnectionType = 27,
     Dob = 28,
-    CookieVersion = 29
+    CookieVersion = 29,
+    DeviceFamily = 30, // Allows iOS SDK to override the DeviceFamily value parsed from UserAgent.
+    InitialScrollTop = 31,
+    InitialScrollBottom = 32,
+    AncestorOrigins = 33,
+    Timezone = 34,
+    TimezoneOffset = 35,
+    Consent = 36,
+    InteractionNextPaint = 37,
+    GlobalPrivacyControl = 38,
+    PageHeadings = 40
+    // 200-300 reserved for internal use
 }
 
 export const enum Check {
@@ -162,11 +213,14 @@ export const enum Code {
     CallStackDepth = 4,
     Selector = 5,
     Metric = 6,
-/**
- * @deprecated No longer support ContentSecurityPolicy
- */
+    /**
+     * @deprecated No longer support ContentSecurityPolicy
+     */
     ContentSecurityPolicy = 7,
-    Config = 8
+    Config = 8,
+    FunctionExecutionTime = 9,
+    LeanLimit = 10,
+    BFCache = 11,
 }
 
 export const enum Severity {
@@ -186,6 +240,12 @@ export const enum BooleanFlag {
     True = 1
 }
 
+export const enum GCMConsent {
+    Unknown = 0,
+    Granted = 1,
+    Denied = 2
+}
+
 export const enum IframeStatus {
     Unknown = 0,
     TopFrame = 1,
@@ -202,6 +262,9 @@ export const enum Setting {
     PingTimeout = 5 * Time.Minute, // 5 Minutes
     SummaryInterval = 100, // Same events within 100ms will be collapsed into single summary
     ClickText = 25, // Maximum number of characters to send as part of Click event's text field
+    ClickClass = 50, // Maximum number of characters to send as part of Click event's class name
+    ClickTag = 10, // Maximum number of characters to send as part of Click event's tag
+    ClickId = 25, // Maximum number of characters to send as part of Click event's id
     PayloadLimit = 128, // Do not allow more than specified payloads per page
     PageLimit = 128, // Do not allow more than 128 pages in a session
     ShutdownLimit = 2 * Time.Hour, // Shutdown instrumentation after specified time
@@ -209,6 +272,7 @@ export const enum Setting {
     PlaybackBytesLimit = 10 * 1024 * 1024, // 10MB
     CollectionLimit = 128, // Number of unique entries for dimensions
     ClickPrecision = 32767, // 2^15 - 1
+    ClickParentTraversal = 10, // Maximum number of parent elements to traverse when computing relative click coordinates
     BoxPrecision = 100, // Up to 2 decimal points (e.g. 34.56)
     ScriptErrorLimit = 5, // Do not send the same script error more than 5 times per page
     DimensionLimit = 256, // Do not extract dimensions which are over 256 characters
@@ -224,8 +288,10 @@ export const enum Setting {
     MinUploadDelay = 100, // Minimum time before we are ready to flush events to the server
     MaxUploadDelay = 30 * Time.Second, // Do flush out payload once every 30s,
     ExtractLimit = 10000, // Do not extract more than 10000 characters
-    ChecksumPrecision = 24, // n-bit integer to represent token hash
-    UploadTimeout = 15000 // Timeout in ms for XHR requests
+    ChecksumPrecision = 28, // n-bit integer to represent token hash
+    UploadTimeout = 15000, // Timeout in ms for XHR requests
+    LongTask = 30, // Long Task threshold in ms
+    MaxBeaconPayloadBytes = 64 * 1024, // 64KB: Cap the beacon payload to a maximum of 64KB
 }
 
 export const enum Character {
@@ -236,6 +302,10 @@ export const enum Character {
     Tab = 9,
     NewLine = 10,
     Return = 13
+}
+
+export const enum ApplicationPlatform {
+    WebApp = 0
 }
 
 export const enum Constant {
@@ -274,7 +344,11 @@ export const enum Constant {
     End = "END",
     Upgrade = "UPGRADE",
     Action = "ACTION",
+    Signal = "SIGNAL",
     Extract = "EXTRACT",
+    Snapshot = "SNAPSHOT",
+    Headings = "HEADINGS",
+    Module = "MODULE",
     UserHint = "userHint",
     UserType = "userType",
     UserId = "userId",
@@ -291,6 +365,7 @@ export const enum Constant {
     FID = "first-input",
     CLS = "layout-shift",
     LCP = "largest-contentful-paint",
+    PerformanceEventTiming = "event",
     HTTPS = "https://",
     CompressionStream = "CompressionStream",
     Accept = "Accept",
@@ -303,7 +378,12 @@ export const enum Constant {
     Timeout = "Timeout",
     Bang = "!",
     SHA256 = "SHA-256",
-    Electron = "Electron"
+    Electron = "Electron",
+    Caret = "^",
+    Granted = "granted",
+    Denied = "denied",
+    AdStorage = "ad_storage",
+    AnalyticsStorage = "analytics_storage",
 }
 
 export const enum XMLReadyState {
@@ -312,6 +392,34 @@ export const enum XMLReadyState {
     Headers_Recieved = 2,
     Loading = 3,
     Done = 4
+}
+
+export const enum ConsentSource {
+    Implicit = 0,
+    API = 1,
+    GCM = 2,
+    TCF = 3,
+    APIv1 = 4,
+    APIv2 = 5,
+    Cookie = 6,
+    Default = 7,
+    // 100-255 Reserved for CMP integration, both internal and external
+    ClarityShopifyPixel = 100,
+    ClarityShopifyApp = 101,
+    UET = 102,
+
+    //CMPs
+    CmpMyAgilePrivacy = 150,
+    CmpUserCentrics = 151,
+    CmpCookiebot = 152,
+    CmpAxeptio = 153,
+    CmpCookiehub = 154,
+    CmpCookieYes = 155,
+    CmpWebTofee = 156,
+    CmpWPConsent = 157,
+    CmpSeersAI = 158,
+    // Reserved to indicate an unknown consent source
+    Unknown = 255,
 }
 
 /* Helper Interfaces */
@@ -358,6 +466,8 @@ export interface Envelope extends Metadata {
     version: string;
     upload: Upload;
     end: BooleanFlag;
+    applicationPlatform: number;
+    url: string;
 }
 
 export interface Transit {
@@ -385,6 +495,21 @@ export interface BaselineData {
     pointerX: number;
     pointerY: number;
     activityTime: number;
+    scrollTime: number;
+    pointerTime?: number;
+    moveX?: number;
+    moveY?: number;
+    moveTime?: number;
+    downX?: number;
+    downY?: number;
+    downTime?: number;
+    upX?: number;
+    upY?: number;
+    upTime?: number;
+    pointerPrevX?: number;
+    pointerPrevY?: number;
+    pointerPrevTime?: number;
+    modules: number[];
 }
 
 export interface IdentityData {
@@ -400,6 +525,15 @@ export interface DimensionData {
 
 export interface VariableData {
     [name: string]: string[];
+}
+
+export interface ChatData {
+    action: Action;
+}
+
+export interface WebMcpData {
+    action: WebMcpAction;
+    name: string | number | null;
 }
 
 // Eventually custom event can be expanded to contain more properties
@@ -432,11 +566,49 @@ export interface UpgradeData {
 }
 
 export interface ExtractData {
-    [key: number]: { [subkey : number]: string }; // Array of { subkey: number } representing the extracted data
+    [key: number]: { [subkey: number]: string }; // Array of { subkey: number } representing the extracted data
 }
 
 export interface UploadData {
     sequence: number;
     attempts: number;
     status: number;
+}
+
+export interface ClaritySignal {
+    type: string
+    value?: number
+}
+
+export interface PerformanceEventTiming extends PerformanceEntry {
+    duration: DOMHighResTimeStamp;
+    interactionId: number;
+}
+
+export interface Interaction {
+    id: number;
+    latency: number;
+}
+
+export interface ConsentState {
+    source?: ConsentSource;
+    ad_Storage?: string;
+    analytics_Storage?: string;
+}
+
+export const enum ConsentType {
+    None = 0,
+    Implicit = 1,
+    General = 2
+}
+
+export interface ConsentData {
+    source: ConsentSource;
+    ad_Storage: BooleanFlag;
+    analytics_Storage: BooleanFlag;
+}
+
+export interface GCMConsentState {
+    ad_Storage: GCMConsent;
+    analytics_Storage: GCMConsent;
 }

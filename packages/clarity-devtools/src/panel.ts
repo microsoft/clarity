@@ -3,20 +3,108 @@ import { Visualizer } from "clarity-visualize";
 
 let visualize = new Visualizer();
 let activeTabId = chrome.devtools.inspectedWindow.tabId;
-let background = chrome.runtime.connect({ name: "panel" });
-background.postMessage({ action: "init", tabId: activeTabId });
+console.log('[Clarity DevTools] Panel: Connecting to background for tab', activeTabId);
+
+let background: chrome.runtime.Port | null = null;
+let retryCount = 0;
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 200;
+let isReconnecting = false;
+let disconnectListener: (() => void) | null = null;
+let messageListener: ((message: { action?: string; payload?: string }) => void) | null = null;
+
 let sessionId = "";
 let pageNum = 0;
 let events: Data.DecodedEvent[] = [];
-let eJson: string[][] = []; // Encoded JSON for the whole session
-let pJson: string[] = []; // Encoded JSON for the page
-let dJson: Data.DecodedPayload[] = []; // Decoded JSON for the page
+let eJson: string[][] = [];
+let pJson: string[] = [];
+let dJson: Data.DecodedPayload[] = [];
 
 const enum Mode {
     Encoded = 0,
     Decoded = 1,
     Merged = 2
 }
+
+function handleMessage(message: { action?: string; payload?: string }): void {
+    if (message?.payload) {
+        try {
+            const decoded = decode(message.payload);
+            if (decoded.envelope.sequence === 1) { 
+                reset(decoded.envelope, decoded.dimension?.[0].data[0][0]); 
+            }
+            pJson.push(JSON.parse(message.payload));
+            dJson.push(copy(decoded));
+            const merged = visualize.merge([decoded]);
+            events = events.concat(merged.events).sort(sort);
+            visualize.dom(merged.dom);
+        } catch (error) {
+            console.error('[Clarity DevTools] Panel: Error handling message:', error);
+        }
+    }
+}
+
+function connectToBackground(): void {
+    if (isReconnecting) {
+        console.log('[Clarity DevTools] Panel: Connection attempt already in progress');
+        return;
+    }
+    
+    isReconnecting = true;
+    
+    try {
+        if (background) {
+            try {
+                if (disconnectListener) {
+                    background.onDisconnect.removeListener(disconnectListener);
+                }
+                if (messageListener) {
+                    background.onMessage.removeListener(messageListener);
+                }
+                background.disconnect();
+            } catch (e) {
+                // Ignore disconnect errors
+            }
+        }
+        
+        background = chrome.runtime.connect({ name: "panel" });
+        console.log('[Clarity DevTools] Panel: Connected to background, port name:', background.name);
+        
+        disconnectListener = () => {
+            console.log('[Clarity DevTools] Panel: Background connection disconnected');
+            isReconnecting = false;
+            
+            if (retryCount < MAX_RETRIES) {
+                retryCount++;
+                console.log('[Clarity DevTools] Panel: Attempting reconnect', retryCount, 'of', MAX_RETRIES);
+                setTimeout(() => connectToBackground(), RETRY_DELAY * retryCount);
+            } else {
+                console.error('[Clarity DevTools] Panel: Max reconnection attempts reached');
+            }
+        };
+        background.onDisconnect.addListener(disconnectListener);
+
+        messageListener = handleMessage;
+        background.onMessage.addListener(messageListener);
+        
+        console.log('[Clarity DevTools] Panel: Sending init message for tab', activeTabId);
+        background.postMessage({ action: "init", tabId: activeTabId });
+        console.log('[Clarity DevTools] Panel: Init message sent');
+        retryCount = 0;
+        isReconnecting = false;
+    } catch (error) {
+        console.error('[Clarity DevTools] Panel: Failed to connect to background', error);
+        isReconnecting = false;
+        
+        if (retryCount < MAX_RETRIES) {
+            retryCount++;
+            console.log('[Clarity DevTools] Panel: Retrying connection', retryCount, 'of', MAX_RETRIES);
+            setTimeout(() => connectToBackground(), RETRY_DELAY * retryCount);
+        }
+    }
+}
+
+connectToBackground();
 
 function save(mode: Mode): void {
     let json: string;
@@ -51,19 +139,6 @@ function save(mode: Mode): void {
     a.click();
 }
 
-background.onMessage.addListener(function(message: any): void {
-    // Handle responses from the background page, if any
-    if (message && message.payload) {
-        let decoded = decode(message.payload);
-        if (decoded.envelope.sequence === 1) { reset(decoded.envelope); }
-        pJson.push(JSON.parse(message.payload));
-        dJson.push(copy(decoded)); // Save a copy of JSON
-        let merged = visualize.merge([decoded]);
-        events = events.concat(merged.events).sort(sort);
-        visualize.dom(merged.dom);
-    }
-});
-
 function replay(): void {
     // Execute only if there are events to render
     if (events.length > 0) {
@@ -97,7 +172,7 @@ function resize(width: number, height: number): void {
     iframe.style.left = ((container.clientWidth - (width * scale)) / 2) + px;
 }
 
-function reset(envelope: Data.Envelope): void {
+function reset(envelope: Data.Envelope, userAgent: string): void {
     if (console) { console.clear(); }
     let info = document.getElementById("info");
     let metadata = document.getElementById("header") as HTMLDivElement;
@@ -126,7 +201,8 @@ function reset(envelope: Data.Envelope): void {
     for (let i = 0; i < links.length; i++) {
         (links[i] as HTMLElement).onclick = function(): void { save(i); };
     }
-    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata });
+    const mobile = isMobileDevice(userAgent);
+    visualize.setup(iframe.contentWindow, { version: envelope.version, onresize: resize, metadata, mobile, vNext: true, locale: 'en-us', onclickMismatch: (args) => console.log(`${args.time}|${args.x}|${args.y}|${args.nodeId}`) });
 }
 
 function sort(a: Data.DecodedEvent, b: Data.DecodedEvent): number {
@@ -139,3 +215,9 @@ function copy(input: any): any {
 
 // Call replay on every animation frame to emulate near real-time playback
 requestAnimationFrame(replay);
+
+function isMobileDevice(userAgent: string): boolean {
+    if(!userAgent) { return false; }
+
+    return /android|webos|iphone|ipad|ipod|blackberry|windows phone|opera mini|iemobile|mobile|silk|fennec|bada|tizen|symbian|nokia|palmsource|meego|sailfish|kindle|playbook|bb10|rim/i.test(userAgent);
+}

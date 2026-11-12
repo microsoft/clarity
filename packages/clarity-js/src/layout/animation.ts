@@ -7,26 +7,47 @@ import { getId } from "@src/layout/dom";
 import * as core from "@src/core";
 
 export let state: AnimationState[] = [];
-let animationPlay: () => void = null;
-let animationPause: () => void = null;
-let animationCancel: () => void = null;
-let animationFinish: () => void = null;
-const animationId = 'clarityAnimationId';
-const operationCount = 'clarityOperationCount';
+let elementAnimate: (keyframes: Keyframe[] | PropertyIndexedKeyframes, options?: number | KeyframeAnimationOptions) => Animation = null;
+let overridden = false;
+const animationId = '__clrAId';
+const operationCount = '__clrOCnt';
 const maxOperations = 20;
 
 export function start(): void {
     if (
         window["Animation"] && 
+        window["Animation"].prototype && 
         window["KeyframeEffect"] && 
+        window["KeyframeEffect"].prototype && 
         window["KeyframeEffect"].prototype.getKeyframes &&
         window["KeyframeEffect"].prototype.getTiming
     ) {
         reset();
-        overrideAnimationHelper(animationPlay, "play");
-        overrideAnimationHelper(animationPause, "pause");
-        overrideAnimationHelper(animationCancel, "cancel");
-        overrideAnimationHelper(animationFinish, "finish");
+        if (!overridden) {
+            overridden = true;
+            ["play", "pause", "commitStyles", "cancel", "finish"].forEach(overrideAnimationHelper);
+        }
+        if (elementAnimate === null) {
+            elementAnimate = Element.prototype.animate;
+            Element.prototype.animate = function(): Animation {
+                var createdAnimation = elementAnimate.apply(this, arguments);
+                trackAnimationOperation(createdAnimation, "play");
+                return createdAnimation;
+            }
+        }
+        if (document.getAnimations) {
+            for (var animation of document.getAnimations()) {
+                if (animation.playState === "finished") {
+                    trackAnimationOperation(animation, "finish");
+                }
+                else if (animation.playState === "paused" || animation.playState === "idle") {
+                    trackAnimationOperation(animation, "pause");
+                }
+                else if (animation.playState === "running") {
+                    trackAnimationOperation(animation, "play");
+                }
+            }
+        }
     }    
 }
 
@@ -55,46 +76,55 @@ export function stop(): void {
     reset();
 }
 
-function overrideAnimationHelper(functionToOverride: () => void, name: string) {
-    if (functionToOverride === null) {
-      functionToOverride = Animation.prototype[name];
-      Animation.prototype[name] = function(): void {
-        if (core.active()) {
-            let effect = <KeyframeEffect>this.effect;
-            if (effect.getKeyframes && effect.getTiming) {
-                if (!this[animationId]) {
-                    this[animationId] = shortid();
-                    this[operationCount] = 0;
-                    
-                    let keyframes = effect.getKeyframes();
-                    let timing = effect.getTiming();
-                    track(time(), this[animationId], AnimationOperation.Create, JSON.stringify(keyframes), JSON.stringify(timing), getId(this.effect.target));
-                }
-    
-                if (this[operationCount]++ < maxOperations)  {
-                    let operation: AnimationOperation = null;
-                    switch (name) {
-                        case "play":
-                            operation = AnimationOperation.Play;
-                            break;
-                        case "pause":
-                            operation = AnimationOperation.Pause;
-                            break;
-                        case "cancel":
-                            operation = AnimationOperation.Cancel;
-                            break;
-                        case "finish":
-                            operation = AnimationOperation.Finish;
-                            break;
-                    }
-                    if (operation) {
-                        track(time(), this[animationId], operation);
-                    }
-                }
-            }            
-        }
-        
-        return functionToOverride.apply(this, arguments);
-      }
+function overrideAnimationHelper(name: string) {
+    let original = Animation.prototype[name];
+    if (typeof original !== "function") { return; }
+    Animation.prototype[name] = function(): void {
+        trackAnimationOperation(this, name);
+        return original.apply(this, arguments);
     }
-  }
+}
+
+function trackAnimationOperation(animation: Animation, name: string) {
+    if (core.active()) {
+        let effect = <KeyframeEffect>animation.effect;
+        let target = effect?.target ? getId(effect.target) : null;
+        // Skip pseudo-element animations (e.g. ::view-transition-*, ::before). Calling
+        // getKeyframes()/getTiming() on a pseudo-element-targeted effect crashes Firefox's
+        // content process during View Transitions, and pseudo animations aren't replayable anyway.
+        if (effect && target !== null && !effect.pseudoElement && effect.getKeyframes && effect.getTiming) {
+            if (!animation[animationId]) {
+                animation[animationId] = shortid();
+                animation[operationCount] = 0;
+                
+                let keyframes = effect.getKeyframes();
+                let timing = effect.getTiming();
+                track(time(), animation[animationId], AnimationOperation.Create, JSON.stringify(keyframes), JSON.stringify(timing), target);
+            }
+
+            if (animation[operationCount]++ < maxOperations)  {
+                let operation: AnimationOperation = null;
+                switch (name) {
+                    case "play":
+                        operation = AnimationOperation.Play;
+                        break;
+                    case "pause":
+                        operation = AnimationOperation.Pause;
+                        break;
+                    case "cancel":
+                        operation = AnimationOperation.Cancel;
+                        break;
+                    case "finish":
+                        operation = AnimationOperation.Finish;
+                        break;
+                    case "commitStyles":
+                        operation = AnimationOperation.CommitStyles;
+                        break;
+                }
+                if (operation) {
+                    track(time(), animation[animationId], operation);
+                }
+            }
+        }            
+    }
+}

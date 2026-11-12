@@ -2,6 +2,10 @@ import { Asset, Constant, PlaybackState, Point, Setting } from "@clarity-types/v
 import { Data, Layout } from "clarity-js";
 import type { Interaction } from "clarity-decode"
 import { LayoutHelper } from "./layout";
+import pointerSvg from "./styles/pointer/pointerIcon.svg";
+import clickStyle from "./styles/pointer/click.css";
+import { BooleanFlag } from "clarity-decode/types/data";
+import { ClickVizualizationData } from "clarity-decode/types/interaction";
 
 export class InteractionHelper {
     static TRAIL_START_COLOR = [242, 97, 12]; // rgb(242,97,12)
@@ -14,10 +18,13 @@ export class InteractionHelper {
     clickAudio = null;
     layout: LayoutHelper;
     state: PlaybackState;
+    vnext: boolean;
+    visualizedClicks: Map<HTMLElement, ClickVizualizationData> = new Map();
 
-    constructor(state: PlaybackState, layout: LayoutHelper) {
+    constructor(state: PlaybackState, layout: LayoutHelper, vnext: boolean) {
         this.state = state;
         this.layout = layout;
+        this.vnext = vnext;
     }
 
     public reset = (): void => {
@@ -47,7 +54,9 @@ export class InteractionHelper {
 
         // Position canvas relative to scroll events on the parent page
         if (scrollTarget === de || scrollTarget === doc.body) {
-            if (!scrollable) { this.state.window.scrollTo(data.x, data.y); }
+            if (!scrollable) { 
+                this.state.window.scrollTo(data.x, data.y); 
+            }
             let canvas = this.overlay();
             if (canvas) {
                 canvas.style.left = data.x + Constant.Pixel;
@@ -70,12 +79,30 @@ export class InteractionHelper {
 
     public visibility = (event: Interaction.VisibilityEvent): void => {
         let doc = this.state.window.document;
-        if (doc && doc.documentElement && event.data.visible !== Constant.Visible) {
+        if (doc && doc.documentElement && event.data.visible === BooleanFlag.False) {
+            // if the website has styles on the <html> node then we need to save the reference to them before we change them
+            // to indicate the window was hidden. This is to ensure that we can restore the original styles when the window is visible again.
+            const bg = doc.documentElement.style.backgroundColor;
+            if (bg) {
+                doc.documentElement.setAttribute(Constant.OriginalBackgroundColor, bg);
+            }
+            const o = doc.documentElement.style.opacity;
+            if (o) {
+                doc.documentElement.setAttribute(Constant.OriginalOpacity, o);
+            }
             doc.documentElement.style.backgroundColor = Constant.Black;
             doc.documentElement.style.opacity = Constant.HiddenOpacity;
         } else {
-            doc.documentElement.style.backgroundColor = Constant.Transparent;
-            doc.documentElement.style.opacity = Constant.VisibleOpacity;
+            if (doc.documentElement.getAttribute(Constant.OriginalBackgroundColor)) {
+                doc.documentElement.style.backgroundColor = doc.documentElement.getAttribute(Constant.OriginalBackgroundColor);
+            } else {
+                doc.documentElement.style.backgroundColor = '';
+            }
+            if (doc.documentElement.getAttribute(Constant.OriginalOpacity)) {
+                doc.documentElement.style.opacity = doc.documentElement.getAttribute(Constant.OriginalOpacity);
+            } else {
+                doc.documentElement.style.opacity = '';
+            }
         }
     };
 
@@ -87,6 +114,9 @@ export class InteractionHelper {
                 case "checkbox":
                 case "radio":
                     el.checked = data.value === "true";
+                    break;
+                case "file":
+                    // We cannot set value for files, only allowed to be an empty string when programatically set
                     break;
                 default:
                     el.value = data.value;
@@ -106,6 +136,9 @@ export class InteractionHelper {
     };
 
     public pointer = (event: Interaction.PointerEvent): void => {
+        if (!this.state.options.pointer) {
+            return;
+        }
         let data = event.data;
         let type = event.event;
         let doc = this.state.window.document;
@@ -128,13 +161,12 @@ export class InteractionHelper {
                 "@keyframes disappear { 90% { transform: scale(1, 1); opacity: 1; } 100% { transform: scale(1.3, 1.3); opacity: 0; } }" +
                 `#${Constant.InteractionCanvas} { position: absolute; left: 0; top: 0; z-index: ${Setting.ZIndex}; background: none; }` +
                 `#${Constant.PointerLayer} { position: absolute; z-index: ${Setting.ZIndex}; url(${Asset.Pointer}) no-repeat left center; width: ${pointerWidth}px; height: ${pointerHeight}px; }` +
-                `.${Constant.ClickLayer}, .${Constant.ClickRing}, .${Constant.TouchLayer}, .${Constant.TouchRing} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
-                `.${Constant.ClickRing} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }` +
+                this.getClickLayerStyle() +
                 `.${Constant.TouchLayer} { background: radial-gradient(rgba(242,97,12,1), transparent); }` +
                 `.${Constant.TouchRing} { background: transparent; border: 1px solid rgba(242,97,12,0.8); }` +
                 `.${Constant.PointerClickLayer} { background-image: url(${Asset.Click}); }` +
                 `.${Constant.PointerNone} { background: none; }` +
-                `.${Constant.PointerMove} { background-image: url(${Asset.Pointer}); }`;
+                this.getPointerStyle();
 
             p.appendChild(style);
         }
@@ -145,19 +177,52 @@ export class InteractionHelper {
         switch (type) {
             case Data.Event.Click:
                 title = "Click";
-                this.drawClick(doc, data.x, data.y, title);
+                const clickElement = this.drawClick(doc, data.x, data.y, title);
+                this.visualizedClicks.set(clickElement, {
+                    doc: de,
+                    click: clickElement,
+                    time: event.time
+                });
+                if (this.state.options.onclickMismatch) {
+                    const originalTarget = this.layout.element(data.target as number);
+                    let correctTargetHit = false;
+                    const elementsUnderClick = doc.elementsFromPoint(data.x, data.y);
+                    for (const elementUnderClick of elementsUnderClick) {
+                        if (originalTarget === elementUnderClick) {
+                            correctTargetHit = true;
+                        }
+                    }
+                    if (!correctTargetHit) {
+                        this.state.options.onclickMismatch({
+                            time: event.time,
+                            x: data.x,
+                            y: data.y,
+                            nodeId: data.target as number});
+                    }
+                }
+
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.DoubleClick:
                 title = "Click";
-                this.drawClick(doc, data.x, data.y, title);
+                const doubleClickElement = this.drawClick(doc, data.x, data.y, title);
+                this.visualizedClicks.set(doubleClickElement, {
+                    doc: de,
+                    click: doubleClickElement,
+                    time: event.time
+                });
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.TouchStart:
             case Data.Event.TouchEnd:
             case Data.Event.TouchCancel:
                 title = "Touch";
-                this.drawTouch(doc, data.x, data.y, title);
+                const touchElement = this.drawTouch(doc, data.x, data.y, title);
+                this.visualizedClicks.set(touchElement, {
+                    doc: de,
+                    click: touchElement,
+                    time: event.time
+                });
                 p.className = Constant.PointerNone;
                 break;
             case Data.Event.TouchMove:
@@ -176,6 +241,37 @@ export class InteractionHelper {
         }
         p.setAttribute(Constant.Title, `${title} (${data.x}${Constant.Pixel}, ${data.y}${Constant.Pixel})`);
     };
+
+    public clearOldClickVisualizations = (currentTimestamp: number): void => {
+        if (this.vnext) {
+            // Track elements to remove to avoid modifying Map during iteration
+            const elementsToRemove: HTMLElement[] = [];
+
+            // Calculate how many clicks exceed the maximum allowed
+            const excess = Math.max(0, this.visualizedClicks.size - Setting.MaxClicksDisplayed);
+            let count = 0;
+
+            // Iterate through visualized clicks and mark old ones for removal
+            for (const [element, data] of this.visualizedClicks) {
+                count++;
+                const isTooOld = currentTimestamp - data.time > Setting.MaxClickDisplayDuration;
+                const exceedsMaxCount = count <= excess;
+
+                if (isTooOld || exceedsMaxCount) {
+                    elementsToRemove.push(element);
+                    this.fadeOutElement(element, data.doc);
+                }
+            }
+
+            // Remove marked elements from the Map
+            elementsToRemove.forEach(element => this.visualizedClicks.delete(element));
+        }
+    }
+
+    private fadeOutElement = (element: HTMLElement, document: HTMLElement): void => {
+        element.classList.add("clarity-click-hidden");
+        setTimeout(() => { document.removeChild(element); }, 10000);
+    }
 
     private hover = (): void => {
         if (this.targetId && this.targetId !== this.hoverId) {
@@ -207,7 +303,7 @@ export class InteractionHelper {
         } else { this.points.push(point); }
     }
 
-    private drawTouch = (doc: Document, x: number, y: number, title: string): void => {
+    private drawTouch = (doc: Document, x: number, y: number, title: string): HTMLElement => {
         let de = doc.documentElement;
         let touch = doc.createElement("DIV");
         touch.className = Constant.TouchLayer;
@@ -226,16 +322,18 @@ export class InteractionHelper {
         ringOne.style.animation = "pulsate-touch 1 1s";
         ringOne.style.animationFillMode = "forwards";
         touch.appendChild(ringOne);
+
+        return touch;
     };
 
-    private drawClick = (doc: Document, x: number, y: number, title: string): void => {
+    private drawClick = (doc: Document, x: number, y: number, title: string): HTMLElement => {
         let de = doc.documentElement;
         let click = doc.createElement("DIV");
         click.className = Constant.ClickLayer;
+        
         click.setAttribute(Constant.Title, `${title} (${x}${Constant.Pixel}, ${y}${Constant.Pixel})`);
         click.style.left = (x - Setting.ClickRadius / 2) + Constant.Pixel;
         click.style.top = (y - Setting.ClickRadius / 2) + Constant.Pixel
-        de.appendChild(click);
 
         // First pulsating ring
         let ringOne = click.cloneNode() as HTMLElement;
@@ -246,11 +344,18 @@ export class InteractionHelper {
         ringOne.style.animationFillMode = "forwards";
         click.appendChild(ringOne);
 
-        // Second pulsating ring
-        let ringTwo = ringOne.cloneNode() as HTMLElement;
-        ringTwo.style.animation = "pulsate-two 1 1s";
-        click.appendChild(ringTwo);
-
+        if (this.vnext) {
+            let center = doc.createElement("DIV");
+            center.className = `${Constant.ClickLayer}-center`;
+            click.appendChild(center);
+        } else {    
+            // Second pulsating ring
+            let ringTwo = ringOne.cloneNode() as HTMLElement;
+            ringTwo.style.animation = "pulsate-two 1 1s";
+            click.appendChild(ringTwo);
+        }
+        de.appendChild(click);
+        
         // Play sound
         if (typeof Audio !== Constant.Undefined) {
             if (this.clickAudio === null) { 
@@ -259,6 +364,7 @@ export class InteractionHelper {
             }
             this.clickAudio.play();
         }
+        return click;
     };
 
     private overlay = (): HTMLCanvasElement => {
@@ -398,4 +504,21 @@ export class InteractionHelper {
         const dy = a.y - b.y;
         return Math.sqrt(dx * dx + dy * dy);
     };
+
+    private getPointerStyle = (): string => {
+        if (this.vnext) {
+            return `.${Constant.PointerMove} { ${pointerSvg} }`;
+        } else {
+            return `.${Constant.PointerMove} { background-image: url(${Asset.Pointer}); }`;
+        }
+    }
+
+    private getClickLayerStyle = (): string => {
+        if (this.vnext) {
+            return clickStyle;
+        } else {
+            return  `.${Constant.ClickLayer}, .${Constant.ClickRing}, .${Constant.TouchLayer}, .${Constant.TouchRing} { position: absolute; z-index: ${Setting.ZIndex}; border-radius: 50%; background: radial-gradient(rgba(0,90,158,0.8), transparent); width: ${Setting.ClickRadius}px; height: ${Setting.ClickRadius}px;}` +
+                    `.${Constant.ClickRing} { background: transparent; border: 1px solid rgba(0,90,158,0.8); }`;
+        }
+    }
 }

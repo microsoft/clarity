@@ -11,16 +11,17 @@ interface Clarity {
   pause: () => void;
   resume: () => void;
   upgrade: (key: string) => void;
-  consent: () => void;
+  consent: (status?: boolean) => void;
+  consentv2: (consentState?: Data.ConsentState, source?: number) => void;
   event: (name: string, value: string) => void;
   set: (variable: string, value: string | string[]) => void;
   identify: (userId: string, sessionId?: string, pageId?: string, userHint?: string) => void;
-  metadata: (callback: Data.MetadataCallback, wait?: boolean) => void;
+  metadata: (callback: Data.MetadataCallback, wait?: boolean, recall?: boolean, consentInfo?: boolean) => void;
+  signal: (callback: Data.SignalCallback) => void;
 }
 
 interface Selector {
-  get: (input: Layout.SelectorInput, type: Layout.Selector) => string;
-  reset: () => void;
+  get: (input: Layout.SelectorInput) => string;
 }
 
 interface Helper {

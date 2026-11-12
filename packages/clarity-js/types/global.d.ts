@@ -1,0 +1,30 @@
+declare global {
+  interface Window {
+    __clr?: { [key: string]: ((...args: any[]) => any) | undefined };
+    google_tag_data?: {
+      ics: {
+        addListener: (keys: string[], callback: () => void) => void;
+        getConsentState: (key: string) => any;
+        usedUpdate: boolean;
+      };
+    };
+    LiveChatWidget?: {
+      off(eventName: string, callback: (data: any) => void): unknown;
+      on: (eventName: string, callback: (data: any) => void) => void;
+    };
+    tidioChatApi?: {
+      on: (eventName: string, callback: (data: any) => void) => void;
+    };
+    $crisp?: {
+      push: (
+        args: [action: string, eventName: string, callback: (data: any) => void]
+      ) => void;
+    };
+  }
+
+  interface Function {
+    dn?: number;
+  }
+}
+
+export {};

@@ -26,8 +26,11 @@ export function check(bytes: number): void {
 
 export function trigger(reason: Check): void {
     data.check = reason;
-    metadata.clear();
-    clarity.stop();
+    // limit the dimensions we collect, but we don't need to stop Clarity entirely if we hit the limit
+    if (reason !== Check.Collection) {
+        metadata.clear();
+        clarity.stop();
+    }
 }
 
 export function compute(): void {
