@@ -80,6 +80,7 @@ export const enum Constant {
     MaskData = "data-clarity-mask",
     UnmaskData = "data-clarity-unmask",
     RegionData = "data-clarity-region",
+    EventData = "data-clarity-event",
     Type = "type",
     Submit = "submit",
     Name = "name",

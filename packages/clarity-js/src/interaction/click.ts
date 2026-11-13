@@ -1,6 +1,6 @@
 import { BooleanFlag, Constant, Event, Setting } from "@clarity-types/data";
 import { BrowsingContext, ClickSource, ClickState, TextInfo } from "@clarity-types/interaction";
-import { Box } from "@clarity-types/layout";
+import { Box, Constant as LayoutConstant } from "@clarity-types/layout";
 import { FunctionNames } from "@clarity-types/performance";
 import config from "@src/core/config";
 import { bind } from "@src/core/event";
@@ -103,8 +103,9 @@ function text(element: Node): TextInfo {
     let output = null;
     let isFullText = false;
     if (element) {
-        // Grab text using "textContent" for most HTMLElements, however, use "value" for HTMLInputElements and "alt" for HTMLImageElement.
-        let t = element.textContent || String((element as HTMLInputElement).value || '') || (element as HTMLImageElement).alt;
+        let customText = element.nodeType === Node.ELEMENT_NODE ? (element as Element).getAttribute(LayoutConstant.EventData) : null;
+        // Grab text using "EventData" attribute, or "textContent" for most HTMLElements, however, use "value" for HTMLInputElements and "alt" for HTMLImageElement.
+        let t = customText || element.textContent || String((element as HTMLInputElement).value || '') || (element as HTMLImageElement).alt;
         if (t) {
             // Replace multiple occurrence of space characters with a single white space
             // Also, trim any spaces at the beginning or at the end of string
