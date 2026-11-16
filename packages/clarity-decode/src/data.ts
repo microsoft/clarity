@@ -1,5 +1,6 @@
 import { Data } from "clarity-js";
 import { Action } from "clarity-js/types/agent";
+import { Action as WebMcpAction } from "clarity-js/types/webmcp";
 import { Constant, DataEvent } from "../types/data";
 
 export function decode(tokens: Data.Token[]): DataEvent {
@@ -18,6 +19,12 @@ export function decode(tokens: Data.Token[]): DataEvent {
         case Data.Event.Chat:
             let chat: Data.ChatData = { action: tokens[2] as Action };
             return { time, event, data: chat };
+        case Data.Event.WebMcp:
+            let webMcp: Data.WebMcpData = {
+                action: tokens[2] as WebMcpAction,
+                name: tokens.length > 3 ? tokens[3] as string | number : null,
+            };
+            return { time, event, data: webMcp };
         case Data.Event.Upgrade:
             let upgrade: Data.UpgradeData = { key: tokens[2] as string };
             return { time, event, data: upgrade };

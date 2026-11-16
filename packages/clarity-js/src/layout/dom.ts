@@ -55,7 +55,6 @@ function reset(): void {
     iframeContentMap = new WeakMap();
     privacyMap = new WeakMap();
     fraudMap = new WeakMap();
-    selector.reset();
 }
 
 // We parse new root nodes for any regions or masked nodes in the beginning (document) and
@@ -319,9 +318,11 @@ function updateSelector(value: NodeValue): void {
     let d = value.data;
     let p = position(parent, value);
     let s: SelectorInput = { id: value.id, tag: d.tag, prefix, position: p, attributes: d.attributes };
-    value.selector = [selector.get(s, Selector.Alpha), selector.get(s, Selector.Beta)];
-    value.hash = value.selector.map(x => x ? hash(x) : null) as [string, string];
-    value.hash.forEach(h => hashMap[h] = value.id);
+    let beta = selector.get(s);
+    let betaHash = beta ? hash(beta) : null;
+    value.selector = [null, beta];
+    value.hash = [null, betaHash];
+    if (betaHash) { hashMap[betaHash] = value.id; }
 }
 
 export function hashText(hash: string): string {

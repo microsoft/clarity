@@ -114,6 +114,15 @@ export default [
     ]
   },
   {
+    input: "src/dynamic/webmcp/index.ts",
+    output: [ { file: pkg.webmcp, format: "iife", name: "ClarityWebMcp", exports: "named", freeze: false } ],
+    plugins: [
+      resolve(),
+      typescript(),
+      terser(terserOpts)
+    ]
+  },
+  {
     input: "src/dynamic/agent/index.ts",
     output: [ { file: pkg.livechat, format: "iife", exports: "named", freeze: false } ],
     onwarn(message, warn) {

@@ -82,7 +82,11 @@ test.describe("build-specific snapshot responses", () => {
                 expect(JSON.stringify(snapshots[0])).toContain("id=snapshot-button");
             }
             expect(events.some(event => event[1] === discoverEvent)).toBe(build.recording);
-            expect(events.some(event => event[1] === clickEvent)).toBe(build.clicks);
+            const clicks = events.filter(event => event[1] === clickEvent);
+            expect(clicks.length > 0).toBe(build.clicks);
+            if (build.recording && build.clicks) {
+                expect(clicks[0][12]).toMatch(/^\.[0-9a-z]+$/);
+            }
             expect(errors).toEqual([]);
             expect(unexpectedRequests).toEqual([]);
         });
