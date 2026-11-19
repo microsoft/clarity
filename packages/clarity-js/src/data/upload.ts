@@ -116,10 +116,11 @@ export function stop(): void {
         let payload = pending[sequence];
         delete pending[sequence];
         metric.sum(Metric.TotalBytes, payload.length);
-        send(payload, null, sequence, true);
+        sendPending(payload, sequence);
     }
     clearTimeout(timeout);
     upload(true);
+    ping.stop();
     clearTimeout(timeout);
     timeout = null;
     discoverBytes = 0;
@@ -131,6 +132,15 @@ export function stop(): void {
     transit = {};
     track = null;
     active = false;
+}
+
+async function sendPending(payload: string, sequence: number): Promise<void> {
+    try {
+        send(payload, null, sequence, true);
+    } catch (error) {
+        // Keep dispatch/report failures observable without interrupting synchronous teardown.
+        throw report(error);
+    }
 }
 
 async function upload(final: boolean = false): Promise<void> {

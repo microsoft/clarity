@@ -49,6 +49,7 @@ async function setup(page: Page, compression: boolean = true, transport: boolean
         w.uploadClarity = (method: string, ...args: unknown[]): void => w["clarity"](method, ...args);
         w.uploadClarity("start", {
             projectId: "old-project", track: false, content: false, lean: true, delay: network ? 1000 : gap,
+            report: network ? "https://example.test/report" : null,
             upload: network ? "https://example.test/collect" : (payload: string): void => {
                 w.uploads.push(JSON.parse(payload) as Payload);
                 if (w.onUpload) { w.onUpload(); }
@@ -167,7 +168,7 @@ test.describe("upload shutdown", () => {
                 const cancel = window.clearTimeout;
                 window.setTimeout = (...args: Parameters<typeof window.setTimeout>): number => {
                     const handle = schedule(...args);
-                    if (args[1] === gap) { scheduled.push(handle); }
+                    if (args[1] === gap || args[1] === 0) { scheduled.push(handle); }
                     return handle;
                 };
                 window.clearTimeout = (handle: number): void => {
@@ -195,6 +196,54 @@ test.describe("upload shutdown", () => {
                 w.uploadClarity("stop");
             });
             expect(await page.evaluate(() => (window as UploadWindow).uploads.length)).toBe(timers.uploads.length + 1);
+        });
+    }
+
+    for (const transport of [false, true]) {
+        test(`continues shutdown after pending dispatch and reporting failures (XHR=${transport})`, async ({ page }) => {
+            await setup(page, true, transport);
+            await expect.poll(() => page.evaluate(() => (window as UploadWindow).releases.length)).toBe(1);
+            await page.evaluate(() => (window as UploadWindow).uploadClarity("event", "second-batch"));
+            await expect.poll(() => page.evaluate(() => (window as UploadWindow).releases.length)).toBe(2);
+            await page.evaluate(network => {
+                const w = window as UploadWindow;
+                let failed = false;
+                if (network) {
+                    navigator.sendBeacon = (_url: string, body: BodyInit): boolean => {
+                        const payload = JSON.parse(String(body)) as Payload;
+                        if (payload.e[1] === 1) { return false; }
+                        w.uploads.push(payload);
+                        return true;
+                    };
+                    XMLHttpRequest.prototype.open = function(_method: string, url: string): void {
+                        throw new Error(url.endsWith("/report") ? "Error reporting failed" : "XHR dispatch failed");
+                    };
+                } else {
+                    w.onUpload = (): void => {
+                        if (!failed) {
+                            failed = true;
+                            throw new Error("Upload callback failed");
+                        }
+                    };
+                }
+                w.uploadClarity("stop");
+                w.onUpload = undefined;
+            }, transport);
+            const uploads = await page.evaluate(() => (window as UploadWindow).uploads);
+            expect(uploads.map(payload => payload.e[1])).toEqual(transport ? [2, 3] : [1, 2, 3]);
+            await expect.poll(() => errors.length).toBe(1);
+            expect(errors.splice(0)).toEqual([transport ? "Error reporting failed" : "Upload callback failed"]);
+            await release(page);
+            expect(await page.evaluate(() => (window as UploadWindow).uploads)).toEqual(uploads);
+            await page.evaluate(() => {
+                const w = window as UploadWindow;
+                w.uploadClarity("start", {
+                    delay: 60000,
+                    upload: (payload: string): void => { w.uploads.push(JSON.parse(payload) as Payload); }
+                });
+                w.uploadClarity("stop");
+            });
+            expect(await page.evaluate(() => (window as UploadWindow).uploads.length)).toBe(uploads.length + 1);
         });
     }
 
