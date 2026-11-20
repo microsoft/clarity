@@ -182,6 +182,7 @@ export interface ClickData {
     class: string;
     id: string;
     source: ClickSource;
+    detail: number;
 }
 
 export interface TextInfo {

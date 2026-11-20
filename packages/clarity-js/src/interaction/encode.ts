@@ -69,7 +69,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     scrub.url(entry.data.link),
                     cHash, entry.data.trust, entry.data.isFullText,
                     entry.data.w, entry.data.h,
-                    entry.data.tag, entry.data.class, entry.data.id, entry.data.source
+                    entry.data.tag, entry.data.class, entry.data.id, entry.data.source, entry.data.detail
                 );
                 queue(tokens);
                 timeline.track(entry.time, entry.event, cHash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);

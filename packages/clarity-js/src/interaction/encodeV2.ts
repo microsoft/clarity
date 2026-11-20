@@ -73,6 +73,7 @@ export default async function (type: Event, ts: number = null): Promise<void> {
                     entry.data.tag, entry.data.class, entry.data.id, entry.data.source
                 );
                 tokens.push(cTarget.region || Constant.Empty);
+                tokens.push(entry.data.detail);
                 queue(tokens);
                 timeline.track(entry.time, entry.event, cHash, entry.data.x, entry.data.y, entry.data.reaction, entry.data.context);
             }
