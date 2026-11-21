@@ -3,6 +3,9 @@ import { InteractionState, RegionData, RegionState, RegionQueue, RegionVisibilit
 import { time } from "@src/core/time";
 import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
+import * as dialog from "@src/layout/dialog";
+
+export { observe as observeRoot, update } from "@src/layout/dialog";
 
 export let state: RegionState[] = [];
 let regionMap: WeakMap<Node, string> = null; // Maps region nodes => region name
@@ -11,6 +14,8 @@ let queue: RegionQueue[] = [];
 let watch = false;
 let observer: IntersectionObserver = null;
 let prevIntersected: WeakMap<Node, boolean> = null;
+let intersected: Set<Element> = new Set();
+let occluded: WeakMap<Element, boolean> = null;
 
 export function start(): void {
     reset();
@@ -20,6 +25,9 @@ export function start(): void {
     queue = [];
     watch = window["IntersectionObserver"] ? true : false;
     prevIntersected = new WeakMap();
+    intersected = new Set();
+    occluded = new WeakMap();
+    dialog.start(refreshExposure);
 }
 
 export function observe(node: Node, name: string): void {
@@ -72,7 +80,7 @@ export function compute(): void {
         let id = dom.getId(r.node);
         if (id) {
             r.state.data.id = id;
-            regions[id] = r.state.data;
+            if (r.state.data.visibility < RegionVisibility.ViewportEnter) { regions[id] = r.state.data; }
             state.push(r.state);
         } else { q.push(r); }
     }
@@ -83,6 +91,8 @@ export function compute(): void {
 }
 
 function handler(entries: IntersectionObserverEntry[]): void {
+    if (!regionMap) { return; }
+    dialog.refresh();
     for (let entry of entries) {
         let target = entry.target;
         let rect = entry.boundingClientRect;
@@ -111,18 +121,41 @@ function handler(entries: IntersectionObserverEntry[]): void {
                             (visible ? RegionVisibility.Visible : RegionVisibility.Rendered)));
 
             // Viewport enter/exit tracking — keep observing, don't unobserve after ScrolledToEnd
-            let prev = prevIntersected.get(target);
-            switch (prev) {
-                case true:
-                    if (!entry.isIntersecting) { emitViewportEvent(target, id, data, RegionVisibility.ViewportExit); }
-                    break;
-                default: // undefined (first observation) or false (was not intersecting)
-                    if (entry.isIntersecting) { emitViewportEvent(target, id, data, RegionVisibility.ViewportEnter); }
-                    break;
-            }
-            prevIntersected.set(target, entry.isIntersecting);
+            if (entry.isIntersecting) { intersected.add(target); dialog.watch(target); }
+            else { intersected.delete(target); dialog.unwatch(target); }
+            exposure(target, id, data, entry.isIntersecting);
+        } else if (intersected.has(target)) {
+            intersected.delete(target);
+            dialog.unwatch(target);
+            let id = dom.getId(target);
+            exposure(target, id, { id, name: regionMap.get(target),
+                interaction: InteractionState.None, visibility: RegionVisibility.Rendered }, false);
         }
     }
+    if (state.length > 0) { encode(Event.Region); }
+}
+
+function exposure(target: Element, id: number, data: RegionData, geometric: boolean): void {
+    // Page visibility is encoded separately; it must not split a geometrically continuous visit.
+    // Even an IO callback while hidden must defer dialog-only changes until the next visible observation.
+    if (document.visibilityState !== "hidden") { occluded.set(target, dialog.covered(target)); }
+    let visible = geometric && target.isConnected && !occluded.get(target);
+    let previous = prevIntersected.get(target);
+    if (visible && previous !== true || !visible && previous === true) {
+        emitViewportEvent(target, id, data, visible ? RegionVisibility.ViewportEnter : RegionVisibility.ViewportExit);
+    }
+    prevIntersected.set(target, visible);
+}
+
+function refreshExposure(): void {
+    if (!regionMap) { return; }
+    dialog.refresh();
+    intersected.forEach(target => {
+        let id = dom.getId(target);
+        exposure(target, id, { id, name: regionMap.get(target),
+            interaction: InteractionState.None, visibility: RegionVisibility.Rendered }, true);
+        if (!target.isConnected) { intersected.delete(target); dialog.unwatch(target); }
+    });
     if (state.length > 0) { encode(Event.Region); }
 }
 
@@ -162,6 +195,7 @@ export function reset(): void {
 }
 
 export function stop(): void {
+    dialog.stop();
     reset();
     regionMap = null;
     regions = {};
@@ -172,4 +206,6 @@ export function stop(): void {
     }
     watch = false;
     prevIntersected = null;
+    occluded = null;
+    intersected.clear();
 }

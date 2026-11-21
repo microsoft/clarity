@@ -5,6 +5,9 @@ import * as dom from "@src/layout/dom";
 import encode from "@src/layout/encode";
 
 export let state: RegionState[] = [];
+// Extended builds replace these hooks along with viewport interval tracking.
+export function observeRoot(_root: Document | ShadowRoot): void {}
+export function update(_records: MutationRecord[]): void {}
 let regionMap: WeakMap<Node, string> = null; // Maps region nodes => region name
 let regions: { [key: number]: RegionData } = {};
 let queue: RegionQueue[] = [];

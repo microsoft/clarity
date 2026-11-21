@@ -54,6 +54,7 @@ export function observe(node: Document | ShadowRoot): void {
     let observer = m in window ? new window[m](measure(handle) as MutationCallback) : null;
     if (observer) {
       observer.observe(node, { attributes: true, childList: true, characterData: true, subtree: true });
+      region.observeRoot(node);
       observedNodes.set(node, observer);
       observers.add(observer);
     }
@@ -105,6 +106,7 @@ export function disconnect(n: Node): void {
 }
 
 function handle(m: MutationRecord[]): void {
+  region.update(m);
   // Queue up mutation records for asynchronous processing
   let now = time();
   summary.track(Event.Mutation, now);
