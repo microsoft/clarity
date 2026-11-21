@@ -121,12 +121,11 @@ function handler(entries: IntersectionObserverEntry[]): void {
                             (visible ? RegionVisibility.Visible : RegionVisibility.Rendered)));
 
             // Viewport enter/exit tracking — keep observing, don't unobserve after ScrolledToEnd
-            if (entry.isIntersecting) { intersected.add(target); dialog.watch(target); }
-            else { intersected.delete(target); dialog.unwatch(target); }
+            if (entry.isIntersecting) { intersected.add(target); }
+            else { intersected.delete(target); }
             exposure(target, id, data, entry.isIntersecting);
         } else if (intersected.has(target)) {
             intersected.delete(target);
-            dialog.unwatch(target);
             let id = dom.getId(target);
             exposure(target, id, { id, name: regionMap.get(target),
                 interaction: InteractionState.None, visibility: RegionVisibility.Rendered }, false);
@@ -154,7 +153,7 @@ function refreshExposure(): void {
         let id = dom.getId(target);
         exposure(target, id, { id, name: regionMap.get(target),
             interaction: InteractionState.None, visibility: RegionVisibility.Rendered }, true);
-        if (!target.isConnected) { intersected.delete(target); dialog.unwatch(target); }
+        if (!target.isConnected) { intersected.delete(target); }
     });
     if (state.length > 0) { encode(Event.Region); }
 }
