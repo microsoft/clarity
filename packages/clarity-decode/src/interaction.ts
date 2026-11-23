@@ -42,6 +42,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
         case Data.Event.ContextMenu:
             let [legacyClickHash, betaClickHash] = (tokens[12] as string).split(Data.Constant.Dot);
             let clickHash = legacyClickHash || betaClickHash || Data.Constant.Empty;
+            let clickDetail = typeof tokens[21] === "number" ? tokens[21] : tokens[22];
             let clickData: ClickData = {
                 target: tokens[2] as number,
                 x: tokens[3] as number,
@@ -63,6 +64,7 @@ export function decode(tokens: Data.Token[]): InteractionEvent {
                 class: tokens.length > 18 ? tokens[18] as string : null,
                 id: tokens.length > 19 ? tokens[19] as string : null,
                 source: tokens.length > 20 ? tokens[20] as number : null,
+                detail: typeof clickDetail === "number" ? clickDetail as number : null,
             };
             return { time, event, data: clickData };
         case Data.Event.Clipboard:

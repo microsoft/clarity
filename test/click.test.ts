@@ -13,7 +13,7 @@ declare global {
     }
 }
 
-async function setupPage(page: Page, options: Record<string, any> = {}): Promise<void> {
+async function setupPage(page: Page, options: Record<string, any> = {}, bundle: string = "clarity.min.js"): Promise<void> {
     const htmlPath = resolve(__dirname, `./html/core.html`);
     const htmlFileUrl = pathToFileURL(htmlPath).toString();
     const html = readFileSync(htmlPath, 'utf8');
@@ -26,7 +26,7 @@ async function setupPage(page: Page, options: Record<string, any> = {}): Promise
     await page.setContent(html.replace("</body>", `
         <script>
           window.payloads = [];
-          ${readFileSync(resolve(__dirname, `../packages/clarity-js/build/clarity.min.js`), 'utf8')};
+          ${readFileSync(resolve(__dirname, `../packages/clarity-js/build/${bundle}`), 'utf8')};
           clarity("start", {
             ...${configOptions},
             "upload": (payload) => { window.payloads.push(payload); }
@@ -153,5 +153,31 @@ test.describe('Click Source Detection', () => {
 
         expect(clicks.length).toBeGreaterThan(0);
         expect(clicks[0].data.trust).toBe(1);
+    });
+
+    test('should preserve click detail across payload layouts', async ({ browser }) => {
+        for (const [bundle, detailIndex] of [["clarity.min.js", 21], ["clarity.extended.js", 22]] as const) {
+            const page = await browser.newPage();
+            await setupPage(page, {}, bundle);
+            await page.locator("#child").evaluate(element =>
+                element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 7 })));
+            await page.waitForTimeout(200);
+            await page.waitForFunction("payloads && payloads.length > 0");
+
+            const payloads: string[] = await page.evaluate('payloads');
+            const encoded = payloads.map(payload => JSON.parse(payload)).find(payload => payload.a.some(event => event[1] === 9));
+            const click = encoded.a.find(event => event[1] === 9);
+            expect(click[detailIndex]).toBe(7);
+            expect(getClicks(payloads.map(payload => decode(payload)))[0].data.detail).toBe(7);
+
+            if (detailIndex === 21) {
+                click.pop();
+                expect(getClicks([decode(JSON.stringify(encoded))])[0].data.detail).toBeNull();
+            } else {
+                expect(typeof click[21]).toBe("string");
+            }
+
+            await page.close();
+        }
     });
 });
