@@ -57,8 +57,35 @@ export function setCookie(key: string, value: string, time: number): void {
     expiry.setDate(expiry.getDate() + time);
     let expires = expiry ? Constant.Expires + expiry.toUTCString() : Constant.Empty;
     let cookie = key + "=" + encodedValue + Constant.Semicolon + expires + Constant.Path;
+
+    // When clearing a cookie (empty value) we must not write any new cookie, because storing
+    // information on the device without consent is not permitted, and consent may already be denied
+    // by the time we clear. We also cannot rely on the cached root domain here: when a deletion is
+    // the first cookie operation in this runtime, the domain is still undiscovered. Instead, issue
+    // the deletion on the current host and on every writable parent domain. A deletion is an
+    // already-expired cookie, so it stores nothing and can be attempted broadly; the browser simply
+    // ignores domains we are not allowed to write to (e.g. public suffixes). This guarantees an
+    // existing domain-scoped cookie (e.g. _clck on .example.com) is removed from subdomains without
+    // needing to discover the domain first. See issue #1105.
+    if (value === Constant.Empty) {
+      // Delete the host-only cookie.
+      document.cookie = cookie;
+      let hostname = location.hostname ? location.hostname.split(Constant.Dot) : [];
+      let domain = Constant.Empty;
+      // Walk backwards, accumulating parent-domain suffixes (.com -> .example.com -> ...), and delete
+      // on each. We skip the absolute last part, e.g. .com or .net, which is never a writable domain.
+      for (let i = hostname.length - 1; i >= 0; i--) {
+        domain = Constant.Dot + hostname[i] + domain;
+        if (i < hostname.length - 1) {
+          document.cookie = cookie + Constant.Semicolon + Constant.Domain + domain;
+        }
+      }
+      return;
+    }
+
     try {
       // Attempt to get the root domain only once and fall back to writing cookie on the current domain.
+      // This only runs for writes, which happen when config.track is true (i.e. consent is granted).
       if (rootDomain === null) {
         let hostname = location.hostname ? location.hostname.split(Constant.Dot) : [];
         // Walk backwards on a domain and attempt to set a cookie, until successful
