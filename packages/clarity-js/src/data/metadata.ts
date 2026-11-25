@@ -69,6 +69,7 @@ export function start(): void {
   // Capture navigator specific dimensions
   if (navigator) {
     dimension.log(Dimension.Language, navigator.language);
+    navigator.languages?.slice(0, Setting.LanguageLimit).forEach(language => dimension.log(Dimension.Languages, language));
     metric.max(Metric.HardwareConcurrency, navigator.hardwareConcurrency);
     metric.max(Metric.MaxTouchPoints, navigator.maxTouchPoints);
     metric.max(Metric.DeviceMemory, Math.round((<any>navigator).deviceMemory));

@@ -190,7 +190,8 @@ export const enum Dimension {
     Consent = 36,
     InteractionNextPaint = 37,
     GlobalPrivacyControl = 38,
-    PageHeadings = 40
+    PageHeadings = 40,
+    Languages = 41
     // 200-300 reserved for internal use
 }
 
@@ -271,6 +272,7 @@ export const enum Setting {
     RetryLimit = 1, // Maximum number of attempts to upload a payload before giving up
     PlaybackBytesLimit = 10 * 1024 * 1024, // 10MB
     CollectionLimit = 128, // Number of unique entries for dimensions
+    LanguageLimit = 5, // Maximum number of navigator.languages entries to collect
     ClickPrecision = 32767, // 2^15 - 1
     ClickParentTraversal = 10, // Maximum number of parent elements to traverse when computing relative click coordinates
     BoxPrecision = 100, // Up to 2 decimal points (e.g. 34.56)
