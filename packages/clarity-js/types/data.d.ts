@@ -82,6 +82,7 @@ export const enum Event {
     Chat = 52,
     PointerDown = 53,
     WebMcp = 54,
+    AgenticBrowser = 55,
 
     // Apps specific events
     WebViewDiscover = 100,
@@ -238,6 +239,17 @@ export const enum Upload {
 export const enum BooleanFlag {
     False = 0,
     True = 1
+}
+
+export const enum AgenticBrowserSignal {
+    None = 0,
+    ClaudeAgentGlowBorder = 1,
+    ClaudePhantomCursor = 5,
+    CodexAgentOverlayRoot = 6
+}
+
+export interface AgenticBrowserData {
+    signal: AgenticBrowserSignal;
 }
 
 export const enum GCMConsent {
