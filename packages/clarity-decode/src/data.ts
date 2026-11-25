@@ -25,6 +25,9 @@ export function decode(tokens: Data.Token[]): DataEvent {
                 name: tokens.length > 3 ? tokens[3] as string | number : null,
             };
             return { time, event, data: webMcp };
+        case Data.Event.AgenticBrowser:
+            let agenticBrowser: Data.AgenticBrowserData = { signal: tokens[2] as Data.AgenticBrowserSignal };
+            return { time, event, data: agenticBrowser };
         case Data.Event.Upgrade:
             let upgrade: Data.UpgradeData = { key: tokens[2] as string };
             return { time, event, data: upgrade };

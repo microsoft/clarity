@@ -82,6 +82,7 @@ export const enum Event {
     Chat = 52,
     PointerDown = 53,
     WebMcp = 54,
+    AgenticBrowser = 55,
 
     // Apps specific events
     WebViewDiscover = 100,
@@ -190,7 +191,6 @@ export const enum Dimension {
     Consent = 36,
     InteractionNextPaint = 37,
     GlobalPrivacyControl = 38,
-    AgenticBrowserSignal = 39,
     PageHeadings = 40
     // 200-300 reserved for internal use
 }
@@ -246,6 +246,10 @@ export const enum AgenticBrowserSignal {
     ClaudeAgentGlowBorder = 1,
     ClaudePhantomCursor = 5,
     CodexAgentOverlayRoot = 6
+}
+
+export interface AgenticBrowserData {
+    signal: AgenticBrowserSignal;
 }
 
 export const enum GCMConsent {

@@ -25,6 +25,7 @@ export interface MetricEvent extends PartialEvent { data: Data.MetricData; }
 export interface CustomEvent extends PartialEvent { data: Data.CustomData; }
 export interface ChatEvent extends PartialEvent { data: Data.ChatData; }
 export interface WebMcpEvent extends PartialEvent { data: Data.WebMcpData; }
+export interface AgenticBrowserEvent extends PartialEvent { data: Data.AgenticBrowserData; }
 export interface VariableEvent extends PartialEvent { data: Data.VariableData; }
 export interface PingEvent extends PartialEvent { data: Data.PingData; }
 export interface LimitEvent extends PartialEvent { data: Data.LimitData; }
@@ -47,7 +48,8 @@ export interface DataEvent extends PartialEvent {
     Data.ExtractData |
     Data.ConsentData |
     Data.ChatData |
-    Data.WebMcpData;
+    Data.WebMcpData |
+    Data.AgenticBrowserData;
 }
 
 export type DecodedEvent = DataEvent | DiagnosticEvent | InteractionEvent | LayoutEvent | PerformanceEvent;
@@ -89,6 +91,7 @@ export interface DecodedPayload {
     custom?: CustomEvent[];
     chat?: ChatEvent[];
     webMcp?: WebMcpEvent[];
+    agenticBrowser?: AgenticBrowserEvent[];
     extract?: ExtractEvent[];
     consent?: ConsentEvent[];
     customElement?: CustomElementEvent[];

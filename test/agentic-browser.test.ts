@@ -13,7 +13,6 @@ declare global {
     }
 }
 
-const AgenticBrowserSignalDimension = 39;
 const Signals = {
     ClaudeAgentGlowBorder: "1",
     ClaudePhantomCursor: "5",
@@ -49,10 +48,8 @@ async function collect(page: Page): Promise<string[]> {
     const payloads = await page.evaluate((): string[] => window.payloads);
     const signals: string[] = [];
     for (const payload of payloads.map((value: string): Data.DecodedPayload => decode(value))) {
-        for (const event of payload.dimension || []) {
-            if (event.data && event.data[AgenticBrowserSignalDimension]) {
-                signals.push(...event.data[AgenticBrowserSignalDimension]);
-            }
+        for (const event of payload.agenticBrowser || []) {
+            signals.push(event.data.signal.toString());
         }
     }
     return signals;
