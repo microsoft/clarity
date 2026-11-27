@@ -130,16 +130,11 @@ test.describe("UA-CH userAgentData", () => {
     });
 });
 
-test.describe("UA-CH ARM architecture", () => {
-    const cases: [string | undefined, number | undefined][] = [
-        ["aRm", 1],
-        ["ArM64", 1],
-        ["PRIVATE_ARCHITECTURE_SENTINEL", undefined],
-        [undefined, undefined],
-    ];
+test.describe("UA-CH local ARM architecture", () => {
+    const cases = ["aRm", "ArM64", "PRIVATE_ARCHITECTURE_SENTINEL", undefined];
 
-    for (const [architecture, expected] of cases) {
-        test(`architecture ${String(architecture)} emits ${String(expected)}`, async ({ page }) => {
+    for (const architecture of cases) {
+        test(`architecture ${String(architecture)} uploads no ARM metric`, async ({ page }) => {
             await page.addInitScript(value => {
                 (window as any).hintRequests = [];
                 Object.defineProperty(navigator, "userAgentData", {
@@ -159,7 +154,7 @@ test.describe("UA-CH ARM architecture", () => {
                 .flatMap(event => event.data[Metric.ArmArchitecture] === undefined
                     ? [] : [event.data[Metric.ArmArchitecture]]);
 
-            expect(values).toEqual(expected === undefined ? [] : [expected]);
+            expect(values).toEqual([]);
             expect(await page.evaluate(() => (window as any).hintRequests)).toEqual(
                 [["model", "platformVersion", "architecture"]]);
             expect(encoded.join("").toLowerCase()).not.toContain("private_architecture_sentinel");
