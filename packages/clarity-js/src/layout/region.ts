@@ -10,6 +10,7 @@ let regions: { [key: number]: RegionData } = {};
 let queue: RegionQueue[] = [];
 let watch = false;
 let observer: IntersectionObserver = null;
+let prevIntersected: WeakMap<Node, boolean> = null;
 
 export function start(): void {
     reset();
@@ -18,7 +19,7 @@ export function start(): void {
     regions = {};
     queue = [];
     watch = window["IntersectionObserver"] ? true : false;
-    
+    prevIntersected = new WeakMap();
 }
 
 export function observe(node: Node, name: string): void {
@@ -48,11 +49,10 @@ export function exists(node: Node): boolean {
     // and still attempt to call exists on a late coming DOM mutation (or addition), effectively causing a script error
     return regionMap && regionMap.has(node);
 }
-
 export function track(id: number, event: Event): void {
     let node = dom.getNode(id);
     let data = id in regions ? regions[id] : { id, visibility: RegionVisibility.Rendered, interaction: InteractionState.None, name: regionMap.get(node) };
-    
+
     // Determine the interaction state based on incoming event
     let interaction = InteractionState.None;
     switch (event) {
@@ -95,7 +95,7 @@ function handler(entries: IntersectionObserverEntry[]): void {
         if (regionMap.has(target) && rect.width + rect.height > 0 && viewport && viewport.width > 0 && viewport.height > 0) {
             let id = target ? dom.getId(target) : null;
             let data = id in regions ? regions[id] : { id, name: regionMap.get(target), interaction: InteractionState.None, visibility: RegionVisibility.Rendered };
-            
+
             // For regions that have relatively smaller area, we look at intersection ratio and see the overlap relative to element's area
             // However, for larger regions, area of regions could be bigger than viewport and therefore comparison is relative to visible area
             let viewportRatio = overlap ? (overlap.width * overlap.height * 1.0) / (viewport.width * viewport.height) : 0;
@@ -105,16 +105,34 @@ function handler(entries: IntersectionObserverEntry[]): void {
             // starting position is relative to the viewport - so Intersection observer returns a negative value for rect.top to indicate that the element top is above the viewport
             let scrolledToEnd = (visible || data.visibility == RegionVisibility.Visible) && Math.abs(rect.top) + viewport.height > rect.height;
             // Process updates to this region, if applicable
-            process(target, data, data.interaction, 
-                        (scrolledToEnd ? 
+            process(target, data, data.interaction,
+                        (scrolledToEnd ?
                             RegionVisibility.ScrolledToEnd :
                             (visible ? RegionVisibility.Visible : RegionVisibility.Rendered)));
 
-            // Stop observing this element now that we have already received scrolled signal
-            if (data.visibility >= RegionVisibility.ScrolledToEnd && observer) { observer.unobserve(target); }
+            // Viewport enter/exit tracking — keep observing, don't unobserve after ScrolledToEnd
+            let prev = prevIntersected.get(target);
+            switch (prev) {
+                case true:
+                    if (!entry.isIntersecting) { emitViewportEvent(target, id, data, RegionVisibility.ViewportExit); }
+                    break;
+                default: // undefined (first observation) or false (was not intersecting)
+                    if (entry.isIntersecting) { emitViewportEvent(target, id, data, RegionVisibility.ViewportEnter); }
+                    break;
+            }
+            prevIntersected.set(target, entry.isIntersecting);
         }
     }
     if (state.length > 0) { encode(Event.Region); }
+}
+
+function emitViewportEvent(n: Node, id: number, d: RegionData, v: RegionVisibility): void {
+    let vpData: RegionData = { id: d.id, interaction: InteractionState.None, visibility: v, name: d.name };
+    if (id) {
+        state.push(clone(vpData));
+    } else {
+        queue.push({node: n, state: clone(vpData)});
+    }
 }
 
 function process(n: Node, d: RegionData, s: InteractionState, v: RegionVisibility): void {
@@ -131,7 +149,7 @@ function process(n: Node, d: RegionData, s: InteractionState, v: RegionVisibilit
         }
     } else {
         // Get the time before adding to queue to ensure accurate event time
-        queue.push({node: n, state: clone(d)}); 
+        queue.push({node: n, state: clone(d)});
     }
 }
 
@@ -140,7 +158,7 @@ function clone(r: RegionData): RegionState {
 }
 
 export function reset(): void {
-    state = [];   
+    state = [];
 }
 
 export function stop(): void {
@@ -153,4 +171,5 @@ export function stop(): void {
         observer = null;
     }
     watch = false;
+    prevIntersected = null;
 }
